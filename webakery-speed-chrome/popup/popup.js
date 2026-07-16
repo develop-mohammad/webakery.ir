@@ -139,17 +139,39 @@ function renderFonts(fonts) {
     return;
   }
 
-  box.innerHTML = fonts
-    .map((font) => {
-      const displayClass = font.displayOk
-        ? "ok"
-        : font.display === "ندارد" || font.display === "نامشخص"
-          ? "bad"
-          : "neutral";
-      const preloadClass = font.preloaded ? "ok" : "bad";
-      const preconnectClass = font.preconnect ? "ok" : "neutral";
+  const swapCount = fonts.filter((f) => f.display === "swap").length;
+  const missingSwap = fonts.filter(
+    (f) => !f.displayOk && f.display !== "از CSS"
+  ).length;
 
-      return `<article class="font-row">
+  const summary = `<p class="font-summary">
+    <strong>font-display: swap</strong> —
+    ${swapCount} فونت swap دارد
+    ${missingSwap > 0 ? ` / <span class="font-summary__warn">${missingSwap} بدون swap</span>` : ""}
+  </p>`;
+
+  box.innerHTML =
+    summary +
+    fonts
+      .map((font) => {
+        const isSwap = font.display === "swap";
+        const displayClass = isSwap
+          ? "ok"
+          : font.displayOk
+            ? "ok"
+            : font.display === "ندارد" ||
+                font.display === "نامشخص" ||
+                font.display === "block" ||
+                font.display === "auto"
+              ? "bad"
+              : "neutral";
+        const displayLabel = isSwap
+          ? "display swap ✓"
+          : `display: ${font.display}`;
+        const preloadClass = font.preloaded ? "ok" : "bad";
+        const preconnectClass = font.preconnect ? "ok" : "neutral";
+
+        return `<article class="font-row">
         <div class="font-row__name">${escapeHtml(font.name)}</div>
         ${
           font.url
@@ -157,14 +179,14 @@ function renderFonts(fonts) {
             : ""
         }
         <div class="font-badges">
-          <span class="badge ${displayClass}">display: ${escapeHtml(font.display)}</span>
+          <span class="badge ${displayClass}">${escapeHtml(displayLabel)}</span>
           <span class="badge ${preloadClass}">preload: ${font.preloaded ? "بله" : "خیر"}</span>
           <span class="badge ${preconnectClass}">preconnect: ${font.preconnect ? "بله" : "خیر"}</span>
           <span class="badge neutral">${escapeHtml(font.source)}</span>
         </div>
       </article>`;
-    })
-    .join("");
+      })
+      .join("");
 }
 
 function renderReport(report) {

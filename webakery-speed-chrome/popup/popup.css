@@ -270,3 +270,16 @@ body {
 .panel-fonts h2 {
   margin-bottom: 6px;
 }
+
+.font-summary {
+  margin: 0 0 8px;
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(47, 93, 69, 0.08);
+}
+
+.font-summary__warn {
+  color: var(--bad);
+  font-weight: 700;
+}

@@ -3,7 +3,7 @@
   "name": "Webakery Speed Analyzer",
   "short_name": "Webakery Speed",
   "description": "تحلیل صفحه فعلی کروم — مکمل پلاگین Webakery Speed برای وردپرس",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "action": {
     "default_title": "تحلیل سرعت این صفحه",
     "default_popup": "popup/popup.html",

@@ -140,8 +140,11 @@
         var href = absoluteUrl(link.href);
         if (!isFontCssUrl(href)) return;
         var display = parseDisplayFromUrl(href) || "ندارد";
+        if (display === "block" || display === "auto") {
+          display = display + " (نیاز به swap)";
+        }
         pushFont({
-          name: "Google/Bunny Font CSS",
+          name: "Font CSS (" + shortUrl(href) + ")",
           url: href,
           source: "stylesheet",
           display: display,
@@ -328,9 +331,9 @@
           "font_display",
           issue(
             "font-display",
-            "font-display مناسب نیست",
+            "font-display: swap نیست",
             (noSwap.length + noDisplay.length) +
-              " فونت بدون swap/optional (جزئیات در بخش فونت)",
+              " فونت بدون swap — در وردپرس گزینه font-display swap را فعال کنید",
             ["font_display"],
             0.38
           )

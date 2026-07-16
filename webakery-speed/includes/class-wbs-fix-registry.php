@@ -54,8 +54,8 @@ class WBS_Fix_Registry {
 				'class'       => 'WBS_Fix_Image_Dimensions',
 			),
 			'font_display' => array(
-				'title'       => __( 'font-display: swap', 'webakery-speed' ),
-				'description' => __( 'برای فونت‌های Google و CSS فونت، swap اعمال می‌شود.', 'webakery-speed' ),
+				'title'       => __( 'font-display: swap (اجباری)', 'webakery-speed' ),
+				'description' => __( 'برای Google Fonts، Bunny Fonts و @font-face مقدار swap اعمال می‌شود.', 'webakery-speed' ),
 				'risk'        => 'low',
 				'audits'      => array( 'font-display' ),
 				'file'        => 'class-wbs-fix-font-display.php',
