@@ -139,37 +139,26 @@ function renderFonts(fonts) {
     return;
   }
 
-  const swapCount = fonts.filter((f) => f.display === "swap").length;
-  const missingSwap = fonts.filter(
-    (f) => !f.displayOk && f.display !== "از CSS"
-  ).length;
+  const swapCount = fonts.filter((f) => f.displayOk).length;
+  const missingSwap = fonts.length - swapCount;
 
-  const summary = `<p class="font-summary">
+  const summary = `<p class="font-summary ${missingSwap > 0 ? "font-summary--bad" : ""}">
     <strong>font-display: swap</strong> —
     ${swapCount} فونت swap دارد
-    ${missingSwap > 0 ? ` / <span class="font-summary__warn">${missingSwap} بدون swap</span>` : ""}
+    ${missingSwap > 0 ? ` / <span class="font-summary__warn">${missingSwap} بدون swap (قرمز)</span>` : ""}
   </p>`;
 
   box.innerHTML =
     summary +
     fonts
       .map((font) => {
-        const isSwap = font.display === "swap";
-        const displayClass = isSwap
-          ? "ok"
-          : font.displayOk
-            ? "ok"
-            : font.display === "ندارد" ||
-                font.display === "نامشخص" ||
-                font.display === "block" ||
-                font.display === "auto"
-              ? "bad"
-              : "neutral";
+        const isSwap = !!font.displayOk;
+        const displayClass = isSwap ? "ok" : "bad";
         const displayLabel = isSwap
           ? "display swap ✓"
-          : `display: ${font.display}`;
+          : `display: ${font.display} ✗`;
         const preloadClass = font.preloaded ? "ok" : "bad";
-        const preconnectClass = font.preconnect ? "ok" : "neutral";
+        const preconnectClass = font.preconnect ? "ok" : "bad";
 
         return `<article class="font-row">
         <div class="font-row__name">${escapeHtml(font.name)}</div>

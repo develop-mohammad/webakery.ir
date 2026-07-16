@@ -47,6 +47,17 @@
     };
   }
 
+  function normalizeDisplay(display) {
+    if (!display) {
+      return "نامشخص";
+    }
+    return String(display).toLowerCase().split("(")[0].trim();
+  }
+
+  function isDisplaySwap(display) {
+    return normalizeDisplay(display) === "swap";
+  }
+
   function parseDisplayFromUrl(url) {
     try {
       var value = new URL(url).searchParams.get("display");
@@ -119,15 +130,14 @@
         origin = "";
       }
 
+      var displayRaw = item.display || "نامشخص";
+
       fonts.push({
         name: item.name || shortUrl(abs) || "font",
         url: abs,
         source: item.source || "unknown",
-        display: item.display || "نامشخص",
-        displayOk:
-          item.display === "swap" ||
-          item.display === "optional" ||
-          item.display === "fallback",
+        display: displayRaw,
+        displayOk: isDisplaySwap(displayRaw),
         preloaded: !!(preloadInfo && (preloadInfo.as === "font" || preloadInfo.as === "style")),
         preloadAs: preloadInfo ? preloadInfo.as : "",
         preconnect: origin ? !!preconnects[origin] : false,

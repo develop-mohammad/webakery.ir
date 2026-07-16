@@ -279,6 +279,11 @@ body {
   background: rgba(47, 93, 69, 0.08);
 }
 
+.font-summary--bad {
+  background: rgba(185, 28, 28, 0.08);
+  border: 1px solid rgba(185, 28, 28, 0.15);
+}
+
 .font-summary__warn {
   color: var(--bad);
   font-weight: 700;
