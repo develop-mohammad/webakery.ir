@@ -292,13 +292,14 @@ table.grid th{background:#f3f4f6;font-size:10.5px}
 .meta-line{font-size:11px;margin:2px 0}
 .bc{margin-top:4px;line-height:0}
 
-.parties{margin:8px 0;display:flex;flex-direction:row;gap:0;width:100%}
-.party{flex:1 1 50%;width:50%;border:1px solid #222}
-.party+.party{border-right:0}
-.party h3{background:#f3f4f6;border-bottom:1px solid #222;padding:4px 8px;font-size:11px}
-.party .body{padding:6px 8px;line-height:1.55;min-height:auto}
-.party-sender{text-align:right}
-.party-receiver{text-align:right}
+.parties{margin:8px 0;display:table;width:100%;border-collapse:collapse;table-layout:fixed}
+.party{display:table-cell;width:50%;border:1px solid #222;vertical-align:top;text-align:right;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.party h3{border-bottom:1px solid #222;padding:5px 8px;font-size:11px;font-weight:700;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.party .body{padding:7px 8px;line-height:1.55}
+.party-sender{background:#e8f5f3}
+.party-sender h3{background:<?php echo esc_attr( $color ); ?>}
+.party-receiver{background:#eef2ff}
+.party-receiver h3{background:#334155}
 
 .items th{background:<?php echo esc_attr( $color ); ?>;color:#fff;border-color:#155e54}
 .items td{font-size:10.5px}
@@ -319,6 +320,7 @@ table.grid th{background:#f3f4f6;font-size:10.5px}
 	.no-print{display:none!important}
 	.sheet{max-width:none;margin:0;padding:0}
 	.party,.items,.summary,.head{break-inside:avoid}
+	.party,.party h3,.items th,.summary tr.total td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
 </head>
