@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>تنظیمات Webakery Speed</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        max-width: 720px;
+        margin: 24px auto;
+        padding: 0 16px;
+        color: #221c18;
+      }
+      h1 { font-size: 22px; }
+      label { display: block; margin: 14px 0 6px; font-weight: 600; }
+      input, select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font: inherit;
+      }
+      button {
+        margin-top: 16px;
+        background: #d9a441;
+        border: 0;
+        color: #20180f;
+        font-weight: 700;
+        padding: 10px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .hint { color: #6a6158; font-size: 13px; }
+      .saved { color: #2f5d45; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <h1>تنظیمات افزونه کروم Webakery Speed</h1>
+    <p class="hint">این افزونه مکمل پلاگین وردپرس Webakery Speed است.</p>
+
+    <label for="psiApiKey">کلید API Google PageSpeed</label>
+    <input id="psiApiKey" type="text" dir="ltr" placeholder="AIza..." />
+    <p class="hint">
+      از
+      <a href="https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com" target="_blank" rel="noopener">Google Cloud</a>
+      دریافت کنید.
+    </p>
+
+    <label for="strategy">نوع اسکن پیش‌فرض</label>
+    <select id="strategy">
+      <option value="mobile">موبایل</option>
+      <option value="desktop">دسکتاپ</option>
+    </select>
+
+    <label for="wpUrl">آدرس پیشخوان وردپرس (اختیاری)</label>
+    <input id="wpUrl" type="url" dir="ltr" placeholder="https://example.com/wp-admin/admin.php?page=webakery-speed" />
+    <p class="hint">برای رفتن سریع به صفحه PageSpeed در وردپرس.</p>
+
+    <button id="save">ذخیره</button>
+    <p id="saved" class="saved" hidden>ذخیره شد.</p>
+
+    <script src="options.js"></script>
+  </body>
+</html>
