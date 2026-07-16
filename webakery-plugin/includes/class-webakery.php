@@ -39,6 +39,7 @@ class Webakery {
 	 */
 	private function __construct() {
 		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
+		add_action( 'plugins_loaded', array( $this, 'maybe_upgrade' ), 20 );
 		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_public_assets' ) );
 
@@ -47,6 +48,8 @@ class Webakery {
 		Webakery_Settings::init();
 		Webakery_Shortcodes::init();
 		Webakery_Orders::init();
+		Webakery_Invoices::init();
+		Webakery_Roles::init();
 
 		if ( is_admin() ) {
 			Webakery_Admin::init();
@@ -65,6 +68,24 @@ class Webakery {
 	 */
 	public function init() {
 		// Reserved for future runtime hooks.
+	}
+
+	/**
+	 * Install roles/CPT extras after plugin updates without reactivation.
+	 */
+	public function maybe_upgrade() {
+		$stored = get_option( 'webakery_version', '' );
+		if ( WEBAKERY_VERSION === $stored ) {
+			return;
+		}
+
+		Webakery_Roles::install();
+
+		if ( false === get_option( Webakery_Invoices::COUNTER_OPTION ) ) {
+			update_option( Webakery_Invoices::COUNTER_OPTION, 0, false );
+		}
+
+		update_option( 'webakery_version', WEBAKERY_VERSION );
 	}
 
 	/**
@@ -114,6 +135,8 @@ class Webakery {
 	public static function activate() {
 		Webakery_CPT::register();
 		Webakery_Orders::register_post_type();
+		Webakery_Invoices::register_post_type();
+		Webakery_Roles::install();
 		flush_rewrite_rules();
 
 		if ( false === get_option( 'webakery_settings' ) ) {
@@ -131,6 +154,12 @@ class Webakery {
 				)
 			);
 		}
+
+		if ( false === get_option( Webakery_Invoices::COUNTER_OPTION ) ) {
+			update_option( Webakery_Invoices::COUNTER_OPTION, 0, false );
+		}
+
+		update_option( 'webakery_version', WEBAKERY_VERSION );
 	}
 
 	/**

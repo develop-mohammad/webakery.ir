@@ -37,3 +37,77 @@
 	padding: 2px 6px;
 	border-radius: 6px;
 }
+
+.wbk-panel__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 16px;
+	margin-top: 20px;
+	max-width: 920px;
+}
+
+.wbk-panel__card {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 20px;
+	background: linear-gradient(160deg, #fffdf8 0%, #f7efe4 100%);
+	border: 1px solid #e2d6c8;
+	border-radius: 14px;
+	text-decoration: none;
+	color: #2c241c;
+	box-shadow: 0 1px 0 rgba(44, 36, 28, 0.04);
+	transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.wbk-panel__card:hover,
+.wbk-panel__card:focus {
+	transform: translateY(-2px);
+	border-color: #c9a882;
+	color: #2c241c;
+}
+
+.wbk-panel__card-title {
+	font-size: 18px;
+	font-weight: 700;
+}
+
+.wbk-panel__card-count {
+	font-size: 28px;
+	font-weight: 700;
+	color: #8a5a2b;
+	line-height: 1;
+}
+
+.wbk-panel__card-desc {
+	color: #6a5848;
+	font-size: 13px;
+}
+
+.wbk-status {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 12px;
+	background: #f0e7db;
+	color: #5b4a3c;
+}
+
+.wbk-status--issued {
+	background: #e7f0ff;
+	color: #1d4f91;
+}
+
+.wbk-status--paid {
+	background: #e6f6ea;
+	color: #1f6b3a;
+}
+
+.wbk-status--cancelled {
+	background: #fde8e8;
+	color: #8a1f1f;
+}
+
+.wbk-invoice-form th {
+	width: 160px;
+}
