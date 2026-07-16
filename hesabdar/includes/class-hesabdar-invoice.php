@@ -2,7 +2,7 @@
 /**
  * Order invoices — view and download.
  *
- * @package Webakery
+ * @package Hesabdar
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Builds printable invoices for bakery orders.
  */
-class Webakery_Invoice {
+class Hesabdar_Invoice {
 
 	/**
 	 * Hook registrations.
@@ -44,9 +44,9 @@ class Webakery_Invoice {
 
 		return wp_nonce_url(
 			admin_url(
-				'edit.php?post_type=wbk_order&webakery_invoice=' . $order_id . '&webakery_invoice_action=' . $action
+				'edit.php?post_type=hsb_order&hesabdar_invoice=' . $order_id . '&hesabdar_invoice_action=' . $action
 			),
-			'webakery_invoice_' . $order_id
+			'hesabdar_invoice_' . $order_id
 		);
 	}
 
@@ -54,33 +54,33 @@ class Webakery_Invoice {
 	 * Handle view/download requests.
 	 */
 	public static function maybe_handle_request() {
-		if ( empty( $_GET['webakery_invoice'] ) ) {
+		if ( empty( $_GET['hesabdar_invoice'] ) ) {
 			return;
 		}
 
-		$order_id = absint( $_GET['webakery_invoice'] );
-		$action   = isset( $_GET['webakery_invoice_action'] ) ? sanitize_key( wp_unslash( $_GET['webakery_invoice_action'] ) ) : 'view';
+		$order_id = absint( $_GET['hesabdar_invoice'] );
+		$action   = isset( $_GET['hesabdar_invoice_action'] ) ? sanitize_key( wp_unslash( $_GET['hesabdar_invoice_action'] ) ) : 'view';
 
 		if ( $order_id <= 0 ) {
-			wp_die( esc_html__( 'سفارش نامعتبر است.', 'webakery' ) );
+			wp_die( esc_html__( 'سفارش نامعتبر است.', 'hesabdar' ) );
 		}
 
 		if ( ! self::user_can_access( $order_id ) ) {
-			wp_die( esc_html__( 'اجازه دسترسی ندارید.', 'webakery' ) );
+			wp_die( esc_html__( 'اجازه دسترسی ندارید.', 'hesabdar' ) );
 		}
 
-		check_admin_referer( 'webakery_invoice_' . $order_id );
+		check_admin_referer( 'hesabdar_invoice_' . $order_id );
 
 		$order = get_post( $order_id );
-		if ( ! $order || 'wbk_order' !== $order->post_type ) {
-			wp_die( esc_html__( 'سفارش یافت نشد.', 'webakery' ) );
+		if ( ! $order || 'hsb_order' !== $order->post_type ) {
+			wp_die( esc_html__( 'سفارش یافت نشد.', 'hesabdar' ) );
 		}
 
 		$data = self::get_invoice_data( $order_id );
 		$html = self::render_html( $data, 'download' === $action );
 
 		if ( 'download' === $action ) {
-			$filename = 'webakery-invoice-' . $order_id . '.html';
+			$filename = 'hesabdar-invoice-' . $order_id . '.html';
 			nocache_headers();
 			header( 'Content-Type: text/html; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename=' . $filename );
@@ -110,7 +110,7 @@ class Webakery_Invoice {
 		$product_id = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND post_status IN ('publish','private') AND post_title = %s ORDER BY ID DESC LIMIT 1",
-				'wbk_product',
+				'hsb_product',
 				$product_name
 			)
 		);
@@ -119,7 +119,7 @@ class Webakery_Invoice {
 			return 0;
 		}
 
-		return absint( get_post_meta( $product_id, '_wbk_price', true ) );
+		return absint( get_post_meta( $product_id, '_hsb_price', true ) );
 	}
 
 	/**
@@ -130,13 +130,13 @@ class Webakery_Invoice {
 	 * @return int
 	 */
 	public static function resolve_unit_price( $order_id, $product_name = '' ) {
-		$stored = get_post_meta( $order_id, '_wbk_unit_price', true );
+		$stored = get_post_meta( $order_id, '_hsb_unit_price', true );
 		if ( '' !== $stored && null !== $stored ) {
 			return absint( $stored );
 		}
 
 		if ( '' === $product_name ) {
-			$product_name = (string) get_post_meta( $order_id, '_wbk_product', true );
+			$product_name = (string) get_post_meta( $order_id, '_hsb_product', true );
 		}
 
 		return self::lookup_product_price( $product_name );
@@ -149,13 +149,13 @@ class Webakery_Invoice {
 	 * @return array
 	 */
 	public static function get_invoice_data( $order_id ) {
-		$settings = Webakery_Settings::get();
-		$qty      = max( 1, absint( get_post_meta( $order_id, '_wbk_qty', true ) ) );
-		$product  = (string) get_post_meta( $order_id, '_wbk_product', true );
+		$settings = Hesabdar_Settings::get();
+		$qty      = max( 1, absint( get_post_meta( $order_id, '_hsb_qty', true ) ) );
+		$product  = (string) get_post_meta( $order_id, '_hsb_product', true );
 		$unit     = absint( self::resolve_unit_price( $order_id, $product ) );
 		$total    = $unit * $qty;
 
-		$invoice_prefix = ! empty( $settings['invoice_prefix'] ) ? $settings['invoice_prefix'] : 'WBK';
+		$invoice_prefix = ! empty( $settings['invoice_prefix'] ) ? $settings['invoice_prefix'] : 'HSB';
 		$invoice_number = $invoice_prefix . '-' . str_pad( (string) $order_id, 5, '0', STR_PAD_LEFT );
 
 		return array(
@@ -167,13 +167,13 @@ class Webakery_Invoice {
 			'store_address'    => $settings['address'],
 			'currency'         => $settings['currency'],
 			'invoice_note'     => isset( $settings['invoice_note'] ) ? $settings['invoice_note'] : '',
-			'customer_name'    => (string) get_post_meta( $order_id, '_wbk_customer_name', true ),
-			'customer_phone'   => (string) get_post_meta( $order_id, '_wbk_customer_phone', true ),
+			'customer_name'    => (string) get_post_meta( $order_id, '_hsb_customer_name', true ),
+			'customer_phone'   => (string) get_post_meta( $order_id, '_hsb_customer_phone', true ),
 			'product'          => $product,
 			'qty'              => $qty,
 			'unit_price'       => $unit,
 			'total'            => $total,
-			'message'          => (string) get_post_meta( $order_id, '_wbk_message', true ),
+			'message'          => (string) get_post_meta( $order_id, '_hsb_message', true ),
 			'download_url'     => self::get_url( $order_id, 'download' ),
 			'view_url'         => self::get_url( $order_id, 'view' ),
 		);
@@ -220,17 +220,17 @@ class Webakery_Invoice {
 		$title          = esc_html(
 			sprintf(
 				/* translators: %s: invoice number */
-				__( 'فاکتور %s', 'webakery' ),
+				__( 'فاکتور %s', 'hesabdar' ),
 				$data['invoice_number']
 			)
 		);
 
 		$toolbar = '';
 		if ( ! $for_download ) {
-			$toolbar = '<div class="wbk-invoice-toolbar no-print">'
-				. '<button type="button" onclick="window.print()">' . esc_html__( 'چاپ / ذخیره PDF', 'webakery' ) . '</button>'
-				. '<a class="wbk-invoice-download" href="' . $download_url . '">' . esc_html__( 'دانلود فاکتور', 'webakery' ) . '</a>'
-				. '<button type="button" class="wbk-invoice-close" onclick="window.close()">' . esc_html__( 'بستن', 'webakery' ) . '</button>'
+			$toolbar = '<div class="hsb-invoice-toolbar no-print">'
+				. '<button type="button" onclick="window.print()">' . esc_html__( 'چاپ / ذخیره PDF', 'hesabdar' ) . '</button>'
+				. '<a class="hsb-invoice-download" href="' . $download_url . '">' . esc_html__( 'دانلود فاکتور', 'hesabdar' ) . '</a>'
+				. '<button type="button" class="hsb-invoice-close" onclick="window.close()">' . esc_html__( 'بستن', 'hesabdar' ) . '</button>'
 				. '</div>';
 		}
 
@@ -248,27 +248,27 @@ class Webakery_Invoice {
 </head>
 <body>
 	<?php echo $toolbar; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-	<main class="wbk-invoice">
-		<header class="wbk-invoice__header">
+	<main class="hsb-invoice">
+		<header class="hsb-invoice__header">
 			<div>
-				<p class="wbk-invoice__brand"><?php echo $store_name; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
-				<p class="wbk-invoice__label"><?php echo esc_html__( 'فاکتور فروش', 'webakery' ); ?></p>
+				<p class="hsb-invoice__brand"><?php echo $store_name; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
+				<p class="hsb-invoice__label"><?php echo esc_html__( 'فاکتور فروش', 'hesabdar' ); ?></p>
 			</div>
-			<div class="wbk-invoice__meta">
-				<p><strong><?php echo esc_html__( 'شماره فاکتور:', 'webakery' ); ?></strong> <?php echo $invoice_number; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
-				<p><strong><?php echo esc_html__( 'تاریخ:', 'webakery' ); ?></strong> <?php echo $date; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
-				<p><strong><?php echo esc_html__( 'شماره سفارش:', 'webakery' ); ?></strong> #<?php echo esc_html( (string) $data['order_id'] ); ?></p>
+			<div class="hsb-invoice__meta">
+				<p><strong><?php echo esc_html__( 'شماره فاکتور:', 'hesabdar' ); ?></strong> <?php echo $invoice_number; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
+				<p><strong><?php echo esc_html__( 'تاریخ:', 'hesabdar' ); ?></strong> <?php echo $date; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
+				<p><strong><?php echo esc_html__( 'شماره سفارش:', 'hesabdar' ); ?></strong> #<?php echo esc_html( (string) $data['order_id'] ); ?></p>
 			</div>
 		</header>
 
-		<section class="wbk-invoice__parties">
+		<section class="hsb-invoice__parties">
 			<div>
-				<h2><?php echo esc_html__( 'خریدار', 'webakery' ); ?></h2>
+				<h2><?php echo esc_html__( 'خریدار', 'hesabdar' ); ?></h2>
 				<p><?php echo $customer_name; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
 				<p dir="ltr"><?php echo $customer_phone; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
 			</div>
 			<div>
-				<h2><?php echo esc_html__( 'فروشنده', 'webakery' ); ?></h2>
+				<h2><?php echo esc_html__( 'فروشنده', 'hesabdar' ); ?></h2>
 				<p><?php echo $store_name; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
 				<?php if ( $store_phone ) : ?>
 					<p dir="ltr"><?php echo $store_phone; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
@@ -279,14 +279,14 @@ class Webakery_Invoice {
 			</div>
 		</section>
 
-		<table class="wbk-invoice__table">
+		<table class="hsb-invoice__table">
 			<thead>
 				<tr>
-					<th><?php echo esc_html__( 'ردیف', 'webakery' ); ?></th>
-					<th><?php echo esc_html__( 'محصول', 'webakery' ); ?></th>
-					<th><?php echo esc_html__( 'تعداد', 'webakery' ); ?></th>
-					<th><?php echo esc_html__( 'قیمت واحد', 'webakery' ); ?></th>
-					<th><?php echo esc_html__( 'مبلغ', 'webakery' ); ?></th>
+					<th><?php echo esc_html__( 'ردیف', 'hesabdar' ); ?></th>
+					<th><?php echo esc_html__( 'محصول', 'hesabdar' ); ?></th>
+					<th><?php echo esc_html__( 'تعداد', 'hesabdar' ); ?></th>
+					<th><?php echo esc_html__( 'قیمت واحد', 'hesabdar' ); ?></th>
+					<th><?php echo esc_html__( 'مبلغ', 'hesabdar' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -300,16 +300,16 @@ class Webakery_Invoice {
 			</tbody>
 			<tfoot>
 				<tr>
-					<td colspan="4"><?php echo esc_html__( 'جمع کل', 'webakery' ); ?></td>
+					<td colspan="4"><?php echo esc_html__( 'جمع کل', 'hesabdar' ); ?></td>
 					<td><?php echo $total; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
 				</tr>
 			</tfoot>
 		</table>
 
-		<section class="wbk-invoice__note">
-			<p><strong><?php echo esc_html__( 'یادداشت سفارش:', 'webakery' ); ?></strong> <?php echo $message; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
+		<section class="hsb-invoice__note">
+			<p><strong><?php echo esc_html__( 'یادداشت سفارش:', 'hesabdar' ); ?></strong> <?php echo $message; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
 			<?php if ( $note ) : ?>
-				<p class="wbk-invoice__footer-note"><?php echo $note; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
+				<p class="hsb-invoice__footer-note"><?php echo $note; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
 			<?php endif; ?>
 		</section>
 	</main>
@@ -328,34 +328,34 @@ class Webakery_Invoice {
 		return '
 			*{box-sizing:border-box}
 			body{margin:0;background:#f3efe8;color:#2b2118;font-family:Tahoma,"Segoe UI",sans-serif;line-height:1.7}
-			.wbk-invoice-toolbar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:14px;background:#2b2118;position:sticky;top:0;z-index:5}
-			.wbk-invoice-toolbar button,.wbk-invoice-toolbar a{appearance:none;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer;text-decoration:none;color:#2b2118;background:#f4c76a}
-			.wbk-invoice-toolbar .wbk-invoice-download{background:#fff}
-			.wbk-invoice-toolbar .wbk-invoice-close{background:#d9cfc3}
-			.wbk-invoice{max-width:820px;margin:24px auto;background:#fff;border:1px solid #e2d6c8;border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(43,33,24,.06)}
-			.wbk-invoice__header{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #2b2118;padding-bottom:16px;margin-bottom:20px}
-			.wbk-invoice__brand{margin:0;font-size:28px;font-weight:700;color:#8b4513}
-			.wbk-invoice__label{margin:4px 0 0;color:#6b5a4a}
-			.wbk-invoice__meta{text-align:left;direction:rtl}
-			.wbk-invoice__meta p{margin:0 0 6px}
-			.wbk-invoice__parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
-			.wbk-invoice__parties h2{margin:0 0 8px;font-size:15px;color:#8b4513}
-			.wbk-invoice__parties p{margin:0 0 4px}
-			.wbk-invoice__table{width:100%;border-collapse:collapse;margin-bottom:18px}
-			.wbk-invoice__table th,.wbk-invoice__table td{border:1px solid #e2d6c8;padding:10px 12px;text-align:center}
-			.wbk-invoice__table th{background:#fff8ef}
-			.wbk-invoice__table tfoot td{font-weight:700;background:#f7f1e8}
-			.wbk-invoice__note p{margin:0 0 8px}
-			.wbk-invoice__footer-note{color:#6b5a4a;border-top:1px dashed #e2d6c8;padding-top:10px;margin-top:12px}
+			.hsb-invoice-toolbar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:14px;background:#2b2118;position:sticky;top:0;z-index:5}
+			.hsb-invoice-toolbar button,.hsb-invoice-toolbar a{appearance:none;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer;text-decoration:none;color:#2b2118;background:#f4c76a}
+			.hsb-invoice-toolbar .hsb-invoice-download{background:#fff}
+			.hsb-invoice-toolbar .hsb-invoice-close{background:#d9cfc3}
+			.hsb-invoice{max-width:820px;margin:24px auto;background:#fff;border:1px solid #e2d6c8;border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(43,33,24,.06)}
+			.hsb-invoice__header{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #2b2118;padding-bottom:16px;margin-bottom:20px}
+			.hsb-invoice__brand{margin:0;font-size:28px;font-weight:700;color:#8b4513}
+			.hsb-invoice__label{margin:4px 0 0;color:#6b5a4a}
+			.hsb-invoice__meta{text-align:left;direction:rtl}
+			.hsb-invoice__meta p{margin:0 0 6px}
+			.hsb-invoice__parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+			.hsb-invoice__parties h2{margin:0 0 8px;font-size:15px;color:#8b4513}
+			.hsb-invoice__parties p{margin:0 0 4px}
+			.hsb-invoice__table{width:100%;border-collapse:collapse;margin-bottom:18px}
+			.hsb-invoice__table th,.hsb-invoice__table td{border:1px solid #e2d6c8;padding:10px 12px;text-align:center}
+			.hsb-invoice__table th{background:#fff8ef}
+			.hsb-invoice__table tfoot td{font-weight:700;background:#f7f1e8}
+			.hsb-invoice__note p{margin:0 0 8px}
+			.hsb-invoice__footer-note{color:#6b5a4a;border-top:1px dashed #e2d6c8;padding-top:10px;margin-top:12px}
 			@media print{
 				body{background:#fff}
 				.no-print{display:none!important}
-				.wbk-invoice{margin:0;border:0;box-shadow:none;border-radius:0;max-width:none}
+				.hsb-invoice{margin:0;border:0;box-shadow:none;border-radius:0;max-width:none}
 			}
 			@media (max-width:640px){
-				.wbk-invoice{margin:12px;padding:18px}
-				.wbk-invoice__header,.wbk-invoice__parties{grid-template-columns:1fr;display:grid}
-				.wbk-invoice__meta{text-align:right}
+				.hsb-invoice{margin:12px;padding:18px}
+				.hsb-invoice__header,.hsb-invoice__parties{grid-template-columns:1fr;display:grid}
+				.hsb-invoice__meta{text-align:right}
 			}
 		';
 	}

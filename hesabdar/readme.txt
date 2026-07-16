@@ -1,6 +1,6 @@
-=== Webakery ===
+=== Hesabdar ===
 Contributors: webakery
-Tags: bakery, products, orders, rtl, persian
+Tags: accounting, orders, invoice, products, rtl, persian
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
@@ -8,11 +8,11 @@ Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-کاتالوگ محصولات، ساعات کاری و فرم سفارش برای نانوایی و شیرینی‌فروشی.
+افزونه حسابدار (Hesabdar) — مدیریت محصولات، سفارش‌ها و فاکتور.
 
 == Description ==
 
-Webakery یک پلاگین وردپرس برای مدیریت محصولات نانوایی/شیرینی‌فروشی است:
+Hesabdar (حسابدار) یک پلاگین وردپرس برای مدیریت فروش است:
 
 * نوع نوشته سفارشی محصولات
 * دسته‌بندی محصولات
@@ -25,23 +25,24 @@ Webakery یک پلاگین وردپرس برای مدیریت محصولات ن�
 
 == Installation ==
 
-1. پوشه `webakery-plugin` را در مسیر `/wp-content/plugins/` آپلود کنید.
-2. از منوی افزونه‌ها، Webakery را فعال کنید.
-3. به منوی Webakery بروید و محصولات و تنظیمات را تکمیل کنید.
+1. پوشه `hesabdar` را در مسیر `/wp-content/plugins/` آپلود کنید.
+2. از منوی افزونه‌ها، Hesabdar را فعال کنید.
+3. به منوی «حسابدار» بروید و محصولات و تنظیمات را تکمیل کنید.
 4. شورت‌کدها را در برگه‌ها قرار دهید.
 
 == Shortcodes ==
 
-* `[webakery_products]`
-* `[webakery_products featured="1" limit="6" columns="3"]`
-* `[webakery_products category="bread"]`
-* `[webakery_hours]`
-* `[webakery_info]`
-* `[webakery_order]`
+* `[hesabdar_products]`
+* `[hesabdar_products featured="1" limit="6" columns="3"]`
+* `[hesabdar_products category="bread"]`
+* `[hesabdar_hours]`
+* `[hesabdar_info]`
+* `[hesabdar_order]`
 
 == Changelog ==
 
 = 1.1.0 =
+* تغییر نام افزونه به Hesabdar (حسابدار)
 * ستون فاکتور در لیست سفارش‌ها با لینک مشاهده و دانلود
 * صفحه فاکتور چاپی فارسی (RTL) با امکان چاپ/PDF
 * تنظیمات پیشوند و یادداشت فاکتور

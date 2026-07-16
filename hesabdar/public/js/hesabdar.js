@@ -1,16 +1,16 @@
 (function () {
 	"use strict";
 
-	var STORAGE_KEY = "webakery_order_draft_v1";
+	var STORAGE_KEY = "hesabdar_order_draft_v1";
 	var FIELD_NAMES = ["name", "phone", "product", "qty", "message"];
 
 	function t(key, fallback) {
 		if (
-			typeof webakeryData !== "undefined" &&
-			webakeryData.i18n &&
-			webakeryData.i18n[key]
+			typeof hesabdarData !== "undefined" &&
+			hesabdarData.i18n &&
+			hesabdarData.i18n[key]
 		) {
-			return webakeryData.i18n[key];
+			return hesabdarData.i18n[key];
 		}
 		return fallback;
 	}
@@ -110,7 +110,7 @@
 		var link = document.createElement("a");
 		var stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
 		link.href = url;
-		link.download = "webakery-order-draft-" + stamp + ".json";
+		link.download = "hesabdar-order-draft-" + stamp + ".json";
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
@@ -118,11 +118,11 @@
 	}
 
 	function initLocalSave(form) {
-		var feedback = form.querySelector(".wbk-order__feedback");
-		var saveBtn = form.querySelector(".wbk-order__save-local");
-		var downloadBtn = form.querySelector(".wbk-order__download-local");
-		var clearBtn = form.querySelector(".wbk-order__clear-local");
-		var draftNote = form.querySelector(".wbk-order__draft-note");
+		var feedback = form.querySelector(".hsb-order__feedback");
+		var saveBtn = form.querySelector(".hsb-order__save-local");
+		var downloadBtn = form.querySelector(".hsb-order__download-local");
+		var clearBtn = form.querySelector(".hsb-order__clear-local");
+		var draftNote = form.querySelector(".hsb-order__draft-note");
 		var saveTimer = null;
 
 		var existing = readDraft();
@@ -202,7 +202,7 @@
 				downloadDraftFile(
 					Object.assign({}, data, {
 						savedAt: new Date().toISOString(),
-						source: "webakery-order-form",
+						source: "hesabdar-order-form",
 					})
 				);
 				setFeedback(
@@ -238,8 +238,8 @@
 	}
 
 	function initOrderForms() {
-		var forms = document.querySelectorAll(".wbk-order");
-		if (!forms.length || typeof webakeryData === "undefined") {
+		var forms = document.querySelectorAll(".hsb-order");
+		if (!forms.length || typeof hesabdarData === "undefined") {
 			return;
 		}
 
@@ -249,11 +249,11 @@
 			form.addEventListener("submit", function (event) {
 				event.preventDefault();
 
-				var submit = form.querySelector(".wbk-order__submit");
-				var feedback = form.querySelector(".wbk-order__feedback");
+				var submit = form.querySelector(".hsb-order__submit");
+				var feedback = form.querySelector(".hsb-order__feedback");
 				var name = form.querySelector('[name="name"]');
 				var phone = form.querySelector('[name="phone"]');
-				var draftNote = form.querySelector(".wbk-order__draft-note");
+				var draftNote = form.querySelector(".hsb-order__draft-note");
 
 				if (!name.value.trim() || !phone.value.trim()) {
 					setFeedback(
@@ -265,16 +265,16 @@
 				}
 
 				var body = new FormData(form);
-				body.append("action", "webakery_submit_order");
-				body.append("nonce", webakeryData.nonce);
+				body.append("action", "hesabdar_submit_order");
+				body.append("nonce", hesabdarData.nonce);
 
 				if (submit) {
 					submit.disabled = true;
 					submit.dataset.originalText = submit.textContent;
-					submit.textContent = webakeryData.i18n.sending;
+					submit.textContent = hesabdarData.i18n.sending;
 				}
 
-				fetch(webakeryData.ajaxUrl, {
+				fetch(hesabdarData.ajaxUrl, {
 					method: "POST",
 					credentials: "same-origin",
 					body: body,
@@ -287,7 +287,7 @@
 							setFeedback(
 								feedback,
 								(payload.data && payload.data.message) ||
-									webakeryData.i18n.success,
+									hesabdarData.i18n.success,
 								"success"
 							);
 							form.reset();
@@ -302,14 +302,14 @@
 								(payload &&
 									payload.data &&
 									payload.data.message) ||
-									webakeryData.i18n.error,
+									hesabdarData.i18n.error,
 								"error"
 							);
 						}
 					})
 					.catch(function () {
 						localSave.persist(false);
-						setFeedback(feedback, webakeryData.i18n.error, "error");
+						setFeedback(feedback, hesabdarData.i18n.error, "error");
 					})
 					.finally(function () {
 						if (submit) {

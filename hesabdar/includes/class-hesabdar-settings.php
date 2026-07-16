@@ -2,7 +2,7 @@
 /**
  * Plugin settings.
  *
- * @package Webakery
+ * @package Hesabdar
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,9 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Settings API wrapper.
  */
-class Webakery_Settings {
+class Hesabdar_Settings {
 
-	const OPTION_KEY = 'webakery_settings';
+	const OPTION_KEY = 'hesabdar_settings';
 
 	/**
 	 * Hook registrations.
@@ -28,7 +28,7 @@ class Webakery_Settings {
 	 */
 	public static function register() {
 		register_setting(
-			'webakery_settings_group',
+			'hesabdar_settings_group',
 			self::OPTION_KEY,
 			array(
 				'type'              => 'array',
@@ -45,7 +45,7 @@ class Webakery_Settings {
 	 */
 	public static function get() {
 		$defaults = array(
-			'store_name'     => 'Webakery',
+			'store_name'     => 'حسابدار',
 			'phone'          => '',
 			'whatsapp'       => '',
 			'address'        => '',
@@ -53,9 +53,9 @@ class Webakery_Settings {
 			'hours_weekday'  => '۸ صبح تا ۹ شب',
 			'hours_friday'   => '۹ صبح تا ۲ بعدازظهر',
 			'order_email'    => get_option( 'admin_email' ),
-			'intro'          => __( 'نان تازه، شیرینی خانگی و سفارش روز.', 'webakery' ),
-			'invoice_prefix' => 'WBK',
-			'invoice_note'   => __( 'از خرید شما سپاسگزاریم.', 'webakery' ),
+			'intro'          => __( 'مدیریت سفارش‌ها و صدور فاکتور.', 'hesabdar' ),
+			'invoice_prefix' => 'HSB',
+			'invoice_note'   => __( 'از خرید شما سپاسگزاریم.', 'hesabdar' ),
 		);
 
 		$saved = get_option( self::OPTION_KEY, array() );
@@ -97,7 +97,7 @@ class Webakery_Settings {
 			'hours_friday'   => sanitize_text_field( $input['hours_friday'] ?? '' ),
 			'order_email'    => sanitize_email( $input['order_email'] ?? '' ),
 			'intro'          => sanitize_textarea_field( $input['intro'] ?? '' ),
-			'invoice_prefix' => sanitize_text_field( $input['invoice_prefix'] ?? 'WBK' ),
+			'invoice_prefix' => sanitize_text_field( $input['invoice_prefix'] ?? 'HSB' ),
 			'invoice_note'   => sanitize_textarea_field( $input['invoice_note'] ?? '' ),
 		);
 	}
