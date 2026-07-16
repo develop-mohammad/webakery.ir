@@ -96,6 +96,7 @@ class Webakery_Orders {
 		update_post_meta( $order_id, '_wbk_product', $product );
 		update_post_meta( $order_id, '_wbk_qty', $qty );
 		update_post_meta( $order_id, '_wbk_message', $message );
+		update_post_meta( $order_id, '_wbk_unit_price', Webakery_Invoice::lookup_product_price( $product ) );
 
 		$settings = Webakery_Settings::get();
 		$to       = ! empty( $settings['order_email'] ) ? $settings['order_email'] : get_option( 'admin_email' );

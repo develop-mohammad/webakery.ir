@@ -9,15 +9,12 @@
 
 ### Webakery (محصولات و سفارش)
 - [`webakery-plugin.zip`](./webakery-plugin.zip)
-- https://github.com/develop-mohammad/webakery.ir/raw/cursor/webakery-wordpress-plugin-45a5/webakery-plugin.zip
 
 ### Webakery Speed (PageSpeed)
 - [`webakery-speed.zip`](./webakery-speed.zip)
-- https://github.com/develop-mohammad/webakery.ir/raw/cursor/webakery-wordpress-plugin-45a5/webakery-speed.zip
 
 ### افزونه کروم Webakery Speed (تحلیل صفحه فعلی)
 - [`webakery-speed-chrome.zip`](./webakery-speed-chrome.zip) — **فقط کروم، نه وردپرس**
-- https://github.com/develop-mohammad/webakery.ir/raw/cursor/webakery-wordpress-plugin-45a5/webakery-speed-chrome.zip
 
 ## نصب افزونه کروم (مهم)
 
@@ -40,6 +37,14 @@ ZIP مستقیم نصب نمی‌شود. حتماً Extract کنید.
 
 1. `webakery-plugin.zip` را باز کنید.
 2. پوشه را در `wp-content/plugins/` بگذارید و فعال کنید.
+
+## فاکتور سفارش‌ها
+
+در پیشخوان → Webakery → **سفارش‌ها**:
+- ستون **فاکتور** کنار هر سفارش: **مشاهده** و **دانلود**
+- داخل صفحه سفارش هم دکمه‌های مشاهده/دانلود هست
+- از صفحه فاکتور می‌توانید **چاپ / ذخیره PDF** بگیرید
+- تنظیمات پیشوند و یادداشت فاکتور در **تنظیمات Webakery**
 
 ## نصب Webakery Speed (PageSpeed)
 
@@ -75,6 +80,7 @@ ZIP مستقیم نصب نمی‌شود. حتماً Extract کنید.
 - نوع نوشته سفارشی محصولات + دسته‌بندی
 - قیمت، واحد، زمان آماده‌سازی، موجودی، محصول ویژه
 - ذخیره سفارش‌ها در پیشخوان و ارسال ایمیل اعلان
+- فاکتور هر سفارش: مشاهده، دانلود، چاپ/PDF
 - ذخیره پیش‌نویس فرم روی لپ‌تاپ/مرورگر (`localStorage`) + دانلود فایل JSON
 - دانلود CSV سفارش‌ها از پیشخوان روی لپ‌تاپ
 - استایل فرانت RTL و فارسی

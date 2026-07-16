@@ -47,6 +47,7 @@ class Webakery {
 		Webakery_Settings::init();
 		Webakery_Shortcodes::init();
 		Webakery_Orders::init();
+		Webakery_Invoice::init();
 
 		if ( is_admin() ) {
 			Webakery_Admin::init();

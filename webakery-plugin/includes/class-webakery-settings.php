@@ -45,15 +45,17 @@ class Webakery_Settings {
 	 */
 	public static function get() {
 		$defaults = array(
-			'store_name'    => 'Webakery',
-			'phone'         => '',
-			'whatsapp'      => '',
-			'address'       => '',
-			'currency'      => 'تومان',
-			'hours_weekday' => '۸ صبح تا ۹ شب',
-			'hours_friday'  => '۹ صبح تا ۲ بعدازظهر',
-			'order_email'   => get_option( 'admin_email' ),
-			'intro'         => __( 'نان تازه، شیرینی خانگی و سفارش روز.', 'webakery' ),
+			'store_name'     => 'Webakery',
+			'phone'          => '',
+			'whatsapp'       => '',
+			'address'        => '',
+			'currency'       => 'تومان',
+			'hours_weekday'  => '۸ صبح تا ۹ شب',
+			'hours_friday'   => '۹ صبح تا ۲ بعدازظهر',
+			'order_email'    => get_option( 'admin_email' ),
+			'intro'          => __( 'نان تازه، شیرینی خانگی و سفارش روز.', 'webakery' ),
+			'invoice_prefix' => 'WBK',
+			'invoice_note'   => __( 'از خرید شما سپاسگزاریم.', 'webakery' ),
 		);
 
 		$saved = get_option( self::OPTION_KEY, array() );
@@ -86,15 +88,17 @@ class Webakery_Settings {
 		$input = is_array( $input ) ? $input : array();
 
 		return array(
-			'store_name'    => sanitize_text_field( $input['store_name'] ?? '' ),
-			'phone'         => sanitize_text_field( $input['phone'] ?? '' ),
-			'whatsapp'      => preg_replace( '/[^0-9+]/', '', $input['whatsapp'] ?? '' ),
-			'address'       => sanitize_textarea_field( $input['address'] ?? '' ),
-			'currency'      => sanitize_text_field( $input['currency'] ?? 'تومان' ),
-			'hours_weekday' => sanitize_text_field( $input['hours_weekday'] ?? '' ),
-			'hours_friday'  => sanitize_text_field( $input['hours_friday'] ?? '' ),
-			'order_email'   => sanitize_email( $input['order_email'] ?? '' ),
-			'intro'         => sanitize_textarea_field( $input['intro'] ?? '' ),
+			'store_name'     => sanitize_text_field( $input['store_name'] ?? '' ),
+			'phone'          => sanitize_text_field( $input['phone'] ?? '' ),
+			'whatsapp'       => preg_replace( '/[^0-9+]/', '', $input['whatsapp'] ?? '' ),
+			'address'        => sanitize_textarea_field( $input['address'] ?? '' ),
+			'currency'       => sanitize_text_field( $input['currency'] ?? 'تومان' ),
+			'hours_weekday'  => sanitize_text_field( $input['hours_weekday'] ?? '' ),
+			'hours_friday'   => sanitize_text_field( $input['hours_friday'] ?? '' ),
+			'order_email'    => sanitize_email( $input['order_email'] ?? '' ),
+			'intro'          => sanitize_textarea_field( $input['intro'] ?? '' ),
+			'invoice_prefix' => sanitize_text_field( $input['invoice_prefix'] ?? 'WBK' ),
+			'invoice_note'   => sanitize_textarea_field( $input['invoice_note'] ?? '' ),
 		);
 	}
 }

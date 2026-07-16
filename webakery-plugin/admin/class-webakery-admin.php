@@ -25,6 +25,7 @@ class Webakery_Admin {
 		add_filter( 'manage_wbk_order_posts_columns', array( __CLASS__, 'order_columns' ) );
 		add_action( 'manage_wbk_order_posts_custom_column', array( __CLASS__, 'order_column_content' ), 10, 2 );
 		add_action( 'restrict_manage_posts', array( __CLASS__, 'orders_export_button' ) );
+		add_filter( 'post_row_actions', array( __CLASS__, 'order_row_actions' ), 10, 2 );
 	}
 
 	/**
@@ -199,6 +200,14 @@ class Webakery_Admin {
 						<th scope="row"><label for="wbk_order_email"><?php esc_html_e( 'ایمیل دریافت سفارش', 'webakery' ); ?></label></th>
 						<td><input type="email" class="regular-text" id="wbk_order_email" name="webakery_settings[order_email]" value="<?php echo esc_attr( $settings['order_email'] ); ?>" dir="ltr" /></td>
 					</tr>
+					<tr>
+						<th scope="row"><label for="wbk_invoice_prefix"><?php esc_html_e( 'پیشوند شماره فاکتور', 'webakery' ); ?></label></th>
+						<td><input type="text" class="regular-text" id="wbk_invoice_prefix" name="webakery_settings[invoice_prefix]" value="<?php echo esc_attr( $settings['invoice_prefix'] ); ?>" placeholder="WBK" /></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="wbk_invoice_note"><?php esc_html_e( 'یادداشت پایین فاکتور', 'webakery' ); ?></label></th>
+						<td><textarea class="large-text" rows="2" id="wbk_invoice_note" name="webakery_settings[invoice_note]"><?php echo esc_textarea( $settings['invoice_note'] ); ?></textarea></td>
+					</tr>
 				</table>
 
 				<?php submit_button( __( 'ذخیره تنظیمات', 'webakery' ) ); ?>
@@ -246,12 +255,28 @@ class Webakery_Admin {
 			'_wbk_message'        => __( 'پیام', 'webakery' ),
 		);
 
+		$invoice = Webakery_Invoice::get_invoice_data( $post->ID );
+
 		echo '<table class="widefat striped"><tbody>';
 		foreach ( $fields as $key => $label ) {
 			$value = get_post_meta( $post->ID, $key, true );
 			echo '<tr><th style="width:160px;">' . esc_html( $label ) . '</th><td>' . esc_html( $value ? $value : '—' ) . '</td></tr>';
 		}
+		echo '<tr><th>' . esc_html__( 'مبلغ فاکتور', 'webakery' ) . '</th><td>' . esc_html( Webakery_Invoice::format_money( $invoice['total'], $invoice['currency'] ) ) . '</td></tr>';
 		echo '</tbody></table>';
+
+		$view_url     = Webakery_Invoice::get_url( $post->ID, 'view' );
+		$download_url = Webakery_Invoice::get_url( $post->ID, 'download' );
+		?>
+		<p class="wbk-order-invoice-actions">
+			<a class="button button-primary" href="<?php echo esc_url( $view_url ); ?>" target="_blank" rel="noopener noreferrer">
+				<?php esc_html_e( 'مشاهده فاکتور', 'webakery' ); ?>
+			</a>
+			<a class="button" href="<?php echo esc_url( $download_url ); ?>">
+				<?php esc_html_e( 'دانلود فاکتور', 'webakery' ); ?>
+			</a>
+		</p>
+		<?php
 	}
 
 	/**
@@ -262,12 +287,13 @@ class Webakery_Admin {
 	 */
 	public static function order_columns( $columns ) {
 		return array(
-			'cb'         => $columns['cb'],
-			'title'      => __( 'عنوان', 'webakery' ),
-			'wbk_phone'  => __( 'تلفن', 'webakery' ),
-			'wbk_product'=> __( 'محصول', 'webakery' ),
-			'wbk_qty'    => __( 'تعداد', 'webakery' ),
-			'date'       => __( 'تاریخ', 'webakery' ),
+			'cb'          => $columns['cb'],
+			'title'       => __( 'عنوان', 'webakery' ),
+			'wbk_phone'   => __( 'تلفن', 'webakery' ),
+			'wbk_product' => __( 'محصول', 'webakery' ),
+			'wbk_qty'     => __( 'تعداد', 'webakery' ),
+			'wbk_invoice' => __( 'فاکتور', 'webakery' ),
+			'date'        => __( 'تاریخ', 'webakery' ),
 		);
 	}
 
@@ -287,6 +313,45 @@ class Webakery_Admin {
 		if ( isset( $map[ $column ] ) ) {
 			$value = get_post_meta( $post_id, $map[ $column ], true );
 			echo esc_html( $value ? $value : '—' );
+			return;
 		}
+
+		if ( 'wbk_invoice' === $column ) {
+			$view_url     = Webakery_Invoice::get_url( $post_id, 'view' );
+			$download_url = Webakery_Invoice::get_url( $post_id, 'download' );
+			?>
+			<span class="wbk-invoice-links">
+				<a href="<?php echo esc_url( $view_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'مشاهده', 'webakery' ); ?></a>
+				<span aria-hidden="true"> | </span>
+				<a href="<?php echo esc_url( $download_url ); ?>"><?php esc_html_e( 'دانلود', 'webakery' ); ?></a>
+			</span>
+			<?php
+		}
+	}
+
+	/**
+	 * Row actions for invoice shortcuts.
+	 *
+	 * @param array   $actions Actions.
+	 * @param WP_Post $post    Post.
+	 * @return array
+	 */
+	public static function order_row_actions( $actions, $post ) {
+		if ( 'wbk_order' !== $post->post_type || ! current_user_can( 'edit_post', $post->ID ) ) {
+			return $actions;
+		}
+
+		$actions['webakery_view_invoice'] = sprintf(
+			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+			esc_url( Webakery_Invoice::get_url( $post->ID, 'view' ) ),
+			esc_html__( 'مشاهده فاکتور', 'webakery' )
+		);
+		$actions['webakery_download_invoice'] = sprintf(
+			'<a href="%s">%s</a>',
+			esc_url( Webakery_Invoice::get_url( $post->ID, 'download' ) ),
+			esc_html__( 'دانلود فاکتور', 'webakery' )
+		);
+
+		return $actions;
 	}
 }

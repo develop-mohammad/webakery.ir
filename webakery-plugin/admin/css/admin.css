@@ -37,3 +37,19 @@
 	padding: 2px 6px;
 	border-radius: 6px;
 }
+
+.wbk-invoice-links a {
+	white-space: nowrap;
+}
+
+.wbk-order-invoice-actions {
+	margin-top: 14px;
+}
+
+.wbk-order-invoice-actions .button {
+	margin-left: 8px;
+}
+
+.column-wbk_invoice {
+	width: 120px;
+}
