@@ -1,0 +1,187 @@
+{
+    "licenses": [
+        {
+            "id": "6a4b7e2054fca",
+            "license_key": "HESABD-XERU-PYKT-QXDP-7TWH",
+            "email": "esmaili_masoud66@yahoo.com",
+            "product": "hesabdar",
+            "note": "",
+            "status": "active",
+            "expires_at": null,
+            "created_at": "2026-07-06 13:36:24"
+        },
+        {
+            "id": "6a4c11564ba0f",
+            "license_key": "HESABD-37OB-84AD-NQAE-RY5D",
+            "email": "info@asoukala.com",
+            "product": "hesabdar",
+            "note": "",
+            "status": "active",
+            "expires_at": null,
+            "created_at": "2026-07-07 00:04:30"
+        },
+        {
+            "id": "6a4c9eede79fc",
+            "license_key": "WCCP-5NZM-2RFN-Q9OB-6XMM",
+            "email": "mhm.worker@gmail.com",
+            "product": "wccp",
+            "note": "",
+            "status": "active",
+            "expires_at": null,
+            "created_at": "2026-07-07 10:08:37"
+        },
+        {
+            "id": "6a5824e2743e8",
+            "license_key": "HESABD-1G5N-1T1L-CPRB-WPKC",
+            "email": "samixaledy@gmail.com",
+            "product": "hesabdar",
+            "note": "",
+            "status": "active",
+            "expires_at": null,
+            "created_at": "2026-07-16 03:55:06"
+        },
+        {
+            "id": "6a590def004d3",
+            "license_key": "HESABD-F0IT-TMAC-0P4Z-HTE3",
+            "email": "mhm.worker@gmail.com",
+            "product": "hesabdar",
+            "note": "",
+            "status": "active",
+            "expires_at": null,
+            "created_at": "2026-07-16 20:29:27"
+        }
+    ],
+    "activations": [
+        {
+            "license_key": "HESABD-XERU-PYKT-QXDP-7TWH",
+            "domain": "esilvia.com",
+            "ip": "",
+            "activated_at": "2026-07-06 13:36:24"
+        },
+        {
+            "license_key": "HESABD-37OB-84AD-NQAE-RY5D",
+            "domain": "asoukala.com",
+            "ip": "",
+            "activated_at": "2026-07-07 00:04:30"
+        },
+        {
+            "license_key": "WCCP-5NZM-2RFN-Q9OB-6XMM",
+            "domain": "facemag.ir",
+            "ip": "",
+            "activated_at": "2026-07-07 10:08:37"
+        },
+        {
+            "license_key": "WCCP-UC7A-H24E-W0G3-49PN",
+            "domain": "kianstock.ir",
+            "ip": "",
+            "activated_at": "2026-07-16 03:53:21"
+        },
+        {
+            "license_key": "HESABD-1G5N-1T1L-CPRB-WPKC",
+            "domain": "kianstock.ir",
+            "ip": "",
+            "activated_at": "2026-07-16 03:55:06"
+        },
+        {
+            "license_key": "HESABD-F0IT-TMAC-0P4Z-HTE3",
+            "domain": "facemag.ir",
+            "ip": "",
+            "activated_at": "2026-07-16 20:29:27"
+        }
+    ],
+    "payments": [
+        {
+            "track_id": "4666116686",
+            "plugin": "hesabdar",
+            "email": "mhm.worker@gmail.com",
+            "domain": "facemag.ir",
+            "return_url": "https:\/\/www.facemag.ir\/wp-admin\/admin.php?page=wb-licenses&wbl_product=hesabdar",
+            "amount": 4990000,
+            "status": "pending",
+            "license_key": null,
+            "created_at": "2026-07-06 05:50:51"
+        },
+        {
+            "track_id": "4666116884",
+            "plugin": "hesabdar",
+            "email": "mhm.worker@gmail.com",
+            "domain": "facemag.ir",
+            "return_url": "https:\/\/www.facemag.ir\/wp-admin\/admin.php?page=wb-licenses&wbl_product=hesabdar",
+            "amount": 4990000,
+            "status": "pending",
+            "license_key": null,
+            "created_at": "2026-07-06 05:51:43"
+        },
+        {
+            "track_id": "4666488639",
+            "plugin": "hesabdar",
+            "email": "esmaili_masoud66@yahoo.com",
+            "domain": "esilvia.com",
+            "return_url": "",
+            "amount": 4990000,
+            "status": "pending",
+            "license_key": null,
+            "created_at": "2026-07-06 13:35:19"
+        },
+        {
+            "track_id": "4666489407",
+            "plugin": "hesabdar",
+            "email": "esmaili_masoud66@yahoo.com",
+            "domain": "esilvia.com",
+            "return_url": "",
+            "amount": 4990000,
+            "status": "paid",
+            "license_key": "HESABD-XERU-PYKT-QXDP-7TWH",
+            "created_at": "2026-07-06 13:35:56"
+        },
+        {
+            "track_id": "4667396858",
+            "plugin": "hesabdar",
+            "email": "info@asoukala.com",
+            "domain": "asoukala.com",
+            "return_url": "",
+            "amount": 4990000,
+            "status": "paid",
+            "license_key": "HESABD-37OB-84AD-NQAE-RY5D",
+            "created_at": "2026-07-07 00:03:45"
+        },
+        {
+            "track_id": "4667751404",
+            "plugin": "wccp",
+            "email": "mhm.worker@gmail.com",
+            "domain": "facemag.ir",
+            "return_url": "https:\/\/www.facemag.ir\/wp-admin\/admin.php?page=wccp-templates&wccp_tab=license&wccp_activate=1",
+            "amount": 1990000,
+            "status": "pending",
+            "license_key": null,
+            "created_at": "2026-07-07 10:02:56"
+        },
+        {
+            "track_id": "4667755525",
+            "plugin": "wccp",
+            "email": "mhm.worker@gmail.com",
+            "domain": "facemag.ir",
+            "return_url": "https:\/\/www.facemag.ir\/wp-admin\/admin.php?page=wccp-templates&wccp_tab=license&wccp_activate=1",
+            "amount": 1990000,
+            "status": "paid",
+            "license_key": "WCCP-5NZM-2RFN-Q9OB-6XMM",
+            "created_at": "2026-07-07 10:07:38"
+        },
+        {
+            "track_id": "4683876693",
+            "plugin": "hesabdar",
+            "email": "mhm.worker@gmail.com",
+            "domain": "facemag.ir",
+            "return_url": "https:\/\/www.facemag.ir\/wp-admin\/admin.php?page=wb-licenses&wbl_product=hesabdar",
+            "amount": 7990000,
+            "base_amount": 7990000,
+            "coupon_id": null,
+            "coupon_code": null,
+            "coupon_discount": 0,
+            "status": "paid",
+            "license_key": "HESABD-F0IT-TMAC-0P4Z-HTE3",
+            "created_at": "2026-07-16 20:21:33"
+        }
+    ],
+    "coupons": []
+}

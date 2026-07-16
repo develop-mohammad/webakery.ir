@@ -1,0 +1,6 @@
+Options -Indexes
+# از دسترسی مستقیم به پوشه data جلوگیری کنید
+<FilesMatch "\.db$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
