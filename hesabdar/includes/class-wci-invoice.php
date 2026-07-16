@@ -246,8 +246,15 @@ class WCI_Invoice {
                     <dt>روش پرداخت:</dt>
                     <dd><?php echo esc_html( function_exists( 'wci_payment_label' ) ? wci_payment_label( $order->get_payment_method() ) : $order->get_payment_method_title() ); ?></dd>
                     <?php if ( $order->get_transaction_id() ) : ?>
-                    <dt>کد پیگیری:</dt>
+                    <dt>کد پیگیری پرداخت:</dt>
                     <dd><?php echo esc_html( $order->get_transaction_id() ); ?></dd>
+                    <?php endif; ?>
+                    <?php
+                    $tracking = class_exists( 'WCI_Tracking' ) ? WCI_Tracking::get_for_order( $order ) : null;
+                    if ( $tracking && $tracking['code'] !== '' ) :
+                        ?>
+                    <dt>کد رهگیری پستی:</dt>
+                    <dd><?php echo esc_html( $tracking['code'] ); ?> <span style="color:#777">(<?php echo esc_html( $tracking['provider_label'] ); ?>)</span></dd>
                     <?php endif; ?>
                 </dl>
             </div>

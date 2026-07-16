@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hesabdar
  * Description: مدیریت کامل مشتریان و فروش ووکامرس (سفارش‌ها، ایجاد/ویرایش سفارش، محصولات، گزارش مالی، فاکتور) از داخل پیشخوان + پرتال مستقل و مینیمال ورود حسابدار بدون دسترسی به پیشخوان.
- * Version:     1.9.9
+ * Version:     1.10.0
  * Plugin URI:  https://webakery.ir
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,7 +22,7 @@ if ( defined( 'HESABDAR_LOADED' ) ) {
 }
 define( 'HESABDAR_LOADED', true );
 
-define( 'WAP_VERSION', '1.9.9' );
+define( 'WAP_VERSION', '1.10.0' );
 define( 'WAP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WAP_URL', plugin_dir_url( __FILE__ ) );
 
@@ -175,6 +175,7 @@ function hesabdar_load_wci_module() {
 		$wci_files = array(
 			'class-wci-exporter.php',
 			'class-wci-invoice.php',
+			'class-wci-tracking.php',
 			'class-wap-order-service.php',
 			'class-wci-admin-pages.php',
 			'class-wci-order-edit.php',
@@ -184,6 +185,9 @@ function hesabdar_load_wci_module() {
 				hesabdar_admin_error( 'بخش WCI بارگذاری نشد (<code>' . esc_html( $file ) . '</code>).' );
 				return;
 			}
+		}
+		if ( class_exists( 'WCI_Tracking' ) ) {
+			WCI_Tracking::init();
 		}
 		hesabdar_register_wci_hooks();
 		$loaded = true;

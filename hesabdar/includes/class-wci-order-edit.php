@@ -48,6 +48,11 @@ function wci_order_edit_page() {
 		$msg_type = 'success';
 	}
 
+	if ( isset( $_GET['wci_tracking_msg'] ) ) {
+		$message  = sanitize_text_field( wp_unslash( $_GET['wci_tracking_msg'] ) );
+		$msg_type = ( isset( $_GET['wci_tracking'] ) && '1' === $_GET['wci_tracking'] ) ? 'success' : 'error';
+	}
+
 	$order = $order_id ? wc_get_order( $order_id ) : null;
 	if ( $order_id && ( ! $order || $order->get_type() !== 'shop_order' ) ) {
 		wp_die( 'سفارش یافت نشد.' );
@@ -228,6 +233,15 @@ function wci_order_edit_page() {
 	echo '</div>'; // side
 	echo '</div>'; // layout
 	echo '</form>';
+
+	// پنل کد رهگیری خارج از فرم اصلی — مثل متاباکس ووکامرس
+	if ( $order_id && $order && class_exists( 'WCI_Tracking' ) ) {
+		echo '<div class="wci-order-layout" style="margin-top:0">';
+		echo '<div class="wci-order-main" style="max-width:520px">';
+		WCI_Tracking::render_panel( $order );
+		echo '</div></div>';
+	}
+
 	echo '</div>';
 }
 

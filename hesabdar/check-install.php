@@ -25,6 +25,7 @@ $required = array(
 	'includes/class-wap-baget-fields-stub.php',
 	'includes/class-wci-exporter.php',
 	'includes/class-wci-invoice.php',
+	'includes/class-wci-tracking.php',
 	'includes/class-wap-order-service.php',
 	'includes/class-wci-admin-pages.php',
 	'includes/class-wci-order-edit.php',
