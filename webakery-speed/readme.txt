@@ -1,0 +1,55 @@
+=== Webakery Speed ===
+Contributors: webakery
+Tags: pagespeed, performance, lighthouse, optimization, speed
+Requires at least: 6.0
+Tested up to: 6.7
+Requires PHP: 7.4
+Stable tag: 1.2.1
+License: GPLv2 or later
+
+دریافت خطاهای Google PageSpeed و اعمال اصلاحات امن بدون خراب کردن سایت.
+
+== Description ==
+
+* اسکن با Google PageSpeed Insights API
+* وارد کردن لینک گزارش pagespeed.web.dev و دریافت مستقیم همان گزارش Lighthouse
+* بدون نیاز به API Key برای لینک گزارش (با fallback به API)
+* دکمه «دریافت گزارش + اعمال اصلاحات امن»
+* نمایش خطاها و اصلاح پیشنهادی
+* اعمال اصلاحات امن (defer JS، lazy load، font-display و...)
+* خاموش کردن فوری همه اصلاحات
+* فقط روی فرانت‌اند اعمال می‌شود، نه پیشخوان
+
+== Installation ==
+
+1. پوشه `webakery-speed` را در `wp-content/plugins/` قرار دهید
+2. افزونه را فعال کنید
+3. منوی **PageSpeed** → کلید API را وارد کنید → **اسکن PageSpeed**
+4. **اعمال اصلاحات امن پیشنهادی** را بزنید
+
+== Frequently Asked Questions ==
+
+= اگر سایت خراب شد؟ =
+دکمه **خاموش کردن همه اصلاحات** را بزنید یا افزونه را غیرفعال کنید.
+
+= کلید API از کجا؟ =
+Google Cloud Console → PageSpeed Insights API
+
+== Changelog ==
+
+= 1.2.0 =
+* دریافت مستقیم گزارش Lighthouse از صفحه pagespeed.web.dev (بدون API Key)
+* نگاشت auditهای جدید Lighthouse 13 (insights) به اصلاحات
+* fallback خودکار به PageSpeed API در صورت خطا
+
+= 1.1.0 =
+* پشتیبانی از لینک گزارش pagespeed.web.dev (مثل kianstock.ir)
+* استخراج خودکار آدرس سایت و mobile/desktop از لینک
+* دریافت گزارش + اعمال یک‌کلیکی اصلاحات امن
+
+= 1.0.1 =
+* Preload فونت‌های woff2/woff و CSS فونت Google
+* فیلد دستی برای آدرس فونت‌های preload
+
+= 1.0.0 =
+* نسخه اولیه
