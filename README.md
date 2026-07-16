@@ -15,6 +15,12 @@
 - [`webakery-speed.zip`](./webakery-speed.zip)
 - https://github.com/develop-mohammad/webakery.ir/raw/cursor/webakery-wordpress-plugin-45a5/webakery-speed.zip
 
+### افزونه کروم Webakery Speed (تحلیل صفحه فعلی)
+- [`webakery-speed-chrome.zip`](./webakery-speed-chrome.zip)
+- https://github.com/develop-mohammad/webakery.ir/raw/cursor/webakery-wordpress-plugin-45a5/webakery-speed-chrome.zip
+
+نصب: `chrome://extensions` → Developer mode → Load unpacked (یا extract ZIP)
+
 ### روش جایگزین — دانلود کل پروژه
 1. https://github.com/develop-mohammad/webakery.ir
 2. **Code** → **Download ZIP**

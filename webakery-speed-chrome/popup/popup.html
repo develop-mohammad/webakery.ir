@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Webakery Speed</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="head">
+      <div>
+        <h1>Webakery Speed</h1>
+        <p id="page-url">در حال خواندن صفحه…</p>
+      </div>
+      <div class="score" id="score">—</div>
+    </header>
+
+    <div class="actions">
+      <button id="btn-analyze" class="btn primary">تحلیل این صفحه</button>
+      <button id="btn-psi" class="btn">اسکن PageSpeed</button>
+    </div>
+
+    <section class="metrics" id="metrics" hidden></section>
+
+    <section class="panel">
+      <h2>خطاها و پیشنهادها</h2>
+      <ul id="issues" class="issues"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>اصلاحات پیشنهادی پلاگین وردپرس</h2>
+      <div id="fixes" class="fixes"></div>
+    </section>
+
+    <footer class="foot">
+      <button id="btn-copy" class="btn ghost">کپی JSON برای وردپرس</button>
+      <button id="btn-options" class="btn ghost">تنظیمات</button>
+    </footer>
+
+    <p id="status" class="status" hidden></p>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -3,7 +3,7 @@
  * Plugin Name:       Webakery Speed
  * Plugin URI:        https://webakery.ir
  * Description:       دریافت خطاهای Google PageSpeed و اعمال اصلاحات امن بدون خراب کردن سایت.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Webakery

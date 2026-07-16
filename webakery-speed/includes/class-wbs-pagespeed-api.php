@@ -88,6 +88,11 @@ class WBS_PageSpeed_API {
 			return self::normalize_response( $data, $url, 'imported' );
 		}
 
+		// Chrome extension export (DOM or PageSpeed).
+		if ( isset( $data['source'] ) && 'webakery-speed-chrome' === $data['source'] && ! empty( $data['issues'] ) ) {
+			return self::normalize_chrome_export( $data );
+		}
+
 		if ( isset( $data['audits'] ) ) {
 			$wrapped = array(
 				'lighthouseResult' => $data,
@@ -150,6 +155,46 @@ class WBS_PageSpeed_API {
 			'performance'     => null !== $perf ? (int) round( $perf * 100 ) : null,
 			'issues'          => $issues,
 			'suggested_fixes' => self::collect_suggested_fixes( $issues ),
+		);
+	}
+
+	/**
+	 * Normalize Chrome extension JSON export.
+	 *
+	 * @param array $data Chrome export payload.
+	 * @return array
+	 */
+	private static function normalize_chrome_export( $data ) {
+		$issues = array();
+
+		foreach ( (array) $data['issues'] as $issue ) {
+			if ( ! is_array( $issue ) ) {
+				continue;
+			}
+
+			$issues[] = array(
+				'id'          => sanitize_key( $issue['id'] ?? 'chrome-issue' ),
+				'title'       => sanitize_text_field( $issue['title'] ?? '' ),
+				'description' => sanitize_textarea_field( $issue['detail'] ?? '' ),
+				'score'       => isset( $issue['score'] ) ? (float) $issue['score'] : 0.5,
+				'display'     => '',
+				'suggested'   => isset( $issue['suggested'] ) && is_array( $issue['suggested'] )
+					? array_map( 'sanitize_key', $issue['suggested'] )
+					: array(),
+			);
+		}
+
+		$suggested = isset( $data['suggestedFixes'] ) && is_array( $data['suggestedFixes'] )
+			? array_map( 'sanitize_key', $data['suggestedFixes'] )
+			: self::collect_suggested_fixes( $issues );
+
+		return array(
+			'url'             => esc_url_raw( $data['url'] ?? '' ),
+			'strategy'        => 'chrome',
+			'scanned_at'      => sanitize_text_field( $data['exportedAt'] ?? current_time( 'mysql' ) ),
+			'performance'     => isset( $data['performance'] ) ? (int) $data['performance'] : null,
+			'issues'          => $issues,
+			'suggested_fixes' => $suggested,
 		);
 	}
 

@@ -233,6 +233,7 @@ class WBS_Admin {
 					<form method="post" class="wbs-form wbs-import">
 						<?php wp_nonce_field( 'wbs_import_json' ); ?>
 						<h3><?php esc_html_e( 'یا گزارش JSON را وارد کنید', 'webakery-speed' ); ?></h3>
+						<p class="description"><?php esc_html_e( 'خروجی افزونه کروم Webakery Speed (دکمه کپی JSON) یا گزارش Lighthouse را اینجا paste کنید.', 'webakery-speed' ); ?></p>
 						<textarea name="wbs_json_report" rows="4" class="large-text code" dir="ltr" placeholder='{"lighthouseResult":{...}}'></textarea>
 						<p><button type="submit" name="wbs_import_json" class="button"><?php esc_html_e( 'وارد کردن گزارش', 'webakery-speed' ); ?></button></p>
 					</form>
