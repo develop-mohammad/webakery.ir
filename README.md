@@ -1,31 +1,46 @@
 # webakery.ir
 
-پلاگین وردپرس **Webakery** برای مدیریت محصولات نانوایی و شیرینی‌فروشی.
+دو پلاگین وردپرس در این ریپو:
 
-## دانلود پلاگین
+1. **Webakery** — کاتالوگ محصولات و سفارش نانوایی
+2. **Webakery Speed** — دریافت خطاهای Google PageSpeed و رفع امن آن‌ها
 
-### روش ۱ — فایل ZIP آماده
-از همین ریپو فایل زیر را دانلود کنید:
+## دانلود پلاگین‌ها
 
+### Webakery (محصولات و سفارش)
 - [`webakery-plugin.zip`](./webakery-plugin.zip)
+- https://github.com/develop-mohammad/webakery.ir/raw/cursor/webakery-wordpress-plugin-45a5/webakery-plugin.zip
 
-لینک مستقیم GitHub (شاخه فعلی):
+### Webakery Speed (PageSpeed)
+- [`webakery-speed.zip`](./webakery-speed.zip)
+- https://github.com/develop-mohammad/webakery.ir/raw/cursor/webakery-wordpress-plugin-45a5/webakery-speed.zip
 
-https://github.com/develop-mohammad/webakery.ir/raw/cursor/webakery-wordpress-plugin-45a5/webakery-plugin.zip
+### روش جایگزین — دانلود کل پروژه
+1. https://github.com/develop-mohammad/webakery.ir
+2. **Code** → **Download ZIP**
 
-### روش ۲ — دانلود کل پروژه از GitHub
-1. بروید به: https://github.com/develop-mohammad/webakery.ir
-2. دکمه سبز **Code**
-3. **Download ZIP**
+## نصب Webakery
 
-## نصب
+1. `webakery-plugin.zip` را باز کنید.
+2. پوشه را در `wp-content/plugins/` بگذارید و فعال کنید.
 
-1. فایل `webakery-plugin.zip` را از حالت فشرده خارج کنید.
-2. پوشه `webakery-plugin` را در `wp-content/plugins/` کپی کنید.
-3. در پیشخوان وردپرس، افزونه **Webakery** را فعال کنید.
-4. از منوی **Webakery** محصولات را اضافه کنید و تنظیمات فروشگاه را تکمیل کنید.
+## نصب Webakery Speed (PageSpeed)
 
-> نکته: دکمه‌های «ذخیره/دانلود روی لپ‌تاپ» داخل **فرم سفارش سایت** هستند (بعد از نصب پلاگین و گذاشتن شورت‌کد `[webakery_order]`). آن دکمه‌ها برای دانلود خودِ پلاگین نیستند.
+1. `webakery-speed.zip` را باز کنید.
+2. پوشه `webakery-speed` را در `wp-content/plugins/` بگذارید و فعال کنید.
+3. منوی **PageSpeed** در پیشخوان:
+   - کلید API گوگل را وارد کنید ([Google Cloud](https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com))
+   - **اسکن PageSpeed** را بزنید
+   - **اعمال اصلاحات امن پیشنهادی** را بزنید
+4. اگر سایت به‌هم خورد: **خاموش کردن همه اصلاحات** (یا غیرفعال کردن افزونه)
+
+### چرا سایت خراب نمی‌شود؟
+- اصلاحات فقط روی **فرانت‌اند** اعمال می‌شوند (نه پیشخوان)
+- هر اصلاح **جداگانه** قابل خاموش/روشن است
+- دکمه **خاموش کردن فوری** همه بهینه‌سازی‌ها را متوقف می‌کند
+- غیرفعال کردن افزونه = برگشت کامل به حالت قبل
+
+> نکته: دکمه‌های «ذخیره روی لپ‌تاپ» داخل فرم سفارش Webakery هستند، نه برای دانلود پلاگین.
 
 ## شورت‌کدها
 
@@ -50,10 +65,6 @@ https://github.com/develop-mohammad/webakery.ir/raw/cursor/webakery-wordpress-pl
 ## ساختار
 
 ```
-webakery-plugin/
-├── webakery.php
-├── includes/
-├── admin/
-├── public/
-└── uninstall.php
+webakery-plugin/     # کاتالوگ و سفارش
+webakery-speed/      # PageSpeed و بهینه‌سازی امن
 ```
