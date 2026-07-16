@@ -2,11 +2,30 @@
 
 پلاگین وردپرس **Webakery** برای مدیریت محصولات نانوایی و شیرینی‌فروشی.
 
+## دانلود پلاگین
+
+### روش ۱ — فایل ZIP آماده
+از همین ریپو فایل زیر را دانلود کنید:
+
+- [`webakery-plugin.zip`](./webakery-plugin.zip)
+
+لینک مستقیم GitHub (شاخه فعلی):
+
+https://github.com/develop-mohammad/webakery.ir/raw/cursor/webakery-wordpress-plugin-45a5/webakery-plugin.zip
+
+### روش ۲ — دانلود کل پروژه از GitHub
+1. بروید به: https://github.com/develop-mohammad/webakery.ir
+2. دکمه سبز **Code**
+3. **Download ZIP**
+
 ## نصب
 
-1. پوشه `webakery-plugin` را در `wp-content/plugins/` کپی کنید (یا کل ریپو را کلون کرده و پوشه پلاگین را منتقل کنید).
-2. در پیشخوان وردپرس، افزونه **Webakery** را فعال کنید.
-3. از منوی **Webakery** محصولات را اضافه کنید و تنظیمات فروشگاه را تکمیل کنید.
+1. فایل `webakery-plugin.zip` را از حالت فشرده خارج کنید.
+2. پوشه `webakery-plugin` را در `wp-content/plugins/` کپی کنید.
+3. در پیشخوان وردپرس، افزونه **Webakery** را فعال کنید.
+4. از منوی **Webakery** محصولات را اضافه کنید و تنظیمات فروشگاه را تکمیل کنید.
+
+> نکته: دکمه‌های «ذخیره/دانلود روی لپ‌تاپ» داخل **فرم سفارش سایت** هستند (بعد از نصب پلاگین و گذاشتن شورت‌کد `[webakery_order]`). آن دکمه‌ها برای دانلود خودِ پلاگین نیستند.
 
 ## شورت‌کدها
 
