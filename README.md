@@ -19,6 +19,15 @@
 - [`webakery-speed-chrome.zip`](./webakery-speed-chrome.zip)
 - https://github.com/develop-mohammad/webakery.ir/raw/cursor/webakery-wordpress-plugin-45a5/webakery-speed-chrome.zip
 
+## نصب (Developer Mode)
+
+> **ZIP را مستقیم نصب نکنید.** اول Extract کنید.
+
+1. [`webakery-speed-chrome.zip`](./webakery-speed-chrome.zip) را دانلود و **Extract** کنید
+2. `chrome://extensions` → **Developer mode** روشن
+3. **Load unpacked** → پوشه `webakery-speed-chrome` (همان پوشه‌ای که `manifest.json` داخلش است)
+4. اگر خطا داد: [INSTALL-FA.md](./webakery-speed-chrome/INSTALL-FA.md)
+
 نصب: `chrome://extensions` → Developer mode → Load unpacked (یا extract ZIP)
 
 ### روش جایگزین — دانلود کل پروژه
@@ -71,6 +80,7 @@
 ## ساختار
 
 ```
-webakery-plugin/     # کاتالوگ و سفارش
-webakery-speed/      # PageSpeed و بهینه‌سازی امن
+webakery-plugin/          # کاتالوگ و سفارش
+webakery-speed/           # PageSpeed و بهینه‌سازی امن
+webakery-speed-chrome/    # افزونه کروم مکمل
 ```

@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WBS_VERSION', '1.0.1' );
+define( 'WBS_VERSION', '1.0.2' );
 define( 'WBS_FILE', __FILE__ );
 define( 'WBS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBS_URL', plugin_dir_url( __FILE__ ) );
