@@ -51,11 +51,11 @@ class WBS_Fix_Preload_Fonts {
 
 				$src = self::normalize_url( $wp_styles->registered[ $handle ]->src );
 				if ( false !== strpos( $src, 'fonts.googleapis.com' ) ) {
-					$items[] = array(
-						'url'  => $src,
-						'as'   => 'style',
-						'type' => '',
-					);
+				$items[] = array(
+					'url'  => self::apply_font_display_swap( $src ),
+					'as'   => 'style',
+					'type' => '',
+				);
 				}
 			}
 		}
@@ -98,7 +98,7 @@ class WBS_Fix_Preload_Fonts {
 
 			if ( false !== strpos( $url, 'fonts.googleapis.com' ) ) {
 				$items[] = array(
-					'url'  => $url,
+					'url'  => self::apply_font_display_swap( $url ),
 					'as'   => 'style',
 					'type' => '',
 				);
@@ -139,6 +139,22 @@ class WBS_Fix_Preload_Fonts {
 			return site_url( $src );
 		}
 		return $src;
+	}
+
+	/**
+	 * Apply display=swap when font-display fix is active.
+	 *
+	 * @param string $url Font CSS URL.
+	 * @return string
+	 */
+	private static function apply_font_display_swap( $url ) {
+		if ( ! WBS_Settings::is_fix_enabled( 'font_display' ) ) {
+			return $url;
+		}
+
+		$url = apply_filters( 'webakery_speed_font_css_url', $url );
+
+		return is_string( $url ) ? $url : '';
 	}
 
 	/**
