@@ -317,6 +317,7 @@ class WBS_Admin {
 					<input type="hidden" name="wbs_settings[safe_mode]" value="<?php echo $settings['safe_mode'] ? '1' : ''; ?>" />
 					<input type="hidden" name="wbs_settings[exclude_scripts]" value="<?php echo esc_attr( $settings['exclude_scripts'] ); ?>" />
 					<input type="hidden" name="wbs_settings[exclude_styles]" value="<?php echo esc_attr( $settings['exclude_styles'] ); ?>" />
+					<input type="hidden" name="wbs_settings[preload_font_urls]" value="<?php echo esc_attr( $settings['preload_font_urls'] ?? '' ); ?>" />
 
 					<div class="wbs-fix-list">
 						<?php foreach ( $fixes as $slug => $fix ) : ?>
@@ -339,6 +340,13 @@ class WBS_Admin {
 						<tr>
 							<th><label for="wbs_exclude_styles"><?php esc_html_e( 'استثنا CSS', 'webakery-speed' ); ?></label></th>
 							<td><textarea id="wbs_exclude_styles" name="wbs_settings[exclude_styles]" rows="2" class="large-text" dir="ltr"><?php echo esc_textarea( $settings['exclude_styles'] ); ?></textarea></td>
+						</tr>
+						<tr>
+							<th><label for="wbs_preload_font_urls"><?php esc_html_e( 'آدرس فونت برای Preload', 'webakery-speed' ); ?></label></th>
+							<td>
+								<textarea id="wbs_preload_font_urls" name="wbs_settings[preload_font_urls]" rows="4" class="large-text code" dir="ltr" placeholder="https://example.com/fonts/main.woff2&#10;https://fonts.googleapis.com/css2?family=Vazirmatn"><?php echo esc_textarea( $settings['preload_font_urls'] ?? '' ); ?></textarea>
+								<p class="description"><?php esc_html_e( 'هر خط یک URL فونت (woff2/woff) یا CSS فونت Google. فونت‌های Google در صف هم به‌صورت خودکار preload می‌شوند.', 'webakery-speed' ); ?></p>
+							</td>
 						</tr>
 					</table>
 

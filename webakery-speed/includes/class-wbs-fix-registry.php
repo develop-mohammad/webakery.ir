@@ -57,9 +57,17 @@ class WBS_Fix_Registry {
 				'title'       => __( 'font-display: swap', 'webakery-speed' ),
 				'description' => __( 'برای فونت‌های Google و CSS فونت، swap اعمال می‌شود.', 'webakery-speed' ),
 				'risk'        => 'low',
-				'audits'      => array( 'font-display', 'preload-fonts' ),
+				'audits'      => array( 'font-display' ),
 				'file'        => 'class-wbs-fix-font-display.php',
 				'class'       => 'WBS_Fix_Font_Display',
+			),
+			'preload_fonts' => array(
+				'title'       => __( 'Preload فونت‌های مهم', 'webakery-speed' ),
+				'description' => __( 'فایل‌های woff2/woff و CSS فونت Google را preload می‌کند تا فونت زودتر لود شود.', 'webakery-speed' ),
+				'risk'        => 'low',
+				'audits'      => array( 'preload-fonts', 'font-display', 'network-requests' ),
+				'file'        => 'class-wbs-fix-preload-fonts.php',
+				'class'       => 'WBS_Fix_Preload_Fonts',
 			),
 			'preconnect' => array(
 				'title'       => __( 'Preconnect به دامنه‌های مهم', 'webakery-speed' ),

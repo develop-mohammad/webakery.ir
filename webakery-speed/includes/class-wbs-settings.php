@@ -32,6 +32,7 @@ class WBS_Settings {
 			'strategy'          => 'mobile',
 			'exclude_scripts'   => 'jquery-core,jquery-migrate,wp-polyfill',
 			'exclude_styles'    => '',
+			'preload_font_urls' => '',
 			'last_applied'      => array(),
 		);
 	}
@@ -87,6 +88,7 @@ class WBS_Settings {
 				: 'mobile',
 			'exclude_scripts' => sanitize_textarea_field( $input['exclude_scripts'] ?? '' ),
 			'exclude_styles'  => sanitize_textarea_field( $input['exclude_styles'] ?? '' ),
+			'preload_font_urls' => sanitize_textarea_field( $input['preload_font_urls'] ?? '' ),
 			'enabled_fixes'   => $enabled_fixes,
 			'last_applied'    => isset( $current['last_applied'] ) ? $current['last_applied'] : array(),
 		);

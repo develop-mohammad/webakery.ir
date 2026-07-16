@@ -4,7 +4,7 @@ Tags: pagespeed, performance, lighthouse, optimization, speed
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 
 دریافت خطاهای Google PageSpeed و اعمال اصلاحات امن بدون خراب کردن سایت.
@@ -34,6 +34,10 @@ License: GPLv2 or later
 Google Cloud Console → PageSpeed Insights API
 
 == Changelog ==
+
+= 1.0.1 =
+* Preload فونت‌های woff2/woff و CSS فونت Google
+* فیلد دستی برای آدرس فونت‌های preload
 
 = 1.0.0 =
 * نسخه اولیه
