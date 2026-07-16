@@ -54,6 +54,35 @@ class WCI_Invoice {
         return wp_nonce_url( add_query_arg( $args, admin_url( 'admin-post.php' ) ), 'wap_invoice_' . absint( $order_id ) );
     }
 
+    /**
+     * توضیح محصول از ووکامرس (کوتاه، در صورت نبود کامل).
+     */
+    private static function product_description( $product ): string {
+        if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+            return '';
+        }
+
+        $desc = $product->get_short_description();
+        if ( $desc === '' || $desc === null ) {
+            $desc = $product->get_description();
+        }
+
+        $desc = wp_strip_all_tags( (string) $desc );
+        $desc = preg_replace( '/\s+/u', ' ', trim( $desc ) );
+
+        if ( $desc === '' ) {
+            return '';
+        }
+
+        if ( function_exists( 'mb_strlen' ) && mb_strlen( $desc ) > 400 ) {
+            $desc = mb_substr( $desc, 0, 400 ) . '…';
+        } elseif ( strlen( $desc ) > 400 ) {
+            $desc = substr( $desc, 0, 400 ) . '…';
+        }
+
+        return $desc;
+    }
+
     public function download(): void {
         $this->render( true );
     }
@@ -72,6 +101,10 @@ class WCI_Invoice {
         $country    = $order->get_billing_country() ?: 'IR';
         $states     = WC()->countries->get_states( $country ) ?? [];
         $state_name = $states[ $state_code ] ?? $state_code;
+
+        $company_name    = $s['company_name'] ?? get_bloginfo( 'name' );
+        $company_address = $s['company_address'] ?? '';
+        $company_phone   = $s['company_phone'] ?? '';
 
         $download_url = self::admin_download_url( $this->order_id );
         if ( isset( $_GET['action'] ) && 'wap_invoice' === sanitize_key( wp_unslash( $_GET['action'] ) ) ) {
@@ -98,18 +131,29 @@ class WCI_Invoice {
                 .inv-header { background: <?php echo esc_attr( $color ); ?>; color: #fff; padding: 28px 36px; display: flex; justify-content: space-between; align-items: center; }
                 .inv-header h1 { font-size: 26px; font-weight: bold; }
                 .inv-header .logo img { max-height: 70px; max-width: 180px; }
-                .inv-meta { padding: 20px 36px; background: #f8f8f8; border-bottom: 1px solid #e5e5e5; display: flex; gap: 40px; }
+                .inv-meta { padding: 16px 36px; background: #f8f8f8; border-bottom: 1px solid #e5e5e5; display: flex; gap: 40px; flex-wrap: wrap; }
                 .inv-meta dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
                 .inv-meta dt { font-weight: bold; color: #555; }
                 .inv-body { padding: 24px 36px; }
+
+                /* فرستنده بالا-چپ | گیرنده پایین‌تر-راست (در صفحه RTL) */
+                .parties { display: flex; flex-direction: column; gap: 18px; margin: 8px 0 8px; }
+                .party-box { max-width: 48%; padding: 14px 16px; border: 1px solid #e5e5e5; border-radius: 8px; background: #fafafa; }
+                .party-box h3 { font-size: 13px; color: <?php echo esc_attr( $color ); ?>; margin-bottom: 8px; border-bottom: 1px solid #e5e5e5; padding-bottom: 6px; }
+                .party-box p { margin: 0 0 4px; line-height: 1.7; }
+                .party-box .muted { color: #777; }
+                .party-sender { align-self: flex-end; text-align: left; direction: rtl; } /* بصری: چپ */
+                .party-receiver { align-self: flex-start; text-align: right; margin-top: 4px; } /* بصری: راست و پایین‌تر */
+
                 .inv-section-title { font-size: 14px; font-weight: bold; color: <?php echo esc_attr( $color ); ?>; border-bottom: 2px solid <?php echo esc_attr( $color ); ?>; padding-bottom: 6px; margin: 20px 0 12px; }
-                .customer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; }
-                .customer-grid .row { display: flex; gap: 8px; }
-                .customer-grid .lbl { color: #777; min-width: 110px; }
                 table.items { width: 100%; border-collapse: collapse; margin-top: 8px; }
                 table.items th { background: <?php echo esc_attr( $color ); ?>; color: #fff; padding: 9px 12px; text-align: right; font-size: 12px; }
-                table.items td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+                table.items td { padding: 8px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
                 table.items tr:nth-child(even) td { background: #f9f9f9; }
+                .item-name { font-weight: bold; }
+                .item-desc { margin-top: 6px; color: #555; font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+                .item-sku { color: #999; font-size: 11px; }
+                .item-meta { margin-top: 4px; color: #666; font-size: 11.5px; }
                 .totals { display: flex; justify-content: flex-start; margin-top: 16px; }
                 .totals table { border: 1px solid #e5e5e5; border-radius: 6px; overflow: hidden; min-width: 260px; }
                 .totals td { padding: 7px 14px; }
@@ -122,6 +166,10 @@ class WCI_Invoice {
                     body { background: #fff; }
                     .invoice-wrap { box-shadow: none; margin: 0; }
                     .no-print { display: none; }
+                }
+                @media (max-width: 640px) {
+                    .party-box { max-width: 100%; }
+                    .party-sender, .party-receiver { align-self: stretch; text-align: right; }
                 }
             </style>
         </head>
@@ -136,7 +184,7 @@ class WCI_Invoice {
                     <?php if ( $logo ) : ?>
                         <img src="<?php echo esc_url( $logo ); ?>" alt="لوگو">
                     <?php else : ?>
-                        <div style="font-size:20px;font-weight:bold"><?php echo esc_html( $s['company_name'] ?? get_bloginfo('name') ); ?></div>
+                        <div style="font-size:20px;font-weight:bold"><?php echo esc_html( $company_name ); ?></div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -148,67 +196,101 @@ class WCI_Invoice {
                     <dt>وضعیت:</dt>
                     <dd><?php echo esc_html( wc_get_order_status_name( $order->get_status() ) ); ?></dd>
                     <dt>روش پرداخت:</dt>
-                    <dd><?php echo esc_html( wci_payment_label( $order->get_payment_method() ) ); ?></dd>
+                    <dd><?php echo esc_html( function_exists( 'wci_payment_label' ) ? wci_payment_label( $order->get_payment_method() ) : $order->get_payment_method_title() ); ?></dd>
                     <?php if ( $order->get_transaction_id() ) : ?>
                     <dt>کد پیگیری:</dt>
                     <dd><?php echo esc_html( $order->get_transaction_id() ); ?></dd>
-                    <?php endif; ?>
-                </dl>
-                <dl>
-                    <?php if ( ! empty( $s['company_address'] ) ) : ?>
-                    <dt>آدرس فروشگاه:</dt>
-                    <dd><?php echo nl2br( esc_html( $s['company_address'] ) ); ?></dd>
-                    <?php endif; ?>
-                    <?php if ( ! empty( $s['company_phone'] ) ) : ?>
-                    <dt>تلفن فروشگاه:</dt>
-                    <dd><?php echo esc_html( $s['company_phone'] ); ?></dd>
                     <?php endif; ?>
                 </dl>
             </div>
 
             <div class="inv-body">
 
-                <div class="inv-section-title">اطلاعات خریدار</div>
-                <div class="customer-grid">
-                    <div class="row"><span class="lbl">نام و نام خانوادگی:</span><span><?php echo esc_html( $order->get_formatted_billing_full_name() ); ?></span></div>
-                    <div class="row"><span class="lbl">شماره تماس:</span><span><?php echo esc_html( $order->get_billing_phone() ); ?></span></div>
-                    <div class="row"><span class="lbl">ایمیل:</span><span><?php echo esc_html( $order->get_billing_email() ); ?></span></div>
-                    <div class="row"><span class="lbl">شهر:</span><span><?php echo esc_html( $order->get_billing_city() ); ?></span></div>
-                    <div class="row"><span class="lbl">استان:</span><span><?php echo esc_html( $state_name ); ?></span></div>
-                    <div class="row"><span class="lbl">کد پستی:</span><span><?php echo esc_html( $order->get_billing_postcode() ); ?></span></div>
-                    <div class="row" style="grid-column:span 2"><span class="lbl">آدرس:</span><span><?php echo esc_html( $order->get_billing_address_1() . ( $order->get_billing_address_2() ? ' ' . $order->get_billing_address_2() : '' ) ); ?></span></div>
-                    <?php foreach ( WAP_Baget_Fields::get_invoice_fields( $order ) as $label => $value ) : ?>
-                    <div class="row"><span class="lbl"><?php echo esc_html( $label ); ?>:</span><span><?php echo esc_html( $value ); ?></span></div>
-                    <?php endforeach; ?>
+                <div class="parties">
+                    <div class="party-box party-sender">
+                        <h3>فرستنده</h3>
+                        <p><strong><?php echo esc_html( $company_name ); ?></strong></p>
+                        <?php if ( $company_phone ) : ?>
+                            <p><span class="muted">تلفن:</span> <?php echo esc_html( $company_phone ); ?></p>
+                        <?php endif; ?>
+                        <?php if ( $company_address ) : ?>
+                            <p><span class="muted">آدرس:</span> <?php echo nl2br( esc_html( $company_address ) ); ?></p>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="party-box party-receiver">
+                        <h3>گیرنده</h3>
+                        <p><strong><?php echo esc_html( $order->get_formatted_billing_full_name() ); ?></strong></p>
+                        <?php if ( $order->get_billing_phone() ) : ?>
+                            <p><span class="muted">تلفن:</span> <?php echo esc_html( $order->get_billing_phone() ); ?></p>
+                        <?php endif; ?>
+                        <?php if ( $order->get_billing_email() ) : ?>
+                            <p><span class="muted">ایمیل:</span> <?php echo esc_html( $order->get_billing_email() ); ?></p>
+                        <?php endif; ?>
+                        <p>
+                            <span class="muted">آدرس:</span>
+                            <?php
+                            echo esc_html(
+                                trim(
+                                    $order->get_billing_address_1()
+                                    . ( $order->get_billing_address_2() ? ' ' . $order->get_billing_address_2() : '' )
+                                    . ( $order->get_billing_city() ? ' — ' . $order->get_billing_city() : '' )
+                                    . ( $state_name ? '، ' . $state_name : '' )
+                                    . ( $order->get_billing_postcode() ? '، کدپستی ' . $order->get_billing_postcode() : '' )
+                                )
+                            );
+                            ?>
+                        </p>
+                        <?php foreach ( WAP_Baget_Fields::get_invoice_fields( $order ) as $label => $value ) : ?>
+                            <p><span class="muted"><?php echo esc_html( $label ); ?>:</span> <?php echo esc_html( $value ); ?></p>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
 
                 <div class="inv-section-title">اقلام سفارش</div>
                 <table class="items">
                     <thead>
                         <tr>
-                            <th>ردیف</th>
-                            <th>محصول</th>
-                            <th>تعداد</th>
-                            <th>قیمت واحد</th>
-                            <th>جمع</th>
+                            <th style="width:48px">ردیف</th>
+                            <th>محصول / توضیحات</th>
+                            <th style="width:70px">تعداد</th>
+                            <th style="width:110px">قیمت واحد</th>
+                            <th style="width:110px">جمع</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $i = 1; foreach ( $order->get_items() as $item ) :
-                            $product   = $item->get_product();
+                        <?php
+                        $i = 1;
+                        foreach ( $order->get_items() as $item ) :
+                            $product    = $item->get_product();
                             $unit_price = $item->get_total() / max( 1, $item->get_quantity() );
-                        ?>
+                            $desc       = self::product_description( $product );
+                            ?>
                         <tr>
                             <td><?php echo $i++; ?></td>
                             <td>
-                                <?php echo esc_html( $item->get_name() ); ?>
+                                <div class="item-name"><?php echo esc_html( $item->get_name() ); ?></div>
                                 <?php if ( $product && $product->get_sku() ) : ?>
-                                    <br><small style="color:#999">SKU: <?php echo esc_html( $product->get_sku() ); ?></small>
+                                    <div class="item-sku">SKU: <?php echo esc_html( $product->get_sku() ); ?></div>
+                                <?php endif; ?>
+                                <?php
+                                $meta = $item->get_formatted_meta_data( '' );
+                                if ( ! empty( $meta ) ) :
+                                    echo '<div class="item-meta">';
+                                    foreach ( $meta as $meta_item ) {
+                                        echo '<div>' . esc_html( wp_strip_all_tags( (string) $meta_item->display_key ) ) . ': '
+                                            . esc_html( wp_strip_all_tags( (string) $meta_item->display_value ) ) . '</div>';
+                                    }
+                                    echo '</div>';
+                                endif;
+                                ?>
+                                <?php if ( $desc !== '' ) : ?>
+                                    <div class="item-desc"><?php echo esc_html( $desc ); ?></div>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo esc_html( $item->get_quantity() ); ?></td>
-                            <td><?php echo wc_price( $unit_price ); ?></td>
-                            <td><?php echo wc_price( $item->get_total() ); ?></td>
+                            <td><?php echo esc_html( (string) $item->get_quantity() ); ?></td>
+                            <td><?php echo wp_kses_post( wc_price( $unit_price ) ); ?></td>
+                            <td><?php echo wp_kses_post( wc_price( $item->get_total() ) ); ?></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -216,15 +298,15 @@ class WCI_Invoice {
 
                 <div class="totals">
                     <table>
-                        <tr><td>جمع کل محصولات:</td><td><?php echo wc_price( $order->get_subtotal() ); ?></td></tr>
+                        <tr><td>جمع کل محصولات:</td><td><?php echo wp_kses_post( wc_price( $order->get_subtotal() ) ); ?></td></tr>
                         <?php if ( $order->get_shipping_total() > 0 ) : ?>
-                        <tr><td>هزینه ارسال:</td><td><?php echo wc_price( $order->get_shipping_total() ); ?></td></tr>
+                        <tr><td>هزینه ارسال:</td><td><?php echo wp_kses_post( wc_price( $order->get_shipping_total() ) ); ?></td></tr>
                         <?php endif; ?>
                         <?php if ( $order->get_discount_total() > 0 ) : ?>
-                        <tr><td>تخفیف:</td><td>-<?php echo wc_price( $order->get_discount_total() ); ?></td></tr>
+                        <tr><td>تخفیف:</td><td>-<?php echo wp_kses_post( wc_price( $order->get_discount_total() ) ); ?></td></tr>
                         <?php endif; ?>
                         <?php if ( $order->get_total_tax() > 0 ) : ?>
-                        <tr><td>مالیات:</td><td><?php echo wc_price( $order->get_total_tax() ); ?></td></tr>
+                        <tr><td>مالیات:</td><td><?php echo wp_kses_post( wc_price( $order->get_total_tax() ) ); ?></td></tr>
                         <?php endif; ?>
                         <tr><td>مبلغ نهایی:</td><td><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></td></tr>
                     </table>
@@ -238,7 +320,7 @@ class WCI_Invoice {
                 <?php if ( ! empty( $s['show_signature'] ) ) : ?>
                 <div class="signature-box">
                     <div class="signature-inner">
-                        <div style="font-weight:bold"><?php echo esc_html( $s['company_name'] ?? get_bloginfo('name') ); ?></div>
+                        <div style="font-weight:bold"><?php echo esc_html( $company_name ); ?></div>
                         <p>مهر و امضا</p>
                     </div>
                 </div>
@@ -253,7 +335,7 @@ class WCI_Invoice {
 
         <?php if ( ! $as_download ) : ?>
         <div class="no-print" style="text-align:center;margin:20px">
-            <button onclick="window.print()" style="padding:10px 30px;background:<?php echo esc_attr($color); ?>;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px">🖨 چاپ / ذخیره PDF</button>
+            <button onclick="window.print()" style="padding:10px 30px;background:<?php echo esc_attr( $color ); ?>;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px">🖨 چاپ / ذخیره PDF</button>
             <a href="<?php echo esc_url( $download_url ); ?>" style="display:inline-block;padding:10px 24px;background:#1d4ed8;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px;margin-right:8px;text-decoration:none">⬇ دانلود فاکتور</a>
             <button onclick="window.close()" style="padding:10px 20px;background:#888;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px;margin-right:8px">بستن</button>
         </div>
