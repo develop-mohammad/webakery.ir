@@ -93,9 +93,16 @@ class Webakery {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'webakery_order' ),
 				'i18n'    => array(
-					'sending' => __( 'در حال ارسال…', 'webakery' ),
-					'success' => __( 'سفارش شما ثبت شد. به زودی تماس می‌گیریم.', 'webakery' ),
-					'error'   => __( 'ارسال ناموفق بود. دوباره تلاش کنید.', 'webakery' ),
+					'sending'         => __( 'در حال ارسال…', 'webakery' ),
+					'success'         => __( 'سفارش شما ثبت شد. به زودی تماس می‌گیریم.', 'webakery' ),
+					'error'           => __( 'ارسال ناموفق بود. دوباره تلاش کنید.', 'webakery' ),
+					'required'        => __( 'نام و شماره تماس الزامی است.', 'webakery' ),
+					'draftSaved'      => __( 'روی این لپ‌تاپ ذخیره شد.', 'webakery' ),
+					'draftSaveFailed' => __( 'ذخیره روی این دستگاه ممکن نشد.', 'webakery' ),
+					'draftRestored'   => __( 'پیش‌نویس ذخیره‌شده روی این لپ‌تاپ بازیابی شد.', 'webakery' ),
+					'draftDownloaded' => __( 'فایل پیش‌نویس روی لپ‌تاپ دانلود شد.', 'webakery' ),
+					'draftCleared'    => __( 'پیش‌نویس این دستگاه پاک شد.', 'webakery' ),
+					'draftEmpty'      => __( 'چیزی برای ذخیره روی این دستگاه نیست.', 'webakery' ),
 				),
 			)
 		);

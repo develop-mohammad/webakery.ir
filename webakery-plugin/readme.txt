@@ -4,7 +4,7 @@ Tags: bakery, products, orders, rtl, persian
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,11 @@ Webakery یک پلاگین وردپرس برای مدیریت محصولات ن�
 * `[webakery_order]`
 
 == Changelog ==
+
+= 1.0.1 =
+* ذخیره پیش‌نویس فرم سفارش روی لپ‌تاپ/مرورگر
+* دانلود فایل پیش‌نویس JSON
+* دانلود CSV سفارش‌ها از پیشخوان
 
 = 1.0.0 =
 * نسخه اولیه

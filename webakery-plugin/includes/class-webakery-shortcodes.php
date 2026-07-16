@@ -268,7 +268,16 @@ class Webakery_Shortcodes {
 				<textarea name="message" rows="3" placeholder="<?php esc_attr_e( 'ساعت تحویل، توضیح بیشتر…', 'webakery' ); ?>"></textarea>
 			</label>
 
-			<button type="submit" class="wbk-order__submit"><?php esc_html_e( 'ارسال سفارش', 'webakery' ); ?></button>
+			<p class="wbk-order__draft-note" hidden></p>
+
+			<div class="wbk-order__actions">
+				<button type="submit" class="wbk-order__submit"><?php esc_html_e( 'ارسال سفارش', 'webakery' ); ?></button>
+				<button type="button" class="wbk-order__save-local"><?php esc_html_e( 'ذخیره روی این لپ‌تاپ', 'webakery' ); ?></button>
+				<button type="button" class="wbk-order__download-local"><?php esc_html_e( 'دانلود فایل روی لپ‌تاپ', 'webakery' ); ?></button>
+				<button type="button" class="wbk-order__clear-local"><?php esc_html_e( 'پاک کردن پیش‌نویس', 'webakery' ); ?></button>
+			</div>
+
+			<p class="wbk-order__local-hint"><?php esc_html_e( 'پیش‌نویس به‌صورت خودکار روی همین دستگاه ذخیره می‌شود تا اگر صفحه بسته شد، اطلاعات از بین نرود.', 'webakery' ); ?></p>
 			<p class="wbk-order__feedback" aria-live="polite" hidden></p>
 		</form>
 		<?php

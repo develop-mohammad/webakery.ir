@@ -20,9 +20,11 @@ class Webakery_Admin {
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
+		add_action( 'admin_init', array( __CLASS__, 'maybe_export_orders' ) );
 		add_action( 'add_meta_boxes', array( __CLASS__, 'order_meta_box' ) );
 		add_filter( 'manage_wbk_order_posts_columns', array( __CLASS__, 'order_columns' ) );
 		add_action( 'manage_wbk_order_posts_custom_column', array( __CLASS__, 'order_column_content' ), 10, 2 );
+		add_action( 'restrict_manage_posts', array( __CLASS__, 'orders_export_button' ) );
 	}
 
 	/**
@@ -37,6 +39,92 @@ class Webakery_Admin {
 			'webakery-settings',
 			array( __CLASS__, 'render_settings_page' )
 		);
+	}
+
+	/**
+	 * Show export button on orders list.
+	 *
+	 * @param string $post_type Current post type.
+	 */
+	public static function orders_export_button( $post_type ) {
+		if ( 'wbk_order' !== $post_type || ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+
+		$url = wp_nonce_url(
+			admin_url( 'edit.php?post_type=wbk_order&webakery_export_orders=1' ),
+			'webakery_export_orders'
+		);
+		?>
+		<a class="button button-secondary" href="<?php echo esc_url( $url ); ?>">
+			<?php esc_html_e( 'دانلود سفارش‌ها روی لپ‌تاپ (CSV)', 'webakery' ); ?>
+		</a>
+		<?php
+	}
+
+	/**
+	 * Stream orders CSV for local laptop save.
+	 */
+	public static function maybe_export_orders() {
+		if ( ! isset( $_GET['webakery_export_orders'] ) || '1' !== $_GET['webakery_export_orders'] ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_die( esc_html__( 'اجازه دسترسی ندارید.', 'webakery' ) );
+		}
+
+		check_admin_referer( 'webakery_export_orders' );
+
+		$orders = get_posts(
+			array(
+				'post_type'      => 'wbk_order',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+			)
+		);
+
+		$filename = 'webakery-orders-' . gmdate( 'Y-m-d-His' ) . '.csv';
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=' . $filename );
+
+		$output = fopen( 'php://output', 'w' );
+		fprintf( $output, chr( 0xEF ) . chr( 0xBB ) . chr( 0xBF ) );
+
+		fputcsv(
+			$output,
+			array(
+				'ID',
+				__( 'تاریخ', 'webakery' ),
+				__( 'نام', 'webakery' ),
+				__( 'تلفن', 'webakery' ),
+				__( 'محصول', 'webakery' ),
+				__( 'تعداد', 'webakery' ),
+				__( 'پیام', 'webakery' ),
+			)
+		);
+
+		foreach ( $orders as $order ) {
+			fputcsv(
+				$output,
+				array(
+					$order->ID,
+					get_the_date( 'Y-m-d H:i', $order ),
+					get_post_meta( $order->ID, '_wbk_customer_name', true ),
+					get_post_meta( $order->ID, '_wbk_customer_phone', true ),
+					get_post_meta( $order->ID, '_wbk_product', true ),
+					get_post_meta( $order->ID, '_wbk_qty', true ),
+					get_post_meta( $order->ID, '_wbk_message', true ),
+				)
+			);
+		}
+
+		fclose( $output );
+		exit;
 	}
 
 	/**
