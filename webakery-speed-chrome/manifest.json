@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Webakery Speed Analyzer",
-  "short_name": "Webakery Speed",
-  "description": "تحلیل صفحه فعلی کروم — مکمل پلاگین Webakery Speed برای وردپرس",
-  "version": "1.0.3",
+  "name": "Webakery Speed",
+  "short_name": "Webakery",
+  "description": "Analyze the current page speed. Companion for Webakery Speed WordPress plugin.",
+  "version": "1.0.4",
   "action": {
-    "default_title": "تحلیل سرعت این صفحه",
+    "default_title": "Webakery Speed",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -18,18 +18,13 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": [
-    "activeTab",
-    "storage",
-    "scripting"
-  ],
-  "host_permissions": [
-    "https://www.googleapis.com/*",
-    "http://*/*",
-    "https://*/*"
-  ],
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["https://www.googleapis.com/*"],
   "background": {
     "service_worker": "background/service-worker.js"
   },
-  "options_page": "options/options.html"
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  }
 }
