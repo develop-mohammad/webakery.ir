@@ -67,30 +67,43 @@ class WBS_Scanner {
 		}
 
 		$settings = WBS_Settings::get();
-		if ( empty( $settings['psi_api_key'] ) ) {
-			return new WP_Error(
-				'wbs_no_api_key',
-				__( 'برای دریافت گزارش PageSpeed باید کلید API را در تنظیمات وارد کنید.', 'webakery-speed' )
-			);
-		}
-
 		$settings['scan_url'] = $parsed['url'];
 		$settings['strategy'] = $parsed['strategy'];
 		update_option( WBS_Settings::OPTION_KEY, $settings );
 
-		$result = WBS_PageSpeed_API::scan(
-			$parsed['url'],
-			$settings['psi_api_key'],
-			$parsed['strategy']
-		);
-
-		if ( is_wp_error( $result ) ) {
-			return $result;
+		$result = null;
+		if ( 'pagespeed-web' === ( $parsed['source'] ?? '' ) && ! empty( $parsed['report_url'] ) ) {
+			$result = WBS_Report_Fetcher::fetch( $parsed['report_url'], $parsed['strategy'] );
 		}
 
-		$result['report_url'] = $parsed['report_url'] ?? '';
-		$result['report_id']  = $parsed['report_id'] ?? '';
-		$result['source']       = $parsed['source'] ?? 'pagespeed-web';
+		if ( is_wp_error( $result ) || null === $result ) {
+			if ( empty( $settings['psi_api_key'] ) ) {
+				$message = is_wp_error( $result )
+					? $result->get_error_message()
+					: __( 'دریافت گزارش از pagespeed.web.dev ناموفق بود.', 'webakery-speed' );
+
+				return new WP_Error(
+					'wbs_no_api_key',
+					$message . ' ' . __( 'کلید API PageSpeed را در تنظیمات وارد کنید یا دوباره تلاش کنید.', 'webakery-speed' )
+				);
+			}
+
+			$result = WBS_PageSpeed_API::scan(
+				$parsed['url'],
+				$settings['psi_api_key'],
+				$parsed['strategy']
+			);
+
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+
+			$result['fetch_method'] = 'api';
+		}
+
+		$result['report_url'] = $parsed['report_url'] ?? ( $result['report_url'] ?? '' );
+		$result['report_id']  = $parsed['report_id'] ?? ( $result['report_id'] ?? '' );
+		$result['source']     = $parsed['source'] ?? 'pagespeed-web';
 
 		WBS_Settings::save_scan( $result );
 

@@ -109,6 +109,9 @@ class WBS_Admin {
 					$res['url'],
 					null !== $res['performance'] ? (string) $res['performance'] : '—'
 				);
+				if ( ! empty( $res['fetch_method'] ) && 'embedded' === $res['fetch_method'] ) {
+					$message .= ' — ' . __( 'از pagespeed.web.dev (بدون API)', 'webakery-speed' );
+				}
 				if ( $auto_apply && ! empty( $res['applied_fixes'] ) ) {
 					$message .= ' — ' . sprintf(
 						/* translators: %d: number of fixes */
@@ -227,7 +230,7 @@ class WBS_Admin {
 				<section class="wbs-card wbs-card--highlight">
 					<h2><?php esc_html_e( '۱. دریافت گزارش از PageSpeed.web.dev', 'webakery-speed' ); ?></h2>
 					<p class="description">
-						<?php esc_html_e( 'لینک گزارش pagespeed.web.dev را paste کنید. پلاگین آدرس سایت را استخراج می‌کند، همان گزارش Lighthouse را از API می‌گیرد و اصلاحات را پیشنهاد می‌دهد.', 'webakery-speed' ); ?>
+						<?php esc_html_e( 'لینک گزارش pagespeed.web.dev را paste کنید. پلاگین همان گزارش Lighthouse را از صفحه می‌خواند (بدون نیاز به API)، خطاها را نشان می‌دهد و با یک کلیک اصلاحات امن را فعال می‌کند.', 'webakery-speed' ); ?>
 					</p>
 					<form method="post" class="wbs-form">
 						<?php wp_nonce_field( 'wbs_import_report_url' ); ?>
@@ -342,6 +345,15 @@ class WBS_Admin {
 							</span>
 						</div>
 						<div><strong><?php esc_html_e( 'تاریخ:', 'webakery-speed' ); ?></strong> <?php echo esc_html( $scan['scanned_at'] ); ?></div>
+						<?php if ( ! empty( $scan['fetch_method'] ) ) : ?>
+							<div><strong><?php esc_html_e( 'روش دریافت:', 'webakery-speed' ); ?></strong>
+								<?php
+								echo 'embedded' === $scan['fetch_method']
+									? esc_html__( 'مستقیم از pagespeed.web.dev', 'webakery-speed' )
+									: esc_html__( 'PageSpeed API', 'webakery-speed' );
+								?>
+							</div>
+						<?php endif; ?>
 					</div>
 
 					<?php if ( ! empty( $scan['issues'] ) ) : ?>

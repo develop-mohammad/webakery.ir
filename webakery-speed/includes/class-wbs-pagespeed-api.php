@@ -67,6 +67,18 @@ class WBS_PageSpeed_API {
 			return new WP_Error( 'wbs_api_error', $message, array( 'status' => $code ) );
 		}
 
+		return self::normalize_scan( $body, $url, $strategy );
+	}
+
+	/**
+	 * Normalize PSI or Lighthouse payload into scan result.
+	 *
+	 * @param array  $body     Raw body with lighthouseResult key or audits at root.
+	 * @param string $url      URL.
+	 * @param string $strategy Strategy.
+	 * @return array
+	 */
+	public static function normalize_scan( $body, $url, $strategy ) {
 		return self::normalize_response( $body, $url, $strategy );
 	}
 
