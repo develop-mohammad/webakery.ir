@@ -292,12 +292,13 @@ table.grid th{background:#f3f4f6;font-size:10.5px}
 .meta-line{font-size:11px;margin:2px 0}
 .bc{margin-top:4px;line-height:0}
 
-.parties{margin:8px 0;display:flex;flex-direction:column;gap:8px}
-.party{width:48%;border:1px solid #222}
+.parties{margin:8px 0;display:flex;flex-direction:row;gap:0;width:100%}
+.party{flex:1 1 50%;width:50%;border:1px solid #222}
+.party+.party{border-right:0}
 .party h3{background:#f3f4f6;border-bottom:1px solid #222;padding:4px 8px;font-size:11px}
-.party .body{padding:6px 8px;line-height:1.65}
-.party-sender{align-self:flex-end;text-align:left} /* بالا چپ */
-.party-receiver{align-self:flex-start;text-align:right} /* پایین‌تر راست */
+.party .body{padding:6px 8px;line-height:1.55;min-height:auto}
+.party-sender{text-align:right}
+.party-receiver{text-align:right}
 
 .items th{background:<?php echo esc_attr( $color ); ?>;color:#fff;border-color:#155e54}
 .items td{font-size:10.5px}
