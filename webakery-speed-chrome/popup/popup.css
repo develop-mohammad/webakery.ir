@@ -18,8 +18,8 @@
 
 body {
   margin: 0;
-  width: 380px;
-  min-height: 420px;
+  width: 400px;
+  min-height: 460px;
   font-family: var(--font);
   color: var(--ink);
   background: var(--bg);
@@ -206,4 +206,67 @@ body {
 .empty {
   color: var(--muted);
   font-size: 12px;
+}
+
+.fonts {
+  display: grid;
+  gap: 8px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.font-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  background: #faf8f5;
+  font-size: 11px;
+}
+
+.font-row__name {
+  font-weight: 700;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.font-row__url {
+  color: var(--muted);
+  direction: ltr;
+  text-align: left;
+  word-break: break-all;
+  margin-bottom: 6px;
+}
+
+.font-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+
+.badge.ok {
+  background: rgba(47, 93, 69, 0.12);
+  color: var(--good);
+  border-color: rgba(47, 93, 69, 0.2);
+}
+
+.badge.bad {
+  background: rgba(185, 28, 28, 0.1);
+  color: var(--bad);
+  border-color: rgba(185, 28, 28, 0.2);
+}
+
+.badge.neutral {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.panel-fonts h2 {
+  margin-bottom: 6px;
 }

@@ -131,10 +131,47 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
+function renderFonts(fonts) {
+  const box = document.getElementById("fonts");
+  if (!fonts || !fonts.length) {
+    box.innerHTML =
+      '<p class="empty">فونتی در DOM پیدا نشد. ممکن است داخل CSS خارجی باشد — اسکن PageSpeed را هم بزنید.</p>';
+    return;
+  }
+
+  box.innerHTML = fonts
+    .map((font) => {
+      const displayClass = font.displayOk
+        ? "ok"
+        : font.display === "ندارد" || font.display === "نامشخص"
+          ? "bad"
+          : "neutral";
+      const preloadClass = font.preloaded ? "ok" : "bad";
+      const preconnectClass = font.preconnect ? "ok" : "neutral";
+
+      return `<article class="font-row">
+        <div class="font-row__name">${escapeHtml(font.name)}</div>
+        ${
+          font.url
+            ? `<div class="font-row__url">${escapeHtml(font.url)}</div>`
+            : ""
+        }
+        <div class="font-badges">
+          <span class="badge ${displayClass}">display: ${escapeHtml(font.display)}</span>
+          <span class="badge ${preloadClass}">preload: ${font.preloaded ? "بله" : "خیر"}</span>
+          <span class="badge ${preconnectClass}">preconnect: ${font.preconnect ? "بله" : "خیر"}</span>
+          <span class="badge neutral">${escapeHtml(font.source)}</span>
+        </div>
+      </article>`;
+    })
+    .join("");
+}
+
 function renderReport(report) {
   lastReport = report;
   setScore(report.performance);
   renderMetrics(report.timing || null);
+  renderFonts(report.fonts || []);
   renderIssues(report.issues || []);
   renderFixes(report.suggestedFixes || []);
 }
@@ -210,6 +247,7 @@ async function copyJson() {
     url: currentTab?.url || "",
     performance: lastReport.performance,
     suggestedFixes: lastReport.suggestedFixes || [],
+    fonts: lastReport.fonts || [],
     issues: (lastReport.issues || []).map((issue) => ({
       id: issue.id,
       title: issue.title,

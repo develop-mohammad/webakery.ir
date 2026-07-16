@@ -6,46 +6,16 @@
   "use strict";
 
   var FIXES = {
-    defer_js: {
-      title: "Defer جاوااسکریپت",
-      risk: "low",
-    },
-    async_css: {
-      title: "CSS غیر بحرانی async",
-      risk: "medium",
-    },
-    lazyload: {
-      title: "Lazy load تصاویر",
-      risk: "low",
-    },
-    image_dimensions: {
-      title: "ابعاد تصاویر",
-      risk: "low",
-    },
-    font_display: {
-      title: "font-display: swap",
-      risk: "low",
-    },
-    preload_fonts: {
-      title: "Preload فونت",
-      risk: "low",
-    },
-    preconnect: {
-      title: "Preconnect",
-      risk: "low",
-    },
-    disable_emojis: {
-      title: "حذف emoji وردپرس",
-      risk: "low",
-    },
-    cache_headers: {
-      title: "Cache headers",
-      risk: "low",
-    },
-    preload_lcp: {
-      title: "Preload تصویر LCP",
-      risk: "medium",
-    },
+    defer_js: { title: "Defer جاوااسکریپت", risk: "low" },
+    async_css: { title: "CSS غیر بحرانی async", risk: "medium" },
+    lazyload: { title: "Lazy load تصاویر", risk: "low" },
+    image_dimensions: { title: "ابعاد تصاویر", risk: "low" },
+    font_display: { title: "font-display: swap", risk: "low" },
+    preload_fonts: { title: "Preload فونت", risk: "low" },
+    preconnect: { title: "Preconnect", risk: "low" },
+    disable_emojis: { title: "حذف emoji وردپرس", risk: "low" },
+    cache_headers: { title: "Cache headers", risk: "low" },
+    preload_lcp: { title: "Preload تصویر LCP", risk: "medium" },
   };
 
   function absoluteUrl(src) {
@@ -53,6 +23,17 @@
       return new URL(src, window.location.href).href;
     } catch (e) {
       return src;
+    }
+  }
+
+  function shortUrl(url) {
+    if (!url) return "—";
+    try {
+      var u = new URL(url);
+      var path = u.pathname.split("/").pop() || u.hostname;
+      return path.length > 42 ? path.slice(0, 39) + "…" : path;
+    } catch (e) {
+      return String(url).slice(0, 42);
     }
   }
 
@@ -66,14 +47,178 @@
     };
   }
 
+  function parseDisplayFromUrl(url) {
+    try {
+      var value = new URL(url).searchParams.get("display");
+      return value || null;
+    } catch (e) {
+      return (url || "").match(/display=([a-z-]+)/i)?.[1] || null;
+    }
+  }
+
+  function isFontResourceUrl(url) {
+    return /\.(woff2?|ttf|otf|eot)(\?|#|$)/i.test(url || "");
+  }
+
+  function isFontCssUrl(url) {
+    return /fonts\.(googleapis|gstatic)\.com|fonts\.bunny\.net|use\.typekit|cloud\.typography/i.test(
+      url || ""
+    );
+  }
+
+  function collectPreloads() {
+    var map = {};
+    Array.prototype.forEach.call(
+      document.querySelectorAll('link[rel="preload"], link[rel="prefetch"]'),
+      function (link) {
+        if (link.href) {
+          map[absoluteUrl(link.href)] = {
+            as: link.getAttribute("as") || "",
+            crossorigin: link.hasAttribute("crossorigin"),
+          };
+        }
+      }
+    );
+    return map;
+  }
+
+  function collectPreconnects() {
+    var origins = {};
+    Array.prototype.forEach.call(
+      document.querySelectorAll(
+        'link[rel="preconnect"], link[rel="dns-prefetch"]'
+      ),
+      function (link) {
+        if (link.href) {
+          try {
+            origins[new URL(link.href).origin] = link.rel;
+          } catch (e) {
+            /* ignore */
+          }
+        }
+      }
+    );
+    return origins;
+  }
+
+  function analyzeFonts(preloads, preconnects) {
+    var fonts = [];
+    var seen = {};
+
+    function pushFont(item) {
+      var key = item.url || item.name;
+      if (!key || seen[key]) return;
+      seen[key] = true;
+
+      var abs = item.url ? absoluteUrl(item.url) : "";
+      var preloadInfo = abs ? preloads[abs] : null;
+      var origin = "";
+      try {
+        origin = abs ? new URL(abs).origin : "";
+      } catch (e) {
+        origin = "";
+      }
+
+      fonts.push({
+        name: item.name || shortUrl(abs) || "font",
+        url: abs,
+        source: item.source || "unknown",
+        display: item.display || "نامشخص",
+        displayOk:
+          item.display === "swap" ||
+          item.display === "optional" ||
+          item.display === "fallback",
+        preloaded: !!(preloadInfo && (preloadInfo.as === "font" || preloadInfo.as === "style")),
+        preloadAs: preloadInfo ? preloadInfo.as : "",
+        preconnect: origin ? !!preconnects[origin] : false,
+      });
+    }
+
+    Array.prototype.forEach.call(
+      document.querySelectorAll('link[rel="stylesheet"][href]'),
+      function (link) {
+        var href = absoluteUrl(link.href);
+        if (!isFontCssUrl(href)) return;
+        var display = parseDisplayFromUrl(href) || "ندارد";
+        pushFont({
+          name: "Google/Bunny Font CSS",
+          url: href,
+          source: "stylesheet",
+          display: display,
+        });
+      }
+    );
+
+    Array.prototype.forEach.call(document.querySelectorAll("style"), function (node) {
+      var text = node.textContent || "";
+      var faceRegex = /@font-face\s*\{[^}]*\}/gi;
+      var faces = text.match(faceRegex) || [];
+      faces.forEach(function (block, index) {
+        var family = block.match(/font-family\s*:\s*['"]?([^;'"]+)/i)?.[1]?.trim();
+        var display = block.match(/font-display\s*:\s*([a-z-]+)/i)?.[1] || "نامشخص";
+        var src = block.match(/url\((['"]?)([^'")]+)\1\)/i)?.[2] || "";
+        pushFont({
+          name: family || "@font-face #" + (index + 1),
+          url: src,
+          source: "inline-css",
+          display: display,
+        });
+      });
+    });
+
+    try {
+      Array.prototype.forEach.call(document.styleSheets, function (sheet) {
+        var rules;
+        try {
+          rules = sheet.cssRules;
+        } catch (e) {
+          return;
+        }
+        if (!rules) return;
+
+        Array.prototype.forEach.call(rules, function (rule) {
+          if (rule.type !== CSSRule.FONT_FACE_RULE) return;
+          var style = rule.style;
+          var family = style.getPropertyValue("font-family").replace(/['"]/g, "").trim();
+          var display = style.getPropertyValue("font-display").trim() || "نامشخص";
+          var src = style.getPropertyValue("src") || "";
+          var url = src.match(/url\((['"]?)([^'")]+)\1\)/i)?.[2] || sheet.href || "";
+          pushFont({
+            name: family || "font-face",
+            url: url,
+            source: sheet.href ? "css-file" : "stylesheet",
+            display: display,
+          });
+        });
+      });
+    } catch (e) {
+      /* ignore */
+    }
+
+    if (window.performance && performance.getEntriesByType) {
+      performance.getEntriesByType("resource").forEach(function (entry) {
+        if (!isFontResourceUrl(entry.name)) return;
+        pushFont({
+          name: shortUrl(entry.name),
+          url: entry.name,
+          source: "loaded-file",
+          display: "از CSS",
+        });
+      });
+    }
+
+    return fonts;
+  }
+
   function analyzeDom() {
     var issues = [];
     var suggested = {};
+    var preloads = collectPreloads();
+    var preconnects = collectPreconnects();
+    var fonts = analyzeFonts(preloads, preconnects);
 
     function add(slug, item) {
-      if (!suggested[slug]) {
-        suggested[slug] = true;
-      }
+      suggested[slug] = true;
       issues.push(item);
     }
 
@@ -111,7 +256,7 @@
       return (
         link.media !== "print" &&
         !link.getAttribute("onload") &&
-        (link.href || "").indexOf("fonts.googleapis.com") === -1
+        !isFontCssUrl(link.href || "")
       );
     });
 
@@ -131,8 +276,7 @@
     var images = Array.prototype.slice.call(document.images);
     var offscreenWithoutLazy = images.filter(function (img) {
       var rect = img.getBoundingClientRect();
-      var belowFold = rect.top > window.innerHeight;
-      return belowFold && img.loading !== "lazy";
+      return rect.top > window.innerHeight && img.loading !== "lazy";
     });
 
     if (offscreenWithoutLazy.length > 0) {
@@ -165,54 +309,73 @@
       );
     }
 
-    var fontLinks = Array.prototype.slice.call(
-      document.querySelectorAll('link[href*="fonts.googleapis.com"]')
-    );
-    var fontsWithoutSwap = fontLinks.filter(function (link) {
-      return link.href.indexOf("display=") === -1;
-    });
+    if (fonts.length > 0) {
+      var noSwap = fonts.filter(function (f) {
+        return !f.displayOk && f.display !== "از CSS" && f.display !== "نامشخص";
+      });
+      var noDisplay = fonts.filter(function (f) {
+        return f.display === "ندارد" || f.display === "نامشخص";
+      });
+      var noPreload = fonts.filter(function (f) {
+        return !f.preloaded && (f.url || "").indexOf("woff") !== -1;
+      });
+      var cssFontsNoPreload = fonts.filter(function (f) {
+        return f.source === "stylesheet" && !f.preloaded;
+      });
 
-    if (fontsWithoutSwap.length > 0) {
-      add(
-        "font_display",
+      if (noSwap.length > 0 || noDisplay.length > 0) {
+        add(
+          "font_display",
+          issue(
+            "font-display",
+            "font-display مناسب نیست",
+            (noSwap.length + noDisplay.length) +
+              " فونت بدون swap/optional (جزئیات در بخش فونت)",
+            ["font_display"],
+            0.38
+          )
+        );
+      }
+
+      if (noPreload.length > 0 || cssFontsNoPreload.length > 0) {
+        add(
+          "preload_fonts",
+          issue(
+            "preload-fonts",
+            "فونت preload نشده",
+            noPreload.length +
+              " فایل فونت + " +
+              cssFontsNoPreload.length +
+              " CSS فونت بدون preload",
+            ["preload_fonts"],
+            0.4
+          )
+        );
+      }
+
+      var needsGstatic = fonts.some(function (f) {
+        return (f.url || "").indexOf("gstatic") !== -1 || f.source === "stylesheet";
+      });
+      if (needsGstatic && !preconnects["https://fonts.gstatic.com"]) {
+        add(
+          "preconnect",
+          issue(
+            "uses-rel-preconnect",
+            "preconnect به fonts.gstatic نیست",
+            "برای فونت Google preconnect اضافه کنید",
+            ["preconnect"],
+            0.55
+          )
+        );
+      }
+    } else {
+      issues.push(
         issue(
-          "font-display",
-          "فونت بدون display=swap",
-          fontsWithoutSwap.length + " لینک Google Fonts",
+          "fonts-not-found",
+          "فونت در DOM دیده نشد",
+          "شاید فونت داخل CSS خارجی (cross-origin) باشد — اسکن PageSpeed را هم بزنید",
           ["font_display", "preload_fonts"],
-          0.38
-        )
-      );
-    }
-
-    var hasPreloadFont = document.querySelector(
-      'link[rel="preload"][as="font"], link[rel="preload"][as="style"][href*="fonts"]'
-    );
-    if (fontLinks.length > 0 && !hasPreloadFont) {
-      add(
-        "preload_fonts",
-        issue(
-          "preload-fonts",
-          "فونت preload نشده",
-          "هیچ preload برای فونت پیدا نشد",
-          ["preload_fonts", "preconnect"],
-          0.4
-        )
-      );
-    }
-
-    var hasGstaticPreconnect = document.querySelector(
-      'link[rel="preconnect"][href*="fonts.gstatic.com"]'
-    );
-    if (fontLinks.length > 0 && !hasGstaticPreconnect) {
-      add(
-        "preconnect",
-        issue(
-          "uses-rel-preconnect",
-          "preconnect به fonts.gstatic نیست",
-          "برای فونت Google preconnect اضافه کنید",
-          ["preconnect"],
-          0.55
+          0.7
         )
       );
     }
@@ -226,16 +389,15 @@
         : null;
 
     if (hero) {
-      var heroPreloaded = document.querySelector(
-        'link[rel="preload"][as="image"][href="' + hero.currentSrc + '"]'
-      );
+      var heroUrl = absoluteUrl(hero.currentSrc || "");
+      var heroPreloaded = !!preloads[heroUrl];
       if (!heroPreloaded && hero.naturalWidth * hero.naturalHeight > 50000) {
         add(
           "preload_lcp",
           issue(
             "lcp-preload",
             "تصویر بزرگ preload نشده",
-            "احتمالاً LCP: " + (hero.currentSrc || "").split("/").pop(),
+            "احتمالاً LCP: " + shortUrl(heroUrl),
             ["preload_lcp", "lazyload"],
             0.48
           )
@@ -263,10 +425,12 @@
     return {
       issues: issues,
       suggestedFixes: Object.keys(suggested),
+      fonts: fonts,
       stats: {
         scripts: scripts.length,
         styles: styles.length,
         images: images.length,
+        fonts: fonts.length,
         blockingScripts: blockingScripts.length,
         blockingStyles: blockingStyles.length,
       },
@@ -293,9 +457,7 @@
   }
 
   function scoreFromIssues(issues) {
-    if (!issues.length) {
-      return 95;
-    }
+    if (!issues.length) return 95;
     var penalty = issues.reduce(function (sum, item) {
       return sum + (1 - item.score) * 12;
     }, 0);
@@ -312,6 +474,7 @@
     timing: timing,
     issues: dom.issues,
     suggestedFixes: dom.suggestedFixes,
+    fonts: dom.fonts,
     stats: dom.stats,
   };
 })();
