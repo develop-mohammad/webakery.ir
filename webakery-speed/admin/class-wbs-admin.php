@@ -21,6 +21,7 @@ class WBS_Admin {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_actions' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
+		add_action( 'wp_ajax_wbs_import_report', array( __CLASS__, 'ajax_import_report' ) );
 		add_action( 'wp_ajax_wbs_scan', array( __CLASS__, 'ajax_scan' ) );
 		add_action( 'wp_ajax_wbs_apply_safe', array( __CLASS__, 'ajax_apply_safe' ) );
 		add_action( 'wp_ajax_wbs_disable_all', array( __CLASS__, 'ajax_disable_all' ) );
@@ -60,6 +61,7 @@ class WBS_Admin {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'wbs_admin' ),
 				'i18n'    => array(
+					'importing' => __( 'در حال دریافت گزارش PageSpeed…', 'webakery-speed' ),
 					'scanning'  => __( 'در حال اسکن PageSpeed…', 'webakery-speed' ),
 					'applying'  => __( 'در حال اعمال اصلاحات امن…', 'webakery-speed' ),
 					'disabling' => __( 'در حال خاموش کردن همه اصلاحات…', 'webakery-speed' ),
@@ -93,10 +95,60 @@ class WBS_Admin {
 			}
 		}
 
+		if ( ( isset( $_POST['wbs_import_report_url'] ) || isset( $_POST['wbs_import_and_fix'] ) ) && check_admin_referer( 'wbs_import_report_url' ) ) {
+			$report_url = esc_url_raw( wp_unslash( $_POST['wbs_report_url'] ?? '' ) );
+			$auto_apply = isset( $_POST['wbs_import_and_fix'] );
+			$res        = WBS_Scanner::import_report_url( $report_url, $auto_apply );
+
+			if ( is_wp_error( $res ) ) {
+				add_settings_error( 'wbs', 'report_error', $res->get_error_message(), 'error' );
+			} else {
+				$message = sprintf(
+					/* translators: 1: site URL, 2: performance score */
+					__( 'گزارش %1$s دریافت شد. امتیاز Performance: %2$s', 'webakery-speed' ),
+					$res['url'],
+					null !== $res['performance'] ? (string) $res['performance'] : '—'
+				);
+				if ( $auto_apply && ! empty( $res['applied_fixes'] ) ) {
+					$message .= ' — ' . sprintf(
+						/* translators: %d: number of fixes */
+						__( '%d اصلاح امن فعال شد.', 'webakery-speed' ),
+						count( $res['applied_fixes'] )
+					);
+				}
+				add_settings_error( 'wbs', 'report_ok', $message, 'updated' );
+			}
+		}
+
 		if ( isset( $_POST['wbs_emergency_off'] ) && check_admin_referer( 'wbs_emergency_off' ) ) {
 			WBS_Fix_Manager::disable_all_fixes();
 			add_settings_error( 'wbs', 'off', __( 'همه اصلاحات خاموش شد. سایت به حالت قبل برگشت.', 'webakery-speed' ), 'updated' );
 		}
+	}
+
+	/**
+	 * AJAX import pagespeed.web.dev report URL.
+	 */
+	public static function ajax_import_report() {
+		check_ajax_referer( 'wbs_admin', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'دسترسی ندارید.', 'webakery-speed' ) ), 403 );
+		}
+
+		$report_url = esc_url_raw( wp_unslash( $_POST['report_url'] ?? '' ) );
+		$auto_apply = ! empty( $_POST['auto_apply'] );
+
+		$result = WBS_Scanner::import_report_url( $report_url, $auto_apply );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'scan'    => $result,
+				'message' => __( 'گزارش PageSpeed دریافت شد.', 'webakery-speed' ),
+			)
+		);
 	}
 
 	/**
@@ -172,8 +224,34 @@ class WBS_Admin {
 			</p>
 
 			<div class="wbs-grid">
+				<section class="wbs-card wbs-card--highlight">
+					<h2><?php esc_html_e( '۱. دریافت گزارش از PageSpeed.web.dev', 'webakery-speed' ); ?></h2>
+					<p class="description">
+						<?php esc_html_e( 'لینک گزارش pagespeed.web.dev را paste کنید. پلاگین آدرس سایت را استخراج می‌کند، همان گزارش Lighthouse را از API می‌گیرد و اصلاحات را پیشنهاد می‌دهد.', 'webakery-speed' ); ?>
+					</p>
+					<form method="post" class="wbs-form">
+						<?php wp_nonce_field( 'wbs_import_report_url' ); ?>
+						<p>
+							<input
+								type="url"
+								class="large-text code"
+								name="wbs_report_url"
+								id="wbs_report_url"
+								dir="ltr"
+								placeholder="https://pagespeed.web.dev/analysis/https-kianstock-ir/1575e77yov?form_factor=mobile"
+								value="<?php echo esc_attr( is_array( $scan ) ? ( $scan['report_url'] ?? '' ) : '' ); ?>"
+							/>
+						</p>
+						<p class="submit">
+							<button type="submit" name="wbs_import_report_url" class="button button-secondary"><?php esc_html_e( 'دریافت گزارش', 'webakery-speed' ); ?></button>
+							<button type="submit" name="wbs_import_and_fix" class="button button-primary"><?php esc_html_e( 'دریافت گزارش + اعمال اصلاحات امن', 'webakery-speed' ); ?></button>
+							<button type="button" class="button button-secondary" id="wbs-import-report-fix"><?php esc_html_e( 'دریافت و اصلاح (Ajax)', 'webakery-speed' ); ?></button>
+						</p>
+					</form>
+				</section>
+
 				<section class="wbs-card">
-					<h2><?php esc_html_e( '۱. اسکن سایت', 'webakery-speed' ); ?></h2>
+					<h2><?php esc_html_e( '۲. اسکن دستی سایت', 'webakery-speed' ); ?></h2>
 					<form method="post" class="wbs-form">
 						<?php wp_nonce_field( 'wbs_save_settings' ); ?>
 						<table class="form-table" role="presentation">
@@ -251,9 +329,13 @@ class WBS_Admin {
 
 			<?php if ( $scan ) : ?>
 				<section class="wbs-card">
-					<h2><?php esc_html_e( '۲. نتیجه آخرین اسکن', 'webakery-speed' ); ?></h2>
+					<h2><?php esc_html_e( '۳. نتیجه آخرین اسکن', 'webakery-speed' ); ?></h2>
 					<div class="wbs-scan-summary">
 						<div><strong><?php esc_html_e( 'آدرس:', 'webakery-speed' ); ?></strong> <?php echo esc_html( $scan['url'] ); ?></div>
+						<?php if ( ! empty( $scan['report_url'] ) ) : ?>
+							<div><strong><?php esc_html_e( 'لینک گزارش:', 'webakery-speed' ); ?></strong> <a href="<?php echo esc_url( $scan['report_url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $scan['report_url'] ); ?></a></div>
+						<?php endif; ?>
+						<div><strong><?php esc_html_e( 'استراتژی:', 'webakery-speed' ); ?></strong> <?php echo esc_html( $scan['strategy'] ?? 'mobile' ); ?></div>
 						<div><strong><?php esc_html_e( 'امتیاز Performance:', 'webakery-speed' ); ?></strong>
 							<span class="wbs-score wbs-score--<?php echo esc_attr( self::score_class( $scan['performance'] ) ); ?>">
 								<?php echo null !== $scan['performance'] ? esc_html( $scan['performance'] ) : '—'; ?>
@@ -307,7 +389,7 @@ class WBS_Admin {
 			<?php endif; ?>
 
 			<section class="wbs-card">
-				<h2><?php esc_html_e( '۳. اصلاحات قابل اعمال (دستی)', 'webakery-speed' ); ?></h2>
+				<h2><?php esc_html_e( '۴. اصلاحات قابل اعمال (دستی)', 'webakery-speed' ); ?></h2>
 				<form method="post">
 					<?php wp_nonce_field( 'wbs_save_settings' ); ?>
 					<input type="hidden" name="wbs_settings[_update_fixes]" value="1" />

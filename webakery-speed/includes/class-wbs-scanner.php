@@ -54,6 +54,55 @@ class WBS_Scanner {
 	}
 
 	/**
+	 * Import a pagespeed.web.dev report URL, run Lighthouse scan, optionally apply fixes.
+	 *
+	 * @param string $report_url Report URL from PageSpeed web.
+	 * @param bool   $auto_apply Apply suggested fixes after scan.
+	 * @return array|WP_Error
+	 */
+	public static function import_report_url( $report_url, $auto_apply = false ) {
+		$parsed = WBS_Report_URL::parse( $report_url );
+		if ( is_wp_error( $parsed ) ) {
+			return $parsed;
+		}
+
+		$settings = WBS_Settings::get();
+		if ( empty( $settings['psi_api_key'] ) ) {
+			return new WP_Error(
+				'wbs_no_api_key',
+				__( 'برای دریافت گزارش PageSpeed باید کلید API را در تنظیمات وارد کنید.', 'webakery-speed' )
+			);
+		}
+
+		$settings['scan_url'] = $parsed['url'];
+		$settings['strategy'] = $parsed['strategy'];
+		update_option( WBS_Settings::OPTION_KEY, $settings );
+
+		$result = WBS_PageSpeed_API::scan(
+			$parsed['url'],
+			$settings['psi_api_key'],
+			$parsed['strategy']
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$result['report_url'] = $parsed['report_url'] ?? '';
+		$result['report_id']  = $parsed['report_id'] ?? '';
+		$result['source']       = $parsed['source'] ?? 'pagespeed-web';
+
+		WBS_Settings::save_scan( $result );
+
+		if ( $auto_apply ) {
+			$safe_only               = (bool) WBS_Settings::get_one( 'safe_mode', true );
+			$result['applied_fixes'] = self::apply_suggested( $safe_only );
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Apply safe suggested fixes from last scan.
 	 *
 	 * @param bool $safe_only Only low-risk fixes.
@@ -72,7 +121,7 @@ class WBS_Scanner {
 
 		WBS_Fix_Manager::enable_fixes( $slugs, true );
 
-		$settings = WBS_Settings::get();
+		$settings            = WBS_Settings::get();
 		$settings['enabled'] = true;
 		update_option( WBS_Settings::OPTION_KEY, $settings );
 

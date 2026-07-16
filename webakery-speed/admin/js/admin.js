@@ -11,10 +11,15 @@
 		el.classList.toggle("is-error", !!isError);
 	}
 
-	function post(action) {
+	function post(action, extra) {
 		var body = new FormData();
 		body.append("action", action);
 		body.append("nonce", wbsAdmin.nonce);
+		if (extra) {
+			Object.keys(extra).forEach(function (key) {
+				body.append(key, extra[key]);
+			});
+		}
 		return fetch(wbsAdmin.ajaxUrl, {
 			method: "POST",
 			credentials: "same-origin",
@@ -28,6 +33,42 @@
 		var scanBtn = document.getElementById("wbs-run-scan");
 		var applyBtn = document.getElementById("wbs-apply-safe");
 		var disableBtn = document.getElementById("wbs-disable-all");
+		var importFixBtn = document.getElementById("wbs-import-report-fix");
+		var reportInput = document.getElementById("wbs_report_url");
+
+		if (importFixBtn && reportInput) {
+			importFixBtn.addEventListener("click", function () {
+				var reportUrl = reportInput.value.trim();
+				if (!reportUrl) {
+					feedback("لینک گزارش PageSpeed را وارد کنید.", true);
+					return;
+				}
+				importFixBtn.disabled = true;
+				feedback(wbsAdmin.i18n.importing, false);
+				post("wbs_import_report", {
+					report_url: reportUrl,
+					auto_apply: "1",
+				})
+					.then(function (payload) {
+						if (payload && payload.success) {
+							feedback(payload.data.message || wbsAdmin.i18n.done, false);
+							window.location.reload();
+						} else {
+							feedback(
+								(payload && payload.data && payload.data.message) ||
+									wbsAdmin.i18n.error,
+								true
+							);
+						}
+					})
+					.catch(function () {
+						feedback(wbsAdmin.i18n.error, true);
+					})
+					.finally(function () {
+						importFixBtn.disabled = false;
+					});
+			});
+		}
 
 		if (scanBtn) {
 			scanBtn.addEventListener("click", function () {

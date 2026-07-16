@@ -155,6 +155,9 @@ class WBS_PageSpeed_API {
 			'performance'     => null !== $perf ? (int) round( $perf * 100 ) : null,
 			'issues'          => $issues,
 			'suggested_fixes' => self::collect_suggested_fixes( $issues ),
+			'report_url'      => '',
+			'report_id'       => '',
+			'source'          => 'api',
 		);
 	}
 

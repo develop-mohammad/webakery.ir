@@ -150,9 +150,6 @@
         var href = absoluteUrl(link.href);
         if (!isFontCssUrl(href)) return;
         var display = parseDisplayFromUrl(href) || "ندارد";
-        if (display === "block" || display === "auto") {
-          display = display + " (نیاز به swap)";
-        }
         pushFont({
           name: "Font CSS (" + shortUrl(href) + ")",
           url: href,
@@ -215,7 +212,7 @@
           name: shortUrl(entry.name),
           url: entry.name,
           source: "loaded-file",
-          display: "از CSS",
+          display: "نامشخص",
         });
       });
     }
@@ -323,11 +320,8 @@
     }
 
     if (fonts.length > 0) {
-      var noSwap = fonts.filter(function (f) {
-        return !f.displayOk && f.display !== "از CSS" && f.display !== "نامشخص";
-      });
-      var noDisplay = fonts.filter(function (f) {
-        return f.display === "ندارد" || f.display === "نامشخص";
+      var withoutSwap = fonts.filter(function (f) {
+        return !f.displayOk;
       });
       var noPreload = fonts.filter(function (f) {
         return !f.preloaded && (f.url || "").indexOf("woff") !== -1;
@@ -336,14 +330,14 @@
         return f.source === "stylesheet" && !f.preloaded;
       });
 
-      if (noSwap.length > 0 || noDisplay.length > 0) {
+      if (withoutSwap.length > 0) {
         add(
           "font_display",
           issue(
             "font-display",
             "font-display: swap نیست",
-            (noSwap.length + noDisplay.length) +
-              " فونت بدون swap — در وردپرس گزینه font-display swap را فعال کنید",
+            withoutSwap.length +
+              " فونت بدون swap (fallback/optional هم قبول نیست)",
             ["font_display"],
             0.38
           )

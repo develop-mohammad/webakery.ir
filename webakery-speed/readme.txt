@@ -4,7 +4,7 @@ Tags: pagespeed, performance, lighthouse, optimization, speed
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.1.0
 License: GPLv2 or later
 
 دریافت خطاهای Google PageSpeed و اعمال اصلاحات امن بدون خراب کردن سایت.
@@ -12,7 +12,8 @@ License: GPLv2 or later
 == Description ==
 
 * اسکن با Google PageSpeed Insights API
-* وارد کردن گزارش JSON
+* وارد کردن لینک گزارش pagespeed.web.dev و دریافت خودکار خطاها
+* دکمه «دریافت گزارش + اعمال اصلاحات امن»
 * نمایش خطاها و اصلاح پیشنهادی
 * اعمال اصلاحات امن (defer JS، lazy load، font-display و...)
 * خاموش کردن فوری همه اصلاحات

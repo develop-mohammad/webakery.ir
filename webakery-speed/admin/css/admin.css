@@ -27,6 +27,11 @@
 	background: #fff7f7;
 }
 
+.wbs-card--highlight {
+	border-color: #fcd34d;
+	background: linear-gradient(180deg, #fffbeb, #fff);
+}
+
 .wbs-scan-summary {
 	display: grid;
 	gap: 8px;
