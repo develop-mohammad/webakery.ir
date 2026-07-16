@@ -269,56 +269,109 @@ class WCI_Invoice {
 <meta charset="UTF-8">
 <title>فاکتور #<?php echo esc_html( $invoice_no ); ?></title>
 <style>
-@page { size: A4; margin: 8mm; }
+@page { size: A4; margin: 10mm; }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Tahoma,Arial,sans-serif;font-size:11px;color:#111;background:#fff;direction:rtl}
-.sheet{max-width:190mm;margin:0 auto;padding:6px}
-.no-print{text-align:center;margin:12px 0 8px}
-.no-print button,.no-print a{margin:0 4px;padding:8px 16px;border:0;border-radius:4px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
+html,body{height:100%}
+body{
+	font-family:Tahoma,"Segoe UI",Arial,sans-serif;
+	font-size:11px;color:#1a1a1a;direction:rtl;
+	background:linear-gradient(180deg,#f1f5f4 0%,#e8eef0 100%);
+	min-height:100%;
+	display:flex;flex-direction:column;align-items:center;
+}
+.no-print{text-align:center;margin:14px 0 10px;width:100%}
+.no-print button,.no-print a{
+	margin:0 4px;padding:9px 18px;border:0;border-radius:6px;
+	font:inherit;cursor:pointer;text-decoration:none;display:inline-block;font-weight:600
+}
 .btn-print{background:<?php echo esc_attr( $color ); ?>;color:#fff}
 .btn-dl{background:#1d4ed8;color:#fff}
 .btn-close{background:#64748b;color:#fff}
 
-table.grid{width:100%;border-collapse:collapse;table-layout:fixed}
-table.grid th,table.grid td{border:1px solid #222;padding:5px 6px;vertical-align:top}
-table.grid th{background:#f3f4f6;font-size:10.5px}
+.sheet{
+	width:100%;max-width:190mm;margin:0 auto 18px;
+	background:#fff;padding:14px 16px 12px;
+	border:1px solid #d0d7de;border-radius:8px;
+	box-shadow:0 8px 28px rgba(15,23,42,.08);
+	text-align:center;
+}
 
-.head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;border-bottom:2px solid #111;padding-bottom:6px}
-.head-right{text-align:right}
-.head-left{text-align:left}
-.head h1{font-size:20px;letter-spacing:1px;margin-bottom:4px}
-.logo img{max-height:48px;max-width:140px}
-.logo-fallback{font-size:16px;font-weight:700;color:<?php echo esc_attr( $color ); ?>}
-.meta-line{font-size:11px;margin:2px 0}
-.bc{margin-top:4px;line-height:0}
+.head{
+	display:flex;align-items:center;justify-content:space-between;
+	gap:12px;margin-bottom:12px;padding-bottom:10px;
+	border-bottom:2px solid <?php echo esc_attr( $color ); ?>;
+}
+.head-brand,.head-meta{flex:1;min-width:0}
+.head-brand{text-align:right}
+.head-meta{text-align:left}
+.head-center{flex:1.2;text-align:center}
+.head h1{
+	font-size:26px;font-weight:800;letter-spacing:.5px;
+	color:<?php echo esc_attr( $color ); ?>;margin:0 0 4px;line-height:1.2
+}
+.head .sub{font-size:12px;color:#475569;font-weight:600}
+.logo img{max-height:52px;max-width:150px}
+.logo-fallback{
+	font-size:15px;font-weight:800;color:<?php echo esc_attr( $color ); ?>;
+	display:inline-block;padding:6px 10px;border:2px solid <?php echo esc_attr( $color ); ?>;border-radius:6px
+}
+.meta-line{font-size:11px;margin:2px 0;color:#334155}
+.bc{margin-top:5px;line-height:0;display:flex;justify-content:flex-start}
 
-.parties{margin:8px 0;display:table;width:100%;border-collapse:collapse;table-layout:fixed}
-.party{display:table-cell;width:50%;border:1px solid #222;vertical-align:top;text-align:right;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.party h3{border-bottom:1px solid #222;padding:5px 8px;font-size:11px;font-weight:700;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.party .body{padding:7px 8px;line-height:1.55}
-.party-sender{background:#e8f5f3}
+.parties{margin:0 0 10px;display:table;width:100%;border-collapse:collapse;table-layout:fixed;text-align:right}
+.party{
+	display:table-cell;width:50%;border:1px solid #94a3b8;vertical-align:top;
+	-webkit-print-color-adjust:exact;print-color-adjust:exact
+}
+.party h3{
+	border-bottom:1px solid #94a3b8;padding:6px 8px;font-size:12px;font-weight:800;
+	color:#fff;text-align:center;letter-spacing:.3px;
+	-webkit-print-color-adjust:exact;print-color-adjust:exact
+}
+.party .body{padding:8px 10px;line-height:1.65;text-align:right;font-size:11px}
+.party-sender{background:#e7f6f3}
 .party-sender h3{background:<?php echo esc_attr( $color ); ?>}
 .party-receiver{background:#eef2ff}
 .party-receiver h3{background:#334155}
 
-.items th{background:<?php echo esc_attr( $color ); ?>;color:#fff;border-color:#155e54}
+table.grid{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 auto;text-align:center}
+table.grid th,table.grid td{border:1px solid #94a3b8;padding:6px 5px;vertical-align:middle}
+table.grid th{
+	background:<?php echo esc_attr( $color ); ?>;color:#fff;font-size:10.5px;font-weight:700;
+	border-color:#0f5f58;-webkit-print-color-adjust:exact;print-color-adjust:exact
+}
 .items td{font-size:10.5px}
-.pimg{width:46px;height:46px;object-fit:cover;border:1px solid #ccc;display:block}
-.pimg-empty{width:46px;height:46px;border:1px dashed #bbb;display:flex;align-items:center;justify-content:center;color:#999;font-size:9px}
-.pname{font-weight:700;margin-bottom:2px}
-.pdesc{color:#444;font-size:10px;margin-top:2px}
-.pmeta{color:#666;font-size:9.5px}
-.pbc{margin-top:3px;line-height:0;transform:scale(.85);transform-origin:right top}
+.items td.desc{text-align:right;vertical-align:top}
+.pimg{width:48px;height:48px;object-fit:cover;border:1px solid #cbd5e1;border-radius:4px;display:inline-block;margin:0 auto}
+.pimg-empty{
+	width:48px;height:48px;border:1px dashed #94a3b8;border-radius:4px;
+	display:inline-flex;align-items:center;justify-content:center;color:#94a3b8;font-size:9px;margin:0 auto
+}
+.pname{font-weight:700;margin-bottom:3px;color:#0f172a}
+.pdesc{color:#475569;font-size:10px;margin-top:3px}
+.pmeta{color:#64748b;font-size:9.5px}
+.pbc{margin-top:2px;line-height:0;display:flex;justify-content:center;transform:scale(.9)}
 
-.summary{width:55%;margin-right:auto;margin-top:8px;border-collapse:collapse}
-.summary td{border:1px solid #222;padding:5px 8px}
-.summary tr.total td{background:<?php echo esc_attr( $color ); ?>;color:#fff;font-weight:700;font-size:12px}
-.footer{margin-top:8px;text-align:center;border-top:1px solid #999;padding-top:6px;font-size:10px;color:#444}
+.summary-wrap{width:100%;display:flex;justify-content:center;margin-top:12px}
+.summary{width:62%;max-width:360px;border-collapse:collapse;text-align:right}
+.summary td{border:1px solid #94a3b8;padding:6px 10px;font-size:11px}
+.summary td:last-child{text-align:left;font-weight:600;white-space:nowrap}
+.summary tr.total td{
+	background:<?php echo esc_attr( $color ); ?>;color:#fff;font-weight:800;font-size:12.5px;
+	-webkit-print-color-adjust:exact;print-color-adjust:exact
+}
+.footer{
+	margin-top:14px;text-align:center;border-top:1px dashed #94a3b8;
+	padding-top:10px;font-size:12px;color:<?php echo esc_attr( $color ); ?>;font-weight:700
+}
 
 @media print{
-	body{background:#fff}
+	body{background:#fff!important;display:block}
 	.no-print{display:none!important}
-	.sheet{max-width:none;margin:0;padding:0}
+	.sheet{
+		max-width:none;width:100%;margin:0 auto;padding:0;
+		border:0;border-radius:0;box-shadow:none
+	}
 	.party,.items,.summary,.head{break-inside:avoid}
 	.party,.party h3,.items th,.summary tr.total td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
@@ -335,7 +388,7 @@ table.grid th{background:#f3f4f6;font-size:10.5px}
 
 <div class="sheet">
 	<div class="head">
-		<div class="head-right">
+		<div class="head-brand">
 			<div class="logo">
 				<?php if ( $logo ) : ?>
 					<img src="<?php echo esc_url( $logo ); ?>" alt="logo">
@@ -344,12 +397,14 @@ table.grid th{background:#f3f4f6;font-size:10.5px}
 				<?php endif; ?>
 			</div>
 		</div>
-		<div class="head-left">
+		<div class="head-center">
 			<h1>فاکتور</h1>
-			<div class="meta-line">شماره فاکتور: <strong><?php echo esc_html( $invoice_no ); ?></strong></div>
-			<div class="bc"><?php echo self::barcode_svg( $order_barcode_text, 28, 1 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+			<div class="sub">شماره <?php echo esc_html( $invoice_no ); ?></div>
+		</div>
+		<div class="head-meta">
 			<div class="meta-line">تاریخ: <?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?></div>
 			<div class="meta-line">وضعیت: <?php echo esc_html( wc_get_order_status_name( $order->get_status() ) ); ?></div>
+			<div class="bc"><?php echo self::barcode_svg( $order_barcode_text, 28, 1 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		</div>
 	</div>
 
@@ -427,7 +482,7 @@ table.grid th{background:#f3f4f6;font-size:10.5px}
 						<div class="pimg-empty">بدون تصویر</div>
 					<?php endif; ?>
 				</td>
-				<td>
+				<td class="desc">
 					<div class="pname"><?php echo esc_html( $item->get_name() ); ?></div>
 					<?php
 					$meta = $item->get_formatted_meta_data( '' );
@@ -454,47 +509,48 @@ table.grid th{background:#f3f4f6;font-size:10.5px}
 		</tbody>
 	</table>
 
+	<div class="summary-wrap">
 	<table class="summary">
 		<tr>
 			<td>مجموع کالاها</td>
-			<td style="text-align:left"><?php echo wp_kses_post( wc_price( $order->get_subtotal() ) ); ?></td>
+			<td><?php echo wp_kses_post( wc_price( $order->get_subtotal() ) ); ?></td>
 		</tr>
 		<tr>
 			<td>حمل و نقل<?php echo $ship_m ? ' — ' . esc_html( $ship_m ) : ''; ?></td>
-			<td style="text-align:left"><?php echo wp_kses_post( wc_price( (float) $order->get_shipping_total() ) ); ?></td>
+			<td><?php echo wp_kses_post( wc_price( (float) $order->get_shipping_total() ) ); ?></td>
 		</tr>
 		<tr>
 			<td>روش پرداخت</td>
-			<td style="text-align:left"><?php echo esc_html( $pay_m !== '' ? $pay_m : '—' ); ?></td>
+			<td><?php echo esc_html( $pay_m !== '' ? $pay_m : '—' ); ?></td>
 		</tr>
 		<?php if ( $wallet['used'] ) : ?>
 		<tr>
 			<td><?php echo esc_html( $wallet['label'] ); ?></td>
-			<td style="text-align:left"><?php echo wp_kses_post( wc_price( $wallet['amount'] ) ); ?> <span>(پرداخت شده)</span></td>
+			<td><?php echo wp_kses_post( wc_price( $wallet['amount'] ) ); ?> <span>(پرداخت شده)</span></td>
 		</tr>
 		<?php endif; ?>
 		<?php if ( ! empty( $coupons ) ) : ?>
 		<tr>
 			<td>کد تخفیف</td>
-			<td style="text-align:left;direction:ltr"><?php echo esc_html( implode( ', ', $coupons ) ); ?></td>
+			<td style="direction:ltr"><?php echo esc_html( implode( ', ', $coupons ) ); ?></td>
 		</tr>
 		<?php endif; ?>
 		<?php if ( (float) $order->get_discount_total() > 0 ) : ?>
 		<tr>
 			<td>مبلغ تخفیف</td>
-			<td style="text-align:left">-<?php echo wp_kses_post( wc_price( $order->get_discount_total() ) ); ?></td>
+			<td>-<?php echo wp_kses_post( wc_price( $order->get_discount_total() ) ); ?></td>
 		</tr>
 		<?php endif; ?>
 		<?php if ( (float) $order->get_total_tax() > 0 ) : ?>
 		<tr>
 			<td>مالیات</td>
-			<td style="text-align:left"><?php echo wp_kses_post( wc_price( $order->get_total_tax() ) ); ?></td>
+			<td><?php echo wp_kses_post( wc_price( $order->get_total_tax() ) ); ?></td>
 		</tr>
 		<?php endif; ?>
 		<?php if ( ! empty( $tracking['code'] ) ) : ?>
 		<tr>
 			<td>کد رهگیری پستی</td>
-			<td style="text-align:left;direction:ltr">
+			<td style="direction:ltr">
 				<?php echo esc_html( $tracking['code'] ); ?>
 				<?php if ( ! empty( $tracking['provider_label'] ) ) : ?>
 					(<?php echo esc_html( $tracking['provider_label'] ); ?>)
@@ -505,14 +561,15 @@ table.grid th{background:#f3f4f6;font-size:10.5px}
 		<?php if ( $order->get_transaction_id() ) : ?>
 		<tr>
 			<td>کد پیگیری پرداخت</td>
-			<td style="text-align:left;direction:ltr"><?php echo esc_html( $order->get_transaction_id() ); ?></td>
+			<td style="direction:ltr"><?php echo esc_html( $order->get_transaction_id() ); ?></td>
 		</tr>
 		<?php endif; ?>
 		<tr class="total">
 			<td>قیمت نهایی</td>
-			<td style="text-align:left"><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></td>
+			<td><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></td>
 		</tr>
 	</table>
+	</div>
 
 	<div class="footer">
 		<?php echo nl2br( esc_html( $s['footer_text'] ?? 'با تشکر از خرید شما' ) ); ?>
