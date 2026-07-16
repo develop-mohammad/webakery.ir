@@ -55,32 +55,79 @@ class WCI_Invoice {
     }
 
     /**
-     * توضیح محصول از ووکامرس (کوتاه، در صورت نبود کامل).
+     * توضیح محصول از ووکامرس (کوتاه، در صورت نبود کامل؛ برای متغیر از والد).
+     * اگر خالی باشد همان «خالی است» برمی‌گردد.
      */
     private static function product_description( $product ): string {
+        $empty_label = 'خالی است';
+
         if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
-            return '';
+            return $empty_label;
         }
 
-        $desc = $product->get_short_description();
-        if ( $desc === '' || $desc === null ) {
-            $desc = $product->get_description();
+        $candidates = array(
+            $product->get_short_description(),
+            $product->get_description(),
+        );
+
+        // برای محصول متغیر، توضیح معمولاً روی محصول والد است.
+        if ( $product->is_type( 'variation' ) ) {
+            $parent_id = $product->get_parent_id();
+            if ( $parent_id ) {
+                $parent = wc_get_product( $parent_id );
+                if ( $parent ) {
+                    $candidates[] = $parent->get_short_description();
+                    $candidates[] = $parent->get_description();
+                }
+            }
         }
 
-        $desc = wp_strip_all_tags( (string) $desc );
-        $desc = preg_replace( '/\s+/u', ' ', trim( $desc ) );
+        $desc = '';
+        foreach ( $candidates as $candidate ) {
+            $candidate = wp_strip_all_tags( (string) $candidate );
+            $candidate = preg_replace( '/\s+/u', ' ', trim( $candidate ) );
+            if ( $candidate !== '' ) {
+                $desc = $candidate;
+                break;
+            }
+        }
 
         if ( $desc === '' ) {
-            return '';
+            return $empty_label;
         }
 
-        if ( function_exists( 'mb_strlen' ) && mb_strlen( $desc ) > 400 ) {
-            $desc = mb_substr( $desc, 0, 400 ) . '…';
-        } elseif ( strlen( $desc ) > 400 ) {
-            $desc = substr( $desc, 0, 400 ) . '…';
+        if ( function_exists( 'mb_strlen' ) && mb_strlen( $desc ) > 500 ) {
+            $desc = mb_substr( $desc, 0, 500 ) . '…';
+        } elseif ( strlen( $desc ) > 500 ) {
+            $desc = substr( $desc, 0, 500 ) . '…';
         }
 
         return $desc;
+    }
+
+    /**
+     * متادیتای داخلی ووکامرس (مثل موجودی کاهش‌یافته) در فاکتور نشان داده نشود.
+     */
+    private static function is_hidden_item_meta( $meta_item ): bool {
+        $key = strtolower( (string) ( $meta_item->key ?? '' ) );
+        $display_key = strtolower( wp_strip_all_tags( (string) ( $meta_item->display_key ?? '' ) ) );
+
+        $hidden = array(
+            '_reduced_stock',
+            'reduced_stock',
+            '_restock_refunded_items',
+        );
+
+        if ( in_array( $key, $hidden, true ) || in_array( $display_key, $hidden, true ) ) {
+            return true;
+        }
+
+        // کلیدهای داخلی که با _ شروع می‌شوند
+        if ( $key !== '' && $key[0] === '_' ) {
+            return true;
+        }
+
+        return false;
     }
 
     public function download(): void {
@@ -151,7 +198,8 @@ class WCI_Invoice {
                 table.items td { padding: 8px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
                 table.items tr:nth-child(even) td { background: #f9f9f9; }
                 .item-name { font-weight: bold; }
-                .item-desc { margin-top: 6px; color: #555; font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+                .item-desc { margin-top: 8px; color: #555; font-size: 12px; line-height: 1.7; white-space: pre-wrap; background: #f3f4f6; border-radius: 6px; padding: 8px 10px; }
+                .item-desc strong { color: #374151; margin-left: 6px; }
                 .item-sku { color: #999; font-size: 11px; }
                 .item-meta { margin-top: 4px; color: #666; font-size: 11.5px; }
                 .totals { display: flex; justify-content: flex-start; margin-top: 16px; }
@@ -276,17 +324,23 @@ class WCI_Invoice {
                                 <?php
                                 $meta = $item->get_formatted_meta_data( '' );
                                 if ( ! empty( $meta ) ) :
-                                    echo '<div class="item-meta">';
+                                    $meta_html = '';
                                     foreach ( $meta as $meta_item ) {
-                                        echo '<div>' . esc_html( wp_strip_all_tags( (string) $meta_item->display_key ) ) . ': '
+                                        if ( self::is_hidden_item_meta( $meta_item ) ) {
+                                            continue;
+                                        }
+                                        $meta_html .= '<div>' . esc_html( wp_strip_all_tags( (string) $meta_item->display_key ) ) . ': '
                                             . esc_html( wp_strip_all_tags( (string) $meta_item->display_value ) ) . '</div>';
                                     }
-                                    echo '</div>';
+                                    if ( $meta_html !== '' ) {
+                                        echo '<div class="item-meta">' . $meta_html . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                                    }
                                 endif;
                                 ?>
-                                <?php if ( $desc !== '' ) : ?>
-                                    <div class="item-desc"><?php echo esc_html( $desc ); ?></div>
-                                <?php endif; ?>
+                                <div class="item-desc">
+                                    <strong>توضیحات:</strong>
+                                    <?php echo esc_html( $desc ); ?>
+                                </div>
                             </td>
                             <td><?php echo esc_html( (string) $item->get_quantity() ); ?></td>
                             <td><?php echo wp_kses_post( wc_price( $unit_price ) ); ?></td>
