@@ -3,7 +3,7 @@ defined( 'ABSPATH' ) || exit;
 $s = NM_Settings::all();
 $days = NM_Jalali::weekday_names();
 $months = NM_Jalali::month_names();
-$closed = array_map( 'intval', (array) $s['closed_weekdays'] );
+$working = NM_Settings::working_weekdays();
 $active_months = array_map( 'intval', (array) ( $s['active_months'] ?? range( 1, 12 ) ) );
 ?>
 <form method="post" class="nm-panel-card">
@@ -38,14 +38,14 @@ $active_months = array_map( 'intval', (array) ( $s['active_months'] ?? range( 1,
 	</div>
 
 	<h3>تقویم شمسی و تعطیلی</h3>
-	<p>روزهای <strong>بستهٔ هفتگی</strong> (مثلاً اگر جمعه کار می‌کنید، تیک جمعه را بردارید):</p>
+	<p><strong>روزهای کاری هفته</strong> را تیک بزنید (روزهایی که نوبت می‌دهید). معمولاً شنبه تا پنج‌شنبه:</p>
 	<div class="nm-check-row">
 		<?php foreach ( $days as $i => $name ) : ?>
-			<label><input type="checkbox" name="settings[closed_weekdays][]" value="<?php echo (int) $i; ?>" <?php checked( in_array( $i, $closed, true ) ); ?> /> <?php echo esc_html( $name ); ?></label>
+			<label><input type="checkbox" name="settings[working_weekdays][]" value="<?php echo (int) $i; ?>" <?php checked( in_array( $i, $working, true ) ); ?> /> <?php echo esc_html( $name ); ?></label>
 		<?php endforeach; ?>
 	</div>
-	<label><input type="checkbox" name="settings[block_holidays]" value="1" <?php checked( ! empty( $s['block_holidays'] ) ); ?> /> مسدود کردن فقط تعطیلات رسمی ایران (نه روزهای عادی)</label>
-	<p class="nm-muted">روزهای «بسته» به‌خاطر تعطیل هفتگی یا نبودن ساعت کاری هستند؛ با تعطیل رسمی فرق دارند.</p>
+	<label><input type="checkbox" name="settings[block_holidays]" value="1" <?php checked( ! empty( $s['block_holidays'] ) ); ?> /> مسدود کردن تعطیلات رسمی ایران</label>
+	<p class="nm-muted">روز بدون تیک = بسته. جمعه را فقط اگر واقعاً کار می‌کنید تیک بزنید.</p>
 
 	<h3>پرداخت</h3>
 	<div class="nm-fields-admin">

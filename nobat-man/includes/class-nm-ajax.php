@@ -139,8 +139,11 @@ class NM_Ajax {
 						$clean[ $num ] = (int) $clean[ $num ];
 					}
 				}
-				if ( isset( $raw['closed_weekdays'] ) && is_array( $raw['closed_weekdays'] ) ) {
-					$clean['closed_weekdays'] = array_map( 'intval', $raw['closed_weekdays'] );
+				if ( isset( $raw['working_weekdays'] ) && is_array( $raw['working_weekdays'] ) ) {
+					$working = array_map( 'intval', $raw['working_weekdays'] );
+					$clean['closed_weekdays'] = array_values( array_diff( range( 0, 6 ), $working ) );
+				} elseif ( isset( $raw['closed_weekdays'] ) && is_array( $raw['closed_weekdays'] ) ) {
+					$clean['closed_weekdays'] = NM_Settings::normalize_closed_weekdays( $raw['closed_weekdays'] );
 				}
 				NM_Settings::update( $clean );
 				wp_send_json_success( array( 'message' => 'ذخیره شد.' ) );

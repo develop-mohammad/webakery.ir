@@ -33,6 +33,18 @@ class NM_Admin {
 	public function handle_posts() {
 		if ( ! current_user_can( 'manage_options' ) ) return;
 
+		// اصلاح خودکار تنظیمات برعکس روزهای هفته (یک‌بار)
+		if ( isset( $_GET['page'] ) && 'nobat-man' === $_GET['page'] ) {
+			if ( NM_Settings::heal_inverted_weekdays() ) {
+				add_settings_error(
+					'nm',
+					'weekdays_healed',
+					'تنظیمات روزهای هفته اصلاح شد: قبلاً روزهای کاری اشتباهاً به‌عنوان روز بسته ذخیره شده بود. الان شنبه تا پنج‌شنبه باز است.',
+					'updated'
+				);
+			}
+		}
+
 		if ( ! empty( $_POST['nm_save_settings'] ) && check_admin_referer( 'nm_settings' ) ) {
 			$raw = isset( $_POST['settings'] ) ? (array) wp_unslash( $_POST['settings'] ) : array();
 			$data = array();
@@ -46,10 +58,14 @@ class NM_Admin {
 					$data[ $key ] = sanitize_text_field( $v );
 				}
 			}
-			if ( isset( $raw['closed_weekdays'] ) && is_array( $raw['closed_weekdays'] ) ) {
-				$data['closed_weekdays'] = array_map( 'intval', $raw['closed_weekdays'] );
+			// UI جدید: روزهای کاری — به closed_weekdays تبدیل می‌شود
+			if ( isset( $raw['working_weekdays'] ) && is_array( $raw['working_weekdays'] ) ) {
+				$working = array_map( 'intval', $raw['working_weekdays'] );
+				$data['closed_weekdays'] = array_values( array_diff( range( 0, 6 ), $working ) );
+			} elseif ( isset( $raw['closed_weekdays'] ) && is_array( $raw['closed_weekdays'] ) ) {
+				$data['closed_weekdays'] = NM_Settings::normalize_closed_weekdays( $raw['closed_weekdays'] );
 			} else {
-				$data['closed_weekdays'] = array();
+				$data['closed_weekdays'] = array( 6 );
 			}
 			if ( isset( $raw['active_months'] ) && is_array( $raw['active_months'] ) ) {
 				$data['active_months'] = array_values( array_unique( array_map( 'intval', $raw['active_months'] ) ) );

@@ -15,9 +15,11 @@ class NM_Availability {
 
 	public static function month_status( $jy, $jm, $specialist_id = 0 ) {
 		self::ensure_default_schedule();
+		// اگر کاربر روزهای کاری را اشتباهاً به‌جای روزهای بسته ذخیره کرده، همین‌جا اصلاح کن
+		NM_Settings::heal_inverted_weekdays();
 
 		$grid     = NM_Jalali::month_grid( $jy, $jm );
-		$closed   = array_map( 'intval', (array) NM_Settings::get( 'closed_weekdays', array( 6 ) ) );
+		$closed   = NM_Settings::closed_weekdays();
 		$block_h  = (int) NM_Settings::get( 'block_holidays', 1 );
 		$holidays = NM_Holidays::all_for_year( $jy );
 		$today    = NM_Jalali::today();
@@ -133,14 +135,15 @@ class NM_Availability {
 			return;
 		}
 
-		for ( $d = 0; $d <= 4; $d++ ) {
+		// شنبه تا پنج‌شنبه — جمعه پیش‌فرض تعطیل
+		for ( $d = 0; $d <= 5; $d++ ) {
 			$wpdb->insert(
 				$table,
 				array(
 					'specialist_id' => 0,
 					'weekday'       => $d,
 					'start_time'    => '09:00:00',
-					'end_time'      => ( 4 === $d ? '13:00:00' : '17:00:00' ),
+					'end_time'      => ( 5 === $d ? '13:00:00' : '17:00:00' ),
 					'is_active'     => 1,
 				),
 				array( '%d', '%d', '%s', '%s', '%d' )

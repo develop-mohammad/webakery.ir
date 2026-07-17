@@ -75,6 +75,52 @@ class NM_Settings {
 		return $merged;
 	}
 
+	/**
+	 * اصلاح تنظیمات برعکس‌شده: بعضی کاربران روزهای کاری را به‌جای روزهای بسته تیک زده‌اند.
+	 * الگو: ۵ روز یا بیشتر «بسته» و جمعه باز → یعنی شنبه تا پنج‌شنبه را کاری فرض کرده‌اند.
+	 */
+	public static function normalize_closed_weekdays( $closed ) {
+		$closed = array_values( array_unique( array_map( 'intval', (array) $closed ) ) );
+		$closed = array_values( array_filter( $closed, function ( $d ) {
+			return $d >= 0 && $d <= 6;
+		} ) );
+
+		if ( count( $closed ) >= 5 && ! in_array( 6, $closed, true ) ) {
+			$closed = array_values( array_diff( range( 0, 6 ), $closed ) );
+		}
+		if ( count( $closed ) >= 7 ) {
+			$closed = array( 6 );
+		}
+		return $closed;
+	}
+
+	/** روزهای بسته هفتگی (پس از نرمال‌سازی) */
+	public static function closed_weekdays() {
+		return self::normalize_closed_weekdays( self::get( 'closed_weekdays', array( 6 ) ) );
+	}
+
+	/** روزهای کاری هفته */
+	public static function working_weekdays() {
+		return array_values( array_diff( range( 0, 6 ), self::closed_weekdays() ) );
+	}
+
+	/**
+	 * اگر تنظیمات برعکس ذخیره شده، یک‌بار اصلاح و ذخیره کن.
+	 * @return bool آیا اصلاح انجام شد؟
+	 */
+	public static function heal_inverted_weekdays() {
+		$raw  = array_map( 'intval', (array) self::get( 'closed_weekdays', array( 6 ) ) );
+		$fix = self::normalize_closed_weekdays( $raw );
+		sort( $raw );
+		$cmp = $fix;
+		sort( $cmp );
+		if ( $raw === $cmp ) {
+			return false;
+		}
+		self::update( array( 'closed_weekdays' => $fix ) );
+		return true;
+	}
+
 	public static function format_price( $amount ) {
 		$amount = (int) $amount;
 		$label  = self::get( 'currency_label', 'تومان' );
