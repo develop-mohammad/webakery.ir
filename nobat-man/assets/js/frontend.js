@@ -47,7 +47,10 @@
     var weekdays = qs('#nm-cal-weekdays');
     grid.innerHTML = '<div class="nm-muted">' + NM_DATA.i18n.loading + '</div>';
     api('month', { y: state.y, m: state.m, specialist_id: state.specialist }).then(function (res) {
-      if (!res.success) return;
+      if (!res || !res.success) {
+        grid.innerHTML = '<p class="nm-muted">خطا در بارگذاری تقویم. صفحه را رفرش کنید.</p>';
+        return;
+      }
       var d = res.data;
       label.textContent = d.label;
       weekdays.innerHTML = '';
@@ -55,18 +58,21 @@
         var el = document.createElement('div'); el.textContent = w.charAt(0); weekdays.appendChild(el);
       });
       grid.innerHTML = '';
+      var availableDays = 0;
       d.days.forEach(function (day) {
         if (!day) {
           var blank = document.createElement('div');
           grid.appendChild(blank);
           return;
         }
+        var isAvailable = !!day.available;
+        if (isAvailable) availableDays++;
         var btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'nm-day' + (day.available ? '' : ' is-disabled') + (day.holiday ? ' is-holiday' : '') + (state.date === day.jalali ? ' is-selected' : '');
-        btn.innerHTML = day.d + (day.holiday ? '<small>تعطیل</small>' : (day.available ? '<small>' + day.slots + '</small>' : ''));
-        btn.title = day.reason || day.holiday || '';
-        if (day.available) {
+        btn.className = 'nm-day' + (isAvailable ? ' is-available' : ' is-disabled') + (day.holiday ? ' is-holiday' : '') + (state.date === day.jalali ? ' is-selected' : '');
+        btn.innerHTML = day.d + (day.holiday ? '<small>تعطیل</small>' : (isAvailable ? '<small>' + day.slots + ' نوبت</small>' : ''));
+        btn.title = day.reason || day.holiday || (isAvailable ? 'انتخاب این روز' : '');
+        if (isAvailable) {
           btn.addEventListener('click', function () {
             state.date = day.jalali;
             qs('#nm-jalali-date').value = day.jalali;
@@ -79,6 +85,22 @@
         }
         grid.appendChild(btn);
       });
+      if (availableDays === 0) {
+        var tip = document.createElement('p');
+        tip.className = 'nm-muted nm-cal-tip';
+        tip.style.marginTop = '12px';
+        tip.textContent = d.has_schedule === false
+          ? 'برنامه کاری تنظیم نشده. از پیشخوان نوبت من ← ساعات کاری را ذخیره کنید.'
+          : 'در این ماه روز قابل رزروی نیست. ماه بعد را امتحان کنید یا ساعات کاری را بررسی کنید.';
+        var oldTip = qs('.nm-cal-tip');
+        if (oldTip) oldTip.remove();
+        grid.parentNode.appendChild(tip);
+      } else {
+        var clearTip = qs('.nm-cal-tip');
+        if (clearTip) clearTip.remove();
+      }
+    }).catch(function () {
+      grid.innerHTML = '<p class="nm-muted">خطا در ارتباط با سرور.</p>';
     });
   }
 
