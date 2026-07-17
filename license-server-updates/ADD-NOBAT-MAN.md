@@ -1,43 +1,41 @@
 # افزودن محصول nobat-man به license-server
 
-در `license-server/config.php` این مقادیر را اضافه کنید:
+وضعیت: در `license-server/config.php` ثبت شده است.
 
-## LS_PRICES (مبالغ به ریال)
+## مشخصات محصول
+
+| فیلد | مقدار |
+|------|--------|
+| شناسه | `nobat-man` |
+| قیمت | ۵۹۹,۰۰۰ تومان (۵۹۹۰۰۰۰ ریال) |
+| نسخه فعلی | **1.0.2** |
+| بسته آپدیت | `license-server/updates/nobat-man.zip` |
+| URL بسته | `https://webakery.ir/license-server/updates/nobat-man.zip` |
+
+## بخش‌های config.php
 
 ```php
-'nobat-man' => 5990000, // ۵۹۹,۰۰۰ تومان
-```
+// LS_PRICES
+'nobat-man' => 5990000,
 
-## LS_PLUGIN_LABELS
-
-```php
+// LS_PLUGIN_LABELS
 'nobat-man' => 'نوبت من — رزرو نوبت مشاوره',
-```
 
-## LS_PLUGIN_META
-
-```php
+// LS_PLUGIN_META
 'nobat-man' => [
     'icon' => '📅',
     'desc' => 'رزرو نوبت مشاوره با تقویم شمسی، پرداخت و نسخه پرو',
 ],
-```
 
-## LS_UPDATES
-
-```php
+// LS_UPDATES
 'nobat-man' => [
-    'version'      => '1.0.1',
+    'version'      => '1.0.2',
     'package'      => 'https://webakery.ir/license-server/updates/nobat-man.zip',
     'requires'     => '5.8',
     'tested'       => '6.7',
     'requires_php' => '7.4',
-    'changelog'    => 'نسخه ۱.۰.۱: نسخه‌بندی رسمی، سازنده webakery.ir.',
+    'changelog'    => 'نسخه ۱.۰.۲: رفع انتخاب روز در تقویم شمسی، برنامه کاری پیش‌فرض خودکار.',
 ],
 ```
 
-سپس فایل ZIP افزونه را در مسیر زیر کپی کنید:
-
-`license-server/updates/nobat-man.zip`
-
-شناسه محصول در افزونه: `nobat-man`
+پس از آپلود روی سرور، فایل `config.php` و `updates/nobat-man.zip` را جایگزین کنید.
