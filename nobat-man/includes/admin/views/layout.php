@@ -10,7 +10,7 @@ $s = NM_Settings::all();
 				<div class="nm-brand-mark">ن</div>
 				<div>
 					<strong>نوبت من</strong>
-					<span>WEBAKERY · ۲۰۲۶</span>
+					<span>سازنده: webakery.ir · v<?php echo esc_html( NM_VERSION ); ?></span>
 				</div>
 			</div>
 			<nav>
@@ -24,7 +24,8 @@ $s = NM_Settings::all();
 				<?php else : ?>
 					<span class="nm-pill warn">آزمایشی / رایگان</span>
 				<?php endif; ?>
-				<a href="https://webakery.ir" target="_blank" rel="noopener">webakery.ir</a>
+				<span class="nm-muted" style="color:#94a3b8;font-size:12px">نسخه <?php echo esc_html( NM_VERSION ); ?></span>
+				<a href="https://webakery.ir" target="_blank" rel="noopener">سازنده: webakery.ir</a>
 			</div>
 		</aside>
 
@@ -32,7 +33,7 @@ $s = NM_Settings::all();
 			<header class="nm-admin-top">
 				<div>
 					<h1><?php echo esc_html( $tabs[ $tab ] ?? 'نوبت من' ); ?></h1>
-					<p>شورت‌کد: <code>[nobat_man]</code> · قیمت پرو: ۵۹۹,۰۰۰ تومان</p>
+					<p>شورت‌کد: <code>[nobat_man]</code> · قیمت پرو: ۵۹۹,۰۰۰ تومان · سازنده: <a href="https://webakery.ir" target="_blank" rel="noopener">webakery.ir</a> · v<?php echo esc_html( NM_VERSION ); ?></p>
 				</div>
 				<a class="nm-btn-soft" href="<?php echo esc_url( home_url( '/' ) ); ?>" target="_blank">مشاهده سایت</a>
 			</header>

@@ -22,6 +22,8 @@ class NM_Plugin {
 
 		add_action( 'init', array( $this, 'init' ) );
 		add_action( 'nm_daily_maintenance', array( $this, 'maintenance' ) );
+		add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
+		add_filter( 'plugin_action_links_' . plugin_basename( NM_FILE ), array( $this, 'action_links' ) );
 
 		if ( ! wp_next_scheduled( 'nm_daily_maintenance' ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'nm_daily_maintenance' );
@@ -102,5 +104,23 @@ class NM_Plugin {
 			current_time( 'mysql' ),
 			gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - ( $ttl * HOUR_IN_SECONDS ) )
 		) );
+	}
+
+	public function plugin_row_meta( $links, $file ) {
+		if ( plugin_basename( NM_FILE ) !== $file ) {
+			return $links;
+		}
+		$links[] = '<span>نسخه ' . esc_html( NM_VERSION ) . '</span>';
+		$links[] = '<a href="' . esc_url( NM_AUTHOR_URI ) . '" target="_blank" rel="noopener">سازنده: webakery.ir</a>';
+		$links[] = '<a href="' . esc_url( admin_url( 'admin.php?page=nobat-man' ) ) . '">پیشخوان نوبت من</a>';
+		return $links;
+	}
+
+	public function action_links( $links ) {
+		array_unshift(
+			$links,
+			'<a href="' . esc_url( admin_url( 'admin.php?page=nobat-man&tab=settings' ) ) . '">تنظیمات</a>'
+		);
+		return $links;
 	}
 }

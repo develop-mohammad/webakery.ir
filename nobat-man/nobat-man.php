@@ -2,13 +2,13 @@
 /**
  * Plugin Name: نوبت من | Nobat Man
  * Description: رزرو نوبت مشاوره (روانشناسی مثبت و خدمات تخصصی) با تقویم شمسی ایرانی، پرداخت ووکامرس، پنل مدرن و نسخه پرو.
- * Version:     1.0.0
+ * Version:     1.0.1
  * Plugin URI:  https://webakery.ir
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Tested up to: 6.7
  * WC requires at least: 6.0
- * Author:      WEBAKERY.IR
+ * Author:      webakery.ir
  * Author URI:  https://webakery.ir
  * Text Domain: nobat-man
  * Domain Path: /languages
@@ -22,12 +22,14 @@ if ( defined( 'NOBAT_MAN_LOADED' ) ) {
 }
 define( 'NOBAT_MAN_LOADED', true );
 
-define( 'NM_VERSION', '1.0.0' );
+define( 'NM_VERSION', '1.0.1' );
 define( 'NM_FILE', __FILE__ );
 define( 'NM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NM_URL', plugin_dir_url( __FILE__ ) );
 define( 'NM_PRODUCT', 'nobat-man' );
-define( 'NM_DB_VERSION', '1.0.0' );
+define( 'NM_DB_VERSION', '1.0.1' );
+define( 'NM_AUTHOR', 'webakery.ir' );
+define( 'NM_AUTHOR_URI', 'https://webakery.ir' );
 
 if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 	add_action( 'admin_notices', function () {

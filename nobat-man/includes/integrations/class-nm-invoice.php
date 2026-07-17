@@ -62,7 +62,7 @@ table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border-bottom:1p
 		<tr><th>مدت</th><td><?php echo (int) $booking->duration; ?> دقیقه</td></tr>
 		<tr><th>مبلغ</th><td class="total"><?php echo esc_html( NM_Settings::format_price( $booking->price ) ); ?></td></tr>
 	</table>
-	<p class="muted" style="margin-top:24px">این فاکتور توسط افزونه نوبت من | webakery.ir صادر شده است.</p>
+	<p class="muted" style="margin-top:24px">این فاکتور توسط افزونه نوبت من · سازنده: webakery.ir · نسخه <?php echo esc_html( NM_VERSION ); ?> صادر شده است.</p>
 	<script>window.print()</script>
 </div>
 </body>

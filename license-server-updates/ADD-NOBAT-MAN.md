@@ -27,12 +27,12 @@
 
 ```php
 'nobat-man' => [
-    'version'      => '1.0.0',
+    'version'      => '1.0.1',
     'package'      => 'https://webakery.ir/license-server/updates/nobat-man.zip',
     'requires'     => '5.8',
     'tested'       => '6.7',
     'requires_php' => '7.4',
-    'changelog'    => 'نسخه ۱.۰.۰: انتشار اولیه نوبت من.',
+    'changelog'    => 'نسخه ۱.۰.۱: نسخه‌بندی رسمی، سازنده webakery.ir.',
 ],
 ```
 

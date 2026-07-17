@@ -1,18 +1,21 @@
 === نوبت من | Nobat Man ===
-Contributors: webakery
+Contributors: webakery.ir
 Donate link: https://webakery.ir
 Tags: appointment, booking, jalali, persian, woocommerce, counseling
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 
 رزرو نوبت مشاوره با تقویم شمسی ایرانی، پرداخت ووکامرس، پنل مدرن و نسخه پرو.
+سازنده: webakery.ir
 
 == Description ==
 
 **نوبت من** افزونه رزرو نوبت برای وردپرس با تمرکز روی مشاوره (روانشناسی مثبت و خدمات تخصصی) است.
+
+**سازنده:** [webakery.ir](https://webakery.ir)
 
 = امکانات پایه =
 * تقویم ماهانه شمسی ایرانی
@@ -46,6 +49,10 @@ License: GPLv2 or later
 4. شورت‌کد `[nobat_man]` را در برگه قرار دهید.
 
 == Changelog ==
+
+= 1.0.1 =
+* نسخه‌بندی رسمی و نمایش نسخه در پنل
+* سازنده: webakery.ir
 
 = 1.0.0 =
 * انتشار اولیه
