@@ -24,13 +24,12 @@ class NM_Zibal {
 	}
 
 	public static function merchant() {
-		$m = trim( (string) NM_Settings::get( 'zibal_merchant', '' ) );
-		return $m !== '' ? $m : 'fc6fd44c-0e7d-4693-ae42-f7ccc29116d9';
+		return trim( (string) NM_Settings::get( 'zibal_merchant', '' ) );
 	}
 
+	/** آیا زیبال واقعاً قابل استفاده است؟ (مرچنت پر باشد) */
 	public static function enabled() {
-		$gw = NM_Settings::get( 'payment_gateway', 'zibal' );
-		return in_array( $gw, array( 'zibal', 'auto' ), true ) && self::merchant();
+		return self::merchant() !== '';
 	}
 
 	/** ساخت لینک شروع پرداخت برای یک رزرو */

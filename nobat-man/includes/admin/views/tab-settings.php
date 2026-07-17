@@ -48,14 +48,15 @@ $active_months = array_map( 'intval', (array) ( $s['active_months'] ?? range( 1,
 
 	<h3>پرداخت</h3>
 	<div class="nm-fields-admin">
+		<p class="nm-muted">اگر مرچنت‌کد زیبال نداشته باشید، افزونه می‌تواند از درگاه ووکامرس سایت شما استفاده کند.</p>
 		<label>درگاه
 			<select name="settings[payment_gateway]" class="widefat">
-				<option value="zibal" <?php selected( $s['payment_gateway'] ?? 'zibal', 'zibal' ); ?>>زیبال (مستقیم)</option>
-				<option value="woocommerce" <?php selected( $s['payment_gateway'] ?? '', 'woocommerce' ); ?>>ووکامرس</option>
-				<option value="auto" <?php selected( $s['payment_gateway'] ?? '', 'auto' ); ?>>خودکار (زیبال، وگرنه ووکامرس)</option>
+				<option value="auto" <?php selected( ($s['payment_gateway'] ?? 'auto'), 'auto' ); ?>>خودکار (اگر مرچنت زیبال بود زیبال، وگرنه ووکامرس)</option>
+				<option value="woocommerce" <?php selected( $s['payment_gateway'] ?? '', 'woocommerce' ); ?>>فقط ووکامرس</option>
+				<option value="zibal" <?php selected( $s['payment_gateway'] ?? '', 'zibal' ); ?>>فقط زیبال مستقیم</option>
 			</select>
 		</label>
-		<label>مرچنت‌کد زیبال<input type="text" name="settings[zibal_merchant]" value="<?php echo esc_attr( $s['zibal_merchant'] ?? 'fc6fd44c-0e7d-4693-ae42-f7ccc29116d9' ); ?>" class="widefat" dir="ltr" /></label>
+		<label>مرچنت‌کد زیبال (اختیاری)<input type="text" name="settings[zibal_merchant]" value="<?php echo esc_attr( $s['zibal_merchant'] ?? '' ); ?>" class="widefat" dir="ltr" placeholder="اگر خالی باشد از ووکامرس استفاده می‌شود" /></label>
 	</div>
 
 	<h3>ظاهر</h3>

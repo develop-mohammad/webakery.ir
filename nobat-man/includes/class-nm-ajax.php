@@ -102,17 +102,7 @@ class NM_Ajax {
 			wp_send_json_error( array( 'message' => $booking->get_error_message() ) );
 		}
 
-		$pay_url = '';
-		$gw = NM_Settings::get( 'payment_gateway', 'zibal' );
-		if ( 'woocommerce' === $gw && class_exists( 'WooCommerce' ) ) {
-			$pay_url = NM_WooCommerce::create_checkout_for_booking( $booking );
-		} elseif ( in_array( $gw, array( 'zibal', 'auto' ), true ) && NM_Zibal::enabled() ) {
-			$pay_url = NM_Zibal::pay_url_for_booking( $booking );
-		} elseif ( class_exists( 'WooCommerce' ) ) {
-			$pay_url = NM_WooCommerce::create_checkout_for_booking( $booking );
-		} elseif ( NM_Zibal::enabled() ) {
-			$pay_url = NM_Zibal::pay_url_for_booking( $booking );
-		}
+		$pay_url = self::resolve_pay_url( $booking );
 
 		wp_send_json_success( array(
 			'booking_id'   => (int) $booking->id,
@@ -164,5 +154,28 @@ class NM_Ajax {
 			default:
 				wp_send_json_error( array( 'message' => 'اکشن نامعتبر' ), 400 );
 		}
+	}
+
+	private static function resolve_pay_url( $booking ) {
+		$gw = NM_Settings::get( 'payment_gateway', 'auto' );
+		$has_zibal = NM_Zibal::enabled();
+		$has_wc    = class_exists( 'WooCommerce' );
+
+		// انتخاب صریح
+		if ( 'zibal' === $gw ) {
+			return $has_zibal ? NM_Zibal::pay_url_for_booking( $booking ) : ( $has_wc ? NM_WooCommerce::create_checkout_for_booking( $booking ) : '' );
+		}
+		if ( 'woocommerce' === $gw ) {
+			return $has_wc ? NM_WooCommerce::create_checkout_for_booking( $booking ) : ( $has_zibal ? NM_Zibal::pay_url_for_booking( $booking ) : '' );
+		}
+
+		// auto: اول مرچنت زیبال، اگر نبود ووکامرس
+		if ( $has_zibal ) {
+			return NM_Zibal::pay_url_for_booking( $booking );
+		}
+		if ( $has_wc ) {
+			return NM_WooCommerce::create_checkout_for_booking( $booking );
+		}
+		return '';
 	}
 }
