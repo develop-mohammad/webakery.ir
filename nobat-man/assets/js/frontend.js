@@ -16,6 +16,24 @@
   function qs(sel, el) { return (el || root).querySelector(sel); }
   function qsa(sel, el) { return Array.prototype.slice.call((el || root).querySelectorAll(sel)); }
 
+  /** برچسب کوچک زیر روز — فقط تعطیل رسمی را «تعطیل» نشان بده */
+  function daySubLabel(day) {
+    if (day.available) {
+      return (day.slots || 0) + ' نوبت';
+    }
+    if (day.holiday) {
+      return 'تعطیل';
+    }
+    var r = String(day.reason || '');
+    if (r.indexOf('هفتگی') !== -1) return 'بسته';
+    if (r === 'گذشته') return 'گذشته';
+    if (r.indexOf('بازه') !== -1) return 'خارج بازه';
+    if (r.indexOf('برنامه') !== -1) return 'بسته';
+    if (r.indexOf('پر') !== -1) return 'پر';
+    if (r.indexOf('ماه') !== -1) return 'غیرفعال';
+    return r ? 'بسته' : '';
+  }
+
   function go(step) {
     qsa('.nm-step').forEach(function (b) { b.classList.toggle('is-active', String(b.getAttribute('data-step')) === String(step)); });
     qsa('.nm-panel').forEach(function (p) { p.classList.toggle('is-active', String(p.getAttribute('data-panel')) === String(step)); });
@@ -69,9 +87,10 @@
         if (isAvailable) availableDays++;
         var btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'nm-day' + (isAvailable ? ' is-available' : ' is-disabled') + (day.holiday ? ' is-holiday' : '') + (state.date === day.jalali ? ' is-selected' : '');
-        btn.innerHTML = day.d + (day.holiday ? '<small>تعطیل</small>' : (isAvailable ? '<small>' + day.slots + ' نوبت</small>' : ''));
-        btn.title = day.reason || day.holiday || (isAvailable ? 'انتخاب این روز' : '');
+        var isHoliday = !!day.holiday;
+        btn.className = 'nm-day' + (isAvailable ? ' is-available' : ' is-disabled') + (isHoliday ? ' is-holiday' : '') + (state.date === day.jalali ? ' is-selected' : '');
+        btn.innerHTML = day.d + '<small>' + daySubLabel(day) + '</small>';
+        btn.title = day.reason || day.holiday || (isAvailable ? 'انتخاب این روز' : 'این روز قابل رزرو نیست');
         if (isAvailable) {
           btn.addEventListener('click', function () {
             state.date = day.jalali;
@@ -91,7 +110,7 @@
         tip.style.marginTop = '12px';
         tip.textContent = d.has_schedule === false
           ? 'برنامه کاری تنظیم نشده. از پیشخوان نوبت من ← ساعات کاری را ذخیره کنید.'
-          : 'در این ماه روز قابل رزروی نیست. بازه تاریخ/ماه‌های فعال یا ساعات کاری را در تنظیمات نوبت من بررسی کنید.';
+          : 'در این ماه روز قابل رزروی نیست. در تنظیمات: تعطیل هفتگی (مثلاً جمعه)، بازه تاریخ، ماه‌های فعال و ساعات کاری را بررسی کنید. اگر بازه روی سال ۱۴۰۴ مانده، خالی‌اش کنید.';
         var oldTip = qs('.nm-cal-tip');
         if (oldTip) oldTip.remove();
         grid.parentNode.appendChild(tip);

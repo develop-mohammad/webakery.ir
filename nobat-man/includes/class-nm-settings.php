@@ -97,16 +97,18 @@ class NM_Settings {
 
 	/** بازه مجاز رزرو به timestamp (شروع/پایان روز سایت) */
 	public static function booking_window() {
-		$today = NM_Jalali::today();
-		$from  = trim( (string) self::get( 'booking_from', '' ) );
-		$until = trim( (string) self::get( 'booking_until', '' ) );
-		$ahead = max( 1, min( 24, (int) self::get( 'booking_months_ahead', 3 ) ) );
+		$today    = NM_Jalali::today();
+		$today_ts = self::day_ts( NM_Jalali::to_g_date( $today['y'], $today['m'], $today['d'] ) );
+		$from     = trim( (string) self::get( 'booking_from', '' ) );
+		$until    = trim( (string) self::get( 'booking_until', '' ) );
+		$ahead    = max( 1, min( 24, (int) self::get( 'booking_months_ahead', 3 ) ) );
+		$repaired = false;
 
 		if ( $from ) {
 			$p       = NM_Jalali::parse( $from );
 			$from_ts = $p ? self::day_ts( NM_Jalali::to_g_date( $p['y'], $p['m'], $p['d'] ) ) : 0;
 		} else {
-			$from_ts = self::day_ts( NM_Jalali::to_g_date( $today['y'], $today['m'], $today['d'] ) );
+			$from_ts = $today_ts;
 		}
 
 		if ( $until ) {
@@ -114,14 +116,23 @@ class NM_Settings {
 			$until_ts = $p ? self::day_ts( NM_Jalali::to_g_date( $p['y'], $p['m'], $p['d'] ), true ) : 0;
 		} else {
 			// ماه‌های جلو: تقریبی ۳۰ روز × تعداد
-			$until_ts = $from_ts + ( $ahead * 30 * DAY_IN_SECONDS );
+			$until_ts = max( $from_ts, $today_ts ) + ( $ahead * 30 * DAY_IN_SECONDS );
 		}
 
 		if ( $from_ts <= 0 ) {
-			$from_ts = self::day_ts( NM_Jalali::to_g_date( $today['y'], $today['m'], $today['d'] ) );
+			$from_ts = $today_ts;
 		}
+
+		// بازه منقضی (مثلاً تا تاریخ ۱۴۰۴): دیگر همه روزها را «خارج از بازه» نکن
+		if ( $until_ts < $today_ts ) {
+			$from_ts  = $today_ts;
+			$until_ts = $today_ts + ( $ahead * 30 * DAY_IN_SECONDS );
+			$repaired = true;
+		}
+
 		if ( $until_ts < $from_ts ) {
-			$until_ts = $from_ts + ( 90 * DAY_IN_SECONDS );
+			$until_ts = $from_ts + ( $ahead * 30 * DAY_IN_SECONDS );
+			$repaired = true;
 		}
 
 		return array(
@@ -130,6 +141,7 @@ class NM_Settings {
 			'from'     => $from,
 			'until'    => $until,
 			'ahead'    => $ahead,
+			'repaired' => $repaired,
 		);
 	}
 

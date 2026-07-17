@@ -5,7 +5,7 @@ Tags: appointment, booking, jalali, persian, woocommerce, counseling
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.6
+Stable tag: 1.0.7
 License: GPLv2 or later
 
 رزرو نوبت مشاوره با تقویم شمسی ایرانی، پرداخت ووکامرس، پنل مدرن و نسخه پرو.
@@ -50,7 +50,7 @@ License: GPLv2 or later
 
 == Changelog ==
 
-= 1.0.6 =
+= 1.0.7 =
 * تاریخ «امروز» شمسی با منطقه زمانی وردپرس (Asia/Tehran) — سال ۱۴۰۵
 * تعطیلات رسمی قمری سال ۱۴۰۵ به‌روز شد
 

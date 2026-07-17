@@ -36,14 +36,17 @@ class NM_Availability {
 			$reason = '';
 			$ok     = true;
 
+			$holiday_title = isset( $holidays[ $cell['jalali'] ] ) ? $holidays[ $cell['jalali'] ] : '';
+
 			if ( in_array( (int) $cell['weekday'], $closed, true ) ) {
 				$ok     = false;
-				$reason = 'تعطیل هفتگی';
+				$reason = 'بسته (تعطیل هفتگی)';
 			}
 
-			if ( $ok && $block_h && isset( $holidays[ $cell['jalali'] ] ) ) {
+			// فقط وقتی مسدودسازی تعطیلات رسمی روشن است، روز را ببند
+			if ( $ok && $block_h && $holiday_title ) {
 				$ok     = false;
-				$reason = $holidays[ $cell['jalali'] ];
+				$reason = $holiday_title;
 			}
 
 			$cell_ts = NM_Settings::day_ts( $cell['g_date'] );
@@ -64,7 +67,7 @@ class NM_Availability {
 
 			if ( $ok && self::is_exception_closed( $specialist_id, $cell['g_date'] ) ) {
 				$ok     = false;
-				$reason = 'تعطیل ویژه';
+				$reason = 'بسته (تعطیل ویژه)';
 			}
 
 			$slots = 0;
@@ -86,6 +89,9 @@ class NM_Availability {
 				$available_count++;
 			}
 
+			// برچسب «تعطیل» فقط وقتی واقعاً به‌خاطر تعطیل رسمی بسته شده
+			$show_holiday = ( ! $ok && $block_h && $holiday_title && $reason === $holiday_title ) ? $holiday_title : '';
+
 			$out[] = array(
 				'd'         => $cell['d'],
 				'jalali'    => $cell['jalali'],
@@ -94,7 +100,7 @@ class NM_Availability {
 				'available' => (bool) $ok,
 				'slots'     => (int) $slots,
 				'reason'    => $reason,
-				'holiday'   => isset( $holidays[ $cell['jalali'] ] ) ? $holidays[ $cell['jalali'] ] : '',
+				'holiday'   => $show_holiday,
 			);
 		}
 

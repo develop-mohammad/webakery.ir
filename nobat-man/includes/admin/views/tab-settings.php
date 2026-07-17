@@ -23,10 +23,10 @@ $active_months = array_map( 'intval', (array) ( $s['active_months'] ?? range( 1,
 	</div>
 
 	<h3>بازه تاریخ رزرو (شمسی)</h3>
-	<p class="nm-muted">اگر خالی بگذارید: از امروز تا ۳ ماه جلو باز است. برای محدود کردن، تاریخ شروع/پایان بگذارید.</p>
+	<p class="nm-muted">اگر خالی بگذارید: از امروز تا چند ماه جلو باز است. تاریخ‌ها باید سال جاری (۱۴۰۵) باشند؛ اگر بازهٔ قدیمی (مثلاً ۱۴۰۴) بماند، افزونه خودکار از امروز حساب می‌کند.</p>
 	<div class="nm-fields-admin">
-		<label>از تاریخ (مثال ۱۴۰۴/۰۵/۰۱)<input type="text" name="settings[booking_from]" value="<?php echo esc_attr( $s['booking_from'] ?? '' ); ?>" class="widefat nm-jalali-input" placeholder="خالی = از امروز" /></label>
-		<label>تا تاریخ (مثال ۱۴۰۴/۰۸/۳۰)<input type="text" name="settings[booking_until]" value="<?php echo esc_attr( $s['booking_until'] ?? '' ); ?>" class="widefat nm-jalali-input" placeholder="خالی = طبق ماه‌های جلو" /></label>
+		<label>از تاریخ (مثال ۱۴۰۵/۰۴/۰۱)<input type="text" name="settings[booking_from]" value="<?php echo esc_attr( $s['booking_from'] ?? '' ); ?>" class="widefat nm-jalali-input" placeholder="خالی = از امروز" /></label>
+		<label>تا تاریخ (مثال ۱۴۰۵/۰۷/۳۱)<input type="text" name="settings[booking_until]" value="<?php echo esc_attr( $s['booking_until'] ?? '' ); ?>" class="widefat nm-jalali-input" placeholder="خالی = طبق ماه‌های جلو" /></label>
 		<label>اگر «تا تاریخ» خالی است — چند ماه جلو؟<input type="number" name="settings[booking_months_ahead]" min="1" max="24" value="<?php echo esc_attr( $s['booking_months_ahead'] ?? 3 ); ?>" class="widefat" /></label>
 	</div>
 
@@ -38,13 +38,14 @@ $active_months = array_map( 'intval', (array) ( $s['active_months'] ?? range( 1,
 	</div>
 
 	<h3>تقویم شمسی و تعطیلی</h3>
-	<p>روزهای تعطیل هفتگی:</p>
+	<p>روزهای <strong>بستهٔ هفتگی</strong> (مثلاً اگر جمعه کار می‌کنید، تیک جمعه را بردارید):</p>
 	<div class="nm-check-row">
 		<?php foreach ( $days as $i => $name ) : ?>
 			<label><input type="checkbox" name="settings[closed_weekdays][]" value="<?php echo (int) $i; ?>" <?php checked( in_array( $i, $closed, true ) ); ?> /> <?php echo esc_html( $name ); ?></label>
 		<?php endforeach; ?>
 	</div>
-	<label><input type="checkbox" name="settings[block_holidays]" value="1" <?php checked( ! empty( $s['block_holidays'] ) ); ?> /> مسدود کردن تعطیلات رسمی ایران</label>
+	<label><input type="checkbox" name="settings[block_holidays]" value="1" <?php checked( ! empty( $s['block_holidays'] ) ); ?> /> مسدود کردن فقط تعطیلات رسمی ایران (نه روزهای عادی)</label>
+	<p class="nm-muted">روزهای «بسته» به‌خاطر تعطیل هفتگی یا نبودن ساعت کاری هستند؛ با تعطیل رسمی فرق دارند.</p>
 
 	<h3>پرداخت</h3>
 	<div class="nm-fields-admin">

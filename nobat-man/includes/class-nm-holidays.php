@@ -40,10 +40,10 @@ class NM_Holidays {
 			'1404/12/23' => 'مبعث',
 
 			// ۱۴۰۵ (تقویم رسمی مؤسسه ژئوفیزیک)
+			// فقط تعطیلات رسمی عمومی ۱۴۰۵ (تقویم مؤسسه ژئوفیزیک)
 			'1405/01/01' => 'عید فطر و عید نوروز',
-			'1405/01/02' => 'تعطیل عید فطر',
+			'1405/01/02' => 'عید فطر (روز دوم)',
 			'1405/01/25' => 'شهادت امام جعفر صادق',
-			'1405/03/03' => 'شهادت امام محمد باقر',
 			'1405/03/06' => 'عید قربان',
 			'1405/03/14' => 'عید غدیر',
 			'1405/04/03' => 'تاسوعا',
@@ -59,11 +59,12 @@ class NM_Holidays {
 			'1405/11/04' => 'نیمه شعبان',
 			'1405/12/09' => 'شهادت امام علی',
 			'1405/12/19' => 'عید فطر',
-			'1405/12/20' => 'عید فطر (تعطیلی)',
+			'1405/12/20' => 'عید فطر (روز دوم)',
 		);
 	}
 
 	public static function all_for_year( $jy ) {
+		$jy  = (int) $jy;
 		$out = array();
 		foreach ( self::fixed() as $jm => $days ) {
 			foreach ( $days as $jd => $title ) {
@@ -75,9 +76,12 @@ class NM_Holidays {
 		$custom = (array) NM_Settings::get( 'custom_holidays', array() );
 		$lunar  = array_merge( self::lunar_defaults(), $custom );
 		foreach ( $lunar as $date => $title ) {
-			if ( 0 === strpos( (string) $date, (string) $jy . '/' ) ) {
-				$out[ $date ] = $title;
+			$parsed = NM_Jalali::parse( (string) $date );
+			if ( ! $parsed || (int) $parsed['y'] !== $jy ) {
+				continue;
 			}
+			$key = NM_Jalali::format( $parsed['y'], $parsed['m'], $parsed['d'] );
+			$out[ $key ] = (string) $title;
 		}
 
 		/**
