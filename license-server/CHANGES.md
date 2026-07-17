@@ -153,3 +153,7 @@ curl "https://webakery.ir/license-server/api/?action=coupon_list" \
 ## 2026-07-17
 - افزودن محصول nobat-man (نوبت من) نسخه 1.0.2 — قیمت ۵۹۹,۰۰۰ تومان
 - آپلود بسته updates/nobat-man.zip
+
+## 2026-07-17 (price fix)
+- قیمت حسابدار (hesabdar) ثابت شد روی ۴۹۹,۰۰۰ تومان
+- پروموی منقضی‌شده ۷۹۹ حذف شد تا دوباره به ۷۹۹ برنگردد
