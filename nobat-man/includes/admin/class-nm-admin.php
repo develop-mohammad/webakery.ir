@@ -77,9 +77,14 @@ class NM_Admin {
 			if ( isset( $raw['booking_months_ahead'] ) ) { $data['booking_months_ahead'] = max( 1, min( 24, (int) $raw['booking_months_ahead'] ) ); }
 			if ( isset( $raw['payment_gateway'] ) ) {
 				$gw = sanitize_key( $raw['payment_gateway'] );
-				$data['payment_gateway'] = in_array( $gw, array( 'zibal', 'woocommerce', 'auto' ), true ) ? $gw : 'zibal';
+				$data['payment_gateway'] = in_array( $gw, array( 'zarinpal', 'zibal', 'woocommerce', 'auto' ), true ) ? $gw : 'auto';
 			}
-			if ( isset( $raw['zibal_merchant'] ) ) { $data['zibal_merchant'] = sanitize_text_field( $raw['zibal_merchant'] ); }
+			if ( isset( $raw['zibal_merchant'] ) ) {
+				$data['zibal_merchant'] = sanitize_text_field( $raw['zibal_merchant'] );
+			}
+			if ( isset( $raw['zarinpal_merchant'] ) ) {
+				$data['zarinpal_merchant'] = sanitize_text_field( $raw['zarinpal_merchant'] );
+			}
 			foreach ( array( 'default_price','default_duration','min_duration','max_duration','buffer_minutes','slot_step','block_holidays','enable_voice','enable_photo','max_upload_mb','require_email','require_city','require_gender','pending_ttl_hours','notify_email','notify_sms','enable_installments','installment_count','wc_product_id' ) as $n ) {
 				if ( isset( $data[ $n ] ) ) $data[ $n ] = (int) $data[ $n ];
 			}

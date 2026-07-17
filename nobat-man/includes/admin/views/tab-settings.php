@@ -49,15 +49,21 @@ $active_months = array_map( 'intval', (array) ( $s['active_months'] ?? range( 1,
 
 	<h3>پرداخت</h3>
 	<div class="nm-fields-admin">
-		<p class="nm-muted">اگر مرچنت‌کد زیبال نداشته باشید، افزونه می‌تواند از درگاه ووکامرس سایت شما استفاده کند.</p>
+		<p class="nm-muted">
+			اگر <strong>زرین‌پال</strong> دارید، مرچنت ۳۶ کاراکتری را پایین بگذارید و درگاه را «زرین‌پال» یا «خودکار» انتخاب کنید.
+			اگر افزونه زرین‌پال روی <strong>ووکامرس</strong> نصب است، درگاه را «ووکامرس» بگذارید.
+			خطای <code>invalid merchant</code> یعنی مرچنت زیبال اشتباه است — مرچنت زیبال را خالی کنید یا مرچنت درست خودتان را بگذارید.
+		</p>
 		<label>درگاه
 			<select name="settings[payment_gateway]" class="widefat">
-				<option value="auto" <?php selected( ($s['payment_gateway'] ?? 'auto'), 'auto' ); ?>>خودکار (اگر مرچنت زیبال بود زیبال، وگرنه ووکامرس)</option>
-				<option value="woocommerce" <?php selected( $s['payment_gateway'] ?? '', 'woocommerce' ); ?>>فقط ووکامرس</option>
-				<option value="zibal" <?php selected( $s['payment_gateway'] ?? '', 'zibal' ); ?>>فقط زیبال مستقیم</option>
+				<option value="auto" <?php selected( ( $s['payment_gateway'] ?? 'auto' ), 'auto' ); ?>>خودکار (زرین‌پال → ووکامرس → زیبال)</option>
+				<option value="zarinpal" <?php selected( $s['payment_gateway'] ?? '', 'zarinpal' ); ?>>زرین‌پال مستقیم</option>
+				<option value="woocommerce" <?php selected( $s['payment_gateway'] ?? '', 'woocommerce' ); ?>>ووکامرس (زرین‌پال/زیبال ووکامرس)</option>
+				<option value="zibal" <?php selected( $s['payment_gateway'] ?? '', 'zibal' ); ?>>زیبال مستقیم</option>
 			</select>
 		</label>
-		<label>مرچنت‌کد زیبال (اختیاری)<input type="text" name="settings[zibal_merchant]" value="<?php echo esc_attr( $s['zibal_merchant'] ?? '' ); ?>" class="widefat" dir="ltr" placeholder="اگر خالی باشد از ووکامرس استفاده می‌شود" /></label>
+		<label>مرچنت‌کد زرین‌پال<input type="text" name="settings[zarinpal_merchant]" value="<?php echo esc_attr( $s['zarinpal_merchant'] ?? '' ); ?>" class="widefat" dir="ltr" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" /></label>
+		<label>مرچنت‌کد زیبال (اختیاری)<input type="text" name="settings[zibal_merchant]" value="<?php echo esc_attr( $s['zibal_merchant'] ?? '' ); ?>" class="widefat" dir="ltr" placeholder="اگر invalid merchant می‌گیرید خالی بگذارید" /></label>
 	</div>
 
 	<h3>ظاهر</h3>

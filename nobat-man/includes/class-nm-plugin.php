@@ -79,6 +79,7 @@ class NM_Plugin {
 		}
 
 		NM_Zibal::instance();
+		NM_Zarinpal::instance();
 
 		NM_Notifications::instance();
 

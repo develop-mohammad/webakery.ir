@@ -36,6 +36,7 @@ class NM_Settings {
 			'wc_product_id'         => 0,
 			'payment_gateway'       => 'auto',
 			'zibal_merchant'        => '',
+			'zarinpal_merchant'     => '',
 			'notify_email'          => 1,
 			'notify_sms'            => 0,
 			'sms_provider'          => 'ippanel',

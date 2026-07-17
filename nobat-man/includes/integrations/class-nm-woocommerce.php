@@ -53,31 +53,41 @@ class NM_WooCommerce {
 			return '';
 		}
 
-		if ( null === WC()->cart ) {
+		// برای درخواست AJAX باید سشن/سبد ووکامرس واقعاً ساخته و ذخیره شود
+		if ( null === WC()->session ) {
 			if ( function_exists( 'wc_load_cart' ) ) {
 				wc_load_cart();
 			}
 		}
-		if ( WC()->cart ) {
-			WC()->cart->empty_cart();
-			WC()->cart->add_to_cart( $product_id, 1, 0, array(), array(
+		if ( WC()->session && method_exists( WC()->session, 'has_session' ) && ! WC()->session->has_session() ) {
+			WC()->session->set_customer_session_cookie( true );
+		}
+		if ( null === WC()->cart && function_exists( 'wc_load_cart' ) ) {
+			wc_load_cart();
+		}
+		if ( ! WC()->cart ) {
+			return '';
+		}
+
+		WC()->cart->empty_cart();
+		$added = WC()->cart->add_to_cart(
+			$product_id,
+			1,
+			0,
+			array(),
+			array(
 				'nm_booking_id'   => (int) $booking->id,
 				'nm_booking_code' => $booking->booking_code,
 				'nm_jalali_date'  => $booking->jalali_date,
-				'nm_start_time'   => substr( $booking->start_time, 0, 5 ),
+				'nm_start_time'   => substr( (string) $booking->start_time, 0, 5 ),
 				'nm_price'        => (int) $booking->price,
-			) );
+			)
+		);
+		if ( ! $added ) {
+			return '';
 		}
 
-		// قیمت سفارشی از طریق فیلتر
-		add_action( 'woocommerce_before_calculate_totals', function ( $cart ) use ( $booking ) {
-			if ( is_admin() && ! defined( 'DOING_AJAX' ) ) return;
-			foreach ( $cart->get_cart() as $item ) {
-				if ( ! empty( $item['nm_booking_id'] ) && (int) $item['nm_booking_id'] === (int) $booking->id ) {
-					$item['data']->set_price( (float) $booking->price );
-				}
-			}
-		}, 20 );
+		WC()->cart->calculate_totals();
 
 		return wc_get_checkout_url();
 	}

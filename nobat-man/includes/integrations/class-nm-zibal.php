@@ -27,9 +27,14 @@ class NM_Zibal {
 		return trim( (string) NM_Settings::get( 'zibal_merchant', '' ) );
 	}
 
-	/** آیا زیبال واقعاً قابل استفاده است؟ (مرچنت پر باشد) */
+	/** آیا زیبال واقعاً قابل استفاده است؟ (مرچنت شبیه UUID معتبر) */
 	public static function enabled() {
-		return self::merchant() !== '';
+		$m = self::merchant();
+		if ( '' === $m || in_array( strtolower( $m ), array( 'zibal', 'test', 'xxx' ), true ) ) {
+			return false;
+		}
+		// مرچنت واقعی زیبال معمولاً UUID است؛ مقدار کوتاه/نامعتبر را فعال نکن
+		return (bool) preg_match( '/^[0-9a-fA-F\-]{8,64}$/', $m );
 	}
 
 	/** ساخت لینک شروع پرداخت برای یک رزرو */
@@ -58,6 +63,15 @@ class NM_Zibal {
 			exit;
 		}
 
+		if ( ! self::enabled() ) {
+			$fallback = NM_Payments::fallback_url( $booking, 'zibal' );
+			if ( $fallback ) {
+				wp_safe_redirect( $fallback );
+				exit;
+			}
+			wp_die( 'مرچنت‌کد زیبال معتبر نیست. مرچنت خودتان را از پنل زیبال بگذارید، یا زرین‌پال/ووکامرس را انتخاب کنید.' );
+		}
+
 		$amount = (int) $booking->price * 10; // تومان → ریال
 		if ( $amount < 1000 ) {
 			wp_die( 'مبلغ نامعتبر است.' );
@@ -76,7 +90,19 @@ class NM_Zibal {
 		);
 
 		if ( empty( $resp['result'] ) || 100 !== (int) $resp['result'] || empty( $resp['trackId'] ) ) {
-			wp_die( 'خطا در اتصال به درگاه زیبال: ' . esc_html( $resp['message'] ?? (string) ( $resp['result'] ?? '' ) ) );
+			$msg = (string) ( $resp['message'] ?? (string) ( $resp['result'] ?? '' ) );
+			// invalid merchant و مشابه → سراغ درگاه جایگزین
+			if ( false !== stripos( $msg, 'merchant' ) || false !== stripos( $msg, 'مرچنت' ) ) {
+				$fallback = NM_Payments::fallback_url( $booking, 'zibal' );
+				if ( $fallback ) {
+					wp_safe_redirect( $fallback );
+					exit;
+				}
+			}
+			wp_die(
+				'خطا در اتصال به درگاه زیبال: ' . esc_html( $msg )
+				. '<br><br>اگر زرین‌پال دارید: در تنظیمات نوبت من، درگاه را «زرین‌پال» یا «ووکامرس» بگذارید و مرچنت زرین‌پال را وارد کنید.'
+			);
 		}
 
 		$track = (string) $resp['trackId'];

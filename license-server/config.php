@@ -97,12 +97,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه ۱.۹.۱: کارهای دسته‌جمعی تغییر وضعیت، لیست سفارش با ستون محصول، ویرایش/ایجاد سفارش.',
     ],
     'nobat-man' => [
-        'version'      => '1.0.8',
+        'version'      => '1.0.9',
         'package'      => 'https://webakery.ir/license-server/updates/nobat-man.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۰.۸: اصلاح خودکار روزهای کاری برعکس‌شده؛ تقویم دوباره قابل رزرو می‌شود.',
+        'changelog'    => 'نسخه ۱.۰.۹: درگاه زرین‌پال + اصلاح invalid merchant زیبال و اولویت پرداخت.',
     ],
 ] );
 

@@ -3,13 +3,20 @@ defined( 'ABSPATH' ) || exit;
 $s = NM_Settings::all();
 ?>
 <div class="nm-panel-card">
+	<h3>زرین‌پال</h3>
+	<p>وضعیت: <?php echo NM_Zarinpal::enabled() ? '✅ مرچنت معتبر ثبت شده' : '⚠️ مرچنت ثبت نشده یا نامعتبر'; ?></p>
+	<p>مرچنت فعلی: <code dir="ltr"><?php echo esc_html( $s['zarinpal_merchant'] ?? '' ); ?></code></p>
+	<p>مرچنت ۳۶ کاراکتری را از پنل زرین‌پال کپی کنید و در تب تنظیمات ذخیره کنید. نیازی به ووکامرس نیست.</p>
+</div>
+<div class="nm-panel-card">
 	<h3>درگاه زیبال</h3>
+	<p>وضعیت: <?php echo NM_Zibal::enabled() ? '✅ مرچنت ثبت شده' : '⚠️ مرچنت خالی/نامعتبر'; ?></p>
 	<p>مرچنت‌کد فعلی: <code dir="ltr"><?php echo esc_html( $s['zibal_merchant'] ?? '' ); ?></code></p>
-	<p>از تب تنظیمات می‌توانید درگاه و مرچنت را تغییر دهید. پرداخت مستقیم زیبال بدون نیاز به ووکامرس کار می‌کند.</p>
+	<p>اگر خطای <code>invalid merchant</code> می‌بینید، مرچنت زیبال را خالی کنید و از زرین‌پال یا ووکامرس استفاده کنید.</p>
 </div>
 <div class="nm-panel-card">
 	<h3>ووکامرس</h3>
-	<p><?php echo class_exists( 'WooCommerce' ) ? '✅ ووکامرس فعال است.' : '⚠️ ووکامرس نصب نیست — پرداخت آنلاین غیرفعال.'; ?></p>
+	<p><?php echo class_exists( 'WooCommerce' ) ? '✅ ووکامرس فعال است — می‌توانید افزونه زرین‌پال/زیبال ووکامرس را برای پرداخت استفاده کنید.' : '⚠️ ووکامرس نصب نیست.'; ?></p>
 	<form method="post">
 		<?php wp_nonce_field( 'nm_settings' ); ?>
 		<input type="hidden" name="nm_save_settings" value="1" />

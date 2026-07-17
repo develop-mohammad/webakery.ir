@@ -46,6 +46,8 @@ class NM_Autoload {
 			'NM_Admin_Export'      => 'includes/admin/class-nm-admin-export.php',
 			'NM_WooCommerce'       => 'includes/integrations/class-nm-woocommerce.php',
 			'NM_Zibal'             => 'includes/integrations/class-nm-zibal.php',
+			'NM_Zarinpal'          => 'includes/integrations/class-nm-zarinpal.php',
+			'NM_Payments'          => 'includes/integrations/class-nm-payments.php',
 			'NM_Hesabdar'          => 'includes/integrations/class-nm-hesabdar.php',
 			'NM_Google_Calendar'   => 'includes/integrations/class-nm-google-calendar.php',
 			'NM_SMS'               => 'includes/integrations/class-nm-sms.php',

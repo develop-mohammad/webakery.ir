@@ -160,25 +160,6 @@ class NM_Ajax {
 	}
 
 	private static function resolve_pay_url( $booking ) {
-		$gw = NM_Settings::get( 'payment_gateway', 'auto' );
-		$has_zibal = NM_Zibal::enabled();
-		$has_wc    = class_exists( 'WooCommerce' );
-
-		// انتخاب صریح
-		if ( 'zibal' === $gw ) {
-			return $has_zibal ? NM_Zibal::pay_url_for_booking( $booking ) : ( $has_wc ? NM_WooCommerce::create_checkout_for_booking( $booking ) : '' );
-		}
-		if ( 'woocommerce' === $gw ) {
-			return $has_wc ? NM_WooCommerce::create_checkout_for_booking( $booking ) : ( $has_zibal ? NM_Zibal::pay_url_for_booking( $booking ) : '' );
-		}
-
-		// auto: اول مرچنت زیبال، اگر نبود ووکامرس
-		if ( $has_zibal ) {
-			return NM_Zibal::pay_url_for_booking( $booking );
-		}
-		if ( $has_wc ) {
-			return NM_WooCommerce::create_checkout_for_booking( $booking );
-		}
-		return '';
+		return NM_Payments::pay_url_for_booking( $booking );
 	}
 }
