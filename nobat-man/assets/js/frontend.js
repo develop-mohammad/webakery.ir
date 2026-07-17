@@ -91,7 +91,7 @@
         tip.style.marginTop = '12px';
         tip.textContent = d.has_schedule === false
           ? 'برنامه کاری تنظیم نشده. از پیشخوان نوبت من ← ساعات کاری را ذخیره کنید.'
-          : 'در این ماه روز قابل رزروی نیست. ماه بعد را امتحان کنید یا ساعات کاری را بررسی کنید.';
+          : 'در این ماه روز قابل رزروی نیست. بازه تاریخ/ماه‌های فعال یا ساعات کاری را در تنظیمات نوبت من بررسی کنید.';
         var oldTip = qs('.nm-cal-tip');
         if (oldTip) oldTip.remove();
         grid.parentNode.appendChild(tip);

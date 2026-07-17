@@ -78,6 +78,8 @@ class NM_Plugin {
 			NM_WooCommerce::instance();
 		}
 
+		NM_Zibal::instance();
+
 		NM_Notifications::instance();
 
 		if ( NM_Pro::is_active() ) {

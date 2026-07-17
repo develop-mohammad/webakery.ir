@@ -11,7 +11,7 @@ define( 'LS_DB_USER', 'YOUR_DB_USER' );   // نام کاربری دیتابیس
 define( 'LS_DB_PASS', 'YOUR_DB_PASS' );   // رمز عبور دیتابیس
 
 // ─── تنظیمات پرداخت زیبال ───────────────────────────────────────
-define( 'ZIBAL_MERCHANT', 'YOUR_ZIBAL_MERCHANT' );
+define( 'ZIBAL_MERCHANT', 'fc6fd44c-0e7d-4693-ae42-f7ccc29116d9' );
 
 // ─── قیمت جداگانه برای هر محصول (به ریال) — این «قیمت اصلی/همیشگی» است ────
 define( 'LS_PRICES', [
@@ -97,12 +97,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه ۱.۹.۱: کارهای دسته‌جمعی تغییر وضعیت، لیست سفارش با ستون محصول، ویرایش/ایجاد سفارش.',
     ],
     'nobat-man' => [
-        'version'      => '1.0.3',
+        'version'      => '1.0.4',
         'package'      => 'https://webakery.ir/license-server/updates/nobat-man.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۰.۳: بنر هیرو روشن و شیک‌تر؛ متن سفید خوانا.',
+        'changelog'    => 'نسخه ۱.۰.۴: بازه رزرو، ماه‌های فعال، درگاه زیبال، رفع تقویم.',
     ],
 ] );
 

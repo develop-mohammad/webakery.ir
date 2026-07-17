@@ -51,6 +51,19 @@ class NM_Admin {
 			} else {
 				$data['closed_weekdays'] = array();
 			}
+			if ( isset( $raw['active_months'] ) && is_array( $raw['active_months'] ) ) {
+				$data['active_months'] = array_values( array_unique( array_map( 'intval', $raw['active_months'] ) ) );
+			} else {
+				$data['active_months'] = array();
+			}
+			if ( isset( $raw['booking_from'] ) ) { $data['booking_from'] = sanitize_text_field( $raw['booking_from'] ); }
+			if ( isset( $raw['booking_until'] ) ) { $data['booking_until'] = sanitize_text_field( $raw['booking_until'] ); }
+			if ( isset( $raw['booking_months_ahead'] ) ) { $data['booking_months_ahead'] = max( 1, min( 24, (int) $raw['booking_months_ahead'] ) ); }
+			if ( isset( $raw['payment_gateway'] ) ) {
+				$gw = sanitize_key( $raw['payment_gateway'] );
+				$data['payment_gateway'] = in_array( $gw, array( 'zibal', 'woocommerce', 'auto' ), true ) ? $gw : 'zibal';
+			}
+			if ( isset( $raw['zibal_merchant'] ) ) { $data['zibal_merchant'] = sanitize_text_field( $raw['zibal_merchant'] ); }
 			foreach ( array( 'default_price','default_duration','min_duration','max_duration','buffer_minutes','slot_step','block_holidays','enable_voice','enable_photo','max_upload_mb','require_email','require_city','require_gender','pending_ttl_hours','notify_email','notify_sms','enable_installments','installment_count','wc_product_id' ) as $n ) {
 				if ( isset( $data[ $n ] ) ) $data[ $n ] = (int) $data[ $n ];
 			}

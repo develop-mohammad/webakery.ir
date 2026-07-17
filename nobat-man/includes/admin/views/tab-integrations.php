@@ -3,6 +3,11 @@ defined( 'ABSPATH' ) || exit;
 $s = NM_Settings::all();
 ?>
 <div class="nm-panel-card">
+	<h3>درگاه زیبال</h3>
+	<p>مرچنت‌کد فعلی: <code dir="ltr"><?php echo esc_html( $s['zibal_merchant'] ?? '' ); ?></code></p>
+	<p>از تب تنظیمات می‌توانید درگاه و مرچنت را تغییر دهید. پرداخت مستقیم زیبال بدون نیاز به ووکامرس کار می‌کند.</p>
+</div>
+<div class="nm-panel-card">
 	<h3>ووکامرس</h3>
 	<p><?php echo class_exists( 'WooCommerce' ) ? '✅ ووکامرس فعال است.' : '⚠️ ووکامرس نصب نیست — پرداخت آنلاین غیرفعال.'; ?></p>
 	<form method="post">

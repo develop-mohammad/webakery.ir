@@ -2,9 +2,16 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * موتور اسلات‌های قابل رزرو — سبک و بدون فشار.
+ * موتور اسلات‌های قابل رزرو.
  */
 class NM_Availability {
+
+	public static function table_exists( $table ) {
+		global $wpdb;
+		$like  = $wpdb->esc_like( $table );
+		$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) );
+		return ( $found === $table );
+	}
 
 	public static function month_status( $jy, $jm, $specialist_id = 0 ) {
 		self::ensure_default_schedule();
@@ -15,8 +22,9 @@ class NM_Availability {
 		$holidays = NM_Holidays::all_for_year( $jy );
 		$today    = NM_Jalali::today();
 		$today_ts = strtotime( NM_Jalali::to_g_date( $today['y'], $today['m'], $today['d'] ) . ' 00:00:00' );
+		$window   = NM_Settings::booking_window();
 
-		$out = array();
+		$out             = array();
 		$available_count = 0;
 
 		foreach ( $grid as $cell ) {
@@ -42,6 +50,16 @@ class NM_Availability {
 			if ( $ok && $cell_ts < $today_ts ) {
 				$ok     = false;
 				$reason = 'گذشته';
+			}
+
+			if ( $ok && ! NM_Settings::is_month_active( (int) $jm ) ) {
+				$ok     = false;
+				$reason = 'این ماه فعال نیست';
+			}
+
+			if ( $ok && ( $cell_ts < $window['from_ts'] || $cell_ts > $window['until_ts'] ) ) {
+				$ok     = false;
+				$reason = 'خارج از بازه رزرو';
 			}
 
 			if ( $ok && self::is_exception_closed( $specialist_id, $cell['g_date'] ) ) {
@@ -88,6 +106,11 @@ class NM_Availability {
 			'days'            => $out,
 			'available_count' => $available_count,
 			'has_schedule'    => self::has_any_schedule( $specialist_id ),
+			'window'          => array(
+				'from'  => $window['from'],
+				'until' => $window['until'],
+				'ahead' => $window['ahead'],
+			),
 		);
 	}
 
@@ -95,8 +118,7 @@ class NM_Availability {
 		global $wpdb;
 		$table = $wpdb->prefix . 'nm_schedules';
 
-		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
-		if ( ! $exists ) {
+		if ( ! self::table_exists( $table ) ) {
 			NM_Install::create_tables();
 		}
 
@@ -123,7 +145,10 @@ class NM_Availability {
 	public static function has_any_schedule( $specialist_id = 0 ) {
 		global $wpdb;
 		$table = $wpdb->prefix . 'nm_schedules';
-		$id    = $wpdb->get_var(
+		if ( ! self::table_exists( $table ) ) {
+			return false;
+		}
+		$id = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT id FROM {$table} WHERE is_active = 1 AND specialist_id IN (0, %d) LIMIT 1",
 				$specialist_id
@@ -241,7 +266,7 @@ class NM_Availability {
 		self::ensure_default_schedule();
 
 		$has_specific = false;
-		if ( $specialist_id > 0 ) {
+		if ( $specialist_id > 0 && self::table_exists( $table ) ) {
 			$has_specific = (bool) $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT id FROM {$table} WHERE specialist_id = %d AND weekday = %d AND is_active = 1 LIMIT 1",
@@ -251,23 +276,26 @@ class NM_Availability {
 			);
 		}
 
-		if ( $has_specific ) {
-			$rows = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT start_time, end_time FROM {$table} WHERE specialist_id = %d AND weekday = %d AND is_active = 1 ORDER BY start_time",
-					$specialist_id,
-					$weekday
-				),
-				ARRAY_A
-			);
-		} else {
-			$rows = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT start_time, end_time FROM {$table} WHERE specialist_id = 0 AND weekday = %d AND is_active = 1 ORDER BY start_time",
-					$weekday
-				),
-				ARRAY_A
-			);
+		$rows = array();
+		if ( self::table_exists( $table ) ) {
+			if ( $has_specific ) {
+				$rows = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT start_time, end_time FROM {$table} WHERE specialist_id = %d AND weekday = %d AND is_active = 1 ORDER BY start_time",
+						$specialist_id,
+						$weekday
+					),
+					ARRAY_A
+				);
+			} else {
+				$rows = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT start_time, end_time FROM {$table} WHERE specialist_id = 0 AND weekday = %d AND is_active = 1 ORDER BY start_time",
+						$weekday
+					),
+					ARRAY_A
+				);
+			}
 		}
 
 		if ( ! empty( $rows ) ) {
@@ -279,9 +307,8 @@ class NM_Availability {
 
 	public static function is_exception_closed( $specialist_id, $g_date ) {
 		global $wpdb;
-		$table  = $wpdb->prefix . 'nm_exceptions';
-		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
-		if ( ! $exists ) {
+		$table = $wpdb->prefix . 'nm_exceptions';
+		if ( ! self::table_exists( $table ) ) {
 			return false;
 		}
 		$id = $wpdb->get_var(
@@ -296,9 +323,8 @@ class NM_Availability {
 
 	public static function booked_ranges( $specialist_id, $g_date ) {
 		global $wpdb;
-		$table  = $wpdb->prefix . 'nm_bookings';
-		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
-		if ( ! $exists ) {
+		$table = $wpdb->prefix . 'nm_bookings';
+		if ( ! self::table_exists( $table ) ) {
 			return array();
 		}
 
@@ -316,9 +342,9 @@ class NM_Availability {
 		$buffer = self::buffer_for( $specialist_id );
 		$ranges = array();
 		foreach ( (array) $rows as $r ) {
-			$s         = self::time_to_min( $r['start_time'] );
-			$e         = self::time_to_min( $r['end_time'] ) + $buffer;
-			$ranges[]  = array( $s, $e );
+			$s        = self::time_to_min( $r['start_time'] );
+			$e        = self::time_to_min( $r['end_time'] ) + $buffer;
+			$ranges[] = array( $s, $e );
 		}
 		return $ranges;
 	}

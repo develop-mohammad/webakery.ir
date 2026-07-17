@@ -8,7 +8,7 @@
 |------|--------|
 | شناسه | `nobat-man` |
 | قیمت | ۵۹۹,۰۰۰ تومان (۵۹۹۰۰۰۰ ریال) |
-| نسخه فعلی | **1.0.3** |
+| نسخه فعلی | **1.0.4** |
 | بسته آپدیت | `license-server/updates/nobat-man.zip` |
 | URL بسته | `https://webakery.ir/license-server/updates/nobat-man.zip` |
 
@@ -29,7 +29,7 @@
 
 // LS_UPDATES
 'nobat-man' => [
-    'version'      => '1.0.3',
+    'version'      => '1.0.4',
     'package'      => 'https://webakery.ir/license-server/updates/nobat-man.zip',
     'requires'     => '5.8',
     'tested'       => '6.7',

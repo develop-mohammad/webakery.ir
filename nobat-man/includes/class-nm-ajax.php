@@ -103,8 +103,15 @@ class NM_Ajax {
 		}
 
 		$pay_url = '';
-		if ( class_exists( 'WooCommerce' ) ) {
+		$gw = NM_Settings::get( 'payment_gateway', 'zibal' );
+		if ( 'woocommerce' === $gw && class_exists( 'WooCommerce' ) ) {
 			$pay_url = NM_WooCommerce::create_checkout_for_booking( $booking );
+		} elseif ( in_array( $gw, array( 'zibal', 'auto' ), true ) && NM_Zibal::enabled() ) {
+			$pay_url = NM_Zibal::pay_url_for_booking( $booking );
+		} elseif ( class_exists( 'WooCommerce' ) ) {
+			$pay_url = NM_WooCommerce::create_checkout_for_booking( $booking );
+		} elseif ( NM_Zibal::enabled() ) {
+			$pay_url = NM_Zibal::pay_url_for_booking( $booking );
 		}
 
 		wp_send_json_success( array(

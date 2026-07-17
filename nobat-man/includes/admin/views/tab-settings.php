@@ -2,7 +2,9 @@
 defined( 'ABSPATH' ) || exit;
 $s = NM_Settings::all();
 $days = NM_Jalali::weekday_names();
+$months = NM_Jalali::month_names();
 $closed = array_map( 'intval', (array) $s['closed_weekdays'] );
+$active_months = array_map( 'intval', (array) ( $s['active_months'] ?? range( 1, 12 ) ) );
 ?>
 <form method="post" class="nm-panel-card">
 	<?php wp_nonce_field( 'nm_settings' ); ?>
@@ -20,6 +22,21 @@ $closed = array_map( 'intval', (array) $s['closed_weekdays'] );
 		<label>گام اسلات (دقیقه)<input type="number" name="settings[slot_step]" value="<?php echo esc_attr( $s['slot_step'] ); ?>" class="widefat" /></label>
 	</div>
 
+	<h3>بازه تاریخ رزرو (شمسی)</h3>
+	<p class="nm-muted">اگر خالی بگذارید: از امروز تا ۳ ماه جلو باز است. برای محدود کردن، تاریخ شروع/پایان بگذارید.</p>
+	<div class="nm-fields-admin">
+		<label>از تاریخ (مثال ۱۴۰۴/۰۵/۰۱)<input type="text" name="settings[booking_from]" value="<?php echo esc_attr( $s['booking_from'] ?? '' ); ?>" class="widefat nm-jalali-input" placeholder="خالی = از امروز" /></label>
+		<label>تا تاریخ (مثال ۱۴۰۴/۰۸/۳۰)<input type="text" name="settings[booking_until]" value="<?php echo esc_attr( $s['booking_until'] ?? '' ); ?>" class="widefat nm-jalali-input" placeholder="خالی = طبق ماه‌های جلو" /></label>
+		<label>اگر «تا تاریخ» خالی است — چند ماه جلو؟<input type="number" name="settings[booking_months_ahead]" min="1" max="24" value="<?php echo esc_attr( $s['booking_months_ahead'] ?? 3 ); ?>" class="widefat" /></label>
+	</div>
+
+	<h3>ماه‌های فعال سال شمسی</h3>
+	<div class="nm-check-row">
+		<?php foreach ( $months as $i => $name ) : $m = $i + 1; ?>
+			<label><input type="checkbox" name="settings[active_months][]" value="<?php echo (int) $m; ?>" <?php checked( in_array( $m, $active_months, true ) ); ?> /> <?php echo esc_html( $name ); ?></label>
+		<?php endforeach; ?>
+	</div>
+
 	<h3>تقویم شمسی و تعطیلی</h3>
 	<p>روزهای تعطیل هفتگی:</p>
 	<div class="nm-check-row">
@@ -28,6 +45,18 @@ $closed = array_map( 'intval', (array) $s['closed_weekdays'] );
 		<?php endforeach; ?>
 	</div>
 	<label><input type="checkbox" name="settings[block_holidays]" value="1" <?php checked( ! empty( $s['block_holidays'] ) ); ?> /> مسدود کردن تعطیلات رسمی ایران</label>
+
+	<h3>پرداخت</h3>
+	<div class="nm-fields-admin">
+		<label>درگاه
+			<select name="settings[payment_gateway]" class="widefat">
+				<option value="zibal" <?php selected( $s['payment_gateway'] ?? 'zibal', 'zibal' ); ?>>زیبال (مستقیم)</option>
+				<option value="woocommerce" <?php selected( $s['payment_gateway'] ?? '', 'woocommerce' ); ?>>ووکامرس</option>
+				<option value="auto" <?php selected( $s['payment_gateway'] ?? '', 'auto' ); ?>>خودکار (زیبال، وگرنه ووکامرس)</option>
+			</select>
+		</label>
+		<label>مرچنت‌کد زیبال<input type="text" name="settings[zibal_merchant]" value="<?php echo esc_attr( $s['zibal_merchant'] ?? 'fc6fd44c-0e7d-4693-ae42-f7ccc29116d9' ); ?>" class="widefat" dir="ltr" /></label>
+	</div>
 
 	<h3>ظاهر</h3>
 	<div class="nm-fields-admin">
