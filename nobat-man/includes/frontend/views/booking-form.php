@@ -8,9 +8,12 @@ $pre_sp = (int) ( $atts['specialist_id'] ?? 0 );
 ?>
 <div class="nm-app" dir="rtl" style="--nm-primary:<?php echo esc_attr( $s['primary_color'] ); ?>;--nm-accent:<?php echo esc_attr( $s['accent_color'] ); ?>">
 	<div class="nm-hero">
-		<div class="nm-hero-badge">رزرو نوبت مشاوره</div>
-		<h2 class="nm-hero-title"><?php echo esc_html( $s['business_name'] ); ?></h2>
-		<p class="nm-hero-sub">تقویم شمسی ایرانی · انتخاب آنلاین · پرداخت امن</p>
+		<div class="nm-hero-glow" aria-hidden="true"></div>
+		<div class="nm-hero-content">
+			<div class="nm-hero-badge">رزرو نوبت مشاوره</div>
+			<h2 class="nm-hero-title"><?php echo esc_html( $s['business_name'] ); ?></h2>
+			<p class="nm-hero-sub">تقویم شمسی ایرانی · انتخاب آنلاین · پرداخت امن</p>
+		</div>
 	</div>
 
 	<div class="nm-steps">

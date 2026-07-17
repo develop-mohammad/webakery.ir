@@ -17,13 +17,47 @@
 	direction:rtl;
 }
 .nm-hero{
-	background:linear-gradient(135deg,var(--nm-primary),#4c1d95 55%,var(--nm-accent));
-	color:#fff;border-radius:24px;padding:28px 24px;margin-bottom:18px;
-	box-shadow:var(--nm-shadow);position:relative;overflow:hidden;
+	background:linear-gradient(120deg,#7c3aed 0%,#6d28d9 42%,#0891b2 100%);
+	color:#fff!important;
+	border-radius:28px;
+	padding:32px 28px;
+	margin-bottom:18px;
+	box-shadow:0 22px 50px rgba(109,40,217,.28);
+	position:relative;
+	overflow:hidden;
+	overlay:none;
 }
-.nm-hero-badge{display:inline-block;background:rgba(255,255,255,.18);padding:6px 12px;border-radius:999px;font-size:12px;margin-bottom:10px}
-.nm-hero-title{margin:0 0 6px;font-size:28px}
-.nm-hero-sub{margin:0;opacity:.9}
+.nm-hero-glow{
+	position:absolute;inset:auto -20% -40% auto;width:280px;height:280px;
+	background:radial-gradient(circle,rgba(255,255,255,.35),transparent 70%);
+	pointer-events:none;filter:blur(2px);
+}
+.nm-hero-content{position:relative;z-index:1}
+.nm-hero-badge{
+	display:inline-flex;align-items:center;gap:6px;
+	background:rgba(255,255,255,.22);
+	backdrop-filter:blur(8px);
+	-webkit-backdrop-filter:blur(8px);
+	border:1px solid rgba(255,255,255,.35);
+	padding:7px 14px;border-radius:999px;
+	font-size:12px;font-weight:600;letter-spacing:.2px;
+	color:#fff!important;margin-bottom:14px;
+}
+.nm-hero-title{
+	margin:0 0 10px!important;
+	font-size:clamp(22px,4vw,32px)!important;
+	line-height:1.45!important;
+	font-weight:800!important;
+	color:#fff!important;
+	text-shadow:0 2px 14px rgba(15,23,42,.25);
+}
+.nm-hero-sub{
+	margin:0!important;
+	color:rgba(255,255,255,.92)!important;
+	font-size:14px!important;
+	font-weight:500;
+	text-shadow:0 1px 8px rgba(15,23,42,.18);
+}
 .nm-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
 .nm-step{border:0;background:#fff;border-radius:14px;padding:12px 8px;font-family:inherit;cursor:pointer;color:var(--nm-muted);box-shadow:0 1px 0 rgba(15,23,42,.04)}
 .nm-step.is-active{background:var(--nm-primary);color:#fff;font-weight:700}

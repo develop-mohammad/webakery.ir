@@ -100,12 +100,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه ۱.۹.۱: کارهای دسته‌جمعی تغییر وضعیت، لیست سفارش با ستون محصول، ویرایش/ایجاد سفارش.',
     ],
     'nobat-man' => [
-        'version'      => '1.0.2',
+        'version'      => '1.0.3',
         'package'      => 'https://webakery.ir/license-server/updates/nobat-man.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۰.۲: رفع انتخاب روز در تقویم شمسی، برنامه کاری پیش‌فرض خودکار.',
+        'changelog'    => 'نسخه ۱.۰.۳: بنر هیرو روشن و شیک‌تر؛ متن سفید خوانا.',
     ],
 ] );
 
