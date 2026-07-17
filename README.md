@@ -15,3 +15,13 @@
 - شورت‌کد: `[nobat_man]`
 
 برای ثبت محصول روی سرور لایسنس، فایل `license-server-updates/ADD-NOBAT-MAN.md` را ببینید.
+
+
+## سکوت نوتیف (Quiet Notices)
+
+خاموش کردن نوتیفیکیشن‌های شلوغ افزونه‌ها در پیشخوان وردپرس.
+
+- نسخه: **1.0.0**
+- سازنده: **webakery.ir**
+- مسیر: `webakery-quiet-notices/`
+- ZIP: `webakery-quiet-notices.zip`
