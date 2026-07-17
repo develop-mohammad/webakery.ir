@@ -15,6 +15,26 @@ class NM_Jalali {
 		return array( 'شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه' );
 	}
 
+	/** تاریخ/زمان فعلی در منطقهٔ زمانی وردپرس */
+	public static function now() {
+		if ( function_exists( 'wp_timezone' ) ) {
+			return new DateTimeImmutable( 'now', wp_timezone() );
+		}
+		$tz_string = function_exists( 'get_option' ) ? (string) get_option( 'timezone_string', '' ) : '';
+		if ( $tz_string ) {
+			try {
+				return new DateTimeImmutable( 'now', new DateTimeZone( $tz_string ) );
+			} catch ( Exception $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
+			}
+		}
+		// تهران به‌عنوان پیش‌فرض معقول برای سایت‌های ایرانی
+		try {
+			return new DateTimeImmutable( 'now', new DateTimeZone( 'Asia/Tehran' ) );
+		} catch ( Exception $e ) {
+			return new DateTimeImmutable( 'now' );
+		}
+	}
+
 	public static function to_gregorian( $jy, $jm, $jd ) {
 		$jy  = (int) $jy; $jm = (int) $jm; $jd = (int) $jd;
 		$jy += 1595;
@@ -70,16 +90,30 @@ class NM_Jalali {
 	}
 
 	public static function today() {
-		$now = current_time( 'timestamp' );
-		list( $jy, $jm, $jd ) = self::to_jalali( (int) date( 'Y', $now ), (int) date( 'n', $now ), (int) date( 'j', $now ) );
+		$dt = self::now();
+		list( $jy, $jm, $jd ) = self::to_jalali(
+			(int) $dt->format( 'Y' ),
+			(int) $dt->format( 'n' ),
+			(int) $dt->format( 'j' )
+		);
 		return array( 'y' => $jy, 'm' => $jm, 'd' => $jd );
 	}
 
 	/** شنبه=0 … جمعه=6 */
 	public static function weekday( $jy, $jm, $jd ) {
-		$g  = self::to_gregorian( $jy, $jm, $jd );
-		$ts = mktime( 12, 0, 0, $g[1], $g[2], $g[0] );
-		return ( (int) date( 'w', $ts ) + 1 ) % 7;
+		$g = self::to_gregorian( $jy, $jm, $jd );
+		try {
+			$tz = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+			$dt = new DateTimeImmutable(
+				sprintf( '%04d-%02d-%02d 12:00:00', $g[0], $g[1], $g[2] ),
+				$tz
+			);
+			// PHP: 0=یکشنبه … 6=شنبه → شمسی: شنبه=0
+			return ( (int) $dt->format( 'w' ) + 1 ) % 7;
+		} catch ( Exception $e ) {
+			$ts = gmmktime( 12, 0, 0, $g[1], $g[2], $g[0] );
+			return ( (int) gmdate( 'w', $ts ) + 1 ) % 7;
+		}
 	}
 
 	public static function format( $jy, $jm, $jd ) {

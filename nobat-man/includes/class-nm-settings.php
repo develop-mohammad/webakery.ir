@@ -81,6 +81,20 @@ class NM_Settings {
 		return number_format_i18n( $amount ) . ' ' . $label;
 	}
 
+	/** تبدیل تاریخ میلادی Y-m-d به timestamp نیمه‌شب/انتهای روز در TZ سایت */
+	public static function day_ts( $g_date, $end_of_day = false ) {
+		$g_date = preg_replace( '/[^0-9\-]/', '', (string) $g_date );
+		$time   = $end_of_day ? '23:59:59' : '00:00:00';
+		try {
+			$tz = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'Asia/Tehran' );
+			$dt = new DateTimeImmutable( $g_date . ' ' . $time, $tz );
+			return $dt->getTimestamp();
+		} catch ( Exception $e ) {
+			$ts = strtotime( $g_date . ' ' . $time );
+			return $ts ? $ts : 0;
+		}
+	}
+
 	/** بازه مجاز رزرو به timestamp (شروع/پایان روز سایت) */
 	public static function booking_window() {
 		$today = NM_Jalali::today();
@@ -89,22 +103,22 @@ class NM_Settings {
 		$ahead = max( 1, min( 24, (int) self::get( 'booking_months_ahead', 3 ) ) );
 
 		if ( $from ) {
-			$p = NM_Jalali::parse( $from );
-			$from_ts = $p ? strtotime( NM_Jalali::to_g_date( $p['y'], $p['m'], $p['d'] ) . ' 00:00:00' ) : 0;
+			$p       = NM_Jalali::parse( $from );
+			$from_ts = $p ? self::day_ts( NM_Jalali::to_g_date( $p['y'], $p['m'], $p['d'] ) ) : 0;
 		} else {
-			$from_ts = strtotime( NM_Jalali::to_g_date( $today['y'], $today['m'], $today['d'] ) . ' 00:00:00' );
+			$from_ts = self::day_ts( NM_Jalali::to_g_date( $today['y'], $today['m'], $today['d'] ) );
 		}
 
 		if ( $until ) {
-			$p = NM_Jalali::parse( $until );
-			$until_ts = $p ? strtotime( NM_Jalali::to_g_date( $p['y'], $p['m'], $p['d'] ) . ' 23:59:59' ) : 0;
+			$p        = NM_Jalali::parse( $until );
+			$until_ts = $p ? self::day_ts( NM_Jalali::to_g_date( $p['y'], $p['m'], $p['d'] ), true ) : 0;
 		} else {
 			// ماه‌های جلو: تقریبی ۳۰ روز × تعداد
 			$until_ts = $from_ts + ( $ahead * 30 * DAY_IN_SECONDS );
 		}
 
 		if ( $from_ts <= 0 ) {
-			$from_ts = strtotime( 'today' );
+			$from_ts = self::day_ts( NM_Jalali::to_g_date( $today['y'], $today['m'], $today['d'] ) );
 		}
 		if ( $until_ts < $from_ts ) {
 			$until_ts = $from_ts + ( 90 * DAY_IN_SECONDS );

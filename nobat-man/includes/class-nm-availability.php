@@ -21,7 +21,7 @@ class NM_Availability {
 		$block_h  = (int) NM_Settings::get( 'block_holidays', 1 );
 		$holidays = NM_Holidays::all_for_year( $jy );
 		$today    = NM_Jalali::today();
-		$today_ts = strtotime( NM_Jalali::to_g_date( $today['y'], $today['m'], $today['d'] ) . ' 00:00:00' );
+		$today_ts = NM_Settings::day_ts( NM_Jalali::to_g_date( $today['y'], $today['m'], $today['d'] ) );
 		$window   = NM_Settings::booking_window();
 
 		$out             = array();
@@ -46,7 +46,7 @@ class NM_Availability {
 				$reason = $holidays[ $cell['jalali'] ];
 			}
 
-			$cell_ts = strtotime( $cell['g_date'] . ' 00:00:00' );
+			$cell_ts = NM_Settings::day_ts( $cell['g_date'] );
 			if ( $ok && $cell_ts < $today_ts ) {
 				$ok     = false;
 				$reason = 'گذشته';

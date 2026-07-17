@@ -97,12 +97,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه ۱.۹.۱: کارهای دسته‌جمعی تغییر وضعیت، لیست سفارش با ستون محصول، ویرایش/ایجاد سفارش.',
     ],
     'nobat-man' => [
-        'version'      => '1.0.5',
+        'version'      => '1.0.6',
         'package'      => 'https://webakery.ir/license-server/updates/nobat-man.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۰.۴: بازه رزرو، ماه‌های فعال، درگاه زیبال، رفع تقویم.',
+        'changelog'    => 'نسخه ۱.۰.۶: تاریخ شمسی دقیق با منطقه زمانی وردپرس (۱۴۰۵) و تعطیلات رسمی ۱۴۰۵.',
     ],
 ] );
 
