@@ -50,9 +50,9 @@ $active_months = array_map( 'intval', (array) ( $s['active_months'] ?? range( 1,
 	<h3>پرداخت</h3>
 	<div class="nm-fields-admin">
 		<p class="nm-muted">
-			اگر <strong>زرین‌پال</strong> دارید، مرچنت ۳۶ کاراکتری را پایین بگذارید و درگاه را «زرین‌پال» یا «خودکار» انتخاب کنید.
-			اگر افزونه زرین‌پال روی <strong>ووکامرس</strong> نصب است، درگاه را «ووکامرس» بگذارید.
-			خطای <code>invalid merchant</code> یعنی مرچنت زیبال اشتباه است — مرچنت زیبال را خالی کنید یا مرچنت درست خودتان را بگذارید.
+			<strong>مهم:</strong> مرچنت زرین‌پال (با خط تیره، ۳۶ کاراکتر) را فقط در فیلد «زرین‌پال» بگذارید — نه در فیلد زیبال.
+			خطای <code>invalid merchant</code> معمولاً یعنی مرچنت زرین‌پال اشتباهاً در زیبال ذخیره شده است.
+			اگر افزونه درگاه روی ووکامرس دارید، درگاه را «ووکامرس» انتخاب کنید.
 		</p>
 		<label>درگاه
 			<select name="settings[payment_gateway]" class="widefat">
@@ -63,7 +63,7 @@ $active_months = array_map( 'intval', (array) ( $s['active_months'] ?? range( 1,
 			</select>
 		</label>
 		<label>مرچنت‌کد زرین‌پال<input type="text" name="settings[zarinpal_merchant]" value="<?php echo esc_attr( $s['zarinpal_merchant'] ?? '' ); ?>" class="widefat" dir="ltr" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" /></label>
-		<label>مرچنت‌کد زیبال (اختیاری)<input type="text" name="settings[zibal_merchant]" value="<?php echo esc_attr( $s['zibal_merchant'] ?? '' ); ?>" class="widefat" dir="ltr" placeholder="اگر invalid merchant می‌گیرید خالی بگذارید" /></label>
+		<label>مرچنت‌کد زیبال (فقط اگر واقعاً زیبال دارید)<input type="text" name="settings[zibal_merchant]" value="<?php echo esc_attr( $s['zibal_merchant'] ?? '' ); ?>" class="widefat" dir="ltr" placeholder="خالی بگذارید مگر مرچنت مخصوص زیبال داشته باشید" /></label>
 	</div>
 
 	<h3>ظاهر</h3>

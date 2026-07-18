@@ -97,12 +97,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه ۱.۹.۹: دانلود دسته‌جمعی فاکتورها به‌صورت ZIP بدون محدودیت تعداد.',
     ],
     'nobat-man' => [
-        'version'      => '1.0.9',
+        'version'      => '1.0.10',
         'package'      => 'https://webakery.ir/license-server/updates/nobat-man.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۰.۹: درگاه زرین‌پال + اصلاح invalid merchant زیبال و اولویت پرداخت.',
+        'changelog'    => 'نسخه ۱.۰.۱۰: رفع invalid merchant (مرچنت زرین‌پال در فیلد زیبال) و هدایت خودکار به درگاه درست.',
     ],
 ] );
 

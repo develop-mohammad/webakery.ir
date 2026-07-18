@@ -80,6 +80,7 @@ class NM_Plugin {
 
 		NM_Zibal::instance();
 		NM_Zarinpal::instance();
+		NM_Settings::heal_payment_merchants();
 
 		NM_Notifications::instance();
 

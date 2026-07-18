@@ -257,6 +257,9 @@
       if (res.data.pay_url) {
         box.innerHTML += '<p style="margin-top:12px"><a class="nm-btn nm-btn-primary" href="' + res.data.pay_url + '">ادامه پرداخت</a></p>';
         window.location.href = res.data.pay_url;
+      } else {
+        box.style.background = '#fff7ed';
+        box.innerHTML += '<p style="margin-top:12px;color:#9a3412">لینک پرداخت ساخته نشد. مدیر سایت باید در تنظیمات نوبت من مرچنت زرین‌پال را درست وارد کند (نه در فیلد زیبال) یا درگاه ووکامرس را فعال کند.</p>';
       }
     }).catch(function () {
       btn.disabled = false;

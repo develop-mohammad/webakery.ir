@@ -49,6 +49,8 @@ class NM_Zarinpal {
 			wp_die( 'درخواست نامعتبر است.' );
 		}
 
+		NM_Settings::heal_payment_merchants();
+
 		$booking = NM_Booking::get( $booking_id );
 		if ( ! $booking ) {
 			wp_die( 'رزرو یافت نشد.' );
@@ -59,17 +61,16 @@ class NM_Zarinpal {
 		}
 
 		if ( ! self::enabled() ) {
-			$fallback = NM_Payments::fallback_url( $booking, 'zarinpal' );
-			if ( $fallback ) {
-				wp_safe_redirect( $fallback );
-				exit;
-			}
-			wp_die( 'مرچنت‌کد زرین‌پال معتبر نیست. از تنظیمات نوبت من وارد کنید یا درگاه ووکامرس را انتخاب کنید.' );
+			NM_Payments::redirect_fallback( $booking, 'zarinpal' );
+			NM_Payments::die_payment_error(
+				'مرچنت‌کد زرین‌پال معتبر نیست. مرچنت ۳۶ کاراکتری پنل زرین‌پال را در تنظیمات نوبت من وارد کنید، یا درگاه ووکامرس را انتخاب کنید.',
+				$booking
+			);
 		}
 
 		$amount = (int) $booking->price * 10; // تومان → ریال
 		if ( $amount < 10000 ) {
-			wp_die( 'حداقل مبلغ پرداخت زرین‌پال ۱۰٬۰۰۰ ریال است.' );
+			NM_Payments::die_payment_error( 'حداقل مبلغ پرداخت زرین‌پال ۱۰٬۰۰۰ ریال است.', $booking );
 		}
 
 		$callback = admin_url( 'admin-post.php?action=nm_zarinpal_cb' );
@@ -90,12 +91,11 @@ class NM_Zarinpal {
 
 		if ( 100 !== $code || ! $auth ) {
 			$msg = $resp['errors']['message'] ?? ( $resp['data']['message'] ?? 'خطای ناشناخته' );
-			$fallback = NM_Payments::fallback_url( $booking, 'zarinpal' );
-			if ( $fallback ) {
-				wp_safe_redirect( $fallback );
-				exit;
-			}
-			wp_die( 'خطا در اتصال به زرین‌پال: ' . esc_html( (string) $msg ) );
+			NM_Payments::redirect_fallback( $booking, 'zarinpal' );
+			NM_Payments::die_payment_error(
+				'خطا در اتصال به زرین‌پال: <code dir="ltr">' . esc_html( (string) $msg ) . '</code>',
+				$booking
+			);
 		}
 
 		update_option( 'nm_zarinpal_auth_' . $auth, (int) $booking->id, false );

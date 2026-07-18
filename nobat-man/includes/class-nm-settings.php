@@ -122,6 +122,41 @@ class NM_Settings {
 		return true;
 	}
 
+	/**
+	 * اصلاح مرچنت اشتباه: UUID زرین‌پال که اشتباهاً در فیلد زیبال ذخیره شده.
+	 * علت رایج خطای invalid merchant در زیبال همین است.
+	 *
+	 * @return bool
+	 */
+	public static function heal_payment_merchants() {
+		static $done = false;
+		if ( $done ) {
+			return false;
+		}
+		$done = true;
+
+		$zibal = trim( (string) self::get( 'zibal_merchant', '' ) );
+		$zarin = trim( (string) self::get( 'zarinpal_merchant', '' ) );
+		$gw    = sanitize_key( (string) self::get( 'payment_gateway', 'auto' ) );
+		$is_uuid = class_exists( 'NM_Payments' )
+			? NM_Payments::looks_like_zarinpal_merchant( $zibal )
+			: (bool) preg_match( '/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $zibal );
+
+		if ( ! $zibal || ! $is_uuid ) {
+			return false;
+		}
+
+		$changed = array( 'zibal_merchant' => '' );
+		if ( '' === $zarin ) {
+			$changed['zarinpal_merchant'] = $zibal;
+		}
+		if ( 'zibal' === $gw ) {
+			$changed['payment_gateway'] = ( '' !== ( $changed['zarinpal_merchant'] ?? $zarin ) ) ? 'zarinpal' : 'auto';
+		}
+		self::update( $changed );
+		return true;
+	}
+
 	public static function format_price( $amount ) {
 		$amount = (int) $amount;
 		$label  = self::get( 'currency_label', 'تومان' );
