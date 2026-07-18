@@ -224,6 +224,18 @@ html.wap-panel-manager {
     gap: 8px;
 }
 .wap-alert::before { content: '⚠️'; flex-shrink: 0; }
+.wap-alert-success {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+}
+.wap-alert-success::before { content: '✓'; }
+.wap-alert-error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+.wap-alert-error::before { content: '⚠️'; }
 
 .wap-login-alt {
     text-align: center;
