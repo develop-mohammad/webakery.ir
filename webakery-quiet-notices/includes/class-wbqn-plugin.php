@@ -30,12 +30,14 @@ class WBQN_Plugin {
 	public static function defaults() {
 		return array(
 			'enabled'          => 1,
+			'scope'            => 'all_admin',
 			'mode'             => 'all',
 			'hide_for'         => 'all_caps',
 			'keep_errors'      => 1,
 			'keep_on_own_page' => 1,
 			'hide_update_nags' => 1,
 			'hide_wc_nags'     => 1,
+			'hide_settings_errors' => 1,
 			'css_fallback'     => 1,
 		);
 	}
@@ -48,15 +50,36 @@ class WBQN_Plugin {
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_init', array( $this, 'maybe_mute' ), 0 );
+		add_action( 'admin_notices', array( $this, 'filter_settings_errors' ), 0 );
+		add_action( 'network_admin_notices', array( $this, 'filter_settings_errors' ), 0 );
+		add_action( 'user_admin_notices', array( $this, 'filter_settings_errors' ), 0 );
+		add_filter( 'admin_body_class', array( $this, 'body_class' ) );
 		add_action( 'admin_head', array( $this, 'css_fallback' ), 99 );
 		add_filter( 'plugin_action_links_' . plugin_basename( WBQN_FILE ), array( $this, 'action_links' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'row_meta' ), 10, 2 );
 	}
 
+	private function is_target_screen() {
+		$s = self::settings();
+		if ( 'dashboard_only' !== ( $s['scope'] ?? 'all_admin' ) ) {
+			return true;
+		}
+		global $pagenow;
+		if ( in_array( $pagenow, array( 'index.php', 'admin.php' ), true ) ) {
+			if ( 'index.php' === $pagenow ) {
+				return true;
+			}
+			$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore
+			return '' === $page;
+		}
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		return $screen && 'dashboard' === $screen->id;
+	}
+
 	public function menu() {
 		add_options_page(
-			'سکوت نوتیف',
-			'سکوت نوتیف',
+			'حذف نوتیف پیشخوان',
+			'حذف نوتیف',
 			'manage_options',
 			'webakery-quiet-notices',
 			array( $this, 'render_page' )
@@ -89,20 +112,31 @@ class WBQN_Plugin {
 			$hide_for = $d['hide_for'];
 		}
 
+		$scope = isset( $in['scope'] ) ? sanitize_key( $in['scope'] ) : $d['scope'];
+		if ( ! in_array( $scope, array( 'all_admin', 'dashboard_only' ), true ) ) {
+			$scope = $d['scope'];
+		}
+
 		return array(
 			'enabled'          => empty( $in['enabled'] ) ? 0 : 1,
+			'scope'            => $scope,
 			'mode'             => $mode,
 			'hide_for'         => $hide_for,
 			'keep_errors'      => empty( $in['keep_errors'] ) ? 0 : 1,
 			'keep_on_own_page' => empty( $in['keep_on_own_page'] ) ? 0 : 1,
 			'hide_update_nags' => empty( $in['hide_update_nags'] ) ? 0 : 1,
 			'hide_wc_nags'     => empty( $in['hide_wc_nags'] ) ? 0 : 1,
+			'hide_settings_errors' => empty( $in['hide_settings_errors'] ) ? 0 : 1,
 			'css_fallback'     => empty( $in['css_fallback'] ) ? 0 : 1,
 		);
 	}
 
 	private function should_mute() {
 		if ( ! is_admin() ) {
+			return false;
+		}
+
+		if ( ! $this->is_target_screen() ) {
 			return false;
 		}
 
@@ -154,6 +188,37 @@ class WBQN_Plugin {
 			add_filter( 'woocommerce_show_admin_notice', '__return_false' );
 			add_filter( 'woocommerce_allow_marketplace_suggestions', '__return_false' );
 		}
+	}
+
+	public function filter_settings_errors() {
+		if ( ! $this->should_mute() ) {
+			return;
+		}
+		$s = self::settings();
+		if ( empty( $s['hide_settings_errors'] ) ) {
+			return;
+		}
+		global $wp_settings_errors;
+		if ( ! is_array( $wp_settings_errors ) ) {
+			return;
+		}
+		if ( ! empty( $s['keep_errors'] ) ) {
+			$wp_settings_errors = array_values( array_filter(
+				$wp_settings_errors,
+				static function ( $err ) {
+					return isset( $err['type'] ) && 'error' === $err['type'];
+				}
+			) );
+			return;
+		}
+		$wp_settings_errors = array();
+	}
+
+	public function body_class( $classes ) {
+		if ( $this->muted ) {
+			$classes .= ' wbqn-muted';
+		}
+		return $classes;
 	}
 
 	private function strip_notice_hooks() {
@@ -224,15 +289,26 @@ class WBQN_Plugin {
 
 		echo '<style id="wbqn-hide-notices">';
 		if ( $keep_errors ) {
-			echo '#wpbody-content .notice:not(.notice-error):not(.error),'
-				. '#wpbody-content .updated,'
-				. '#wpbody-content .update-nag,'
-				. '.woocommerce-message,.woocommerce-info{display:none!important}';
+			echo 'body.wbqn-muted #wpbody-content .notice:not(.notice-error):not(.error),'
+				. 'body.wbqn-muted #wpbody-content .updated,'
+				. 'body.wbqn-muted #wpbody-content .update-nag,'
+				. 'body.wbqn-muted #wpbody-content #message.updated,'
+				. 'body.wbqn-muted #wpbody-content .settings-error:not(.error),'
+				. 'body.wbqn-muted #wpbody-content [id^="setting-error-"]:not(.error),'
+				. 'body.wbqn-muted .woocommerce-message,body.wbqn-muted .woocommerce-info,'
+				. 'body.wbqn-muted .alert:not(.alert-danger),'
+				. 'body.wbqn-muted .admin-notice,body.wbqn-muted .plugin-notice{display:none!important}';
 		} else {
-			echo '#wpbody-content .notice,#wpbody-content .updated,#wpbody-content .error,'
-				. '#wpbody-content .update-nag,.woocommerce-message,.woocommerce-info,'
-				. '.woocommerce-error,div.fs-notice,div.jetpack-message,'
-				. '.elementor-message,.e-notice{display:none!important}';
+			echo 'body.wbqn-muted #wpbody-content .notice,body.wbqn-muted #wpbody-content .updated,'
+				. 'body.wbqn-muted #wpbody-content .error,body.wbqn-muted #wpbody-content .update-nag,'
+				. 'body.wbqn-muted #wpbody-content #message,body.wbqn-muted #wpbody-content .settings-error,'
+				. 'body.wbqn-muted #wpbody-content [id^="setting-error-"],'
+				. 'body.wbqn-muted .woocommerce-message,body.wbqn-muted .woocommerce-info,'
+				. 'body.wbqn-muted .woocommerce-error,body.wbqn-muted div.fs-notice,'
+				. 'body.wbqn-muted div.jetpack-message,body.wbqn-muted .elementor-message,'
+				. 'body.wbqn-muted .e-notice,body.wbqn-muted .alert,body.wbqn-muted .admin-notice,'
+				. 'body.wbqn-muted .plugin-notice,body.wbqn-muted .wrap > .notice,'
+				. 'body.wbqn-muted .wrap > .updated,body.wbqn-muted .wrap > .error{display:none!important}';
 		}
 		echo '</style>';
 	}

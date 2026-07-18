@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: سکوت نوتیف | Quiet Notices
+ * Plugin Name: حذف نوتیف پیشخوان | Quiet Notices
  * Description: خاموش و مخفی کردن نوتیفیکیشن‌ها و اعلان‌های شلوغ افزونه‌ها در پیشخوان وردپرس.
- * Version:     1.0.0
+ * Version:     1.0.1
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'WBQN_LOADED' ) ) {
 	return;
 }
 define( 'WBQN_LOADED', true );
-define( 'WBQN_VERSION', '1.0.0' );
+define( 'WBQN_VERSION', '1.0.1' );
 define( 'WBQN_FILE', __FILE__ );
 define( 'WBQN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBQN_URL', plugin_dir_url( __FILE__ ) );
