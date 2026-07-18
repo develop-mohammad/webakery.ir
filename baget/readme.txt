@@ -2,12 +2,15 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.4.1 =
+* رفع کرش سایت — بارگذاری فوق‌ایمن و جلوگیری از fatal
 
 = 1.4.0 =
 * سازنده سوال مثل فرم‌ساز وردپرس: رادیو، چندگزینه‌ای، کشویی

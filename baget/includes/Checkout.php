@@ -16,7 +16,7 @@ class Checkout {
 	}
 
 	private function __construct() {
-		if ( ! class_exists( 'WooCommerce' ) ) {
+		if ( ! class_exists( 'WooCommerce' ) && ! function_exists( 'WC' ) ) {
 			return;
 		}
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'filter_fields' ), 1000 );

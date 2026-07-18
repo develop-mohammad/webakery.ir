@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Baget | ادیت فیلدهای پرداخت
  * Description: مدیریت فیلدهای صفحه پرداخت و محصولات آنلاین — جابه‌جایی و ذخیره فیلدهای پیش‌فرض و سفارشی.
- * Version:     1.4.0
+ * Version:     1.4.1
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -13,55 +13,108 @@
 
 defined( 'ABSPATH' ) || exit;
 
+if ( defined( 'WCCP_LOADED' ) ) {
+	return;
+}
+define( 'WCCP_LOADED', true );
+
 if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
+	add_action(
+		'admin_notices',
+		static function () {
+			if ( current_user_can( 'activate_plugins' ) ) {
+				echo '<div class="notice notice-error"><p><strong>Baget:</strong> PHP 7.4+ لازم است. نسخه فعلی: '
+					. esc_html( PHP_VERSION ) . '</p></div>';
+			}
+		}
+	);
+	return;
+}
+
+if ( ! defined( 'WCCP_VERSION' ) ) {
+	define( 'WCCP_VERSION', '1.4.1' );
+}
+if ( ! defined( 'WCCP_FILE' ) ) {
+	define( 'WCCP_FILE', __FILE__ );
+}
+if ( ! defined( 'WCCP_PATH' ) ) {
+	define( 'WCCP_PATH', plugin_dir_path( __FILE__ ) );
+}
+if ( ! defined( 'WCCP_URL' ) ) {
+	define( 'WCCP_URL', plugin_dir_url( __FILE__ ) );
+}
+if ( ! defined( 'WCCP_PRODUCT' ) ) {
+	define( 'WCCP_PRODUCT', 'wccp' );
+}
+
+$wccp_autoload = WCCP_PATH . 'includes/Autoload.php';
+if ( ! is_readable( $wccp_autoload ) ) {
 	add_action(
 		'admin_notices',
 		static function () {
 			if ( ! current_user_can( 'activate_plugins' ) ) {
 				return;
 			}
-			echo '<div class="notice notice-error"><p><strong>Baget:</strong> '
-				. 'این افزونه به PHP 7.4 یا بالاتر نیاز دارد. نسخهٔ فعلی سرور: '
-				. esc_html( PHP_VERSION ) . '</p></div>';
+			echo '<div class="notice notice-error"><p><strong>Baget:</strong> فایل‌های افزونه ناقص است. '
+				. 'پوشه <code>baget</code> را حذف کنید و ZIP کامل v1.4.1 را دوباره نصب کنید.</p></div>';
 		}
 	);
 	return;
 }
 
-define( 'WCCP_VERSION', '1.4.0' );
-define( 'WCCP_FILE', __FILE__ );
-define( 'WCCP_PATH', plugin_dir_path( __FILE__ ) );
-define( 'WCCP_URL', plugin_dir_url( __FILE__ ) );
-define( 'WCCP_PRODUCT', 'wccp' );
+require_once $wccp_autoload;
 
-if ( ! is_readable( WCCP_PATH . 'includes/Autoload.php' ) ) {
+if ( ! class_exists( '\\WCCP\\Autoload' ) ) {
 	return;
 }
-
-require_once WCCP_PATH . 'includes/Autoload.php';
 \WCCP\Autoload::register();
 
-add_action(
-	'plugins_loaded',
+/**
+ * راه‌اندازی امن — خطای داخلی نباید کل سایت را بخواباند.
+ */
+function wccp_safe_boot() {
+	try {
+		if ( ! class_exists( '\\WCCP\\Plugin' ) ) {
+			return;
+		}
+		\WCCP\Plugin::instance();
+	} catch ( Exception $e ) {
+		wccp_boot_error( $e->getMessage() );
+	} catch ( Throwable $e ) {
+		wccp_boot_error( $e->getMessage() );
+	}
+}
+
+/**
+ * @param string $message
+ */
+function wccp_boot_error( $message ) {
+	if ( ! is_admin() ) {
+		return;
+	}
+	add_action(
+		'admin_notices',
+		static function () use ( $message ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+			echo '<div class="notice notice-error"><p><strong>Baget:</strong> '
+				. esc_html( $message ) . '</p></div>';
+		}
+	);
+}
+
+add_action( 'plugins_loaded', 'wccp_safe_boot', 30 );
+
+register_activation_hook(
+	__FILE__,
 	static function () {
 		try {
-			\WCCP\Plugin::instance();
-		} catch ( Throwable $e ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				add_action(
-					'admin_notices',
-					static function () use ( $e ) {
-						if ( ! current_user_can( 'manage_options' ) ) {
-							return;
-						}
-						echo '<div class="notice notice-error"><p><strong>Baget:</strong> '
-							. esc_html( $e->getMessage() ) . '</p></div>';
-					}
-				);
+			if ( class_exists( '\\WCCP\\Plugin' ) ) {
+				\WCCP\Plugin::activate();
 			}
+		} catch ( Exception $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+		} catch ( Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 		}
-	},
-	20
+	}
 );
-
-register_activation_hook( __FILE__, array( '\WCCP\Plugin', 'activate' ) );
