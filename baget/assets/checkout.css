@@ -1,5 +1,33 @@
-.wccp-choice-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-.wccp-choice{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;background:#fafafa;cursor:pointer}
+.wccp-choice-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.wccp-choice{display:flex;align-items:center;gap:8px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;background:#fafafa;cursor:pointer}
 .wccp-choice input{margin:0}
 .wccp-radio-list .wccp-choice:has(input:checked){border-color:#6d28d9;background:#f5f3ff}
 .wccp-checkbox-list .wccp-choice:has(input:checked){border-color:#6d28d9;background:#f5f3ff}
+
+/* جداسازی واضح بین فیلدهای سوال */
+.woocommerce-checkout .form-row.wccp-field-radio,
+.woocommerce-checkout .form-row.wccp-field-checkboxes,
+.woocommerce-checkout .form-row.wccp-field-select,
+.woocommerce-checkout .form-row.wccp-field-text,
+.woocommerce-checkout .form-row.wccp-field-textarea,
+.woocommerce-checkout .form-row.wccp-field-tel,
+.woocommerce-checkout .form-row.wccp-field-email,
+.woocommerce-checkout .form-row.wccp-field-number,
+.woocommerce-checkout .form-row[class*="wccp-field-"]{
+	margin:0 0 18px!important;
+	padding:0 0 18px!important;
+	border-bottom:1px dashed #d8d0ef!important;
+	clear:both;
+	width:100%;
+}
+.woocommerce-checkout .form-row[class*="wccp-field-"]:last-of-type{
+	border-bottom:0!important;
+	padding-bottom:8px!important;
+}
+.woocommerce-checkout .form-row.wccp-field-radio > label,
+.woocommerce-checkout .form-row.wccp-field-checkboxes > label{
+	display:block;
+	font-weight:700;
+	margin-bottom:8px;
+	color:#0f172a;
+}

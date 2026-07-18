@@ -90,7 +90,7 @@ class Checkout {
 				'type'     => $wc_type,
 				'label'    => $def['label'],
 				'required' => ! empty( $def['required'] ),
-				'class'    => array( 'form-row-wide', 'wccp-field-' . sanitize_key( $raw_type ) ),
+				'class'    => array( 'form-row-wide', 'wccp-field', 'wccp-field-' . sanitize_key( $raw_type ) ),
 				'priority' => $priority,
 			);
 			if ( ! empty( $def['placeholder'] ) ) {

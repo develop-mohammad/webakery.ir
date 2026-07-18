@@ -18,6 +18,9 @@ class Plugin {
 	private function __construct() {
 		// لایسنس باید زود ثبت شود تا منوی خرید/فعال‌سازی و آپدیت کار کند
 		$this->boot_license();
+		// قبل از هندلر admin-post لایسنس، محصول دوباره ثبت شود (رفع «محصول نامعتبر»)
+		add_action( 'admin_post_wb_license_save', array( $this, 'boot_license' ), 1 );
+		add_action( 'admin_post_wb_license_deactivate', array( $this, 'boot_license' ), 1 );
 
 		add_filter( 'plugin_action_links_' . plugin_basename( WCCP_FILE ), array( $this, 'action_links' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'row_meta' ), 10, 2 );
