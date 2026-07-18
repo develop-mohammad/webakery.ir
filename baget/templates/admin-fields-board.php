@@ -7,8 +7,11 @@ defined( 'ABSPATH' ) || exit;
 <div class="wccp-board">
 	<section class="wccp-col">
 		<header>
-			<strong>فیلدهای موجود</strong>
-			<button type="button" class="button" id="wccp-add-field">+ فیلد جدید</button>
+			<div>
+				<strong>فیلدهای موجود</strong>
+				<small class="wccp-muted">هنوز در checkout نیستند</small>
+			</div>
+			<button type="button" class="button button-primary" id="wccp-add-field">+ فیلد / سوال جدید</button>
 		</header>
 		<ul class="wccp-list" id="wccp-available" data-list="available">
 			<?php foreach ( $available as $key ) :
@@ -17,14 +20,17 @@ defined( 'ABSPATH' ) || exit;
 				include WCCP_PATH . 'templates/admin-field-row.php';
 			endforeach; ?>
 		</ul>
-		<p class="wccp-muted" style="padding:8px 12px">روی + بزنید یا بکشید به ستون فعال.</p>
+		<p class="wccp-muted" style="padding:8px 12px">برای فعال‌سازی: دکمه + یا کشیدن به ستون راست.</p>
 	</section>
 
 	<div class="wccp-swap" aria-hidden="true">⇄</div>
 
-	<section class="wccp-col">
+	<section class="wccp-col wccp-col-active">
 		<header>
-			<strong>فیلدهای فعال — برای مرتب‌سازی بکشید</strong>
+			<div>
+				<strong>فیلدهای فعال در checkout</strong>
+				<small class="wccp-muted">برای تغییر ترتیب بکشید</small>
+			</div>
 		</header>
 		<ul class="wccp-list" id="wccp-active" data-list="active">
 			<?php foreach ( $active as $key ) :

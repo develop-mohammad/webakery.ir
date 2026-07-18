@@ -65,12 +65,12 @@ define( 'LS_PLUGIN_META', [
 // نسخهٔ سرور باید از نسخهٔ نصب‌شده روی سایت مشتری بالاتر باشد تا در «افزونه‌ها» آپدیت نمایش داده شود.
 define( 'LS_UPDATES', [
     'wccp' => [
-        'version'      => '1.3.9',
+        'version'      => '1.4.0',
         'package'      => 'https://webakery.ir/license-server/updates/baget.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۳.۹: مسیر استاندارد plugins/baget/baget.php + رفع کرش.',
+        'changelog'    => 'نسخه ۱.۴.۰: ساخت سوال رادیو/چندگزینه‌ای مثل فرم‌ساز وردپرس + تنظیمات شفاف.',
     ],
     'access-levels' => [
         'version'      => '1.5.8',

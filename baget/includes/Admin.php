@@ -130,9 +130,12 @@ class Admin {
 		$active    = OnlineProducts::product_active_fields( $post->ID );
 		$available = array_values( array_diff( array_keys( $fields ), $active ) );
 		echo '<div class="wccp-topbar" style="margin-top:0">';
-		echo '<p class="wccp-muted">فیلدها را بکشید و جابه‌جا کنید، سپس ذخیره را بزنید.</p>';
-		echo '<button type="button" class="wccp-btn-save" id="wccp-save-btn"><span class="dashicons dashicons-yes"></span> ذخیره</button>';
-		echo '</div>';
+		echo '<p class="wccp-muted">سوالات و فیلدهای این لینک پرداخت را تنظیم کنید، بعد ذخیره بزنید.</p>';
+		echo '<div class="wccp-topbar-actions">';
+		echo '<button type="button" class="button" id="wccp-add-radio">+ سوال رادیو</button>';
+		echo '<button type="button" class="button" id="wccp-add-checkboxes">+ چندگزینه‌ای</button>';
+		echo '<button type="button" class="wccp-btn-save" id="wccp-save-btn"><span class="dashicons dashicons-yes"></span> ذخیره تنظیمات</button>';
+		echo '</div></div>';
 		echo '<div class="wccp-app" data-mode="product" data-product-id="' . esc_attr( (string) $post->ID ) . '">';
 		include WCCP_PATH . 'templates/admin-fields-board.php';
 		echo '</div>';

@@ -2,12 +2,16 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.3.9
+Stable tag: 1.4.0
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.4.0 =
+* سازنده سوال مثل فرم‌ساز وردپرس: رادیو، چندگزینه‌ای، کشویی
+* افزودن گزینه با دکمه +، پیش‌نمایش زنده، راهنمای شفاف تنظیمات
 
 = 1.3.9 =
 * پوشه و فایل اصلی استاندارد: plugins/baget/baget.php

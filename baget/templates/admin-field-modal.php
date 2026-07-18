@@ -2,33 +2,103 @@
 defined( 'ABSPATH' ) || exit;
 ?>
 <div id="wccp-field-modal" class="wccp-modal" hidden>
-	<div class="wccp-modal-card" role="dialog" aria-modal="true">
-		<h3 id="wccp-modal-title">فیلد سفارشی</h3>
+	<div class="wccp-modal-card wccp-modal-wide" role="dialog" aria-modal="true" aria-labelledby="wccp-modal-title">
+		<div class="wccp-modal-head">
+			<div>
+				<h3 id="wccp-modal-title">ساخت سوال / فیلد</h3>
+				<p class="wccp-muted">مثل فرم‌ساز وردپرس: عنوان را بنویسید، نوع را انتخاب کنید، گزینه‌ها را اضافه کنید.</p>
+			</div>
+			<button type="button" class="wccp-icon-btn" id="wccp-modal-close" title="بستن">×</button>
+		</div>
+
 		<form id="wccp-field-form">
 			<input type="hidden" id="wccp-field-key" value="" />
-			<label>عنوان فیلد
-				<input type="text" id="wccp-field-label" class="widefat" required />
-			</label>
-			<label>نوع فیلد
-				<select id="wccp-field-type" class="widefat">
-					<option value="text">متنی</option>
-					<option value="textarea">چندخطی</option>
-					<option value="tel">تلفن</option>
-					<option value="email">ایمیل</option>
-					<option value="select">انتخابی (dropdown)</option>
-					<option value="radio">رادیو (یک گزینه)</option>
-					<option value="checkboxes">چندگزینه‌ای (checkbox)</option>
-				</select>
-			</label>
-			<label id="wccp-field-options-wrap">گزینه‌ها <small class="wccp-muted">(هر خط یک گزینه)</small>
-				<textarea id="wccp-field-options" class="widefat" rows="5" placeholder="گزینه ۱&#10;گزینه ۲&#10;گزینه ۳"></textarea>
-			</label>
-			<label class="wccp-check-row">
-				<input type="checkbox" id="wccp-field-required" value="1" /> اجباری
-			</label>
+
+			<div class="wccp-form-grid">
+				<div class="wccp-form-main">
+					<label class="wccp-field-block">
+						<span class="wccp-label">۱) عنوان سوال / فیلد <em>*</em></span>
+						<input type="text" id="wccp-field-label" class="widefat" required placeholder="مثلاً: نحوه آشنایی با ما؟" />
+					</label>
+
+					<div class="wccp-field-block">
+						<span class="wccp-label">۲) نوع فیلد را انتخاب کنید</span>
+						<input type="hidden" id="wccp-field-type" value="text" />
+						<div class="wccp-type-grid" id="wccp-type-grid">
+							<button type="button" class="wccp-type-card" data-type="text">
+								<span class="wccp-type-ic">Aa</span>
+								<strong>متنی</strong>
+								<small>پاسخ کوتاه</small>
+							</button>
+							<button type="button" class="wccp-type-card" data-type="textarea">
+								<span class="wccp-type-ic">¶</span>
+								<strong>چندخطی</strong>
+								<small>پاسخ بلند</small>
+							</button>
+							<button type="button" class="wccp-type-card" data-type="tel">
+								<span class="wccp-type-ic">☎</span>
+								<strong>تلفن</strong>
+								<small>شماره تماس</small>
+							</button>
+							<button type="button" class="wccp-type-card" data-type="email">
+								<span class="wccp-type-ic">@</span>
+								<strong>ایمیل</strong>
+								<small>آدرس ایمیل</small>
+							</button>
+							<button type="button" class="wccp-type-card" data-type="select">
+								<span class="wccp-type-ic">▾</span>
+								<strong>کشویی</strong>
+								<small>یک گزینه از لیست</small>
+							</button>
+							<button type="button" class="wccp-type-card is-choice" data-type="radio">
+								<span class="wccp-type-ic">◉</span>
+								<strong>رادیو</strong>
+								<small>سوال یک‌گزینه‌ای</small>
+							</button>
+							<button type="button" class="wccp-type-card is-choice" data-type="checkboxes">
+								<span class="wccp-type-ic">☑</span>
+								<strong>چندگزینه‌ای</strong>
+								<small>چند گزینه همزمان</small>
+							</button>
+						</div>
+					</div>
+
+					<div class="wccp-field-block" id="wccp-field-options-wrap" hidden>
+						<span class="wccp-label">۳) گزینه‌های پاسخ</span>
+						<p class="wccp-help">هر ردیف یک گزینه است. دکمه «+ گزینه» بزنید. حداقل یک گزینه لازم است.</p>
+						<div id="wccp-options-list" class="wccp-options-list"></div>
+						<button type="button" class="button" id="wccp-add-option">+ افزودن گزینه</button>
+						<textarea id="wccp-field-options" class="wccp-options-hidden" hidden rows="3"></textarea>
+					</div>
+
+					<label class="wccp-check-row wccp-field-block">
+						<input type="checkbox" id="wccp-field-required" value="1" />
+						<span>این سوال / فیلد اجباری باشد</span>
+					</label>
+				</div>
+
+				<aside class="wccp-form-side">
+					<div class="wccp-preview-card">
+						<div class="wccp-preview-title">پیش‌نمایش</div>
+						<div id="wccp-live-preview" class="wccp-live-preview">
+							<div class="wccp-preview-empty">عنوان و نوع را انتخاب کنید…</div>
+						</div>
+					</div>
+					<div class="wccp-tips">
+						<strong>راهنما</strong>
+						<ul>
+							<li><b>رادیو:</b> کاربر فقط یک گزینه انتخاب می‌کند.</li>
+							<li><b>چندگزینه‌ای:</b> کاربر می‌تواند چند گزینه بزند.</li>
+							<li><b>کشویی:</b> لیست بازشو مثل فرم‌های وردپرس.</li>
+							<li>بعد از ذخیره، فیلد در ستون «فعال» می‌آید — صفحه checkout را رفرش کنید.</li>
+						</ul>
+					</div>
+				</aside>
+			</div>
+
 			<div class="wccp-modal-actions">
 				<button type="button" class="button" id="wccp-modal-cancel">انصراف</button>
-				<button type="submit" class="button button-primary">ذخیره فیلد</button>
+				<button type="submit" class="button button-primary" id="wccp-modal-submit">ذخیره سوال / فیلد</button>
 			</div>
 		</form>
 	</div>
