@@ -3,6 +3,7 @@ defined( 'ABSPATH' ) || exit;
 /** @var array $fields */
 /** @var array $active */
 /** @var array $available */
+/** @var string $tab */
 ?>
 <div class="wrap wccp-wrap">
 	<div class="wccp-topbar">
@@ -15,11 +16,7 @@ defined( 'ABSPATH' ) || exit;
 		</button>
 	</div>
 
-	<nav class="wccp-tabs">
-		<a class="is-active" href="<?php echo esc_url( admin_url( 'admin.php?page=wccp' ) ); ?>">فیلدها</a>
-		<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wccp_product' ) ); ?>">محصولات آنلاین</a>
-		<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wccp_product' ) ); ?>">پیش‌نمایش لینک / محصول جدید</a>
-	</nav>
+	<?php include WCCP_PATH . 'templates/admin-tabs.php'; ?>
 
 	<div class="wccp-app" data-mode="global" id="wccp-app">
 		<?php include WCCP_PATH . 'templates/admin-fields-board.php'; ?>

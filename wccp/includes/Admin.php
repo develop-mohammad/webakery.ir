@@ -22,20 +22,46 @@ class Admin {
 		add_action( 'save_post_wccp_product', array( $this, 'save_product_meta' ) );
 	}
 
+	/** @return string */
+	public static function admin_capability() {
+		if ( class_exists( 'WooCommerce' ) ) {
+			return 'manage_woocommerce';
+		}
+		return 'manage_options';
+	}
+
 	public function menu() {
-		$cap = current_user_can( 'manage_woocommerce' ) ? 'manage_woocommerce' : 'manage_options';
+		$cap = self::admin_capability();
+
 		add_menu_page(
-			'Baget',
+			'Baget — فیلدهای پرداخت',
 			'Baget',
 			$cap,
 			'wccp',
-			array( $this, 'render_fields_page' ),
+			array( $this, 'render_page' ),
 			'dashicons-forms',
 			56
 		);
-		add_submenu_page( 'wccp', 'فیلدها', 'فیلدها', $cap, 'wccp', array( $this, 'render_fields_page' ) );
+		add_submenu_page( 'wccp', 'فیلدها', 'فیلدها', $cap, 'wccp', array( $this, 'render_page' ) );
 		add_submenu_page( 'wccp', 'محصولات آنلاین', 'محصولات آنلاین', $cap, 'edit.php?post_type=wccp_product' );
 		add_submenu_page( 'wccp', 'افزودن محصول', 'افزودن محصول', $cap, 'post-new.php?post_type=wccp_product' );
+		add_submenu_page( 'wccp', 'لایسنس', 'لایسنس', 'manage_options', 'wccp-license', array( $this, 'render_license_redirect' ) );
+
+		if ( class_exists( 'WooCommerce' ) ) {
+			add_submenu_page(
+				'woocommerce',
+				'Baget — فیلدهای پرداخت',
+				'Baget — فیلدها',
+				$cap,
+				'wccp',
+				array( $this, 'render_page' )
+			);
+		}
+	}
+
+	public function render_license_redirect() {
+		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=license' ) );
+		exit;
 	}
 
 	public function assets( $hook ) {
@@ -81,14 +107,34 @@ class Admin {
 		);
 	}
 
-	public function render_fields_page() {
-		if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'manage_options' ) ) {
+	public function render_page() {
+		if ( ! current_user_can( self::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
 			wp_die( 'دسترسی غیرمجاز' );
 		}
+
+		$tab = sanitize_key( wp_unslash( $_GET['tab'] ?? 'fields' ) ); // phpcs:ignore
+		if ( 'license' === $tab ) {
+			$this->render_license_page();
+			return;
+		}
+
+		$this->render_fields_page();
+	}
+
+	public function render_fields_page() {
 		$fields    = CustomFields::merged_with_defaults();
 		$active    = Fields::get_active_keys();
 		$available = Fields::get_available_keys();
+		$tab       = 'fields';
 		include WCCP_PATH . 'templates/admin-fields.php';
+	}
+
+	public function render_license_page() {
+		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( self::admin_capability() ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		$tab = 'license';
+		include WCCP_PATH . 'templates/admin-license.php';
 	}
 
 	public function metaboxes() {
