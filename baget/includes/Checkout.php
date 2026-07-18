@@ -22,6 +22,7 @@ class Checkout {
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'filter_fields' ), 1000 );
 		add_filter( 'woocommerce_form_field_wccp_radio', array( $this, 'render_choice_fields' ), 10, 4 );
 		add_filter( 'woocommerce_form_field_wccp_checkboxes', array( $this, 'render_choice_fields' ), 10, 4 );
+		add_filter( 'woocommerce_form_field_wccp_info', array( $this, 'render_info_field' ), 10, 4 );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_choice_fields' ), 10, 2 );
 		add_action( 'woocommerce_checkout_update_order_meta', array( $this, 'save_order_meta' ) );
 		add_action( 'woocommerce_admin_order_data_after_billing_address', array( $this, 'admin_display' ) );
@@ -83,6 +84,8 @@ class Checkout {
 				$wc_type = 'wccp_radio';
 			} elseif ( 'checkboxes' === $type ) {
 				$wc_type = 'wccp_checkboxes';
+			} elseif ( 'info' === $type ) {
+				$wc_type = 'wccp_info';
 			} elseif ( in_array( $type, array( 'text', 'tel', 'email', 'number', 'checkbox' ), true ) ) {
 				$wc_type = $type;
 			} else {
@@ -92,12 +95,16 @@ class Checkout {
 			$field = array(
 				'type'     => $wc_type,
 				'label'    => $def['label'],
-				'required' => ! empty( $def['required'] ),
+				'required' => ( 'info' === $raw_type ) ? false : ! empty( $def['required'] ),
 				'class'    => array( 'form-row-wide', 'wccp-field', 'wccp-field-' . sanitize_key( $raw_type ) ),
 				'priority' => $priority,
 			);
 			if ( ! empty( $def['placeholder'] ) ) {
 				$field['placeholder'] = $def['placeholder'];
+			}
+			if ( 'info' === $raw_type ) {
+				$field['wccp_content'] = (string) ( $def['content'] ?? '' );
+				$field['required']    = false;
 			}
 			if ( in_array( $raw_type, Fields::option_types(), true ) ) {
 				$field['wccp_options'] = $options;
@@ -121,6 +128,24 @@ class Checkout {
 		}
 
 		return $fields;
+	}
+
+	public function render_info_field( $field, $key, $args, $value ) {
+		$classes = isset( $args['class'] ) ? (array) $args['class'] : array( 'form-row-wide', 'wccp-field', 'wccp-field-info' );
+		$label   = isset( $args['label'] ) ? (string) $args['label'] : '';
+		$content = isset( $args['wccp_content'] ) ? (string) $args['wccp_content'] : '';
+
+		ob_start();
+		echo '<div class="form-row ' . esc_attr( implode( ' ', $classes ) ) . '" id="' . esc_attr( $key ) . '_field" data-priority="' . esc_attr( (string) ( $args['priority'] ?? '' ) ) . '">';
+		echo '<div class="wccp-info-box">';
+		if ( '' !== trim( $label ) ) {
+			echo '<strong class="wccp-info-title">' . esc_html( $label ) . '</strong>';
+		}
+		if ( '' !== trim( $content ) ) {
+			echo '<div class="wccp-info-text">' . wp_kses_post( wpautop( $content ) ) . '</div>';
+		}
+		echo '</div></div>';
+		return ob_get_clean();
 	}
 
 	public function render_choice_fields( $field, $key, $args, $value ) {
@@ -213,6 +238,9 @@ class Checkout {
 				continue;
 			}
 			$type = $defs[ $key ]['type'] ?? 'text';
+			if ( in_array( $type, Fields::display_only_types(), true ) ) {
+				continue;
+			}
 
 			if ( 'checkboxes' === $type ) {
 				if ( empty( $_POST[ $key ] ) || ! is_array( $_POST[ $key ] ) ) { // phpcs:ignore

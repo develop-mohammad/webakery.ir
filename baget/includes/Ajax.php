@@ -116,8 +116,12 @@ class Ajax {
 			$type = 'text';
 		}
 		$options = Fields::normalize_options_string( wp_unslash( $_POST['options_text'] ?? '' ) );
+		$content = sanitize_textarea_field( wp_unslash( $_POST['content'] ?? '' ) );
 		if ( in_array( $type, Fields::option_types(), true ) && '' === trim( $options ) ) {
 			wp_send_json_error( array( 'message' => 'برای این نوع فیلد حداقل یک گزینه وارد کنید.' ) );
+		}
+		if ( 'info' === $type && '' === trim( $content ) && '' === trim( $label ) ) {
+			wp_send_json_error( array( 'message' => 'برای متن ساده، عنوان یا متن اطلاع‌رسانی را وارد کنید.' ) );
 		}
 
 		$key    = 'wccp_field_' . strtolower( wp_generate_password( 8, false, false ) );
@@ -134,8 +138,9 @@ class Ajax {
 		$custom[ $key ] = array(
 			'label'        => $label,
 			'type'         => $type,
-			'required'     => ! empty( $_POST['required'] ),
+			'required'     => ( 'info' === $type ) ? false : ! empty( $_POST['required'] ),
 			'options'      => $options,
+			'content'      => ( 'info' === $type ) ? $content : '',
 			'custom'       => true,
 			'user_defined' => true,
 		);
@@ -181,15 +186,20 @@ class Ajax {
 			$type = $custom[ $key ]['type'] ?? 'text';
 		}
 		$options = Fields::normalize_options_string( wp_unslash( $_POST['options_text'] ?? $custom[ $key ]['options'] ?? '' ) );
+		$content = sanitize_textarea_field( wp_unslash( $_POST['content'] ?? $custom[ $key ]['content'] ?? '' ) );
 		if ( in_array( $type, Fields::option_types(), true ) && '' === trim( $options ) ) {
 			wp_send_json_error( array( 'message' => 'برای این نوع فیلد حداقل یک گزینه وارد کنید.' ) );
+		}
+		if ( 'info' === $type && '' === trim( $content ) && '' === trim( $label ) ) {
+			wp_send_json_error( array( 'message' => 'برای متن ساده، عنوان یا متن اطلاع‌رسانی را وارد کنید.' ) );
 		}
 
 		$custom[ $key ] = array(
 			'label'        => $label ?: $key,
 			'type'         => $type,
-			'required'     => ! empty( $_POST['required'] ),
+			'required'     => ( 'info' === $type ) ? false : ! empty( $_POST['required'] ),
 			'options'      => $options,
+			'content'      => ( 'info' === $type ) ? $content : '',
 			'custom'       => true,
 			'user_defined' => true,
 		);

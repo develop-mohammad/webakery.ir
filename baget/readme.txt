@@ -2,12 +2,15 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.5.2
+Stable tag: 1.5.3
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.5.3 =
+* فیلد «متن ساده» برای نمایش اطلاعات بیشتر سفارش — بدون پر کردن توسط مشتری
 
 = 1.5.2 =
 * لیست کامل قالب‌ها در صفحه فیلدها با ستون ستاره پیش‌فرض checkout

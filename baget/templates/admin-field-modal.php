@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 				<div class="wccp-form-main">
 					<label class="wccp-field-block">
 						<span class="wccp-label">۱) عنوان سوال / فیلد <em>*</em></span>
-						<input type="text" id="wccp-field-label" class="widefat" required placeholder="مثلاً: نحوه آشنایی با ما؟" />
+						<input type="text" id="wccp-field-label" class="widefat" placeholder="مثلاً: نحوه آشنایی با ما؟ / اطلاعات بیشتر سفارش" />
 					</label>
 
 					<div class="wccp-field-block">
@@ -60,6 +60,11 @@ defined( 'ABSPATH' ) || exit;
 								<strong>چندگزینه‌ای</strong>
 								<small>چند گزینه همزمان</small>
 							</button>
+							<button type="button" class="wccp-type-card is-info" data-type="info">
+								<span class="wccp-type-ic">ℹ</span>
+								<strong>متن ساده</strong>
+								<small>فقط اطلاع‌رسانی — بدون پر کردن</small>
+							</button>
 						</div>
 					</div>
 
@@ -71,7 +76,13 @@ defined( 'ABSPATH' ) || exit;
 						<textarea id="wccp-field-options" class="wccp-options-hidden" hidden rows="3"></textarea>
 					</div>
 
-					<label class="wccp-check-row wccp-field-block">
+					<div class="wccp-field-block" id="wccp-field-content-wrap" hidden>
+						<label class="wccp-label" for="wccp-field-content">۳) متن اطلاع‌رسانی (اطلاعات بیشتر سفارش)</label>
+						<p class="wccp-help">این متن فقط نمایش داده می‌شود؛ مشتری چیزی پر نمی‌کند.</p>
+						<textarea id="wccp-field-content" class="widefat" rows="5" placeholder="مثلاً: پس از پرداخت، لینک دانلود تا ۱۵ دقیقه برای شما ایمیل می‌شود."></textarea>
+					</div>
+
+					<label class="wccp-check-row wccp-field-block" id="wccp-field-required-wrap">
 						<input type="checkbox" id="wccp-field-required" value="1" />
 						<span>این سوال / فیلد اجباری باشد</span>
 					</label>
@@ -89,7 +100,7 @@ defined( 'ABSPATH' ) || exit;
 						<ul>
 							<li><b>رادیو:</b> کاربر فقط یک گزینه انتخاب می‌کند.</li>
 							<li><b>چندگزینه‌ای:</b> کاربر می‌تواند چند گزینه بزند.</li>
-							<li><b>کشویی:</b> لیست بازشو مثل فرم‌های وردپرس.</li>
+							<li><b>متن ساده:</b> فقط توضیح/اطلاع‌رسانی است و پر نمی‌شود.</li>
 							<li>بعد از ذخیره، فیلد در ستون «فعال» می‌آید — صفحه checkout را رفرش کنید.</li>
 						</ul>
 					</div>

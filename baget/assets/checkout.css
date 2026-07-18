@@ -31,3 +31,24 @@
 	margin-bottom:8px;
 	color:#0f172a;
 }
+
+.wccp-info-box{
+	background:#eff6ff;
+	border:1px solid #bfdbfe;
+	border-radius:12px;
+	padding:14px 16px;
+	color:#1e3a8a;
+}
+.wccp-info-title{
+	display:block;
+	margin:0 0 8px;
+	font-size:14px;
+	color:#1d4ed8;
+}
+.wccp-info-text{
+	font-size:13.5px;
+	line-height:1.8;
+}
+.wccp-info-text p{margin:0 0 8px}
+.wccp-info-text p:last-child{margin-bottom:0}
+.wccp-field-info .wccp-info-box{width:100%}

@@ -20,12 +20,14 @@ class CustomFields {
 					continue;
 				}
 				$key = sanitize_key( (string) $key );
+				$type = (string) ( $def['type'] ?? 'text' );
 				$fields[ $key ] = array(
 					'label'        => (string) ( $def['label'] ?? $key ),
-					'type'         => (string) ( $def['type'] ?? 'text' ),
-					'required'     => ! empty( $def['required'] ),
+					'type'         => $type,
+					'required'     => ( 'info' === $type ) ? false : ! empty( $def['required'] ),
 					'placeholder'  => (string) ( $def['placeholder'] ?? '' ),
 					'options'      => (string) ( $def['options'] ?? '' ),
+					'content'      => (string) ( $def['content'] ?? '' ),
 					'custom'       => true,
 					'user_defined' => true,
 					'icon'         => 'custom',

@@ -45,13 +45,18 @@
       email: 'ایمیل',
       select: 'کشویی',
       radio: 'رادیو',
-      checkboxes: 'چندگزینه‌ای'
+      checkboxes: 'چندگزینه‌ای',
+      info: 'متن ساده'
     };
     return map[type] || type || 'متنی';
   }
 
   function optionTypes() {
     return ['select', 'radio', 'checkboxes'];
+  }
+
+  function displayOnlyTypes() {
+    return ['info'];
   }
 
   function renderItem(key) {
@@ -327,12 +332,25 @@
   }
 
   function toggleOptionsVisibility() {
+    var type = getType();
     var wrap = $('#wccp-field-options-wrap');
-    if (!wrap) return;
-    var need = optionTypes().indexOf(getType()) !== -1;
-    wrap.hidden = !need;
-    if (need && !$$('.wccp-option-row').length) {
-      setOptions(['گزینه ۱', 'گزینه ۲', 'گزینه ۳']);
+    var contentWrap = $('#wccp-field-content-wrap');
+    var requiredWrap = $('#wccp-field-required-wrap');
+    var needOpts = optionTypes().indexOf(type) !== -1;
+    var isInfo = displayOnlyTypes().indexOf(type) !== -1;
+
+    if (wrap) {
+      wrap.hidden = !needOpts;
+      if (needOpts && !$$('.wccp-option-row').length) {
+        setOptions(['گزینه ۱', 'گزینه ۲', 'گزینه ۳']);
+      }
+    }
+    if (contentWrap) contentWrap.hidden = !isInfo;
+    if (requiredWrap) {
+      requiredWrap.hidden = isInfo;
+      if (isInfo && $('#wccp-field-required')) {
+        $('#wccp-field-required').checked = false;
+      }
     }
   }
 
@@ -422,7 +440,12 @@
     var opts = collectOptions();
     var html = '<div class="wccp-pv-label">' + escapeHtml(label) + (required ? ' <span>*</span>' : '') + '</div>';
 
-    if (type === 'textarea') {
+    if (type === 'info') {
+      var content = ($('#wccp-field-content') && $('#wccp-field-content').value) || 'متن اطلاع‌رسانی اینجا نمایش داده می‌شود…';
+      html = '<div class="wccp-pv-info"><div class="wccp-pv-label">' + escapeHtml(label) + '</div><div class="wccp-pv-info-text">' + escapeHtml(content).replace(/\n/g, '<br>') + '</div></div>';
+      box.innerHTML = html;
+      return;
+    } else if (type === 'textarea') {
       html += '<textarea class="wccp-pv-input" rows="3" disabled></textarea>';
     } else if (type === 'select') {
       html += '<select class="wccp-pv-input" disabled><option>انتخاب کنید</option>';
@@ -454,8 +477,10 @@
     var title = $('#wccp-modal-title');
     if (title) title.textContent = isEdit ? 'ویرایش سوال / فیلد' : 'ساخت سوال / فیلد جدید';
     $('#wccp-field-key').value = isEdit ? key : '';
-    $('#wccp-field-label').value = f.label || '';
+    $('#wccp-field-label').value = f.label || (presetType === 'info' ? 'اطلاعات بیشتر سفارش' : '');
     $('#wccp-field-required').checked = !!f.required;
+    var contentEl = $('#wccp-field-content');
+    if (contentEl) contentEl.value = f.content || '';
 
     var type = presetType || f.type || 'text';
     setType(type);
@@ -492,11 +517,24 @@
       return;
     }
 
+    var labelVal = ($('#wccp-field-label') && $('#wccp-field-label').value) || '';
+    var contentVal = ($('#wccp-field-content') && $('#wccp-field-content').value) || '';
+    if (type === 'info') {
+      if (!String(labelVal).trim() && !String(contentVal).trim()) {
+        toast('برای متن ساده، عنوان یا متن اطلاع‌رسانی را وارد کنید', 'error');
+        return;
+      }
+    } else if (!String(labelVal).trim()) {
+      toast('عنوان سوال / فیلد را وارد کنید', 'error');
+      return;
+    }
+
     var payload = {
-      label: $('#wccp-field-label').value,
+      label: labelVal,
       type: type,
       options_text: optionsText,
-      required: $('#wccp-field-required').checked ? 1 : 0,
+      content: contentVal,
+      required: (type === 'info') ? 0 : ($('#wccp-field-required').checked ? 1 : 0),
       template_key: currentTemplateKey()
     };
     var action = key ? 'wccp_update_field' : 'wccp_create_field';
@@ -566,6 +604,9 @@
     var addBtnTop = $('#wccp-add-field-top');
     if (addBtnTop) addBtnTop.addEventListener('click', function (e) { e.preventDefault(); createField('text'); });
 
+    var addInfo = $('#wccp-add-info');
+    if (addInfo) addInfo.addEventListener('click', function (e) { e.preventDefault(); createField('info'); });
+
     var addRadio = $('#wccp-add-radio');
     if (addRadio) addRadio.addEventListener('click', function (e) { e.preventDefault(); createField('radio'); });
 
@@ -584,6 +625,8 @@
 
     var labelEl = $('#wccp-field-label');
     if (labelEl) labelEl.addEventListener('input', updatePreview);
+    var contentInput = $('#wccp-field-content');
+    if (contentInput) contentInput.addEventListener('input', updatePreview);
     var reqEl = $('#wccp-field-required');
     if (reqEl) reqEl.addEventListener('change', updatePreview);
 

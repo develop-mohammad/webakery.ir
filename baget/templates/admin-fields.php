@@ -28,6 +28,7 @@ $tpl_label = $templates[ $current_tpl ]['label'] ?? $current_tpl;
 		<div class="wccp-topbar-actions">
 			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=wccp&tab=templates' ) ); ?>">+ افزودن قالب</a>
 			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=wccp&tab=wc-products' ) ); ?>">محصولات فروشگاه</a>
+			<button type="button" class="button button-secondary" id="wccp-add-info">+ متن ساده</button>
 			<button type="button" class="button button-secondary" id="wccp-add-radio">+ سوال رادیو</button>
 			<button type="button" class="button button-secondary" id="wccp-add-checkboxes">+ سوال چندگزینه‌ای</button>
 			<button type="button" class="wccp-btn-save" id="wccp-save-btn">

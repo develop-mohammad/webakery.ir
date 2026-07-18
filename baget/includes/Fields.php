@@ -34,12 +34,17 @@ class Fields {
 
 	/** @return string[] */
 	public static function allowed_types() {
-		return array( 'text', 'tel', 'email', 'number', 'textarea', 'select', 'radio', 'checkboxes', 'state' );
+		return array( 'text', 'tel', 'email', 'number', 'textarea', 'select', 'radio', 'checkboxes', 'state', 'info' );
 	}
 
 	/** @return string[] */
 	public static function option_types() {
 		return array( 'select', 'radio', 'checkboxes' );
+	}
+
+	/** فیلدهایی که فقط نمایش داده می‌شوند و ورودی کاربر ندارند */
+	public static function display_only_types() {
+		return array( 'info' );
 	}
 
 	/**
@@ -77,6 +82,20 @@ class Fields {
 		$label    = $def['label'] ?? $key;
 
 		echo '<div class="wccp-field wccp-field-' . esc_attr( sanitize_key( $type ) ) . '">';
+
+		if ( 'info' === $type ) {
+			$content = (string) ( $def['content'] ?? $def['options'] ?? '' );
+			echo '<div class="wccp-info-box">';
+			if ( '' !== trim( $label ) ) {
+				echo '<strong class="wccp-info-title">' . esc_html( $label ) . '</strong>';
+			}
+			if ( '' !== trim( $content ) ) {
+				echo '<div class="wccp-info-text">' . wp_kses_post( wpautop( $content ) ) . '</div>';
+			}
+			echo '</div></div>';
+			return;
+		}
+
 		echo '<span class="wccp-field-label">' . esc_html( $label );
 		if ( $required ) {
 			echo ' <abbr class="required" title="required">*</abbr>';
@@ -138,6 +157,7 @@ class Fields {
 			'radio'      => 'رادیو',
 			'checkboxes' => 'چندگزینه‌ای',
 			'state'      => 'استان',
+			'info'       => 'متن ساده',
 		);
 		return $labels[ $type ] ?? (string) $type;
 	}
@@ -212,9 +232,10 @@ class Fields {
 			$clean_custom[ $key ] = array(
 				'label'       => sanitize_text_field( $def['label'] ?? $key ),
 				'type'        => $type,
-				'required'    => ! empty( $def['required'] ),
+				'required'    => ( 'info' === $type ) ? false : ! empty( $def['required'] ),
 				'placeholder' => sanitize_text_field( $def['placeholder'] ?? '' ),
 				'options'     => self::normalize_options_string( $def['options'] ?? '' ),
+				'content'     => ( 'info' === $type ) ? sanitize_textarea_field( $def['content'] ?? '' ) : '',
 				'custom'      => true,
 				'user_defined'=> true,
 			);
