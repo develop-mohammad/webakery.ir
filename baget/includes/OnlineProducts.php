@@ -44,10 +44,12 @@ class OnlineProducts {
 	/** @return string[] */
 	public static function product_active_fields( $product_id ) {
 		$active = get_post_meta( $product_id, '_wccp_active_fields', true );
-		if ( ! is_array( $active ) || empty( $active ) ) {
-			return Fields::get_active_keys();
+		if ( is_array( $active ) && ! empty( $active ) ) {
+			return array_values( array_map( 'strval', $active ) );
 		}
-		return array_values( array_map( 'strval', $active ) );
+		// اگر فیلد محصول خالی است، فیلدهای قالب انتخاب‌شده را بگیر
+		$tpl = Templates::product_template_key( $product_id );
+		return Templates::fields_for( $tpl );
 	}
 
 	public function shortcode_pay( $atts ) {

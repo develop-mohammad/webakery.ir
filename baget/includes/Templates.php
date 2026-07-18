@@ -4,88 +4,45 @@ namespace WCCP;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * قالب‌های صفحه پرداخت محصولات آنلاین.
+ * قالب‌های صفحه پرداخت + فیلدهای اختصاصی هر قالب.
  */
 class Templates {
 
 	const OPTION = 'wccp_pay_templates';
 
+	/** @return string[] */
+	public static function default_fields() {
+		return Fields::default_active();
+	}
+
 	/** @return array<string,array> */
 	public static function builtins() {
-		return array(
-			'violet'  => array(
-				'label'       => 'بنفش کلاسیک',
-				'primary'     => '#6d28d9',
-				'background'  => '#f5f3ff',
-				'card'        => '#ffffff',
-				'text'        => '#0f172a',
-				'muted'       => '#64748b',
-				'button_text' => '#ffffff',
-				'radius'      => '20',
-				'layout'      => 'card',
-				'builtin'     => true,
-			),
-			'ocean'   => array(
-				'label'       => 'آبی اقیانوس',
-				'primary'     => '#0284c7',
-				'background'  => '#e0f2fe',
-				'card'        => '#ffffff',
-				'text'        => '#0c4a6e',
-				'muted'       => '#64748b',
-				'button_text' => '#ffffff',
-				'radius'      => '16',
-				'layout'      => 'card',
-				'builtin'     => true,
-			),
-			'emerald' => array(
-				'label'       => 'سبز زمردی',
-				'primary'     => '#059669',
-				'background'  => '#ecfdf5',
-				'card'        => '#ffffff',
-				'text'        => '#064e3b',
-				'muted'       => '#64748b',
-				'button_text' => '#ffffff',
-				'radius'      => '18',
-				'layout'      => 'card',
-				'builtin'     => true,
-			),
-			'dark'    => array(
-				'label'       => 'تیره حرفه‌ای',
-				'primary'     => '#a78bfa',
-				'background'  => '#0f172a',
-				'card'        => '#1e293b',
-				'text'        => '#f8fafc',
-				'muted'       => '#94a3b8',
-				'button_text' => '#0f172a',
-				'radius'      => '16',
-				'layout'      => 'card',
-				'builtin'     => true,
-			),
-			'minimal' => array(
-				'label'       => 'مینیمال روشن',
-				'primary'     => '#111827',
-				'background'  => '#f9fafb',
-				'card'        => '#ffffff',
-				'text'        => '#111827',
-				'muted'       => '#6b7280',
-				'button_text' => '#ffffff',
-				'radius'      => '12',
-				'layout'      => 'minimal',
-				'builtin'     => true,
-			),
-			'rose'    => array(
-				'label'       => 'صورتی مدرن',
-				'primary'     => '#e11d48',
-				'background'  => '#fff1f2',
-				'card'        => '#ffffff',
-				'text'        => '#881337',
-				'muted'       => '#9f1239',
-				'button_text' => '#ffffff',
-				'radius'      => '22',
-				'layout'      => 'card',
-				'builtin'     => true,
-			),
+		$base_fields = self::default_fields();
+		$skins       = array(
+			'violet'  => array( 'بنفش کلاسیک', '#6d28d9', '#f5f3ff', '#ffffff', '#0f172a', '#64748b', '#ffffff', '20', 'card' ),
+			'ocean'   => array( 'آبی اقیانوس', '#0284c7', '#e0f2fe', '#ffffff', '#0c4a6e', '#64748b', '#ffffff', '16', 'card' ),
+			'emerald' => array( 'سبز زمردی', '#059669', '#ecfdf5', '#ffffff', '#064e3b', '#64748b', '#ffffff', '18', 'card' ),
+			'dark'    => array( 'تیره حرفه‌ای', '#a78bfa', '#0f172a', '#1e293b', '#f8fafc', '#94a3b8', '#0f172a', '16', 'card' ),
+			'minimal' => array( 'مینیمال روشن', '#111827', '#f9fafb', '#ffffff', '#111827', '#6b7280', '#ffffff', '12', 'minimal' ),
+			'rose'    => array( 'صورتی مدرن', '#e11d48', '#fff1f2', '#ffffff', '#881337', '#9f1239', '#ffffff', '22', 'card' ),
 		);
+		$out = array();
+		foreach ( $skins as $key => $s ) {
+			$out[ $key ] = array(
+				'label'       => $s[0],
+				'primary'     => $s[1],
+				'background'  => $s[2],
+				'card'        => $s[3],
+				'text'        => $s[4],
+				'muted'       => $s[5],
+				'button_text' => $s[6],
+				'radius'      => $s[7],
+				'layout'      => $s[8],
+				'fields'      => $base_fields,
+				'builtin'     => true,
+			);
+		}
+		return $out;
 	}
 
 	/** @return array<string,array> */
@@ -96,7 +53,30 @@ class Templates {
 
 	/** @return array<string,array> */
 	public static function all() {
-		return array_merge( self::builtins(), self::custom() );
+		$all = self::builtins();
+		foreach ( self::custom() as $key => $tpl ) {
+			if ( ! is_array( $tpl ) ) {
+				continue;
+			}
+			$base           = $all[ $key ] ?? array(
+				'label'       => $key,
+				'primary'     => '#6d28d9',
+				'background'  => '#f5f3ff',
+				'card'        => '#ffffff',
+				'text'        => '#0f172a',
+				'muted'       => '#64748b',
+				'button_text' => '#ffffff',
+				'radius'      => '16',
+				'layout'      => 'card',
+				'fields'      => self::default_fields(),
+				'builtin'     => false,
+			);
+			$merged         = array_merge( $base, $tpl );
+			$merged['fields'] = self::sanitize_fields( $merged['fields'] ?? self::default_fields() );
+			$merged['builtin'] = isset( self::builtins()[ $key ] );
+			$all[ $key ]    = $merged;
+		}
+		return $all;
 	}
 
 	/** @return array */
@@ -108,10 +88,16 @@ class Templates {
 		return self::builtins()['violet'];
 	}
 
+	/** @return string[] */
+	public static function fields_for( $key ) {
+		$tpl = self::get( $key );
+		$fields = self::sanitize_fields( $tpl['fields'] ?? array() );
+		return ! empty( $fields ) ? $fields : self::default_fields();
+	}
+
 	/** @return string */
 	public static function product_template_key( $product_id ) {
-		$key = get_post_meta( $product_id, '_wccp_template', true );
-		$key = sanitize_key( (string) $key );
+		$key = sanitize_key( (string) get_post_meta( $product_id, '_wccp_template', true ) );
 		$all = self::all();
 		if ( $key && isset( $all[ $key ] ) ) {
 			return $key;
@@ -120,13 +106,49 @@ class Templates {
 	}
 
 	/**
-	 * @param array $data
-	 * @return string|WP_Error key
+	 * اعمال فیلدهای قالب روی محصول.
+	 *
+	 * @return string[]
+	 */
+	public static function apply_to_product( $product_id, $template_key ) {
+		$fields = self::fields_for( $template_key );
+		update_post_meta( $product_id, '_wccp_template', sanitize_key( $template_key ) );
+		update_post_meta( $product_id, '_wccp_active_fields', $fields );
+		return $fields;
+	}
+
+	/** @return string[] */
+	public static function sanitize_fields( $fields ) {
+		$defs = array_keys( CustomFields::merged_with_defaults() );
+		$out  = array();
+		foreach ( (array) $fields as $key ) {
+			$key = sanitize_key( (string) $key );
+			if ( $key && in_array( $key, $defs, true ) ) {
+				$out[] = $key;
+			}
+		}
+		return array_values( array_unique( $out ) );
+	}
+
+	/**
+	 * @param array  $data
+	 * @param string $key
+	 * @return string|\WP_Error
 	 */
 	public static function save_custom( array $data, $key = '' ) {
 		$label = sanitize_text_field( $data['label'] ?? '' );
 		if ( '' === $label ) {
 			return new \WP_Error( 'label', 'نام قالب را وارد کنید.' );
+		}
+
+		$fields_raw = $data['fields'] ?? array();
+		if ( is_string( $fields_raw ) ) {
+			$decoded    = json_decode( $fields_raw, true );
+			$fields_raw = is_array( $decoded ) ? $decoded : array_filter( array_map( 'trim', explode( ',', $fields_raw ) ) );
+		}
+		$fields = self::sanitize_fields( $fields_raw );
+		if ( empty( $fields ) ) {
+			return new \WP_Error( 'fields', 'حداقل یک فیلد برای قالب انتخاب کنید.' );
 		}
 
 		$clean = array(
@@ -139,14 +161,23 @@ class Templates {
 			'button_text' => self::sanitize_color( $data['button_text'] ?? '#ffffff' ),
 			'radius'      => (string) max( 0, min( 40, (int) ( $data['radius'] ?? 16 ) ) ),
 			'layout'      => in_array( ( $data['layout'] ?? 'card' ), array( 'card', 'minimal', 'cover' ), true ) ? $data['layout'] : 'card',
+			'fields'      => $fields,
 			'builtin'     => false,
 		);
 
 		$custom = self::custom();
 		$key    = sanitize_key( (string) $key );
-		if ( ! $key || isset( self::builtins()[ $key ] ) ) {
+
+		// کلید جدید
+		if ( ! $key ) {
 			$key = 'custom_' . strtolower( wp_generate_password( 6, false, false ) );
 		}
+
+		// اگر روی پیش‌فرض ذخیره می‌شود، به‌صورت override نگه دار
+		if ( isset( self::builtins()[ $key ] ) ) {
+			$clean['builtin'] = true;
+		}
+
 		$custom[ $key ] = $clean;
 		update_option( self::OPTION, $custom, false );
 		return $key;
@@ -155,13 +186,11 @@ class Templates {
 	/** @return true|\WP_Error */
 	public static function delete_custom( $key ) {
 		$key = sanitize_key( (string) $key );
-		if ( ! $key || isset( self::builtins()[ $key ] ) ) {
-			return new \WP_Error( 'builtin', 'قالب پیش‌فرض قابل حذف نیست.' );
-		}
 		$custom = self::custom();
 		if ( ! isset( $custom[ $key ] ) ) {
-			return new \WP_Error( 'missing', 'قالب یافت نشد.' );
+			return new \WP_Error( 'missing', 'قالب سفارشی یافت نشد.' );
 		}
+		// برای پیش‌فرض فقط override پاک می‌شود (برمی‌گردد به حالت اولیه)
 		unset( $custom[ $key ] );
 		update_option( self::OPTION, $custom, false );
 		return true;
@@ -204,7 +233,6 @@ class Templates {
 			. "input,textarea,select{border:1px solid rgba(100,116,139,.35);border-radius:12px;padding:12px;font-family:inherit;background:{$card};color:{$text}}"
 			. ".wccp-choice-list{display:flex;flex-direction:column;gap:10px;margin-top:6px}"
 			. ".wccp-choice{display:flex;align-items:center;gap:8px;padding:12px 14px;border:1px solid rgba(100,116,139,.3);border-radius:12px;background:transparent;cursor:pointer;font-weight:500;color:{$text}}"
-			. ".wccp-choice + .wccp-choice{margin-top:0}"
 			. ".wccp-choice input{margin:0}"
 			. ".wccp-radio-list .wccp-choice:has(input:checked),.wccp-checkbox-list .wccp-choice:has(input:checked){border-color:{$prim};background:rgba(109,40,217,.08)}"
 			. ".wccp-price{font-weight:700;color:{$prim};margin:12px 0;padding-top:8px;border-top:1px solid rgba(100,116,139,.2)}"

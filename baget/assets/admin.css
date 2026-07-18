@@ -104,6 +104,15 @@
 .wccp-color-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .wccp-color-grid label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600}
 .wccp-color-grid input[type=color]{width:100%;height:36px;border:0;padding:0;background:transparent}
+.wccp-tpl-card.is-selected{border-color:#6d28d9;box-shadow:0 0 0 2px rgba(109,40,217,.15)}
+.wccp-tpl-fields-box{border:1px solid #e9d5ff;border-radius:12px;padding:12px;background:#faf5ff}
+.wccp-tpl-fields-box > strong{display:block;margin-bottom:6px}
+.wccp-tpl-fields-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow:auto;margin-top:10px}
+.wccp-tpl-field-check{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer}
+.wccp-tpl-field-check:has(input:checked){border-color:#6d28d9;background:#f5f3ff}
+.wccp-tpl-field-check input{margin-top:3px}
+.wccp-tpl-field-check strong{display:block;font-size:13px}
+.wccp-tpl-field-check small{display:block;color:#64748b;font-size:11px;margin-top:2px}
 @media (max-width:960px){.wccp-tpl-grid{grid-template-columns:1fr}}
 
 @media (max-width:960px){

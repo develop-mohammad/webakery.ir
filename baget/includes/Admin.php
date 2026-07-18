@@ -210,25 +210,35 @@ class Admin {
 		$selected = Templates::product_template_key( $post->ID );
 		$link     = get_permalink( $post );
 		$all      = Templates::all();
+		$tpl_fields = Templates::fields_for( $selected );
 		wp_nonce_field( 'wccp_product_meta', 'wccp_product_nonce' );
 
 		echo '<p><label><strong>قیمت (تومان)</strong><br><input type="number" name="wccp_price" value="' . esc_attr( (string) $price ) . '" class="widefat" /></label></p>';
 
 		echo '<p><label><strong>قالب صفحه پرداخت</strong><br>';
-		echo '<select name="wccp_template" class="widefat">';
+		echo '<select name="wccp_template" class="widefat" id="wccp-product-template">';
 		foreach ( $all as $key => $tpl ) {
+			$count = count( Templates::sanitize_fields( $tpl['fields'] ?? array() ) );
 			echo '<option value="' . esc_attr( $key ) . '" ' . selected( $selected, $key, false ) . '>'
-				. esc_html( $tpl['label'] ) . ( ! empty( $tpl['builtin'] ) ? '' : ' ★' )
+				. esc_html( $tpl['label'] ) . ' (' . (int) $count . ' فیلد)'
 				. '</option>';
 		}
 		echo '</select></label></p>';
-		echo '<p class="description"><a href="' . esc_url( admin_url( 'admin.php?page=wccp&tab=templates' ) ) . '">+ افزودن / مدیریت قالب‌ها</a></p>';
+
+		echo '<p><label style="display:flex;gap:8px;align-items:flex-start">';
+		echo '<input type="checkbox" name="wccp_apply_template_fields" value="1" checked />';
+		echo '<span><strong>اعمال فیلدهای این قالب روی محصول</strong><br><small class="description">با ذخیره، فیلدهای اختصاصی قالب جایگزین فیلدهای فعلی محصول می‌شود.</small></span>';
+		echo '</label></p>';
+
+		echo '<p class="description"><a href="' . esc_url( admin_url( 'admin.php?page=wccp&tab=templates&edit=' . rawurlencode( $selected ) ) ) . '">ویرایش فیلدهای این قالب</a> · ';
+		echo '<a href="' . esc_url( admin_url( 'admin.php?page=wccp&tab=templates' ) ) . '">+ قالب جدید</a></p>';
 
 		if ( isset( $all[ $selected ] ) ) {
 			$t = $all[ $selected ];
 			echo '<div class="wccp-tpl-mini-preview" style="background:' . esc_attr( $t['background'] ) . ';border-radius:10px;padding:10px;margin:8px 0 12px">';
 			echo '<div style="background:' . esc_attr( $t['card'] ) . ';border-radius:8px;padding:10px;border-top:3px solid ' . esc_attr( $t['primary'] ) . '">';
 			echo '<div style="font-size:12px;font-weight:700;color:' . esc_attr( $t['text'] ) . '">' . esc_html( $t['label'] ) . '</div>';
+			echo '<div style="font-size:11px;color:' . esc_attr( $t['muted'] ) . ';margin-top:4px">' . esc_html( (string) count( $tpl_fields ) ) . ' فیلد اختصاصی</div>';
 			echo '<div style="margin-top:8px;background:' . esc_attr( $t['primary'] ) . ';color:' . esc_attr( $t['button_text'] ) . ';text-align:center;border-radius:6px;padding:6px;font-size:11px;font-weight:700">دکمه پرداخت</div>';
 			echo '</div></div>';
 		}
@@ -252,9 +262,13 @@ class Admin {
 			$all = Templates::all();
 			if ( isset( $all[ $key ] ) ) {
 				update_post_meta( $post_id, '_wccp_template', $key );
+				if ( ! empty( $_POST['wccp_apply_template_fields'] ) ) {
+					Templates::apply_to_product( $post_id, $key );
+				}
 			}
 		}
-		if ( isset( $_POST['wccp_active_fields'] ) ) {
+		// فقط وقتی «اعمال فیلدهای قالب» تیک نخورده، ترتیب دستی برد را نگه دار
+		if ( empty( $_POST['wccp_apply_template_fields'] ) && isset( $_POST['wccp_active_fields'] ) ) {
 			$raw     = wp_unslash( $_POST['wccp_active_fields'] );
 			$decoded = is_string( $raw ) ? json_decode( $raw, true ) : $raw;
 			if ( is_array( $decoded ) ) {
