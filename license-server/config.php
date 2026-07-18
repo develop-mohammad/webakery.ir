@@ -65,12 +65,12 @@ define( 'LS_PLUGIN_META', [
 // نسخهٔ سرور باید از نسخهٔ نصب‌شده روی سایت مشتری بالاتر باشد تا در «افزونه‌ها» آپدیت نمایش داده شود.
 define( 'LS_UPDATES', [
     'wccp' => [
-        'version'      => '1.3.3',
+        'version'      => '1.3.4',
         'package'      => 'https://webakery.ir/license-server/updates/wccp.zip',
         'requires'     => '5.8',
-        'tested'       => '6.6',
+        'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۳.۳: تست سیستم آپدیت خودکار.',
+        'changelog'    => 'نسخه ۱.۳.۴: جابه‌جایی و ذخیره فیلدهای پیش‌فرض/سفارشی اصلاح شد (HTML5 DnD + AJAX).',
     ],
     'access-levels' => [
         'version'      => '1.5.8',
