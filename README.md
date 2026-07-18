@@ -17,6 +17,17 @@
 برای ثبت محصول روی سرور لایسنس، فایل `license-server-updates/ADD-NOBAT-MAN.md` را ببینید.
 
 
+## Barbari (Access Levels)
+
+مدیریت دسترسی کاربران به افزونه‌ها و بخش‌های پیشخوان.
+
+- نسخه: **1.5.8**
+- سازنده: **webakery.ir**
+- مسیر: `access-levels/`
+- ZIP: `access-levels.zip`
+- قیمت: ۹۹,۹۹۹ تومان
+- شناسه لایسنس: `access-levels`
+
 ## سکوت نوتیف (Quiet Notices)
 
 خاموش کردن نوتیفیکیشن‌های شلوغ افزونه‌ها در پیشخوان وردپرس.
