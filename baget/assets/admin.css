@@ -88,6 +88,9 @@
 .wccp-pv-choices label{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;font-size:13px}
 .wccp-tips ul{margin:8px 0 0;padding:0 16px 0 0;color:#475569;font-size:12.5px;line-height:1.7}
 .wccp-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;border-top:1px solid #f1f5f9;padding-top:14px}
+.wccp-license-wrap{max-width:560px;margin:10px auto 30px}
+.wccp-license-fallback-card{background:#fff;border:1px solid #e9d5ff;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(109,40,217,.08)}
+.wccp-license-fallback-card h2{margin-top:0}
 
 @media (max-width:960px){
 	.wccp-board,.wccp-howto,.wccp-form-grid,.wccp-type-grid{grid-template-columns:1fr}

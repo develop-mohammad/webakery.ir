@@ -11,7 +11,7 @@ $tabs = array(
 		'url'   => admin_url( 'edit.php?post_type=wccp_product' ),
 	),
 	'license'  => array(
-		'label' => 'لایسنس',
+		'label' => 'خرید و لایسنس',
 		'url'   => admin_url( 'admin.php?page=wccp&tab=license' ),
 	),
 );

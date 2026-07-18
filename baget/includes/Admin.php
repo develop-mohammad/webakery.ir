@@ -45,6 +45,14 @@ class Admin {
 		add_submenu_page( 'wccp', 'فیلدها', 'فیلدها', $cap, 'wccp', array( $this, 'render_page' ) );
 		add_submenu_page( 'wccp', 'محصولات آنلاین', 'محصولات آنلاین', $cap, 'edit.php?post_type=wccp_product' );
 		add_submenu_page( 'wccp', 'افزودن محصول', 'افزودن محصول', $cap, 'post-new.php?post_type=wccp_product' );
+		add_submenu_page(
+			'wccp',
+			'خرید و لایسنس',
+			'خرید و لایسنس',
+			$cap,
+			'wccp-license',
+			array( $this, 'render_license_page' )
+		);
 	}
 
 	public function assets( $hook ) {
@@ -115,6 +123,13 @@ class Admin {
 	public function render_license_page() {
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( self::admin_capability() ) ) {
 			wp_die( 'دسترسی غیرمجاز' );
+		}
+		// اگر از منوی «خرید و لایسنس» آمدیم، به تب لایسنس یکدست هدایت شود
+		if ( isset( $_GET['page'] ) && 'wccp-license' === sanitize_key( wp_unslash( $_GET['page'] ) ) ) { // phpcs:ignore
+			if ( ! isset( $_GET['tab'] ) ) { // phpcs:ignore
+				wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=license' ) );
+				exit;
+			}
 		}
 		$tab = 'license';
 		include WCCP_PATH . 'templates/admin-license.php';

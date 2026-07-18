@@ -16,14 +16,15 @@ class Plugin {
 	}
 
 	private function __construct() {
+		// لایسنس باید زود ثبت شود تا منوی خرید/فعال‌سازی و آپدیت کار کند
+		$this->boot_license();
+
 		add_filter( 'plugin_action_links_' . plugin_basename( WCCP_FILE ), array( $this, 'action_links' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'row_meta' ), 10, 2 );
 
 		$this->boot_admin();
 		$this->boot_frontend();
 		$this->boot_checkout();
-
-		add_action( 'init', array( $this, 'boot_license' ), 20 );
 	}
 
 	private function boot_admin() {
@@ -58,8 +59,7 @@ class Plugin {
 				if ( class_exists( 'WooCommerce' ) && class_exists( __NAMESPACE__ . '\\Checkout' ) ) {
 					Checkout::instance();
 				}
-			} catch ( \Throwable $e ) {
-				// silent on frontend
+			} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 			}
 		};
 
@@ -70,35 +70,48 @@ class Plugin {
 		}
 	}
 
+	/** ثبت سیستم خرید و فعال‌سازی لایسنس */
 	public function boot_license() {
 		try {
 			if ( ! class_exists( 'WB_License' ) ) {
 				$file = WCCP_PATH . 'includes/class-wb-license.php';
 				if ( ! is_readable( $file ) ) {
+					$this->notice( 'فایل لایسنس یافت نشد (includes/class-wb-license.php). ZIP کامل را نصب کنید.' );
 					return;
 				}
 				require_once $file;
 			}
 			if ( ! class_exists( 'WB_License' ) || ! method_exists( 'WB_License', 'init' ) ) {
+				$this->notice( 'کلاس WB_License در دسترس نیست.' );
 				return;
 			}
+
 			WB_License::init(
 				array(
-					'product'    => WCCP_PRODUCT,
-					'name'       => 'Baget | ادیت فیلدهای پرداخت',
-					'price'      => '۱۹۹,۰۰۰ تومان',
-					'file'       => WCCP_FILE,
-					'version'    => WCCP_VERSION,
-					'trial_days' => 3,
-					'page'       => 'admin.php?page=wccp&tab=license',
-					'features'   => array(
+					'product'       => WCCP_PRODUCT,
+					'name'          => 'Baget | ادیت فیلدهای پرداخت',
+					'price'         => '۱۹۹,۰۰۰ تومان',
+					'file'          => WCCP_FILE,
+					'version'       => WCCP_VERSION,
+					'trial_days'    => 3,
+					'server'        => 'https://webakery.ir/license-server',
+					'register_menu' => true,
+					'page'          => 'admin.php?page=wccp&tab=license',
+					'features'      => array(
 						'ویرایش و جابه‌جایی فیلدهای checkout',
 						'فیلد رادیو، چندگزینه‌ای و dropdown',
 						'محصولات آنلاین با لینک پرداخت',
 						'به‌روزرسانی خودکار از webakery.ir',
+						'پشتیبانی فنی',
 					),
 				)
 			);
+
+			// زمان نصب برای دوره آزمایشی
+			$opt = 'wbl_' . WCCP_PRODUCT . '_install_time';
+			if ( ! get_option( $opt ) ) {
+				update_option( $opt, time(), false );
+			}
 		} catch ( \Throwable $e ) {
 			$this->notice( 'License: ' . $e->getMessage() );
 		}
@@ -128,7 +141,8 @@ class Plugin {
 		}
 		array_unshift(
 			$links,
-			'<a href="' . esc_url( admin_url( 'admin.php?page=wccp' ) ) . '"><strong>تنظیمات فیلدها</strong></a>'
+			'<a href="' . esc_url( admin_url( 'admin.php?page=wccp' ) ) . '"><strong>تنظیمات</strong></a>',
+			'<a href="' . esc_url( admin_url( 'admin.php?page=wccp&tab=license' ) ) . '" style="color:#6d28d9;font-weight:700">خرید / لایسنس</a>'
 		);
 		return $links;
 	}
@@ -138,7 +152,7 @@ class Plugin {
 		if ( plugin_basename( WCCP_FILE ) !== $file ) {
 			return $links;
 		}
-		$links[] = '<a href="' . esc_url( admin_url( 'admin.php?page=wccp' ) ) . '">پیشخوان Baget</a>';
+		$links[] = '<a href="' . esc_url( admin_url( 'admin.php?page=wccp&tab=license' ) ) . '">فعال‌سازی لایسنس</a>';
 		return $links;
 	}
 
@@ -146,6 +160,10 @@ class Plugin {
 		try {
 			if ( false === get_option( Fields::ACTIVE_OPTION, false ) ) {
 				update_option( Fields::ACTIVE_OPTION, Fields::default_active(), false );
+			}
+			$opt = 'wbl_wccp_install_time';
+			if ( ! get_option( $opt ) ) {
+				update_option( $opt, time(), false );
 			}
 			if ( class_exists( __NAMESPACE__ . '\\OnlineProducts' ) ) {
 				OnlineProducts::register_cpt();
