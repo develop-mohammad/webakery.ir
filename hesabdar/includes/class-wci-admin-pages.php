@@ -71,7 +71,16 @@ function wci_orders_page_render() {
         }
 
         $result = WAP_Order_Service::process_bulk_action( $bulk_action, $bulk_ids );
-        if ( ! empty( $result['redirect'] ) ) {
+        // دانلود/چاپ فاکتور را همان‌جا سرو کن تا صفحه سفید / ریدایرکت شکسته نشود
+        if (
+            ! empty( $result['ok'] )
+            && ! empty( $result['order_ids'] )
+            && ! empty( $result['mode'] )
+            && class_exists( 'WCI_Bulk_Invoice' )
+        ) {
+            WCI_Bulk_Invoice::serve( (array) $result['order_ids'], (string) $result['mode'] );
+        }
+        if ( ! empty( $result['redirect'] ) && ! headers_sent() ) {
             wp_safe_redirect( $result['redirect'] );
             exit;
         }
@@ -349,6 +358,13 @@ function wci_orders_page_render() {
                 $(this).append($h);
             }
             $h.val(JSON.stringify(ids));
+            var act = ($(this).find('select[name="wci_bulk_action"]').val() || $(this).find('select[name="wci_bulk_action2"]').val() || '');
+            // دانلود/چاپ فاکتور در تب جدید تا صفحه لیست سفید نشود
+            if (String(act).indexOf('download_invoices') === 0 || String(act).indexOf('print_invoices') === 0) {
+                this.target = '_blank';
+            } else {
+                this.target = '';
+            }
         });
     });
     </script>

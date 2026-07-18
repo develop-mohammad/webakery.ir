@@ -108,7 +108,63 @@ class WAP_Portal {
             return;
         }
 
+        // کارهای دسته‌جمعی (دانلود/چاپ فاکتور) باید قبل از هر HTML اجرا شوند
+        self::maybe_process_bulk_orders_early();
+
         self::render_dashboard( $panel_type );
+    }
+
+    /** پیام فلش بعد از bulk غیر فاکتوری */
+    private static $bulk_flash_msg = '';
+
+    /**
+     * پردازش bulk قبل از خروجی HTML.
+     * علت صفحه سفید: قبلاً بعد از چاپ هدر، wp_safe_redirect صدا زده می‌شد و exit می‌خورد.
+     */
+    private static function maybe_process_bulk_orders_early(): void {
+        if (
+            ! class_exists( 'WAP_Order_Service' )
+            || ! isset( $_POST['wci_bulk_apply'] )
+            || ! check_admin_referer( 'wci_bulk_orders' )
+        ) {
+            return;
+        }
+
+        $bulk_action = sanitize_key( wp_unslash( $_POST['wci_bulk_action'] ?? $_POST['wci_bulk_action2'] ?? '' ) );
+        $bulk_ids    = class_exists( 'WCI_Bulk_Invoice' )
+            ? WCI_Bulk_Invoice::parse_order_ids( wp_unslash( $_POST ) )
+            : array_map( 'absint', (array) ( $_POST['order_ids'] ?? array() ) );
+
+        if ( in_array( $bulk_action, array( 'print_invoices_filtered', 'download_invoices_filtered' ), true ) ) {
+            $tmp_f = WAP_Data::get_order_list_filters();
+            list( , , $all_for_print ) = WAP_Data::get_filtered_order_list( $tmp_f );
+            $bulk_ids = array();
+            foreach ( (array) $all_for_print as $o ) {
+                if ( is_object( $o ) && method_exists( $o, 'get_id' ) ) {
+                    $bulk_ids[] = (int) $o->get_id();
+                }
+            }
+        }
+
+        $result = WAP_Order_Service::process_bulk_action( $bulk_action, $bulk_ids );
+
+        // دانلود/چاپ فاکتور: همان‌جا سرو کن (بدون ریدایرکت به admin-post)
+        if (
+            ! empty( $result['ok'] )
+            && ! empty( $result['order_ids'] )
+            && ! empty( $result['mode'] )
+            && class_exists( 'WCI_Bulk_Invoice' )
+        ) {
+            WCI_Bulk_Invoice::serve( (array) $result['order_ids'], (string) $result['mode'] );
+            // exit داخل serve/download/render
+        }
+
+        if ( ! empty( $result['redirect'] ) && ! headers_sent() ) {
+            wp_safe_redirect( $result['redirect'] );
+            exit;
+        }
+
+        self::$bulk_flash_msg = (string) ( $result['message'] ?? '' );
     }
 
     private static function render_license_locked( $panel_type = self::PANEL_ACCOUNTANT ) {
@@ -562,35 +618,7 @@ class WAP_Portal {
     }
 
     private static function render_orders_tab() {
-        $bulk_msg = '';
-        if (
-            class_exists( 'WAP_Order_Service' )
-            && isset( $_POST['wci_bulk_apply'] )
-            && check_admin_referer( 'wci_bulk_orders' )
-        ) {
-            $bulk_action = sanitize_key( wp_unslash( $_POST['wci_bulk_action'] ?? $_POST['wci_bulk_action2'] ?? '' ) );
-            $bulk_ids    = class_exists( 'WCI_Bulk_Invoice' )
-                ? WCI_Bulk_Invoice::parse_order_ids( wp_unslash( $_POST ) )
-                : array_map( 'absint', (array) ( $_POST['order_ids'] ?? array() ) );
-
-            if ( in_array( $bulk_action, array( 'print_invoices_filtered', 'download_invoices_filtered' ), true ) ) {
-                $tmp_f = WAP_Data::get_order_list_filters();
-                list( , , $all_for_print ) = WAP_Data::get_filtered_order_list( $tmp_f );
-                $bulk_ids = array();
-                foreach ( (array) $all_for_print as $o ) {
-                    if ( is_object( $o ) && method_exists( $o, 'get_id' ) ) {
-                        $bulk_ids[] = (int) $o->get_id();
-                    }
-                }
-            }
-
-            $result = WAP_Order_Service::process_bulk_action( $bulk_action, $bulk_ids );
-            if ( ! empty( $result['redirect'] ) ) {
-                wp_safe_redirect( $result['redirect'] );
-                exit;
-            }
-            $bulk_msg = $result['message'] ?? '';
-        }
+        $bulk_msg = self::$bulk_flash_msg;
 
         $f              = WAP_Data::get_order_list_filters();
         list( $orders, $total, $all_orders ) = WAP_Data::get_filtered_order_list( $f );
@@ -797,6 +825,16 @@ class WAP_Portal {
                         form.appendChild(h);
                     }
                     h.value = JSON.stringify(ids);
+
+                    // دانلود/چاپ فاکتور در تب جدید تا صفحه لیست سفید نشود
+                    var a1 = form.querySelector('select[name="wci_bulk_action"]');
+                    var a2 = form.querySelector('select[name="wci_bulk_action2"]');
+                    var act = ((a1 && a1.value) ? a1.value : '') || ((a2 && a2.value) ? a2.value : '');
+                    if (act.indexOf('download_invoices') === 0 || act.indexOf('print_invoices') === 0) {
+                        form.target = '_blank';
+                    } else {
+                        form.target = '';
+                    }
                 });
             }
         })();

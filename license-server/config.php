@@ -89,12 +89,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.9.9',
+        'version'      => '1.9.10',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۹.۹: دانلود دسته‌جمعی فاکتورها به‌صورت ZIP بدون محدودیت تعداد.',
+        'changelog'    => 'نسخه ۱.۹.۱۰: رفع صفحه سفید بعد از دانلود دسته‌جمعی فاکتورها در پرتال.',
     ],
     'nobat-man' => [
         'version'      => '1.0.11',

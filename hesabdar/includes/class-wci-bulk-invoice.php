@@ -107,11 +107,28 @@ class WCI_Bulk_Invoice {
 			: count( $order_ids ) . ' فاکتور آماده چاپ است…';
 
 		return array(
-			'ok'       => true,
-			'message'  => $msg,
-			'redirect' => self::action_url( $key, $mode ),
-			'count'    => count( $order_ids ),
+			'ok'        => true,
+			'message'   => $msg,
+			'redirect'  => self::action_url( $key, $mode ),
+			'order_ids' => $order_ids,
+			'mode'      => $mode,
+			'count'     => count( $order_ids ),
 		);
+	}
+
+	/**
+	 * سرو فوری چاپ/دانلود در همان درخواست (بدون ریدایرکت admin-post).
+	 * برای پرتال حسابدار ضروری است چون قبل از خروجی HTML باید اجرا شود.
+	 *
+	 * @param array<int> $order_ids
+	 * @param string     $mode print|download
+	 */
+	public static function serve( array $order_ids, string $mode = 'print' ): void {
+		$mode = ( 'download' === $mode ) ? 'download' : 'print';
+		if ( 'download' === $mode ) {
+			self::download( $order_ids );
+		}
+		self::render( $order_ids );
 	}
 
 	/** هندل admin-post — چاپ یا دانلود */
@@ -154,72 +171,84 @@ class WCI_Bulk_Invoice {
 	 * @param array<int> $order_ids
 	 */
 	public static function download( array $order_ids ): void {
-		self::boost_resources();
+		try {
+			self::boost_resources();
 
-		$order_ids = array_values( array_unique( array_filter( array_map( 'absint', $order_ids ) ) ) );
-		$s         = get_option( 'wci_invoice_settings', array() );
-		$color     = $s['primary_color'] ?? '#2271b1';
-		$stamp     = gmdate( 'Ymd-His' );
-
-		if ( class_exists( 'ZipArchive' ) ) {
-			$tmp = wp_tempnam( 'hesabdar-invoices-' . $stamp . '.zip' );
-			if ( ! $tmp ) {
-				wp_die( 'ساخت فایل موقت ممکن نشد.' );
+			$order_ids = array_values( array_unique( array_filter( array_map( 'absint', $order_ids ) ) ) );
+			$s         = get_option( 'wci_invoice_settings', array() );
+			if ( ! is_array( $s ) ) {
+				$s = array();
 			}
-			$zip = new ZipArchive();
-			if ( true !== $zip->open( $tmp, ZipArchive::OVERWRITE ) ) {
-				@unlink( $tmp ); // phpcs:ignore
-				wp_die( 'ساخت فایل ZIP ممکن نشد.' );
+			$color = $s['primary_color'] ?? '#2271b1';
+			$stamp = gmdate( 'Ymd-His' );
+
+			if ( class_exists( 'ZipArchive' ) ) {
+				$tmp = wp_tempnam( 'hesabdar-invoices-' . $stamp . '.zip' );
+				if ( ! $tmp ) {
+					wp_die( 'ساخت فایل موقت ممکن نشد.' );
+				}
+				$zip = new ZipArchive();
+				if ( true !== $zip->open( $tmp, ZipArchive::OVERWRITE ) ) {
+					@unlink( $tmp ); // phpcs:ignore
+					// بدون ZIP ادامه بده (HTML ترکیبی)
+				} else {
+					$added = 0;
+					foreach ( $order_ids as $order_id ) {
+						$order = wc_get_order( $order_id );
+						if ( ! $order ) {
+							continue;
+						}
+						$html = self::build_single_html( $order, $s, $color );
+						$name = 'invoice-' . preg_replace( '/[^a-zA-Z0-9\-_]/', '', (string) $order->get_order_number() ) . '.html';
+						$zip->addFromString( $name, $html );
+						$added++;
+					}
+					$zip->close();
+
+					if ( $added < 1 ) {
+						@unlink( $tmp ); // phpcs:ignore
+						wp_die( 'هیچ فاکتور معتبری برای دانلود یافت نشد.' );
+					}
+
+					$filename = 'hesabdar-invoices-' . $stamp . '-' . $added . '.zip';
+					nocache_headers();
+					header( 'Content-Type: application/zip' );
+					header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+					header( 'Content-Length: ' . (string) filesize( $tmp ) );
+					readfile( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+					@unlink( $tmp ); // phpcs:ignore
+					exit;
+				}
 			}
 
+			// Fallback: یک HTML ترکیبی
+			$filename = 'hesabdar-invoices-' . $stamp . '.html';
+			nocache_headers();
+			header( 'Content-Type: text/html; charset=utf-8' );
+			header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+			echo '<!DOCTYPE html><html dir="rtl" lang="fa"><head><meta charset="UTF-8"><title>فاکتورها</title><style>';
+			echo self::shared_css( $color );
+			echo '.invoice-page{page-break-after:always;break-after:page;padding:12px 0}.invoice-page:last-child{page-break-after:auto}</style></head><body>';
 			$added = 0;
 			foreach ( $order_ids as $order_id ) {
 				$order = wc_get_order( $order_id );
 				if ( ! $order ) {
 					continue;
 				}
-				$html = self::build_single_html( $order, $s, $color );
-				$name = 'invoice-' . preg_replace( '/[^a-zA-Z0-9\-_]/', '', (string) $order->get_order_number() ) . '.html';
-				$zip->addFromString( $name, $html );
+				echo '<div class="invoice-page">';
+				self::echo_invoice_card( $order, $s, $color );
+				echo '</div>';
 				$added++;
 			}
-			$zip->close();
-
 			if ( $added < 1 ) {
-				@unlink( $tmp ); // phpcs:ignore
-				wp_die( 'هیچ فاکتور معتبری برای دانلود یافت نشد.' );
+				echo '<p>هیچ فاکتور معتبری یافت نشد.</p>';
 			}
-
-			$filename = 'hesabdar-invoices-' . $stamp . '-' . $added . '.zip';
-			nocache_headers();
-			header( 'Content-Type: application/zip' );
-			header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
-			header( 'Content-Length: ' . (string) filesize( $tmp ) );
-			readfile( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
-			@unlink( $tmp ); // phpcs:ignore
+			echo '</body></html>';
 			exit;
+		} catch ( Throwable $e ) {
+			wp_die( 'خطا در ساخت فایل فاکتور: ' . esc_html( $e->getMessage() ) );
 		}
-
-		// Fallback: یک HTML ترکیبی
-		$filename = 'hesabdar-invoices-' . $stamp . '.html';
-		nocache_headers();
-		header( 'Content-Type: text/html; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
-
-		echo '<!DOCTYPE html><html dir="rtl" lang="fa"><head><meta charset="UTF-8"><title>فاکتورها</title><style>';
-		echo self::shared_css( $color );
-		echo '.invoice-page{page-break-after:always;break-after:page;padding:12px 0}.invoice-page:last-child{page-break-after:auto}</style></head><body>';
-		foreach ( $order_ids as $order_id ) {
-			$order = wc_get_order( $order_id );
-			if ( ! $order ) {
-				continue;
-			}
-			echo '<div class="invoice-page">';
-			self::echo_invoice_card( $order, $s, $color );
-			echo '</div>';
-		}
-		echo '</body></html>';
-		exit;
 	}
 
 	/**
