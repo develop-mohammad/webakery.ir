@@ -90,7 +90,7 @@ class UpdateManager {
 
     public static function zip_path( string $product ): ?string {
         $map = array(
-            'wccp'          => 'wccp.zip',
+            'wccp'          => 'baget.zip',
             'hesabdar'      => 'hesabdar.zip',
             'access-levels' => 'access-levels.zip',
             'sokhte-jet'    => 'sokhte-jet.zip',

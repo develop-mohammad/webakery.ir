@@ -66,7 +66,7 @@ define( 'LS_PLUGIN_META', [
 define( 'LS_UPDATES', [
     'wccp' => [
         'version'      => '1.3.3',
-        'package'      => 'https://webakery.ir/license-server/updates/wccp.zip',
+        'package'      => 'https://webakery.ir/license-server/updates/baget.zip',
         'requires'     => '5.8',
         'tested'       => '6.6',
         'requires_php' => '7.4',

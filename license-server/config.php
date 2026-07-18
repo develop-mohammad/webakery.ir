@@ -65,12 +65,12 @@ define( 'LS_PLUGIN_META', [
 // نسخهٔ سرور باید از نسخهٔ نصب‌شده روی سایت مشتری بالاتر باشد تا در «افزونه‌ها» آپدیت نمایش داده شود.
 define( 'LS_UPDATES', [
     'wccp' => [
-        'version'      => '1.3.8',
-        'package'      => 'https://webakery.ir/license-server/updates/wccp.zip',
+        'version'      => '1.3.9',
+        'package'      => 'https://webakery.ir/license-server/updates/baget.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۳.۸: رفع کرش سایت — بارگذاری امن و حذف تداخل منو.',
+        'changelog'    => 'نسخه ۱.۳.۹: مسیر استاندارد plugins/baget/baget.php + رفع کرش.',
     ],
     'access-levels' => [
         'version'      => '1.5.8',

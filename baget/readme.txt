@@ -2,12 +2,15 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.3.8
+Stable tag: 1.3.9
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.3.9 =
+* پوشه و فایل اصلی استاندارد: plugins/baget/baget.php
 
 = 1.3.8 =
 * رفع کرش سایت (بارگذاری امن + حذف تداخل منوی ووکامرس)

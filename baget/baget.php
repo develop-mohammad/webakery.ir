@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Baget | ادیت فیلدهای پرداخت
  * Description: مدیریت فیلدهای صفحه پرداخت و محصولات آنلاین — جابه‌جایی و ذخیره فیلدهای پیش‌فرض و سفارشی.
- * Version:     1.3.8
+ * Version:     1.3.9
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -28,7 +28,7 @@ if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 	return;
 }
 
-define( 'WCCP_VERSION', '1.3.8' );
+define( 'WCCP_VERSION', '1.3.9' );
 define( 'WCCP_FILE', __FILE__ );
 define( 'WCCP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WCCP_URL', plugin_dir_url( __FILE__ ) );
