@@ -72,9 +72,39 @@ class NM_Assets {
 		wp_enqueue_style( 'nm-admin', NM_URL . 'assets/css/admin.css', array( 'nm-vazirmatn' ), NM_VERSION );
 		wp_enqueue_script( 'nm-jalali', NM_URL . 'assets/js/jalali-calendar.js', array(), NM_VERSION, true );
 		wp_enqueue_script( 'nm-admin', NM_URL . 'assets/js/admin.js', array( 'nm-jalali' ), NM_VERSION, true );
-		wp_localize_script( 'nm-admin', 'NM_ADMIN', array(
+
+		$local = array(
 			'ajax'  => admin_url( 'admin-ajax.php' ),
 			'nonce' => wp_create_nonce( 'nm_admin' ),
-		) );
+			'i18n'  => array(
+				'saved'          => 'ذخیره شد',
+				'saving'         => 'در حال ذخیره…',
+				'error'          => 'خطا در ذخیره',
+				'confirmDelete'  => 'این سوال حذف شود؟',
+			),
+		);
+
+		$tab = sanitize_key( $_GET['tab'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( 'questions' === $tab ) {
+			wp_enqueue_script( 'nm-admin-questions', NM_URL . 'assets/js/admin-questions.js', array(), NM_VERSION, true );
+			$current = sanitize_text_field( wp_unslash( $_GET['nm_cat'] ?? '' ) ); // phpcs:ignore
+			$cats    = NM_Questions::all_categories();
+			if ( ! $current && ! empty( $cats ) ) {
+				$current = (string) $cats[0];
+			}
+			if ( ! $current ) {
+				$current = 'عمومی';
+			}
+			$board = NM_Questions::board_for_category( $current );
+			$local['questions'] = array(
+				'category' => $current,
+				'active'   => $board['active'],
+				'fields'   => $board['fields'],
+			);
+			$local['questionsBase'] = admin_url( 'admin.php?page=nobat-man&tab=questions' );
+			wp_localize_script( 'nm-admin-questions', 'NM_ADMIN', $local );
+		} else {
+			wp_localize_script( 'nm-admin', 'NM_ADMIN', $local );
+		}
 	}
 }

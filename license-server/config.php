@@ -97,12 +97,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه ۱.۹.۱۱: رفع قطعی صفحه سفید دانلود bulk + باگ dropdown پایین.',
     ],
     'nobat-man' => [
-        'version'      => '1.0.12',
+        'version'      => '1.0.13',
         'package'      => 'https://webakery.ir/license-server/updates/nobat-man.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۰.۱۲: رفع کرش سوالات رزرو + اعتبارسنجی و پیام خطای واضح.',
+        'changelog'    => 'نسخه ۱.۰.۱۳: تب سوالات با UI Baget — جابه‌جایی و ذخیره فیلدها.',
     ],
 ] );
 

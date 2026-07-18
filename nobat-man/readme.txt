@@ -5,7 +5,7 @@ Tags: appointment, booking, jalali, persian, woocommerce, counseling
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.12
+Stable tag: 1.0.13
 License: GPLv2 or later
 
 رزرو نوبت مشاوره با تقویم شمسی ایرانی، پرداخت ووکامرس، پنل مدرن و نسخه پرو.
@@ -49,6 +49,11 @@ License: GPLv2 or later
 4. شورت‌کد `[nobat_man]` را در برگه قرار دهید.
 
 == Changelog ==
+
+= 1.0.13 =
+* تب سوالات با ظاهر Baget: دو ستون فیلدهای موجود/فعال + کشیدن و رها کردن
+* ذخیره خودکار و دکمه ذخیره برای ترتیب و فعال بودن سوالات
+* ویرایش/حذف/افزودن سوال بدون رفرش صفحه
 
 = 1.0.12 =
 * رفع کرش و خطا هنگام پاسخ به سوالات رزرو (اعتبارسنجی قبل از ثبت + پیام خطای واضح)

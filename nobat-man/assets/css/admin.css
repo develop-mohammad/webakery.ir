@@ -42,3 +42,64 @@
 	.nm-admin-shell,.nm-stats,.nm-grid-2,.nm-fields-admin{grid-template-columns:1fr}
 	.nm-admin-nav{min-height:auto}
 }
+
+/* تخته سوالات — همان ظاهر Baget / WCCP */
+.nm-qboard-wrap{margin-top:4px}
+.nm-qboard-topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin:0 0 18px}
+.nm-qboard-title{margin:0 0 6px;font-size:22px}
+.nm-qboard-muted{color:#64748b;font-size:13px;margin:0}
+.nm-qboard-btn-save{
+	display:inline-flex;align-items:center;gap:6px;border:0;border-radius:12px;padding:12px 22px;
+	background:#6d28d9;color:#fff;font-weight:700;cursor:pointer;font-size:14px;box-shadow:0 8px 20px rgba(109,40,217,.25)
+}
+.nm-qboard-btn-save:hover{background:#5b21b6}
+.nm-qboard-btn-save.is-busy{opacity:.7;pointer-events:none}
+.nm-qboard-shell{display:grid;grid-template-columns:1fr 220px;gap:16px;align-items:start}
+.nm-qboard-tabs{display:flex;gap:18px;border-bottom:1px solid #e2e8f0;margin-bottom:18px;padding-bottom:2px}
+.nm-qboard-tabs .is-active{color:#6d28d9;border-bottom:2px solid #6d28d9;font-weight:700;padding-bottom:8px}
+.nm-qboard-board{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start}
+.nm-qboard-col{background:#fff;border:1px solid #e9d5ff;border-radius:16px;min-height:420px;box-shadow:0 8px 24px rgba(15,23,42,.04)}
+.nm-qboard-col header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #f1f5f9;gap:8px}
+.nm-qboard-swap{display:grid;place-items:center;color:#a78bfa;font-size:22px;padding-top:120px}
+.nm-qboard-list{list-style:none;margin:0;padding:10px;min-height:320px}
+.nm-qboard-list.is-over{background:#f5f3ff;outline:2px dashed #c4b5fd;outline-offset:-6px;border-radius:12px}
+.nm-qboard-item{
+	display:flex;align-items:center;gap:10px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;
+	padding:10px 12px;margin-bottom:8px;cursor:grab;user-select:none;touch-action:none
+}
+.nm-qboard-item.is-dragging{opacity:.45}
+.nm-qboard-item-actions{display:flex;gap:4px}
+.nm-qboard-icon-btn{width:28px;height:28px;border-radius:8px;border:1px solid #ddd6fe;background:#fff;cursor:pointer;line-height:1}
+.nm-qboard-item-meta{flex:1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.nm-qboard-item-label{font-weight:700;color:#0f172a}
+.nm-qboard-item-key{font-size:11px;color:#94a3b8;background:#fff;padding:2px 6px;border-radius:6px}
+.nm-qboard-tag{font-size:11px;border-radius:999px;padding:2px 8px;font-weight:600}
+.nm-qboard-tag.default{background:#dbeafe;color:#1d4ed8}
+.nm-qboard-tag.custom{background:#ede9fe;color:#6d28d9}
+.nm-qboard-tag.required{background:#fee2e2;color:#b91c1c}
+.nm-qboard-drag-handle{color:#94a3b8;font-weight:700;letter-spacing:2px;cursor:grab}
+.nm-qboard-tip{padding:8px 12px}
+.nm-qboard-sidebar{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px}
+.nm-qboard-sidebar strong{display:block;margin-bottom:10px}
+.nm-qboard-cats{list-style:none;margin:0 0 12px;padding:0}
+.nm-qboard-cats li{margin-bottom:6px}
+.nm-qboard-cat{display:block;padding:8px 10px;border-radius:10px;text-decoration:none;color:#334155;border:1px solid transparent}
+.nm-qboard-cat:hover,.nm-qboard-cat.is-active{background:#f5f3ff;border-color:#ddd6fe;color:#6d28d9;font-weight:700}
+.nm-qboard-toast{
+	position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;
+	padding:12px 18px;border-radius:12px;z-index:100000;box-shadow:0 10px 30px rgba(0,0,0,.2)
+}
+.nm-qboard-toast.is-error{background:#b91c1c}
+.nm-qboard-toast.is-ok{background:#15803d}
+.nm-qboard-modal{
+	position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100001;display:grid;place-items:center;padding:20px
+}
+.nm-qboard-modal[hidden]{display:none!important}
+.nm-qboard-modal-card{background:#fff;border-radius:16px;padding:20px;max-width:520px;width:100%;box-shadow:0 20px 50px rgba(15,23,42,.2)}
+.nm-qboard-modal-card h3{margin:0 0 14px}
+.nm-qboard-modal-card label{display:block;margin:10px 0;font-size:13px}
+.nm-qboard-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+@media (max-width:900px){
+	.nm-qboard-shell,.nm-qboard-board{grid-template-columns:1fr}
+	.nm-qboard-swap{padding:8px 0}
+}

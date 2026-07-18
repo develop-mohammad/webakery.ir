@@ -172,6 +172,110 @@ class NM_Ajax {
 				NM_Booking::update_status( $id, $status );
 				wp_send_json_success( array( 'message' => 'وضعیت به‌روز شد.' ) );
 
+			case 'save_questions_board':
+				$category = sanitize_text_field( wp_unslash( $_POST['category'] ?? '' ) );
+				$active   = array();
+				if ( ! empty( $_POST['active'] ) ) {
+					$decoded = is_string( $_POST['active'] ) ? json_decode( wp_unslash( $_POST['active'] ), true ) : wp_unslash( $_POST['active'] );
+					$active  = is_array( $decoded ) ? array_map( 'intval', $decoded ) : array();
+				}
+				$res = NM_Questions::save_board( $category, $active );
+				if ( is_wp_error( $res ) ) {
+					wp_send_json_error( array( 'message' => $res->get_error_message() ) );
+				}
+				$board = NM_Questions::board_for_category( $category );
+				wp_send_json_success( array(
+					'message'   => 'سوالات ذخیره شد.',
+					'category'  => $category,
+					'active'    => $board['active'],
+					'available' => $board['available'],
+					'fields'    => $board['fields'],
+				) );
+
+			case 'create_question':
+				$category = sanitize_text_field( wp_unslash( $_POST['category'] ?? '' ) );
+				$question = sanitize_text_field( wp_unslash( $_POST['question'] ?? '' ) );
+				if ( '' === $category ) {
+					wp_send_json_error( array( 'message' => 'دسته‌بندی را انتخاب کنید.' ) );
+				}
+				if ( '' === $question ) {
+					wp_send_json_error( array( 'message' => 'متن سوال الزامی است.' ) );
+				}
+				$opts = array();
+				if ( ! empty( $_POST['options_text'] ) ) {
+					$opts = array_filter( array_map( 'trim', explode( "\n", (string) wp_unslash( $_POST['options_text'] ) ) ) );
+				}
+				$id = NM_Questions::save( array(
+					'category'    => $category,
+					'question'    => $question,
+					'type'        => sanitize_key( $_POST['type'] ?? 'text' ),
+					'options'     => $opts,
+					'is_required' => ! empty( $_POST['is_required'] ),
+					'sort_order'  => (int) ( $_POST['sort_order'] ?? 0 ),
+					'is_active'   => empty( $_POST['inactive'] ) ? 1 : 0,
+				) );
+				if ( is_wp_error( $id ) ) {
+					wp_send_json_error( array( 'message' => $id->get_error_message() ) );
+				}
+				$board = NM_Questions::board_for_category( $category );
+				wp_send_json_success( array(
+					'message'   => 'سوال ساخته شد.',
+					'id'        => (int) $id,
+					'category'  => $category,
+					'active'    => $board['active'],
+					'available' => $board['available'],
+					'fields'    => $board['fields'],
+				) );
+
+			case 'update_question':
+				$id = (int) ( $_POST['id'] ?? 0 );
+				$q  = NM_Questions::get( $id );
+				if ( ! $q ) {
+					wp_send_json_error( array( 'message' => 'سوال یافت نشد.' ) );
+				}
+				$opts = array();
+				if ( isset( $_POST['options_text'] ) ) {
+					$opts = array_filter( array_map( 'trim', explode( "\n", (string) wp_unslash( $_POST['options_text'] ) ) ) );
+				}
+				$res = NM_Questions::save( array(
+					'category'    => sanitize_text_field( wp_unslash( $_POST['category'] ?? $q->category ) ),
+					'question'    => sanitize_text_field( wp_unslash( $_POST['question'] ?? $q->question ) ),
+					'type'        => sanitize_key( $_POST['type'] ?? $q->type ),
+					'options'     => $opts ?: ( $q->options ?? '' ),
+					'is_required' => isset( $_POST['is_required'] ) ? ! empty( $_POST['is_required'] ) : (bool) $q->is_required,
+					'sort_order'  => (int) ( $_POST['sort_order'] ?? $q->sort_order ),
+					'is_active'   => (int) $q->is_active,
+				), $id );
+				if ( is_wp_error( $res ) ) {
+					wp_send_json_error( array( 'message' => $res->get_error_message() ) );
+				}
+				$category = sanitize_text_field( wp_unslash( $_POST['category'] ?? $q->category ) );
+				$board    = NM_Questions::board_for_category( $category );
+				wp_send_json_success( array(
+					'message'   => 'سوال به‌روز شد.',
+					'category'  => $category,
+					'active'    => $board['active'],
+					'available' => $board['available'],
+					'fields'    => $board['fields'],
+				) );
+
+			case 'delete_question':
+				$id = (int) ( $_POST['id'] ?? 0 );
+				$q  = NM_Questions::get( $id );
+				if ( ! $q ) {
+					wp_send_json_error( array( 'message' => 'سوال یافت نشد.' ) );
+				}
+				$category = (string) $q->category;
+				NM_Questions::delete( $id );
+				$board = NM_Questions::board_for_category( $category );
+				wp_send_json_success( array(
+					'message'   => 'سوال حذف شد.',
+					'category'  => $category,
+					'active'    => $board['active'],
+					'available' => $board['available'],
+					'fields'    => $board['fields'],
+				) );
+
 			default:
 				wp_send_json_error( array( 'message' => 'اکشن نامعتبر' ), 400 );
 		}
