@@ -65,8 +65,8 @@ class NM_Payments {
 		if ( ! NM_Zarinpal::enabled() ) {
 			return '';
 		}
-		// فقط لینک مستقیم درگاه — اگر API خطا داد سراغ جایگزین (ووکامرس/زیبال)
-		return (string) NM_Zarinpal::create_redirect_url( $booking );
+		// لینک admin-post — بدون تماس API در AJAX رزرو (جلوگیری از timeout/کرش)
+		return (string) NM_Zarinpal::pay_url_for_booking( $booking );
 	}
 
 	/** @return string */
@@ -74,8 +74,7 @@ class NM_Payments {
 		if ( ! NM_Zibal::enabled() ) {
 			return '';
 		}
-		// اگر API زیبال شکست خورد (مثل invalid merchant)، لینک میانی خطا نفرست
-		return (string) NM_Zibal::create_redirect_url( $booking );
+		return (string) NM_Zibal::pay_url_for_booking( $booking );
 	}
 
 	/** @return string */

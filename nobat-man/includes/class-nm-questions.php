@@ -8,29 +8,79 @@ class NM_Questions {
 		return $wpdb->prefix . 'nm_questions';
 	}
 
-	public static function categories() {
+	public static function table_ready() {
 		global $wpdb;
+		$table = self::table();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table;
+	}
+
+	public static function categories() {
+		if ( ! self::table_ready() ) {
+			return array();
+		}
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$cols = $wpdb->get_col( 'SELECT DISTINCT category FROM ' . self::table() . ' WHERE is_active = 1 ORDER BY category' );
 		return $cols ?: array();
 	}
 
 	public static function by_category( $category = '' ) {
+		if ( ! self::table_ready() ) {
+			return array();
+		}
 		global $wpdb;
 		if ( $category ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 			return $wpdb->get_results( $wpdb->prepare(
 				'SELECT * FROM ' . self::table() . ' WHERE is_active = 1 AND category = %s ORDER BY sort_order ASC, id ASC',
 				$category
 			) );
 		}
-		return $wpdb->get_results( 'SELECT * FROM ' . self::table() . ' WHERE is_active = 1 ORDER BY category, sort_order ASC' );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		return $wpdb->get_results( 'SELECT * FROM ' . self::table() . ' WHERE is_active = 1 ORDER BY category, sort_order ASC, id ASC' );
 	}
 
 	public static function all() {
+		if ( ! self::table_ready() ) {
+			return array();
+		}
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		return $wpdb->get_results( 'SELECT * FROM ' . self::table() . ' ORDER BY category, sort_order ASC, id ASC' );
 	}
 
+	/**
+	 * بررسی پاسخ سوالات اجباری یک دسته.
+	 *
+	 * @param string              $category
+	 * @param array<int,string>   $answers
+	 * @return true|WP_Error
+	 */
+	public static function validate_answers( $category, array $answers ) {
+		$category = sanitize_text_field( (string) $category );
+		if ( '' === $category ) {
+			return true;
+		}
+		foreach ( self::by_category( $category ) as $q ) {
+			if ( ! (int) $q->is_required ) {
+				continue;
+			}
+			$val = isset( $answers[ (int) $q->id ] ) ? trim( (string) $answers[ (int) $q->id ] ) : '';
+			if ( '' === $val ) {
+				return new WP_Error(
+					'answer_required',
+					'لطفاً به سوال «' . sanitize_text_field( $q->question ) . '» پاسخ دهید.'
+				);
+			}
+		}
+		return true;
+	}
+
 	public static function save( array $data, $id = 0 ) {
+		if ( ! self::table_ready() ) {
+			return new WP_Error( 'no_table', 'جدول سوالات ساخته نشده. افزونه را غیرفعال و دوباره فعال کنید.' );
+		}
 		global $wpdb;
 		$row = array(
 			'category'    => sanitize_text_field( $data['category'] ?? 'سایر' ),
@@ -45,10 +95,16 @@ class NM_Questions {
 			return new WP_Error( 'q', 'متن سوال الزامی است.' );
 		}
 		if ( $id ) {
-			$wpdb->update( self::table(), $row, array( 'id' => (int) $id ) );
+			$ok = $wpdb->update( self::table(), $row, array( 'id' => (int) $id ) );
+			if ( false === $ok ) {
+				return new WP_Error( 'db', 'خطا در ذخیره سوال.' );
+			}
 			return (int) $id;
 		}
-		$wpdb->insert( self::table(), $row );
+		$ok = $wpdb->insert( self::table(), $row );
+		if ( ! $ok ) {
+			return new WP_Error( 'db', 'خطا در ذخیره سوال.' );
+		}
 		return (int) $wpdb->insert_id;
 	}
 

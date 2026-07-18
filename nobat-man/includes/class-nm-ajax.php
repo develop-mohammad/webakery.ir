@@ -16,52 +16,61 @@ class NM_Ajax {
 		check_ajax_referer( 'nm_public', 'nonce' );
 		$action = sanitize_key( $_REQUEST['nm_action'] ?? '' );
 
-		switch ( $action ) {
-			case 'month':
-				$jy = (int) ( $_REQUEST['y'] ?? 0 );
-				$jm = (int) ( $_REQUEST['m'] ?? 0 );
-				$sp = (int) ( $_REQUEST['specialist_id'] ?? 0 );
-				if ( ! $jy || ! $jm ) {
-					$t = NM_Jalali::today();
-					$jy = $t['y']; $jm = $t['m'];
-				}
-				wp_send_json_success( NM_Availability::month_status( $jy, $jm, $sp ) );
+		try {
+			switch ( $action ) {
+				case 'month':
+					$jy = (int) ( $_REQUEST['y'] ?? 0 );
+					$jm = (int) ( $_REQUEST['m'] ?? 0 );
+					$sp = (int) ( $_REQUEST['specialist_id'] ?? 0 );
+					if ( ! $jy || ! $jm ) {
+						$t = NM_Jalali::today();
+						$jy = $t['y']; $jm = $t['m'];
+					}
+					wp_send_json_success( NM_Availability::month_status( $jy, $jm, $sp ) );
 
-			case 'slots':
-				$date = sanitize_text_field( $_REQUEST['date'] ?? '' );
-				$sp   = (int) ( $_REQUEST['specialist_id'] ?? 0 );
-				wp_send_json_success( array(
-					'date'  => $date,
-					'slots' => NM_Availability::slots_for_date( $date, $sp ),
-				) );
+				case 'slots':
+					$date = sanitize_text_field( $_REQUEST['date'] ?? '' );
+					$sp   = (int) ( $_REQUEST['specialist_id'] ?? 0 );
+					wp_send_json_success( array(
+						'date'  => $date,
+						'slots' => NM_Availability::slots_for_date( $date, $sp ),
+					) );
 
-			case 'questions':
-				$cat = sanitize_text_field( $_REQUEST['category'] ?? '' );
-				wp_send_json_success( array(
-					'categories' => NM_Questions::categories(),
-					'questions'  => NM_Questions::by_category( $cat ),
-				) );
+				case 'questions':
+					$cat = sanitize_text_field( wp_unslash( $_REQUEST['category'] ?? '' ) );
+					wp_send_json_success( array(
+						'categories' => NM_Questions::categories(),
+						'questions'  => NM_Questions::by_category( $cat ),
+					) );
 
-			case 'specialists':
-				$list = array_map( function ( $s ) {
-					return array(
-						'id'       => (int) $s->id,
-						'name'     => $s->name,
-						'skills'   => $s->skills,
-						'price'    => (int) $s->price,
-						'price_fa' => NM_Settings::format_price( $s->price ),
-						'duration' => (int) $s->duration,
-						'bio'      => wp_strip_all_tags( $s->bio ),
-						'avatar'   => $s->avatar_id ? wp_get_attachment_image_url( $s->avatar_id, 'thumbnail' ) : '',
-					);
-				}, NM_Specialist::all_active() );
-				wp_send_json_success( $list );
+				case 'specialists':
+					$list = array_map( function ( $s ) {
+						return array(
+							'id'       => (int) $s->id,
+							'name'     => $s->name,
+							'skills'   => $s->skills,
+							'price'    => (int) $s->price,
+							'price_fa' => NM_Settings::format_price( $s->price ),
+							'duration' => (int) $s->duration,
+							'bio'      => wp_strip_all_tags( $s->bio ),
+							'avatar'   => $s->avatar_id ? wp_get_attachment_image_url( $s->avatar_id, 'thumbnail' ) : '',
+						);
+					}, NM_Specialist::all_active() );
+					wp_send_json_success( $list );
 
-			case 'book':
-				self::book();
+				case 'book':
+					self::book();
 
-			default:
-				wp_send_json_error( array( 'message' => 'اکشن نامعتبر' ), 400 );
+				default:
+					wp_send_json_error( array( 'message' => 'اکشن نامعتبر' ), 400 );
+			}
+		} catch ( Throwable $e ) {
+			error_log( 'Nobat Man AJAX error (' . $action . '): ' . $e->getMessage() );
+			wp_send_json_error( array(
+				'message' => defined( 'WP_DEBUG' ) && WP_DEBUG
+					? $e->getMessage()
+					: 'خطای سرور. لطفاً دوباره تلاش کنید.',
+			), 500 );
 		}
 	}
 
@@ -78,8 +87,17 @@ class NM_Ajax {
 		$answers = array();
 		if ( ! empty( $_POST['answers'] ) && is_array( $_POST['answers'] ) ) {
 			foreach ( $_POST['answers'] as $qid => $ans ) {
-				$answers[ (int) $qid ] = sanitize_textarea_field( wp_unslash( $ans ) );
+				if ( is_array( $ans ) ) {
+					$ans = implode( ', ', array_map( 'strval', $ans ) );
+				}
+				$answers[ (int) $qid ] = sanitize_textarea_field( wp_unslash( (string) $ans ) );
 			}
+		}
+
+		$problem_category = sanitize_text_field( wp_unslash( $_POST['problem_category'] ?? '' ) );
+		$answer_check     = NM_Questions::validate_answers( $problem_category, $answers );
+		if ( is_wp_error( $answer_check ) ) {
+			wp_send_json_error( array( 'message' => $answer_check->get_error_message() ) );
 		}
 
 		$data = array(
@@ -92,7 +110,7 @@ class NM_Ajax {
 			'customer_phone'   => sanitize_text_field( wp_unslash( $_POST['customer_phone'] ?? '' ) ),
 			'customer_city'    => sanitize_text_field( wp_unslash( $_POST['customer_city'] ?? '' ) ),
 			'customer_gender'  => sanitize_text_field( wp_unslash( $_POST['customer_gender'] ?? '' ) ),
-			'problem_category' => sanitize_text_field( wp_unslash( $_POST['problem_category'] ?? '' ) ),
+			'problem_category' => $problem_category,
 			'description'      => sanitize_textarea_field( wp_unslash( $_POST['description'] ?? '' ) ),
 			'answers'          => $answers,
 		);

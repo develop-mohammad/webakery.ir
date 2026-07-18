@@ -56,7 +56,53 @@
       Object.keys(data || {}).forEach(function (k) { body.set(k, data[k]); });
     }
     return fetch(NM_DATA.ajax, { method: 'POST', body: body, credentials: 'same-origin' })
-      .then(function (r) { return r.json(); });
+      .then(function (r) {
+        return r.text().then(function (text) {
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            return { success: false, data: { message: 'پاسخ نامعتبر از سرور. صفحه را رفرش کنید.' } };
+          }
+        });
+      })
+      .catch(function () {
+        return { success: false, data: { message: 'خطا در ارتباط با سرور. اتصال اینترنت را بررسی کنید.' } };
+      });
+  }
+
+  function validatePanel3() {
+    var missing = [];
+    qsa('#nm-dynamic-questions [data-required="1"]').forEach(function (field) {
+      var val = (field.value || '').trim();
+      if (val) return;
+      var label = field.closest('label');
+      var labelText = label ? label.textContent.replace(/\*/g, '').trim() : 'سوال';
+      missing.push(labelText);
+    });
+    return missing;
+  }
+
+  function validateMainFields() {
+    var form = qs('#nm-booking-form');
+    var fields = qsa('input, select, textarea', qs('[data-panel="3"]'));
+    for (var i = 0; i < fields.length; i++) {
+      if (!fields[i].checkValidity()) {
+        fields[i].reportValidity();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function showFormError(message) {
+    var box = qs('#nm-result');
+    if (!box) {
+      alert(message);
+      return;
+    }
+    box.hidden = false;
+    box.style.background = '#fef2f2';
+    box.innerHTML = message;
   }
 
   function loadMonth() {
@@ -154,10 +200,19 @@
 
   function loadQuestions(cat) {
     var box = qs('#nm-dynamic-questions');
-    box.innerHTML = '';
+    box.innerHTML = '<p class="nm-muted">' + NM_DATA.i18n.loading + '</p>';
     api('questions', { category: cat || '' }).then(function (res) {
-      if (!res.success) return;
-      (res.data.questions || []).forEach(function (q) {
+      if (!res || !res.success) {
+        box.innerHTML = '<p class="nm-muted">' + ((res && res.data && res.data.message) || 'بارگذاری سوالات ناموفق بود.') + '</p>';
+        return;
+      }
+      box.innerHTML = '';
+      var questions = res.data.questions || [];
+      if (!questions.length) {
+        box.innerHTML = '<p class="nm-muted">سوال اضافه‌ای برای این دسته نیست.</p>';
+        return;
+      }
+      questions.forEach(function (q) {
         if (cat && q.category !== cat) return;
         var label = document.createElement('label');
         label.textContent = q.question + (q.is_required === '1' || q.is_required === 1 ? ' *' : '');
@@ -180,7 +235,7 @@
           field.type = 'text';
           field.name = 'answers[' + q.id + ']';
         }
-        if (q.is_required === '1' || q.is_required === 1) field.required = true;
+        if (q.is_required === '1' || q.is_required === 1) field.setAttribute('data-required', '1');
         label.appendChild(field);
         box.appendChild(label);
       });
@@ -220,7 +275,18 @@
   }
 
   qsa('[data-next]').forEach(function (b) {
-    b.addEventListener('click', function () { go(b.getAttribute('data-next')); });
+    b.addEventListener('click', function () {
+      var next = b.getAttribute('data-next');
+      if (String(next) === '4') {
+        if (!validateMainFields()) return;
+        var missing = validatePanel3();
+        if (missing.length) {
+          alert('لطفاً به این سوالات پاسخ دهید:\n• ' + missing.join('\n• '));
+          return;
+        }
+      }
+      go(next);
+    });
   });
   qsa('[data-prev]').forEach(function (b) {
     b.addEventListener('click', function () { go(b.getAttribute('data-prev')); });
@@ -238,6 +304,16 @@
 
   qs('#nm-booking-form').addEventListener('submit', function (e) {
     e.preventDefault();
+    if (!validateMainFields()) {
+      go(3);
+      return;
+    }
+    var missing = validatePanel3();
+    if (missing.length) {
+      alert('لطفاً به این سوالات پاسخ دهید:\n• ' + missing.join('\n• '));
+      go(3);
+      return;
+    }
     var btn = qs('#nm-submit');
     btn.disabled = true;
     btn.textContent = NM_DATA.i18n.loading;
@@ -247,9 +323,9 @@
       btn.textContent = NM_DATA.i18n.pay;
       var box = qs('#nm-result');
       box.hidden = false;
-      if (!res.success) {
+      if (!res || !res.success) {
         box.style.background = '#fef2f2';
-        box.innerHTML = (res.data && res.data.message) ? res.data.message : NM_DATA.i18n.error;
+        box.innerHTML = (res && res.data && res.data.message) ? res.data.message : NM_DATA.i18n.error;
         return;
       }
       box.style.background = '#ecfdf5';
@@ -261,9 +337,6 @@
         box.style.background = '#fff7ed';
         box.innerHTML += '<p style="margin-top:12px;color:#9a3412">لینک پرداخت ساخته نشد. مدیر سایت باید در تنظیمات نوبت من مرچنت زرین‌پال را درست وارد کند (نه در فیلد زیبال) یا درگاه ووکامرس را فعال کند.</p>';
       }
-    }).catch(function () {
-      btn.disabled = false;
-      btn.textContent = NM_DATA.i18n.pay;
     });
   });
 })();

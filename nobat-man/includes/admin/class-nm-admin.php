@@ -131,7 +131,7 @@ class NM_Admin {
 		if ( ! empty( $_POST['nm_save_question'] ) && check_admin_referer( 'nm_question' ) ) {
 			$id = (int) ( $_POST['id'] ?? 0 );
 			$opts = array_filter( array_map( 'trim', explode( "\n", (string) wp_unslash( $_POST['options_text'] ?? '' ) ) ) );
-			NM_Questions::save( array(
+			$res = NM_Questions::save( array(
 				'category'    => sanitize_text_field( wp_unslash( $_POST['category'] ?? '' ) ),
 				'question'    => sanitize_text_field( wp_unslash( $_POST['question'] ?? '' ) ),
 				'type'        => sanitize_key( $_POST['type'] ?? 'text' ),
@@ -140,7 +140,11 @@ class NM_Admin {
 				'sort_order'  => (int) ( $_POST['sort_order'] ?? 0 ),
 				'is_active'   => 1,
 			), $id );
-			add_settings_error( 'nm', 'q', 'سوال ذخیره شد.', 'updated' );
+			if ( is_wp_error( $res ) ) {
+				add_settings_error( 'nm', 'q', $res->get_error_message(), 'error' );
+			} else {
+				add_settings_error( 'nm', 'q', 'سوال ذخیره شد.', 'updated' );
+			}
 		}
 
 		if ( ! empty( $_GET['nm_delete_question'] ) && check_admin_referer( 'nm_del_q_' . (int) $_GET['nm_delete_question'] ) ) {

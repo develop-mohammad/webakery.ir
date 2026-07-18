@@ -23,7 +23,7 @@ $pre_sp = (int) ( $atts['specialist_id'] ?? 0 );
 		<button type="button" class="nm-step" data-step="4">۴. تایید</button>
 	</div>
 
-	<form class="nm-form" id="nm-booking-form" enctype="multipart/form-data">
+	<form class="nm-form" id="nm-booking-form" enctype="multipart/form-data" novalidate>
 		<input type="hidden" name="specialist_id" id="nm-specialist-id" value="<?php echo esc_attr( $pre_sp ); ?>" />
 		<input type="hidden" name="jalali_date" id="nm-jalali-date" value="" />
 		<input type="hidden" name="start_time" id="nm-start-time" value="" />
