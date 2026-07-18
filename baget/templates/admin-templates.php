@@ -28,8 +28,8 @@ if ( empty( $edit_fields ) ) {
 <div class="wrap wccp-wrap">
 	<div class="wccp-topbar">
 		<div>
-			<h1>Baget — قالب + فیلدهای اختصاصی</h1>
-			<p class="wccp-muted">برای هر قالب نام، ظاهر و <strong>فیلدهای سوال</strong> را مشخص کنید. بعد همان قالب را روی محصول آنلاین انتخاب کنید.</p>
+			<h1>Baget — افزودن قالب</h1>
+			<p class="wccp-muted">دو قالب پیش‌فرض: <strong>محصولات دیجیتال</strong> و <strong>محصولات فیزیکی</strong>. می‌توانید قالب سفارشی جدید بسازید و بعد در «محصولات فروشگاه» روی هر محصول اعمال کنید.</p>
 		</div>
 	</div>
 
@@ -46,10 +46,10 @@ if ( empty( $edit_fields ) ) {
 	?>
 
 	<div class="wccp-howto" style="margin-bottom:16px">
-		<div class="wccp-howto-step"><span>۱</span><div><strong>قالب بسازید/ویرایش کنید</strong><p>نام + رنگ + فیلدها</p></div></div>
+		<div class="wccp-howto-step"><span>۱</span><div><strong>قالب بسازید/ویرایش کنید</strong><p>دیجیتال / فیزیکی / سفارشی</p></div></div>
 		<div class="wccp-howto-step"><span>۲</span><div><strong>فیلدها را تیک بزنید</strong><p>سوالات همان قالب</p></div></div>
 		<div class="wccp-howto-step"><span>۳</span><div><strong>ذخیره قالب</strong><p>نام قابل ویرایش است</p></div></div>
-		<div class="wccp-howto-step"><span>۴</span><div><strong>روی محصول اعمال</strong><p>در ویرایش محصول آنلاین</p></div></div>
+		<div class="wccp-howto-step"><span>۴</span><div><strong>روی محصول فروشگاه</strong><p>تب محصولات فروشگاه</p></div></div>
 	</div>
 
 	<div class="wccp-tpl-grid">
@@ -138,7 +138,7 @@ if ( empty( $edit_fields ) ) {
 					</div>
 				</div>
 
-				<p class="wccp-muted">بعد از ذخیره: <strong>محصولات آنلاین → ویرایش محصول → انتخاب قالب → تیک «اعمال فیلدهای قالب»</strong></p>
+				<p class="wccp-muted">بعد از ذخیره: <strong>محصولات فروشگاه → انتخاب قالب برای هر محصول</strong> یا لینک پرداخت آنلاین.</p>
 				<button type="submit" class="button button-primary button-large"><?php echo $is_edit ? 'ذخیره تغییرات قالب' : 'افزودن قالب'; ?></button>
 				<?php if ( $is_edit ) : ?>
 					<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=wccp&tab=templates' ) ); ?>">انصراف</a>

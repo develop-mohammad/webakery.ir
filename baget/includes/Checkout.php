@@ -41,7 +41,7 @@ class Checkout {
 		}
 
 		$defs   = CustomFields::merged_with_defaults();
-		$active = Templates::fields_for( Templates::default_key() );
+		$active = Templates::fields_for( Templates::resolve_checkout_template() );
 		if ( empty( $active ) ) {
 			$active = Fields::get_active_keys();
 		}
@@ -183,7 +183,7 @@ class Checkout {
 
 	public function validate_choice_fields( $data, $errors ) {
 		$defs   = CustomFields::merged_with_defaults();
-		$active = Templates::fields_for( Templates::default_key() );
+		$active = Templates::fields_for( Templates::resolve_checkout_template() );
 
 		foreach ( $active as $key ) {
 			if ( empty( $defs[ $key ] ) || empty( $defs[ $key ]['required'] ) ) {
@@ -208,7 +208,7 @@ class Checkout {
 
 	public function save_order_meta( $order_id ) {
 		$defs = CustomFields::merged_with_defaults();
-		foreach ( Templates::fields_for( Templates::default_key() ) as $key ) {
+		foreach ( Templates::fields_for( Templates::resolve_checkout_template() ) as $key ) {
 			if ( empty( $defs[ $key ] ) ) {
 				continue;
 			}

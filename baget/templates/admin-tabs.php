@@ -2,19 +2,23 @@
 defined( 'ABSPATH' ) || exit;
 /** @var string $tab */
 $tabs = array(
-	'fields'    => array(
-		'label' => 'فیلدها',
+	'fields'      => array(
+		'label' => 'افزودن فیلدها',
 		'url'   => admin_url( 'admin.php?page=wccp' ),
 	),
-	'templates' => array(
-		'label' => 'قالب‌ها',
+	'templates'   => array(
+		'label' => 'افزودن قالب',
 		'url'   => admin_url( 'admin.php?page=wccp&tab=templates' ),
 	),
-	'products'  => array(
-		'label' => 'محصولات آنلاین',
+	'wc-products' => array(
+		'label' => 'محصولات فروشگاه',
+		'url'   => admin_url( 'admin.php?page=wccp&tab=wc-products' ),
+	),
+	'products'    => array(
+		'label' => 'لینک پرداخت',
 		'url'   => admin_url( 'edit.php?post_type=wccp_product' ),
 	),
-	'license'   => array(
+	'license'     => array(
 		'label' => 'خرید و لایسنس',
 		'url'   => admin_url( 'admin.php?page=wccp&tab=license' ),
 	),

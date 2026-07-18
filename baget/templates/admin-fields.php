@@ -22,11 +22,12 @@ $tpl_label = $templates[ $current_tpl ]['label'] ?? $current_tpl;
 <div class="wrap wccp-wrap">
 	<div class="wccp-topbar">
 		<div>
-			<h1>Baget — فیلدها بر اساس قالب</h1>
-			<p class="wccp-muted">اول قالب را انتخاب کنید (ستاره = پیش‌فرض checkout)، بعد فیلدهای همان قالب را بسازید و مرتب کنید.</p>
+			<h1>Baget — افزودن فیلدها</h1>
+			<p class="wccp-muted">قالب‌های پیش‌فرض: <strong>محصولات دیجیتال</strong> و <strong>محصولات فیزیکی</strong>. قالب را انتخاب کنید، فیلدها را بسازید، بعد از تب «محصولات فروشگاه» روی هر محصول اعمال کنید.</p>
 		</div>
 		<div class="wccp-topbar-actions">
-			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=wccp&tab=templates' ) ); ?>">+ مدیریت ظاهر قالب‌ها</a>
+			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=wccp&tab=templates' ) ); ?>">+ افزودن قالب</a>
+			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=wccp&tab=wc-products' ) ); ?>">محصولات فروشگاه</a>
 			<button type="button" class="button button-secondary" id="wccp-add-radio">+ سوال رادیو</button>
 			<button type="button" class="button button-secondary" id="wccp-add-checkboxes">+ سوال چندگزینه‌ای</button>
 			<button type="button" class="wccp-btn-save" id="wccp-save-btn">

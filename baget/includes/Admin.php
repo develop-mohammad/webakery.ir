@@ -22,6 +22,7 @@ class Admin {
 		add_action( 'save_post_wccp_product', array( $this, 'save_product_meta' ) );
 		add_action( 'admin_post_wccp_save_template', array( $this, 'handle_save_template' ) );
 		add_action( 'admin_post_wccp_delete_template', array( $this, 'handle_delete_template' ) );
+		add_action( 'admin_post_wccp_save_wc_templates', array( $this, 'handle_save_wc_templates' ) );
 	}
 
 	/** @return string */
@@ -44,15 +45,21 @@ class Admin {
 			'dashicons-forms',
 			56
 		);
-		add_submenu_page( 'wccp', 'فیلدها', 'فیلدها', $cap, 'wccp', array( $this, 'render_page' ) );
-		add_submenu_page( 'wccp', 'قالب‌ها', 'قالب‌ها', $cap, 'wccp-templates', array( $this, 'render_templates_redirect' ) );
-		add_submenu_page( 'wccp', 'محصولات آنلاین', 'محصولات آنلاین', $cap, 'edit.php?post_type=wccp_product' );
-		add_submenu_page( 'wccp', 'افزودن محصول', 'افزودن محصول', $cap, 'post-new.php?post_type=wccp_product' );
+		add_submenu_page( 'wccp', 'افزودن فیلدها', 'افزودن فیلدها', $cap, 'wccp', array( $this, 'render_page' ) );
+		add_submenu_page( 'wccp', 'افزودن قالب', 'افزودن قالب', $cap, 'wccp-templates', array( $this, 'render_templates_redirect' ) );
+		add_submenu_page( 'wccp', 'محصولات فروشگاه', 'محصولات فروشگاه', $cap, 'wccp-wc-products', array( $this, 'render_wc_products_redirect' ) );
+		add_submenu_page( 'wccp', 'لینک پرداخت', 'لینک پرداخت', $cap, 'edit.php?post_type=wccp_product' );
+		add_submenu_page( 'wccp', 'افزودن لینک پرداخت', 'افزودن لینک پرداخت', $cap, 'post-new.php?post_type=wccp_product' );
 		add_submenu_page( 'wccp', 'خرید و لایسنس', 'خرید و لایسنس', $cap, 'wccp-license', array( $this, 'render_license_page' ) );
 	}
 
 	public function render_templates_redirect() {
 		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=templates' ) );
+		exit;
+	}
+
+	public function render_wc_products_redirect() {
+		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=wc-products' ) );
 		exit;
 	}
 
@@ -128,8 +135,20 @@ class Admin {
 			$this->render_templates_page();
 			return;
 		}
+		if ( 'wc-products' === $tab ) {
+			$this->render_wc_products_page();
+			return;
+		}
 
 		$this->render_fields_page();
+	}
+
+	public function render_wc_products_page() {
+		if ( ! current_user_can( self::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		$tab = 'wc-products';
+		include WCCP_PATH . 'templates/admin-wc-products.php';
 	}
 
 	public function render_fields_page() {
@@ -191,6 +210,43 @@ class Admin {
 		}
 		set_transient( 'settings_errors', get_settings_errors(), 30 );
 		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=templates' ) );
+		exit;
+	}
+
+	public function handle_save_wc_templates() {
+		if ( ! current_user_can( self::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		check_admin_referer( 'wccp_save_wc_templates' );
+
+		$map  = isset( $_POST['wccp_tpl'] ) && is_array( $_POST['wccp_tpl'] ) ? wp_unslash( $_POST['wccp_tpl'] ) : array(); // phpcs:ignore
+		$all  = Templates::all();
+		$saved = 0;
+		foreach ( $map as $product_id => $tpl_key ) {
+			$product_id = (int) $product_id;
+			$tpl_key    = sanitize_key( (string) $tpl_key );
+			if ( $product_id <= 0 || get_post_type( $product_id ) !== 'product' ) {
+				continue;
+			}
+			if ( $tpl_key === '' || ! isset( $all[ $tpl_key ] ) ) {
+				delete_post_meta( $product_id, Templates::WC_PRODUCT_META );
+				$saved++;
+				continue;
+			}
+			Templates::set_wc_product_template( $product_id, $tpl_key );
+			$saved++;
+		}
+
+		add_settings_error( 'wccp_wc_products', 'ok', sprintf( 'قالب %d محصول ذخیره شد.', $saved ), 'updated' );
+		set_transient( 'settings_errors', get_settings_errors(), 30 );
+
+		$paged  = max( 1, (int) ( $_POST['paged'] ?? 1 ) );
+		$search = isset( $_POST['s'] ) ? sanitize_text_field( wp_unslash( $_POST['s'] ) ) : '';
+		$url    = admin_url( 'admin.php?page=wccp&tab=wc-products&paged=' . $paged );
+		if ( $search !== '' ) {
+			$url = add_query_arg( 's', rawurlencode( $search ), $url );
+		}
+		wp_safe_redirect( $url );
 		exit;
 	}
 

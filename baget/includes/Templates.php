@@ -5,22 +5,63 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * قالب‌های صفحه پرداخت + فیلدهای اختصاصی هر قالب.
+ *
+ * دو قالب پیش‌فرض ثابت:
+ * - digital  → محصولات دیجیتال
+ * - physical → محصولات فیزیکی
+ * قالب‌های سفارشی از صفحه «افزودن قالب» اضافه می‌شوند.
  */
 class Templates {
 
 	const OPTION         = 'wccp_pay_templates';
 	const DEFAULT_OPTION = 'wccp_default_checkout_template';
+	/** متا روی محصول ووکامرس (نه CPT لینک پرداخت) */
+	const WC_PRODUCT_META = '_wccp_checkout_template';
 
 	/** @return string[] */
 	public static function default_fields() {
 		return Fields::default_active();
 	}
 
-	/** قالب پیش‌فرض صفحه پرداخت ووکامرس */
-	public static function default_key() {
-		$key = sanitize_key( (string) get_option( self::DEFAULT_OPTION, 'violet' ) );
+	/** فیلدهای پیشنهادی قالب دیجیتال */
+	public static function digital_fields() {
+		return array(
+			'billing_first_name',
+			'billing_last_name',
+			'billing_email',
+			'billing_phone',
+		);
+	}
+
+	/** فیلدهای پیشنهادی قالب فیزیکی */
+	public static function physical_fields() {
+		return array(
+			'billing_first_name',
+			'billing_last_name',
+			'billing_phone',
+			'billing_email',
+			'billing_state',
+			'billing_city',
+			'billing_address_1',
+			'billing_postcode',
+		);
+	}
+
+	/** مهاجرت کلیدهای قدیمی (مثل violet) به digital */
+	private static function migrate_default_key() {
+		$key = sanitize_key( (string) get_option( self::DEFAULT_OPTION, 'digital' ) );
 		$all = self::all();
-		return ( $key && isset( $all[ $key ] ) ) ? $key : 'violet';
+		if ( $key && isset( $all[ $key ] ) ) {
+			return $key;
+		}
+		// کلید قدیمی دیگر وجود ندارد
+		update_option( self::DEFAULT_OPTION, 'digital', false );
+		return 'digital';
+	}
+
+	/** قالب پیش‌فرض صفحه پرداخت ووکامرس (وقتی محصول قالب اختصاصی ندارد) */
+	public static function default_key() {
+		return self::migrate_default_key();
 	}
 
 	/** @return true|\WP_Error */
@@ -31,7 +72,6 @@ class Templates {
 			return new \WP_Error( 'tpl', 'قالب نامعتبر است.' );
 		}
 		update_option( self::DEFAULT_OPTION, $key, false );
-		// فیلدهای فعال checkout را با قالب پیش‌فرض همگام کن
 		$fields = self::fields_for( $key );
 		update_option( Fields::ACTIVE_OPTION, $fields, false );
 		return true;
@@ -50,8 +90,8 @@ class Templates {
 		if ( ! $key || ! isset( $all[ $key ] ) ) {
 			return new \WP_Error( 'tpl', 'قالب نامعتبر است.' );
 		}
-		$tpl    = $all[ $key ];
-		$clean  = self::sanitize_fields( $fields );
+		$tpl   = $all[ $key ];
+		$clean = self::sanitize_fields( $fields );
 		if ( empty( $clean ) ) {
 			return new \WP_Error( 'fields', 'حداقل یک فیلد فعال لازم است.' );
 		}
@@ -87,32 +127,36 @@ class Templates {
 
 	/** @return array<string,array> */
 	public static function builtins() {
-		$base_fields = self::default_fields();
-		$skins       = array(
-			'violet'  => array( 'بنفش کلاسیک', '#6d28d9', '#f5f3ff', '#ffffff', '#0f172a', '#64748b', '#ffffff', '20', 'card' ),
-			'ocean'   => array( 'آبی اقیانوس', '#0284c7', '#e0f2fe', '#ffffff', '#0c4a6e', '#64748b', '#ffffff', '16', 'card' ),
-			'emerald' => array( 'سبز زمردی', '#059669', '#ecfdf5', '#ffffff', '#064e3b', '#64748b', '#ffffff', '18', 'card' ),
-			'dark'    => array( 'تیره حرفه‌ای', '#a78bfa', '#0f172a', '#1e293b', '#f8fafc', '#94a3b8', '#0f172a', '16', 'card' ),
-			'minimal' => array( 'مینیمال روشن', '#111827', '#f9fafb', '#ffffff', '#111827', '#6b7280', '#ffffff', '12', 'minimal' ),
-			'rose'    => array( 'صورتی مدرن', '#e11d48', '#fff1f2', '#ffffff', '#881337', '#9f1239', '#ffffff', '22', 'card' ),
-		);
-		$out = array();
-		foreach ( $skins as $key => $s ) {
-			$out[ $key ] = array(
-				'label'       => $s[0],
-				'primary'     => $s[1],
-				'background'  => $s[2],
-				'card'        => $s[3],
-				'text'        => $s[4],
-				'muted'       => $s[5],
-				'button_text' => $s[6],
-				'radius'      => $s[7],
-				'layout'      => $s[8],
-				'fields'      => $base_fields,
+		return array(
+			'digital'  => array(
+				'label'       => 'محصولات دیجیتال',
+				'description' => 'برای فایل، دانلود و سرویس‌های دیجیتال',
+				'primary'     => '#0ea5e9',
+				'background'  => '#f0f9ff',
+				'card'        => '#ffffff',
+				'text'        => '#0c4a6e',
+				'muted'       => '#64748b',
+				'button_text' => '#ffffff',
+				'radius'      => '16',
+				'layout'      => 'card',
+				'fields'      => self::digital_fields(),
 				'builtin'     => true,
-			);
-		}
-		return $out;
+			),
+			'physical' => array(
+				'label'       => 'محصولات فیزیکی',
+				'description' => 'برای کالاهای ارسالی با آدرس پستی',
+				'primary'     => '#16a34a',
+				'background'  => '#f0fdf4',
+				'card'        => '#ffffff',
+				'text'        => '#14532d',
+				'muted'       => '#64748b',
+				'button_text' => '#ffffff',
+				'radius'      => '16',
+				'layout'      => 'card',
+				'fields'      => self::physical_fields(),
+				'builtin'     => true,
+			),
+		);
 	}
 
 	/** @return array<string,array> */
@@ -128,7 +172,12 @@ class Templates {
 			if ( ! is_array( $tpl ) ) {
 				continue;
 			}
-			$base           = $all[ $key ] ?? array(
+			$key = sanitize_key( (string) $key );
+			if ( ! $key ) {
+				continue;
+			}
+			// کلیدهای قدیمی پوسته‌ها (violet/ocean/…) اگر override داشته باشند به‌صورت سفارشی می‌مانند
+			$base = $all[ $key ] ?? array(
 				'label'       => $key,
 				'primary'     => '#6d28d9',
 				'background'  => '#f5f3ff',
@@ -141,10 +190,10 @@ class Templates {
 				'fields'      => self::default_fields(),
 				'builtin'     => false,
 			);
-			$merged         = array_merge( $base, $tpl );
-			$merged['fields'] = self::sanitize_fields( $merged['fields'] ?? self::default_fields() );
+			$merged            = array_merge( $base, $tpl );
+			$merged['fields']  = self::sanitize_fields( $merged['fields'] ?? self::default_fields() );
 			$merged['builtin'] = isset( self::builtins()[ $key ] );
-			$all[ $key ]    = $merged;
+			$all[ $key ]       = $merged;
 		}
 		return $all;
 	}
@@ -155,28 +204,79 @@ class Templates {
 		if ( isset( $all[ $key ] ) && is_array( $all[ $key ] ) ) {
 			return $all[ $key ];
 		}
-		return self::builtins()['violet'];
+		return self::builtins()['digital'];
 	}
 
 	/** @return string[] */
 	public static function fields_for( $key ) {
-		$tpl = self::get( $key );
+		$tpl    = self::get( $key );
 		$fields = self::sanitize_fields( $tpl['fields'] ?? array() );
 		return ! empty( $fields ) ? $fields : self::default_fields();
 	}
 
-	/** @return string */
+	/**
+	 * قالب لینک پرداخت (CPT wccp_product).
+	 *
+	 * @return string
+	 */
 	public static function product_template_key( $product_id ) {
 		$key = sanitize_key( (string) get_post_meta( $product_id, '_wccp_template', true ) );
 		$all = self::all();
 		if ( $key && isset( $all[ $key ] ) ) {
 			return $key;
 		}
-		return 'violet';
+		return self::default_key();
 	}
 
 	/**
-	 * اعمال فیلدهای قالب روی محصول.
+	 * قالب اختصاص‌داده‌شده به محصول ووکامرس.
+	 *
+	 * @return string
+	 */
+	public static function wc_product_template_key( $product_id ) {
+		$key = sanitize_key( (string) get_post_meta( $product_id, self::WC_PRODUCT_META, true ) );
+		$all = self::all();
+		if ( $key && isset( $all[ $key ] ) ) {
+			return $key;
+		}
+		return self::default_key();
+	}
+
+	public static function set_wc_product_template( $product_id, $template_key ) {
+		$product_id   = (int) $product_id;
+		$template_key = sanitize_key( (string) $template_key );
+		$all          = self::all();
+		if ( $product_id <= 0 || ! isset( $all[ $template_key ] ) ) {
+			return false;
+		}
+		update_post_meta( $product_id, self::WC_PRODUCT_META, $template_key );
+		return true;
+	}
+
+	/**
+	 * تشخیص قالب checkout از سبد خرید ووکامرس.
+	 * اولویت: اولین محصولی که قالب صریح دارد، وگرنه پیش‌فرض.
+	 */
+	public static function resolve_checkout_template() {
+		if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+			return self::default_key();
+		}
+		$all = self::all();
+		foreach ( WC()->cart->get_cart() as $item ) {
+			$pid = (int) ( $item['product_id'] ?? 0 );
+			if ( $pid <= 0 ) {
+				continue;
+			}
+			$explicit = sanitize_key( (string) get_post_meta( $pid, self::WC_PRODUCT_META, true ) );
+			if ( $explicit && isset( $all[ $explicit ] ) ) {
+				return $explicit;
+			}
+		}
+		return self::default_key();
+	}
+
+	/**
+	 * اعمال فیلدهای قالب روی محصول لینک پرداخت (CPT).
 	 *
 	 * @return string[]
 	 */
@@ -238,12 +338,10 @@ class Templates {
 		$custom = self::custom();
 		$key    = sanitize_key( (string) $key );
 
-		// کلید جدید
 		if ( ! $key ) {
 			$key = 'custom_' . strtolower( wp_generate_password( 6, false, false ) );
 		}
 
-		// اگر روی پیش‌فرض ذخیره می‌شود، به‌صورت override نگه دار
 		if ( isset( self::builtins()[ $key ] ) ) {
 			$clean['builtin'] = true;
 		}
@@ -255,14 +353,16 @@ class Templates {
 
 	/** @return true|\WP_Error */
 	public static function delete_custom( $key ) {
-		$key = sanitize_key( (string) $key );
+		$key    = sanitize_key( (string) $key );
 		$custom = self::custom();
 		if ( ! isset( $custom[ $key ] ) ) {
 			return new \WP_Error( 'missing', 'قالب سفارشی یافت نشد.' );
 		}
-		// برای پیش‌فرض فقط override پاک می‌شود (برمی‌گردد به حالت اولیه)
 		unset( $custom[ $key ] );
 		update_option( self::OPTION, $custom, false );
+		if ( self::default_key() === $key && ! isset( self::builtins()[ $key ] ) ) {
+			update_option( self::DEFAULT_OPTION, 'digital', false );
+		}
 		return true;
 	}
 
