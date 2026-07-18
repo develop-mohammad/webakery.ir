@@ -24,13 +24,12 @@ class NM_Zarinpal {
 	}
 
 	public static function merchant() {
-		return trim( (string) NM_Settings::get( 'zarinpal_merchant', '' ) );
+		return NM_Payments::normalize_zarinpal_merchant( NM_Settings::get( 'zarinpal_merchant', '' ) );
 	}
 
 	/** مرچنت زرین‌پال معمولاً UUID ۳۶ کاراکتری است */
 	public static function enabled() {
-		$m = self::merchant();
-		return (bool) preg_match( '/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $m );
+		return NM_Payments::looks_like_zarinpal_merchant( self::merchant() );
 	}
 
 	public static function pay_url_for_booking( $booking ) {
@@ -41,6 +40,46 @@ class NM_Zarinpal {
 			admin_url( 'admin-post.php?action=nm_zarinpal_start&booking_id=' . (int) $booking->id ),
 			'nm_zarinpal_start_' . (int) $booking->id
 		);
+	}
+
+	/**
+	 * ساخت مستقیم لینک درگاه زرین‌پال (بدون صفحه میانی).
+	 * در صورت خطا رشته خالی برمی‌گرداند.
+	 */
+	public static function create_redirect_url( $booking ) {
+		if ( ! $booking || empty( $booking->id ) || ! self::enabled() ) {
+			return '';
+		}
+		if ( 'paid' === ( $booking->payment_status ?? '' ) ) {
+			return '';
+		}
+
+		$amount = (int) $booking->price * 10; // تومان → ریال
+		if ( $amount < 10000 ) {
+			return '';
+		}
+
+		$callback = admin_url( 'admin-post.php?action=nm_zarinpal_cb' );
+		$payload  = array(
+			'merchant_id'  => self::merchant(),
+			'amount'       => $amount,
+			'callback_url' => $callback,
+			'description'  => 'رزرو نوبت ' . $booking->booking_code,
+			'metadata'     => array(
+				'mobile' => (string) ( $booking->customer_phone ?? '' ),
+				'email'  => (string) ( $booking->customer_email ?? '' ),
+			),
+		);
+
+		$resp = self::api( 'https://api.zarinpal.com/pg/v4/payment/request.json', $payload );
+		$code = (int) ( $resp['data']['code'] ?? 0 );
+		$auth = (string) ( $resp['data']['authority'] ?? '' );
+		if ( 100 !== $code || ! $auth ) {
+			return '';
+		}
+
+		update_option( 'nm_zarinpal_auth_' . $auth, (int) $booking->id, false );
+		return 'https://www.zarinpal.com/pg/StartPay/' . rawurlencode( $auth );
 	}
 
 	public static function start() {
@@ -68,39 +107,16 @@ class NM_Zarinpal {
 			);
 		}
 
-		$amount = (int) $booking->price * 10; // تومان → ریال
-		if ( $amount < 10000 ) {
-			NM_Payments::die_payment_error( 'حداقل مبلغ پرداخت زرین‌پال ۱۰٬۰۰۰ ریال است.', $booking );
+		$url = self::create_redirect_url( $booking );
+		if ( $url ) {
+			NM_Payments::redirect_pay( $url );
 		}
 
-		$callback = admin_url( 'admin-post.php?action=nm_zarinpal_cb' );
-		$payload  = array(
-			'merchant_id'  => self::merchant(),
-			'amount'       => $amount,
-			'callback_url' => $callback,
-			'description'  => 'رزرو نوبت ' . $booking->booking_code,
-			'metadata'     => array(
-				'mobile' => (string) ( $booking->customer_phone ?? '' ),
-				'email'  => (string) ( $booking->customer_email ?? '' ),
-			),
+		NM_Payments::redirect_fallback( $booking, 'zarinpal' );
+		NM_Payments::die_payment_error(
+			'خطا در اتصال به زرین‌پال. مرچنت را بررسی کنید یا درگاه ووکامرس را فعال کنید.',
+			$booking
 		);
-
-		$resp = self::api( 'https://api.zarinpal.com/pg/v4/payment/request.json', $payload );
-		$code = (int) ( $resp['data']['code'] ?? 0 );
-		$auth = (string) ( $resp['data']['authority'] ?? '' );
-
-		if ( 100 !== $code || ! $auth ) {
-			$msg = $resp['errors']['message'] ?? ( $resp['data']['message'] ?? 'خطای ناشناخته' );
-			NM_Payments::redirect_fallback( $booking, 'zarinpal' );
-			NM_Payments::die_payment_error(
-				'خطا در اتصال به زرین‌پال: <code dir="ltr">' . esc_html( (string) $msg ) . '</code>',
-				$booking
-			);
-		}
-
-		update_option( 'nm_zarinpal_auth_' . $auth, (int) $booking->id, false );
-		wp_redirect( 'https://www.zarinpal.com/pg/StartPay/' . rawurlencode( $auth ) );
-		exit;
 	}
 
 	public static function callback() {

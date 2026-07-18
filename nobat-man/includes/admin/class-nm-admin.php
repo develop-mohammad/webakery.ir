@@ -85,16 +85,21 @@ class NM_Admin {
 			if ( isset( $raw['zarinpal_merchant'] ) ) {
 				$data['zarinpal_merchant'] = sanitize_text_field( $raw['zarinpal_merchant'] );
 			}
-			// اگر مرچنت UUID در فیلد زیبال بود، به زرین‌پال منتقل کن
-			$zibal_in = $data['zibal_merchant'] ?? null;
-			$zarin_in = $data['zarinpal_merchant'] ?? null;
-			if ( null !== $zibal_in && class_exists( 'NM_Payments' ) && NM_Payments::looks_like_zarinpal_merchant( $zibal_in ) ) {
-				if ( null === $zarin_in || '' === trim( (string) $zarin_in ) ) {
-					$data['zarinpal_merchant'] = trim( (string) $zibal_in );
+			if ( class_exists( 'NM_Payments' ) ) {
+				if ( isset( $data['zarinpal_merchant'] ) ) {
+					$data['zarinpal_merchant'] = NM_Payments::normalize_zarinpal_merchant( $data['zarinpal_merchant'] );
 				}
-				$data['zibal_merchant'] = '';
-				if ( ( $data['payment_gateway'] ?? '' ) === 'zibal' ) {
-					$data['payment_gateway'] = 'zarinpal';
+				// اگر مرچنت UUID در فیلد زیبال بود، به زرین‌پال منتقل کن
+				$zibal_in = $data['zibal_merchant'] ?? null;
+				$zarin_in = $data['zarinpal_merchant'] ?? null;
+				if ( null !== $zibal_in && NM_Payments::looks_like_zarinpal_merchant( $zibal_in ) ) {
+					if ( null === $zarin_in || '' === trim( (string) $zarin_in ) ) {
+						$data['zarinpal_merchant'] = NM_Payments::normalize_zarinpal_merchant( $zibal_in );
+					}
+					$data['zibal_merchant'] = '';
+					if ( ( $data['payment_gateway'] ?? '' ) === 'zibal' ) {
+						$data['payment_gateway'] = 'zarinpal';
+					}
 				}
 			}
 			foreach ( array( 'default_price','default_duration','min_duration','max_duration','buffer_minutes','slot_step','block_holidays','enable_voice','enable_photo','max_upload_mb','require_email','require_city','require_gender','pending_ttl_hours','notify_email','notify_sms','enable_installments','installment_count','wc_product_id' ) as $n ) {

@@ -5,7 +5,7 @@ Tags: appointment, booking, jalali, persian, woocommerce, counseling
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.10
+Stable tag: 1.0.11
 License: GPLv2 or later
 
 رزرو نوبت مشاوره با تقویم شمسی ایرانی، پرداخت ووکامرس، پنل مدرن و نسخه پرو.
@@ -49,6 +49,11 @@ License: GPLv2 or later
 4. شورت‌کد `[nobat_man]` را در برگه قرار دهید.
 
 == Changelog ==
+
+= 1.0.11 =
+* ساخت مستقیم لینک درگاه بانک هنگام رزرو (بدون گیرکردن در صفحه خطای زیبال)
+* نرمال‌سازی مرچنت زرین‌پال (۳۲ کاراکتر بدون خط تیره)
+* اگر زیبال invalid merchant بدهد، خودکار به زرین‌پال/ووکامرس سوییچ می‌کند
 
 = 1.0.10 =
 * رفع خطای invalid merchant: تشخیص خودکار مرچنت زرین‌پال که اشتباهاً در فیلد زیبال ذخیره شده

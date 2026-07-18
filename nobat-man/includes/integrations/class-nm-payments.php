@@ -7,14 +7,13 @@ defined( 'ABSPATH' ) || exit;
 class NM_Payments {
 
 	/**
-	 * لینک پرداخت برای رزرو بر اساس تنظیمات.
+	 * لینک پرداخت برای رزرو — ترجیحاً مستقیم به درگاه بانک (نه صفحه میانی خطا).
 	 */
 	public static function pay_url_for_booking( $booking ) {
 		if ( ! $booking || empty( $booking->id ) ) {
 			return '';
 		}
 
-		// اصلاح خودکار مرچنت اشتباه (UUID زرین‌پال در فیلد زیبال)
 		if ( class_exists( 'NM_Settings' ) && method_exists( 'NM_Settings', 'heal_payment_merchants' ) ) {
 			NM_Settings::heal_payment_merchants();
 		}
@@ -22,46 +21,69 @@ class NM_Payments {
 		$gw = sanitize_key( (string) NM_Settings::get( 'payment_gateway', 'auto' ) );
 
 		if ( 'zarinpal' === $gw ) {
-			if ( NM_Zarinpal::enabled() ) {
-				return NM_Zarinpal::pay_url_for_booking( $booking );
+			$url = self::try_zarinpal( $booking );
+			if ( $url ) {
+				return $url;
 			}
 			return self::fallback_url( $booking, 'zarinpal' );
 		}
 
 		if ( 'zibal' === $gw ) {
-			if ( NM_Zibal::enabled() ) {
-				return NM_Zibal::pay_url_for_booking( $booking );
+			$url = self::try_zibal( $booking );
+			if ( $url ) {
+				return $url;
 			}
 			return self::fallback_url( $booking, 'zibal' );
 		}
 
 		if ( 'woocommerce' === $gw ) {
-			if ( class_exists( 'WooCommerce' ) ) {
-				$url = NM_WooCommerce::create_checkout_for_booking( $booking );
-				if ( $url ) {
-					return $url;
-				}
+			$url = self::try_woocommerce( $booking );
+			if ( $url ) {
+				return $url;
 			}
 			return self::fallback_url( $booking, 'woocommerce' );
 		}
 
-		// auto:
-		// 1) زرین‌پال مستقیم اگر مرچنت معتبر
-		// 2) ووکامرس (زرین‌پال/زیبال نصب‌شده روی ووکامرس)
-		// 3) زیبال مستقیم اگر مرچنت معتبر
-		if ( NM_Zarinpal::enabled() ) {
-			return NM_Zarinpal::pay_url_for_booking( $booking );
+		// auto: زرین‌پال مستقیم → ووکامرس → زیبال
+		$url = self::try_zarinpal( $booking );
+		if ( $url ) {
+			return $url;
 		}
-		if ( class_exists( 'WooCommerce' ) ) {
-			$url = NM_WooCommerce::create_checkout_for_booking( $booking );
-			if ( $url ) {
-				return $url;
-			}
+		$url = self::try_woocommerce( $booking );
+		if ( $url ) {
+			return $url;
 		}
-		if ( NM_Zibal::enabled() ) {
-			return NM_Zibal::pay_url_for_booking( $booking );
+		$url = self::try_zibal( $booking );
+		if ( $url ) {
+			return $url;
 		}
 		return '';
+	}
+
+	/** @return string */
+	private static function try_zarinpal( $booking ) {
+		if ( ! NM_Zarinpal::enabled() ) {
+			return '';
+		}
+		// فقط لینک مستقیم درگاه — اگر API خطا داد سراغ جایگزین (ووکامرس/زیبال)
+		return (string) NM_Zarinpal::create_redirect_url( $booking );
+	}
+
+	/** @return string */
+	private static function try_zibal( $booking ) {
+		if ( ! NM_Zibal::enabled() ) {
+			return '';
+		}
+		// اگر API زیبال شکست خورد (مثل invalid merchant)، لینک میانی خطا نفرست
+		return (string) NM_Zibal::create_redirect_url( $booking );
+	}
+
+	/** @return string */
+	private static function try_woocommerce( $booking ) {
+		if ( ! class_exists( 'WooCommerce' ) || ! class_exists( 'NM_WooCommerce' ) ) {
+			return '';
+		}
+		return (string) NM_WooCommerce::create_checkout_for_booking( $booking );
 	}
 
 	/**
@@ -70,41 +92,83 @@ class NM_Payments {
 	public static function fallback_url( $booking, $failed = '' ) {
 		$failed = sanitize_key( (string) $failed );
 
-		if ( 'zarinpal' !== $failed && NM_Zarinpal::enabled() ) {
-			return NM_Zarinpal::pay_url_for_booking( $booking );
-		}
-		if ( 'woocommerce' !== $failed && class_exists( 'WooCommerce' ) ) {
-			$url = NM_WooCommerce::create_checkout_for_booking( $booking );
+		if ( 'zarinpal' !== $failed ) {
+			$url = self::try_zarinpal( $booking );
 			if ( $url ) {
 				return $url;
 			}
 		}
-		if ( 'zibal' !== $failed && NM_Zibal::enabled() ) {
-			return NM_Zibal::pay_url_for_booking( $booking );
+		if ( 'woocommerce' !== $failed ) {
+			$url = self::try_woocommerce( $booking );
+			if ( $url ) {
+				return $url;
+			}
+		}
+		if ( 'zibal' !== $failed ) {
+			$url = self::try_zibal( $booking );
+			if ( $url ) {
+				return $url;
+			}
 		}
 		return '';
 	}
 
 	/**
 	 * ریدایرکت به لینک پرداخت جایگزین؛ در صورت نبودن، false.
+	 * توجه: لینک درگاه بانک خارجی است — نباید از wp_safe_redirect استفاده شود.
 	 */
 	public static function redirect_fallback( $booking, $failed = '' ) {
 		$url = self::fallback_url( $booking, $failed );
 		if ( ! $url ) {
 			return false;
 		}
-		// لینک‌های داخلی (admin-post / checkout)
-		wp_safe_redirect( $url );
+		self::redirect_pay( $url );
+		return true;
+	}
+
+	/**
+	 * ریدایرکت امن به checkout داخلی یا درگاه خارجی.
+	 */
+	public static function redirect_pay( $url ) {
+		$url = esc_url_raw( (string) $url );
+		if ( ! $url ) {
+			return;
+		}
+		$host      = wp_parse_url( $url, PHP_URL_HOST );
+		$home_host = wp_parse_url( home_url(), PHP_URL_HOST );
+		if ( $host && $home_host && strtolower( (string) $host ) === strtolower( (string) $home_host ) ) {
+			wp_safe_redirect( $url );
+		} else {
+			// zarinpal.com / zibal.ir و ...
+			wp_redirect( $url );
+		}
 		exit;
+	}
+
+	/**
+	 * نرمال‌سازی مرچنت زرین‌پال (حذف فاصله، افزودن خط تیره به ۳۲ کاراکتر hex).
+	 */
+	public static function normalize_zarinpal_merchant( $merchant ) {
+		$merchant = strtolower( trim( (string) $merchant ) );
+		$merchant = preg_replace( '/\s+/', '', $merchant );
+		$merchant = str_replace( array( '{', '}', '"' ), '', $merchant );
+		if ( preg_match( '/^[0-9a-f]{32}$/', $merchant ) ) {
+			$merchant = substr( $merchant, 0, 8 ) . '-' .
+				substr( $merchant, 8, 4 ) . '-' .
+				substr( $merchant, 12, 4 ) . '-' .
+				substr( $merchant, 16, 4 ) . '-' .
+				substr( $merchant, 20, 12 );
+		}
+		return $merchant;
 	}
 
 	/**
 	 * آیا رشته شبیه مرچنت‌کد زرین‌پال (UUID) است؟
 	 */
 	public static function looks_like_zarinpal_merchant( $merchant ) {
-		$merchant = trim( (string) $merchant );
+		$merchant = self::normalize_zarinpal_merchant( $merchant );
 		return (bool) preg_match(
-			'/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/',
+			'/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/',
 			$merchant
 		);
 	}

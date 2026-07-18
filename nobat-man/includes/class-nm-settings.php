@@ -123,8 +123,10 @@ class NM_Settings {
 	}
 
 	/**
-	 * اصلاح مرچنت اشتباه: UUID زرین‌پال که اشتباهاً در فیلد زیبال ذخیره شده.
-	 * علت رایج خطای invalid merchant در زیبال همین است.
+	 * اصلاح مرچنت اشتباه:
+	 * - UUID زرین‌پال که اشتباهاً در فیلد زیبال است
+	 * - مرچنت ۳۲ کاراکتری بدون خط تیره
+	 * - فاصله/کاراکتر اضافه
 	 *
 	 * @return bool
 	 */
@@ -135,23 +137,43 @@ class NM_Settings {
 		}
 		$done = true;
 
-		$zibal = trim( (string) self::get( 'zibal_merchant', '' ) );
-		$zarin = trim( (string) self::get( 'zarinpal_merchant', '' ) );
-		$gw    = sanitize_key( (string) self::get( 'payment_gateway', 'auto' ) );
-		$is_uuid = class_exists( 'NM_Payments' )
-			? NM_Payments::looks_like_zarinpal_merchant( $zibal )
-			: (bool) preg_match( '/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $zibal );
-
-		if ( ! $zibal || ! $is_uuid ) {
+		if ( ! class_exists( 'NM_Payments' ) ) {
 			return false;
 		}
 
-		$changed = array( 'zibal_merchant' => '' );
-		if ( '' === $zarin ) {
-			$changed['zarinpal_merchant'] = $zibal;
+		$zibal   = trim( (string) self::get( 'zibal_merchant', '' ) );
+		$zarin   = trim( (string) self::get( 'zarinpal_merchant', '' ) );
+		$gw      = sanitize_key( (string) self::get( 'payment_gateway', 'auto' ) );
+		$changed = array();
+
+		$zarin_norm = NM_Payments::normalize_zarinpal_merchant( $zarin );
+		if ( $zarin && $zarin_norm !== $zarin && NM_Payments::looks_like_zarinpal_merchant( $zarin_norm ) ) {
+			$changed['zarinpal_merchant'] = $zarin_norm;
+			$zarin = $zarin_norm;
 		}
-		if ( 'zibal' === $gw ) {
-			$changed['payment_gateway'] = ( '' !== ( $changed['zarinpal_merchant'] ?? $zarin ) ) ? 'zarinpal' : 'auto';
+
+		// UUID / مرچنت زرین‌پال در فیلد زیبال
+		if ( $zibal && NM_Payments::looks_like_zarinpal_merchant( $zibal ) ) {
+			$moved = NM_Payments::normalize_zarinpal_merchant( $zibal );
+			if ( '' === $zarin ) {
+				$changed['zarinpal_merchant'] = $moved;
+				$zarin = $moved;
+			}
+			$changed['zibal_merchant'] = '';
+			$zibal = '';
+			if ( 'zibal' === $gw ) {
+				$changed['payment_gateway'] = $zarin ? 'zarinpal' : 'auto';
+				$gw = $changed['payment_gateway'];
+			}
+		}
+
+		// اگر فقط زیبال خراب/خالی است و زرین‌پال داریم، درگاه را از zibal دربیاور
+		if ( 'zibal' === $gw && $zarin && NM_Payments::looks_like_zarinpal_merchant( $zarin ) && '' === $zibal ) {
+			$changed['payment_gateway'] = 'zarinpal';
+		}
+
+		if ( empty( $changed ) ) {
+			return false;
 		}
 		self::update( $changed );
 		return true;

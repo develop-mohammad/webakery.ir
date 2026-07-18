@@ -62,6 +62,68 @@ class NM_Zibal {
 		);
 	}
 
+	/**
+	 * ساخت مستقیم لینک درگاه زیبال.
+	 * اگر invalid merchant بگیرد، مرچنت خراب را پاک می‌کند و خالی برمی‌گرداند.
+	 */
+	public static function create_redirect_url( $booking ) {
+		if ( ! $booking || empty( $booking->id ) || ! self::enabled() ) {
+			return '';
+		}
+		if ( 'paid' === ( $booking->payment_status ?? '' ) ) {
+			return '';
+		}
+
+		$amount = (int) $booking->price * 10; // تومان → ریال
+		if ( $amount < 1000 ) {
+			return '';
+		}
+
+		$callback = admin_url( 'admin-post.php?action=nm_zibal_cb' );
+		$resp     = self::api(
+			'https://gateway.zibal.ir/v1/request',
+			array(
+				'merchant'    => self::merchant(),
+				'amount'      => $amount,
+				'callbackUrl' => $callback,
+				'description' => 'رزرو نوبت ' . $booking->booking_code,
+				'orderId'     => (string) $booking->id,
+			)
+		);
+
+		$result = (int) ( $resp['result'] ?? 0 );
+		if ( 100 !== $result || empty( $resp['trackId'] ) ) {
+			$msg = (string) ( $resp['message'] ?? (string) $result );
+			$merchant_err = in_array( $result, array( 102, 103, 104 ), true )
+				|| false !== stripos( $msg, 'merchant' )
+				|| false !== stripos( $msg, 'مرچنت' );
+
+			if ( $merchant_err ) {
+				// اگر اشتباهاً مرچنت زرین‌پال اینجا بود، منتقل کن
+				$raw = self::merchant();
+				if ( NM_Payments::looks_like_zarinpal_merchant( $raw ) && ! NM_Zarinpal::enabled() ) {
+					NM_Settings::update(
+						array(
+							'zarinpal_merchant' => NM_Payments::normalize_zarinpal_merchant( $raw ),
+							'zibal_merchant'    => '',
+							'payment_gateway'   => 'zarinpal',
+						)
+					);
+				} else {
+					NM_Settings::update( array( 'zibal_merchant' => '' ) );
+					if ( 'zibal' === NM_Settings::get( 'payment_gateway', 'auto' ) ) {
+						NM_Settings::update( array( 'payment_gateway' => 'auto' ) );
+					}
+				}
+			}
+			return '';
+		}
+
+		$track = (string) $resp['trackId'];
+		update_option( 'nm_zibal_track_' . $track, (int) $booking->id, false );
+		return 'https://gateway.zibal.ir/start/' . rawurlencode( $track );
+	}
+
 	public static function start() {
 		$booking_id = (int) ( $_GET['booking_id'] ?? 0 );
 		if ( ! $booking_id || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ?? '' ) ), 'nm_zibal_start_' . $booking_id ) ) {
@@ -85,91 +147,32 @@ class NM_Zibal {
 			if ( ! NM_Zarinpal::enabled() ) {
 				NM_Settings::update(
 					array(
-						'zarinpal_merchant' => $raw_merchant,
+						'zarinpal_merchant' => NM_Payments::normalize_zarinpal_merchant( $raw_merchant ),
 						'zibal_merchant'    => '',
 						'payment_gateway'   => 'zarinpal',
 					)
 				);
 			}
-			$url = NM_Zarinpal::pay_url_for_booking( $booking );
+			$url = NM_Zarinpal::create_redirect_url( $booking );
+			if ( ! $url ) {
+				$url = NM_Zarinpal::pay_url_for_booking( $booking );
+			}
 			if ( $url ) {
-				wp_safe_redirect( $url );
-				exit;
+				NM_Payments::redirect_pay( $url );
 			}
 		}
 
-		if ( ! self::enabled() ) {
-			if ( NM_Payments::redirect_fallback( $booking, 'zibal' ) ) {
-				return;
-			}
-			NM_Payments::die_payment_error(
-				'مرچنت‌کد زیبال معتبر نیست. اگر زرین‌پال دارید، مرچنت ۳۶ کاراکتری را در فیلد «زرین‌پال» بگذارید و فیلد زیبال را خالی کنید.',
-				$booking
-			);
+		$url = self::create_redirect_url( $booking );
+		if ( $url ) {
+			NM_Payments::redirect_pay( $url );
 		}
 
-		$amount = (int) $booking->price * 10; // تومان → ریال
-		if ( $amount < 1000 ) {
-			NM_Payments::die_payment_error( 'مبلغ نامعتبر است.', $booking );
-		}
-
-		$callback = admin_url( 'admin-post.php?action=nm_zibal_cb' );
-		$resp     = self::api(
-			'https://gateway.zibal.ir/v1/request',
-			array(
-				'merchant'    => self::merchant(),
-				'amount'      => $amount,
-				'callbackUrl' => $callback,
-				'description' => 'رزرو نوبت ' . $booking->booking_code,
-				'orderId'     => (string) $booking->id,
-			)
+		NM_Payments::redirect_fallback( $booking, 'zibal' );
+		NM_Payments::die_payment_error(
+			'خطا در اتصال به درگاه زیبال (احتمالاً <code>invalid merchant</code>).<br><br>'
+			. 'اگر زرین‌پال دارید: مرچنت را در فیلد «زرین‌پال» بگذارید، فیلد زیبال را خالی کنید و درگاه را «زرین‌پال» یا «ووکامرس» انتخاب کنید.',
+			$booking
 		);
-
-		$result = (int) ( $resp['result'] ?? 0 );
-		if ( 100 !== $result || empty( $resp['trackId'] ) ) {
-			$msg = (string) ( $resp['message'] ?? (string) $result );
-			$merchant_err = in_array( $result, array( 102, 103, 104 ), true )
-				|| false !== stripos( $msg, 'merchant' )
-				|| false !== stripos( $msg, 'مرچنت' );
-
-			if ( $merchant_err ) {
-				// اگر مرچنت شبیه UUID بود، یک‌بار با زرین‌پال امتحان کن
-				if ( NM_Payments::looks_like_zarinpal_merchant( self::merchant() ) ) {
-					NM_Settings::update(
-						array(
-							'zarinpal_merchant' => self::merchant(),
-							'zibal_merchant'    => '',
-							'payment_gateway'   => 'zarinpal',
-						)
-					);
-					$url = NM_Zarinpal::pay_url_for_booking( $booking );
-					if ( $url ) {
-						wp_safe_redirect( $url );
-						exit;
-					}
-				}
-				// مرچنت زیبال خراب است — غیرفعال کن تا دفعات بعد سراغش نرود
-				NM_Settings::update( array( 'zibal_merchant' => '' ) );
-				if ( 'zibal' === NM_Settings::get( 'payment_gateway', 'auto' ) ) {
-					NM_Settings::update( array( 'payment_gateway' => 'auto' ) );
-				}
-				if ( NM_Payments::redirect_fallback( $booking, 'zibal' ) ) {
-					return;
-				}
-			}
-
-			NM_Payments::die_payment_error(
-				'خطا در اتصال به درگاه زیبال: <code dir="ltr">' . esc_html( $msg ) . '</code><br><br>'
-				. 'اگر زرین‌پال دارید: در تنظیمات نوبت من، مرچنت را در فیلد «زرین‌پال» بگذارید، فیلد زیبال را خالی کنید و درگاه را «زرین‌پال» یا «ووکامرس» انتخاب کنید.',
-				$booking
-			);
-		}
-
-		$track = (string) $resp['trackId'];
-		update_option( 'nm_zibal_track_' . $track, (int) $booking->id, false );
-
-		wp_redirect( 'https://gateway.zibal.ir/start/' . rawurlencode( $track ) );
-		exit;
 	}
 
 	public static function callback() {
