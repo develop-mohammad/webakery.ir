@@ -64,6 +64,69 @@ class Fields {
 	}
 
 	/** @return string */
+	/**
+	 * رندر یک فیلد در فرم‌های مستقل (لینک پرداخت / shortcode).
+	 *
+	 * @param string $key
+	 * @param array  $def
+	 */
+	public static function render_standalone_field( $key, $def ) {
+		$type     = $def['type'] ?? 'text';
+		$required = ! empty( $def['required'] );
+		$req_attr = $required ? ' required' : '';
+		$label    = $def['label'] ?? $key;
+
+		echo '<div class="wccp-field wccp-field-' . esc_attr( sanitize_key( $type ) ) . '">';
+		echo '<span class="wccp-field-label">' . esc_html( $label );
+		if ( $required ) {
+			echo ' <abbr class="required" title="required">*</abbr>';
+		}
+		echo '</span>';
+
+		if ( 'textarea' === $type ) {
+			echo '<textarea name="' . esc_attr( $key ) . '"' . $req_attr . '></textarea>';
+		} elseif ( 'select' === $type ) {
+			$options = self::parse_options( $def['options'] ?? '' );
+			echo '<select name="' . esc_attr( $key ) . '"' . $req_attr . '>';
+			echo '<option value="">' . esc_html( 'انتخاب کنید' ) . '</option>';
+			foreach ( $options as $opt ) {
+				echo '<option value="' . esc_attr( $opt ) . '">' . esc_html( $opt ) . '</option>';
+			}
+			echo '</select>';
+		} elseif ( 'radio' === $type ) {
+			$options = self::parse_options( $def['options'] ?? '' );
+			echo '<span class="wccp-choice-list wccp-radio-list">';
+			foreach ( $options as $i => $opt ) {
+				$id = $key . '_' . $i;
+				echo '<label class="wccp-choice wccp-radio" for="' . esc_attr( $id ) . '">';
+				echo '<input type="radio" name="' . esc_attr( $key ) . '" id="' . esc_attr( $id ) . '" value="' . esc_attr( $opt ) . '"' . $req_attr . ' /> ';
+				echo esc_html( $opt );
+				echo '</label>';
+			}
+			echo '</span>';
+		} elseif ( 'checkboxes' === $type ) {
+			$options = self::parse_options( $def['options'] ?? '' );
+			echo '<span class="wccp-choice-list wccp-checkbox-list">';
+			foreach ( $options as $i => $opt ) {
+				$id = $key . '_' . $i;
+				echo '<label class="wccp-choice wccp-checkbox" for="' . esc_attr( $id ) . '">';
+				echo '<input type="checkbox" name="' . esc_attr( $key ) . '[]" id="' . esc_attr( $id ) . '" value="' . esc_attr( $opt ) . '" /> ';
+				echo esc_html( $opt );
+				echo '</label>';
+			}
+			echo '</span>';
+		} else {
+			$html_type = in_array( $type, array( 'email', 'tel', 'number' ), true ) ? $type : 'text';
+			echo '<input type="' . esc_attr( $html_type ) . '" name="' . esc_attr( $key ) . '"' . $req_attr;
+			if ( ! empty( $def['placeholder'] ) ) {
+				echo ' placeholder="' . esc_attr( $def['placeholder'] ) . '"';
+			}
+			echo ' />';
+		}
+
+		echo '</div>';
+	}
+
 	public static function type_label( $type ) {
 		$labels = array(
 			'text'       => 'متنی',

@@ -17,7 +17,8 @@ class Checkout {
 
 	private function __construct() {
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'filter_fields' ), 1000 );
-		add_filter( 'woocommerce_form_field', array( $this, 'render_choice_fields' ), 20, 4 );
+		add_filter( 'woocommerce_form_field_wccp_radio', array( $this, 'render_choice_fields' ), 10, 4 );
+		add_filter( 'woocommerce_form_field_wccp_checkboxes', array( $this, 'render_choice_fields' ), 10, 4 );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_choice_fields' ), 10, 2 );
 		add_action( 'woocommerce_checkout_update_order_meta', array( $this, 'save_order_meta' ) );
 		add_action( 'woocommerce_admin_order_data_after_billing_address', array( $this, 'admin_display' ) );
