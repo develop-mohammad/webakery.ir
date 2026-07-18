@@ -16,6 +16,9 @@ class Checkout {
 	}
 
 	private function __construct() {
+		if ( ! class_exists( 'WooCommerce' ) ) {
+			return;
+		}
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'filter_fields' ), 1000 );
 		add_filter( 'woocommerce_form_field_wccp_radio', array( $this, 'render_choice_fields' ), 10, 4 );
 		add_filter( 'woocommerce_form_field_wccp_checkboxes', array( $this, 'render_choice_fields' ), 10, 4 );

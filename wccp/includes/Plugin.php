@@ -16,20 +16,30 @@ class Plugin {
 	}
 
 	private function __construct() {
-		$this->boot_license();
-
 		add_filter( 'plugin_action_links_' . plugin_basename( WCCP_FILE ), array( $this, 'action_links' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'row_meta' ), 10, 2 );
 
-		Admin::instance();
-		Ajax::instance();
-		Checkout::instance();
+		if ( is_admin() ) {
+			Admin::instance();
+			Ajax::instance();
+		}
+
 		OnlineProducts::instance();
+
+		if ( class_exists( 'WooCommerce' ) ) {
+			Checkout::instance();
+		}
+
+		add_action( 'init', array( $this, 'boot_license' ), 5 );
 	}
 
-	private function boot_license() {
+	public function boot_license() {
 		if ( ! class_exists( 'WB_License' ) ) {
-			require_once WCCP_PATH . 'includes/class-wb-license.php';
+			$file = WCCP_PATH . 'includes/class-wb-license.php';
+			if ( ! is_readable( $file ) ) {
+				return;
+			}
+			require_once $file;
 		}
 		if ( ! class_exists( 'WB_License' ) || ! method_exists( 'WB_License', 'init' ) ) {
 			return;
@@ -55,6 +65,9 @@ class Plugin {
 
 	/** @param string[] $links */
 	public function action_links( $links ) {
+		if ( ! is_array( $links ) ) {
+			$links = array();
+		}
 		array_unshift(
 			$links,
 			'<a href="' . esc_url( admin_url( 'admin.php?page=wccp' ) ) . '"><strong>تنظیمات فیلدها</strong></a>',

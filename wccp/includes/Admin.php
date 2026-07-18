@@ -45,23 +45,6 @@ class Admin {
 		add_submenu_page( 'wccp', 'فیلدها', 'فیلدها', $cap, 'wccp', array( $this, 'render_page' ) );
 		add_submenu_page( 'wccp', 'محصولات آنلاین', 'محصولات آنلاین', $cap, 'edit.php?post_type=wccp_product' );
 		add_submenu_page( 'wccp', 'افزودن محصول', 'افزودن محصول', $cap, 'post-new.php?post_type=wccp_product' );
-		add_submenu_page( 'wccp', 'لایسنس', 'لایسنس', 'manage_options', 'wccp-license', array( $this, 'render_license_redirect' ) );
-
-		if ( class_exists( 'WooCommerce' ) ) {
-			add_submenu_page(
-				'woocommerce',
-				'Baget — فیلدهای پرداخت',
-				'Baget — فیلدها',
-				$cap,
-				'wccp',
-				array( $this, 'render_page' )
-			);
-		}
-	}
-
-	public function render_license_redirect() {
-		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=license' ) );
-		exit;
 	}
 
 	public function assets( $hook ) {
