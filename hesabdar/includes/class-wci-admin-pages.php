@@ -59,8 +59,8 @@ function wci_orders_page_render() {
             ? WCI_Bulk_Invoice::parse_order_ids( wp_unslash( $_POST ) )
             : array_map( 'absint', (array) ( $_POST['order_ids'] ?? array() ) );
 
-        // چاپ همه نتایج فیلتر فعلی — بدون محدودیت تعداد
-        if ( 'print_invoices_filtered' === $bulk_action ) {
+        // چاپ/دانلود همه نتایج فیلتر فعلی — بدون محدودیت تعداد
+        if ( in_array( $bulk_action, array( 'print_invoices_filtered', 'download_invoices_filtered' ), true ) ) {
             list( $all_filtered ) = wci_get_filtered_orders( true );
             $bulk_ids = array();
             foreach ( (array) $all_filtered as $o ) {

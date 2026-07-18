@@ -72,43 +72,56 @@ class WCI_Bulk_Invoice {
 		return is_array( $data ) ? array_values( array_filter( array_map( 'absint', $data ) ) ) : array();
 	}
 
-	public static function print_url( string $key, string $context = 'admin' ): string {
+	public static function action_url( string $key, string $mode = 'print' ): string {
+		$mode = ( 'download' === $mode ) ? 'download' : 'print';
 		$args = array(
 			'action'   => 'wci_bulk_print',
 			'bulk_key' => $key,
+			'mode'     => $mode,
 		);
-		$url = wp_nonce_url( add_query_arg( $args, admin_url( 'admin-post.php' ) ), 'wci_bulk_print_' . $key );
-		return $url;
+		return wp_nonce_url( add_query_arg( $args, admin_url( 'admin-post.php' ) ), 'wci_bulk_print_' . $key );
+	}
+
+	/** @deprecated استفاده از action_url */
+	public static function print_url( string $key, string $context = 'admin' ): string {
+		return self::action_url( $key, 'print' );
 	}
 
 	/**
-	 * شروع چاپ دسته‌جمعی: ذخیره + URL ریدایرکت.
+	 * شروع چاپ/دانلود دسته‌جمعی: ذخیره + URL ریدایرکت.
 	 *
 	 * @param array<int> $order_ids
+	 * @param string     $mode print|download
 	 * @return array{ok:bool,message:string,redirect?:string,count?:int}
 	 */
-	public static function start( array $order_ids ): array {
+	public static function start( array $order_ids, string $mode = 'print' ): array {
 		$order_ids = array_values( array_unique( array_filter( array_map( 'absint', $order_ids ) ) ) );
+		$mode      = ( 'download' === $mode ) ? 'download' : 'print';
 		if ( empty( $order_ids ) ) {
-			return array( 'ok' => false, 'message' => 'هیچ سفارشی برای چاپ فاکتور انتخاب نشده است.' );
+			return array( 'ok' => false, 'message' => 'هیچ سفارشی برای فاکتور انتخاب نشده است.' );
 		}
 
 		$key = self::store_ids( $order_ids );
+		$msg = 'download' === $mode
+			? count( $order_ids ) . ' فاکتور آماده دانلود است…'
+			: count( $order_ids ) . ' فاکتور آماده چاپ است…';
+
 		return array(
 			'ok'       => true,
-			'message'  => count( $order_ids ) . ' فاکتور آماده چاپ است…',
-			'redirect' => self::print_url( $key ),
+			'message'  => $msg,
+			'redirect' => self::action_url( $key, $mode ),
 			'count'    => count( $order_ids ),
 		);
 	}
 
-	/** هندل admin-post */
+	/** هندل admin-post — چاپ یا دانلود */
 	public static function handle_admin_post(): void {
 		if ( ! is_user_logged_in() ) {
 			auth_redirect();
 		}
 
-		$key = isset( $_GET['bulk_key'] ) ? sanitize_text_field( wp_unslash( $_GET['bulk_key'] ) ) : '';
+		$key  = isset( $_GET['bulk_key'] ) ? sanitize_text_field( wp_unslash( $_GET['bulk_key'] ) ) : '';
+		$mode = isset( $_GET['mode'] ) ? sanitize_key( wp_unslash( $_GET['mode'] ) ) : 'print';
 		check_admin_referer( 'wci_bulk_print_' . $key );
 
 		$can = false;
@@ -120,15 +133,108 @@ class WCI_Bulk_Invoice {
 			$can = true;
 		}
 		if ( ! $can ) {
-			wp_die( 'دسترسی چاپ فاکتور ندارید.' );
+			wp_die( 'دسترسی فاکتور ندارید.' );
 		}
 
 		$ids = self::load_ids( $key );
 		if ( empty( $ids ) ) {
-			wp_die( 'لیست فاکتورها منقضی شده یا خالی است. دوباره از لیست سفارش‌ها چاپ بگیرید.' );
+			wp_die( 'لیست فاکتورها منقضی شده یا خالی است. دوباره از لیست سفارش‌ها اقدام کنید.' );
 		}
 
+		if ( 'download' === $mode ) {
+			self::download( $ids );
+		}
 		self::render( $ids );
+	}
+
+	/**
+	 * دانلود ZIP همه فاکتورها (هر فاکتور یک فایل HTML).
+	 * اگر ZipArchive نباشد، یک فایل HTML ترکیبی دانلود می‌شود.
+	 *
+	 * @param array<int> $order_ids
+	 */
+	public static function download( array $order_ids ): void {
+		self::boost_resources();
+
+		$order_ids = array_values( array_unique( array_filter( array_map( 'absint', $order_ids ) ) ) );
+		$s         = get_option( 'wci_invoice_settings', array() );
+		$color     = $s['primary_color'] ?? '#2271b1';
+		$stamp     = gmdate( 'Ymd-His' );
+
+		if ( class_exists( 'ZipArchive' ) ) {
+			$tmp = wp_tempnam( 'hesabdar-invoices-' . $stamp . '.zip' );
+			if ( ! $tmp ) {
+				wp_die( 'ساخت فایل موقت ممکن نشد.' );
+			}
+			$zip = new ZipArchive();
+			if ( true !== $zip->open( $tmp, ZipArchive::OVERWRITE ) ) {
+				@unlink( $tmp ); // phpcs:ignore
+				wp_die( 'ساخت فایل ZIP ممکن نشد.' );
+			}
+
+			$added = 0;
+			foreach ( $order_ids as $order_id ) {
+				$order = wc_get_order( $order_id );
+				if ( ! $order ) {
+					continue;
+				}
+				$html = self::build_single_html( $order, $s, $color );
+				$name = 'invoice-' . preg_replace( '/[^a-zA-Z0-9\-_]/', '', (string) $order->get_order_number() ) . '.html';
+				$zip->addFromString( $name, $html );
+				$added++;
+			}
+			$zip->close();
+
+			if ( $added < 1 ) {
+				@unlink( $tmp ); // phpcs:ignore
+				wp_die( 'هیچ فاکتور معتبری برای دانلود یافت نشد.' );
+			}
+
+			$filename = 'hesabdar-invoices-' . $stamp . '-' . $added . '.zip';
+			nocache_headers();
+			header( 'Content-Type: application/zip' );
+			header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+			header( 'Content-Length: ' . (string) filesize( $tmp ) );
+			readfile( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+			@unlink( $tmp ); // phpcs:ignore
+			exit;
+		}
+
+		// Fallback: یک HTML ترکیبی
+		$filename = 'hesabdar-invoices-' . $stamp . '.html';
+		nocache_headers();
+		header( 'Content-Type: text/html; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+		echo '<!DOCTYPE html><html dir="rtl" lang="fa"><head><meta charset="UTF-8"><title>فاکتورها</title><style>';
+		echo self::shared_css( $color );
+		echo '.invoice-page{page-break-after:always;break-after:page;padding:12px 0}.invoice-page:last-child{page-break-after:auto}</style></head><body>';
+		foreach ( $order_ids as $order_id ) {
+			$order = wc_get_order( $order_id );
+			if ( ! $order ) {
+				continue;
+			}
+			echo '<div class="invoice-page">';
+			self::echo_invoice_card( $order, $s, $color );
+			echo '</div>';
+		}
+		echo '</body></html>';
+		exit;
+	}
+
+	/**
+	 * @param WC_Order            $order
+	 * @param array<string,mixed> $s
+	 */
+	private static function build_single_html( $order, array $s, string $color ): string {
+		ob_start();
+		echo '<!DOCTYPE html><html dir="rtl" lang="fa"><head><meta charset="UTF-8">';
+		echo '<title>فاکتور #' . esc_html( $order->get_order_number() ) . '</title><style>';
+		echo self::shared_css( $color );
+		echo '@media print{body{background:#fff}.invoice-wrap{box-shadow:none;margin:0}}</style></head><body>';
+		self::echo_invoice_card( $order, $s, $color );
+		echo '</body></html>';
+		return (string) ob_get_clean();
 	}
 
 	/**

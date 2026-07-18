@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
 WC requires at least: 6.0
-Stable tag: 1.9.8
+Stable tag: 1.9.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,9 @@ Hesabdar دو بخش را در یک افزونه ترکیب می‌کند:
 خیر، نقش حسابدار کاملاً از پیشخوان وردپرس مسدود است و فقط پرتال اختصاصی خودش را می‌بیند.
 
 == Changelog ==
+
+= 1.9.9 =
+* دانلود دسته‌جمعی فاکتورها به‌صورت ZIP (انتخاب‌شده یا همه نتایج فیلتر) بدون محدودیت تعداد
 
 = 1.9.8 =
 * چاپ دسته‌جمعی فاکتورها بدون محدودیت تعداد (انتخاب‌شده یا همه نتایج فیلتر)

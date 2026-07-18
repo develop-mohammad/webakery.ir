@@ -573,7 +573,7 @@ class WAP_Portal {
                 ? WCI_Bulk_Invoice::parse_order_ids( wp_unslash( $_POST ) )
                 : array_map( 'absint', (array) ( $_POST['order_ids'] ?? array() ) );
 
-            if ( 'print_invoices_filtered' === $bulk_action ) {
+            if ( in_array( $bulk_action, array( 'print_invoices_filtered', 'download_invoices_filtered' ), true ) ) {
                 $tmp_f = WAP_Data::get_order_list_filters();
                 list( , , $all_for_print ) = WAP_Data::get_filtered_order_list( $tmp_f );
                 $bulk_ids = array();
