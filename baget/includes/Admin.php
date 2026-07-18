@@ -20,6 +20,8 @@ class Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
 		add_action( 'add_meta_boxes', array( $this, 'metaboxes' ) );
 		add_action( 'save_post_wccp_product', array( $this, 'save_product_meta' ) );
+		add_action( 'admin_post_wccp_save_template', array( $this, 'handle_save_template' ) );
+		add_action( 'admin_post_wccp_delete_template', array( $this, 'handle_delete_template' ) );
 	}
 
 	/** @return string */
@@ -43,16 +45,15 @@ class Admin {
 			56
 		);
 		add_submenu_page( 'wccp', 'فیلدها', 'فیلدها', $cap, 'wccp', array( $this, 'render_page' ) );
+		add_submenu_page( 'wccp', 'قالب‌ها', 'قالب‌ها', $cap, 'wccp-templates', array( $this, 'render_templates_redirect' ) );
 		add_submenu_page( 'wccp', 'محصولات آنلاین', 'محصولات آنلاین', $cap, 'edit.php?post_type=wccp_product' );
 		add_submenu_page( 'wccp', 'افزودن محصول', 'افزودن محصول', $cap, 'post-new.php?post_type=wccp_product' );
-		add_submenu_page(
-			'wccp',
-			'خرید و لایسنس',
-			'خرید و لایسنس',
-			$cap,
-			'wccp-license',
-			array( $this, 'render_license_page' )
-		);
+		add_submenu_page( 'wccp', 'خرید و لایسنس', 'خرید و لایسنس', $cap, 'wccp-license', array( $this, 'render_license_page' ) );
+	}
+
+	public function render_templates_redirect() {
+		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=templates' ) );
+		exit;
 	}
 
 	public function assets( $hook ) {
@@ -82,13 +83,13 @@ class Admin {
 			'wccp-admin',
 			'WCCP_ADMIN',
 			array(
-				'ajax'       => admin_url( 'admin-ajax.php' ),
-				'nonce'      => wp_create_nonce( 'wccp_admin' ),
-				'productId'  => $product_id,
-				'active'     => $active,
-				'available'  => array_values( array_diff( array_keys( CustomFields::merged_with_defaults() ), $active ) ),
-				'fields'     => CustomFields::merged_with_defaults(),
-				'i18n'       => array(
+				'ajax'      => admin_url( 'admin-ajax.php' ),
+				'nonce'     => wp_create_nonce( 'wccp_admin' ),
+				'productId' => $product_id,
+				'active'    => $active,
+				'available' => array_values( array_diff( array_keys( CustomFields::merged_with_defaults() ), $active ) ),
+				'fields'    => CustomFields::merged_with_defaults(),
+				'i18n'      => array(
 					'saved'   => 'ذخیره شد',
 					'saving'  => 'در حال ذخیره…',
 					'error'   => 'خطا در ذخیره',
@@ -108,6 +109,10 @@ class Admin {
 			$this->render_license_page();
 			return;
 		}
+		if ( 'templates' === $tab ) {
+			$this->render_templates_page();
+			return;
+		}
 
 		$this->render_fields_page();
 	}
@@ -120,11 +125,18 @@ class Admin {
 		include WCCP_PATH . 'templates/admin-fields.php';
 	}
 
+	public function render_templates_page() {
+		if ( ! current_user_can( self::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		$tab = 'templates';
+		include WCCP_PATH . 'templates/admin-templates.php';
+	}
+
 	public function render_license_page() {
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( self::admin_capability() ) ) {
 			wp_die( 'دسترسی غیرمجاز' );
 		}
-		// اگر از منوی «خرید و لایسنس» آمدیم، به تب لایسنس یکدست هدایت شود
 		if ( isset( $_GET['page'] ) && 'wccp-license' === sanitize_key( wp_unslash( $_GET['page'] ) ) ) { // phpcs:ignore
 			if ( ! isset( $_GET['tab'] ) ) { // phpcs:ignore
 				wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=license' ) );
@@ -135,9 +147,44 @@ class Admin {
 		include WCCP_PATH . 'templates/admin-license.php';
 	}
 
+	public function handle_save_template() {
+		if ( ! current_user_can( self::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		check_admin_referer( 'wccp_save_template' );
+		$key = sanitize_key( wp_unslash( $_POST['key'] ?? '' ) );
+		$res = Templates::save_custom( wp_unslash( $_POST ), $key ); // phpcs:ignore
+		if ( is_wp_error( $res ) ) {
+			add_settings_error( 'wccp_templates', 'err', $res->get_error_message(), 'error' );
+			set_transient( 'settings_errors', get_settings_errors(), 30 );
+			wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=templates' ) );
+			exit;
+		}
+		add_settings_error( 'wccp_templates', 'ok', 'قالب ذخیره شد.', 'updated' );
+		set_transient( 'settings_errors', get_settings_errors(), 30 );
+		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=templates&edit=' . rawurlencode( $res ) ) );
+		exit;
+	}
+
+	public function handle_delete_template() {
+		if ( ! current_user_can( self::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		check_admin_referer( 'wccp_delete_template' );
+		$res = Templates::delete_custom( sanitize_key( wp_unslash( $_POST['key'] ?? '' ) ) );
+		if ( is_wp_error( $res ) ) {
+			add_settings_error( 'wccp_templates', 'err', $res->get_error_message(), 'error' );
+		} else {
+			add_settings_error( 'wccp_templates', 'ok', 'قالب حذف شد.', 'updated' );
+		}
+		set_transient( 'settings_errors', get_settings_errors(), 30 );
+		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=templates' ) );
+		exit;
+	}
+
 	public function metaboxes() {
 		add_meta_box( 'wccp_product_fields', 'فیلدهای محصول آنلاین', array( $this, 'render_product_fields_box' ), 'wccp_product', 'normal', 'high' );
-		add_meta_box( 'wccp_product_settings', 'تنظیمات و لینک', array( $this, 'render_product_settings_box' ), 'wccp_product', 'side', 'high' );
+		add_meta_box( 'wccp_product_settings', 'تنظیمات، قالب و لینک', array( $this, 'render_product_settings_box' ), 'wccp_product', 'side', 'high' );
 	}
 
 	public function render_product_fields_box( $post ) {
@@ -159,11 +206,34 @@ class Admin {
 	}
 
 	public function render_product_settings_box( $post ) {
-		$price = (int) get_post_meta( $post->ID, '_wccp_price', true );
-		$link  = get_permalink( $post );
+		$price    = (int) get_post_meta( $post->ID, '_wccp_price', true );
+		$selected = Templates::product_template_key( $post->ID );
+		$link     = get_permalink( $post );
+		$all      = Templates::all();
 		wp_nonce_field( 'wccp_product_meta', 'wccp_product_nonce' );
-		echo '<p><label>قیمت (تومان)<br><input type="number" name="wccp_price" value="' . esc_attr( (string) $price ) . '" class="widefat" /></label></p>';
-		echo '<p><strong>پیش‌نمایش لینک</strong><br><code style="word-break:break-all" dir="ltr">' . esc_html( $link ) . '</code></p>';
+
+		echo '<p><label><strong>قیمت (تومان)</strong><br><input type="number" name="wccp_price" value="' . esc_attr( (string) $price ) . '" class="widefat" /></label></p>';
+
+		echo '<p><label><strong>قالب صفحه پرداخت</strong><br>';
+		echo '<select name="wccp_template" class="widefat">';
+		foreach ( $all as $key => $tpl ) {
+			echo '<option value="' . esc_attr( $key ) . '" ' . selected( $selected, $key, false ) . '>'
+				. esc_html( $tpl['label'] ) . ( ! empty( $tpl['builtin'] ) ? '' : ' ★' )
+				. '</option>';
+		}
+		echo '</select></label></p>';
+		echo '<p class="description"><a href="' . esc_url( admin_url( 'admin.php?page=wccp&tab=templates' ) ) . '">+ افزودن / مدیریت قالب‌ها</a></p>';
+
+		if ( isset( $all[ $selected ] ) ) {
+			$t = $all[ $selected ];
+			echo '<div class="wccp-tpl-mini-preview" style="background:' . esc_attr( $t['background'] ) . ';border-radius:10px;padding:10px;margin:8px 0 12px">';
+			echo '<div style="background:' . esc_attr( $t['card'] ) . ';border-radius:8px;padding:10px;border-top:3px solid ' . esc_attr( $t['primary'] ) . '">';
+			echo '<div style="font-size:12px;font-weight:700;color:' . esc_attr( $t['text'] ) . '">' . esc_html( $t['label'] ) . '</div>';
+			echo '<div style="margin-top:8px;background:' . esc_attr( $t['primary'] ) . ';color:' . esc_attr( $t['button_text'] ) . ';text-align:center;border-radius:6px;padding:6px;font-size:11px;font-weight:700">دکمه پرداخت</div>';
+			echo '</div></div>';
+		}
+
+		echo '<p><strong>پیش‌نمایش لینک</strong><br><code style="word-break:break-all" dir="ltr">' . esc_html( (string) $link ) . '</code></p>';
 		echo '<p><a class="button" target="_blank" href="' . esc_url( $link ) . '">باز کردن لینک</a></p>';
 	}
 
@@ -177,8 +247,15 @@ class Admin {
 		if ( isset( $_POST['wccp_price'] ) ) {
 			update_post_meta( $post_id, '_wccp_price', (int) $_POST['wccp_price'] );
 		}
+		if ( isset( $_POST['wccp_template'] ) ) {
+			$key = sanitize_key( wp_unslash( $_POST['wccp_template'] ) );
+			$all = Templates::all();
+			if ( isset( $all[ $key ] ) ) {
+				update_post_meta( $post_id, '_wccp_template', $key );
+			}
+		}
 		if ( isset( $_POST['wccp_active_fields'] ) ) {
-			$raw = wp_unslash( $_POST['wccp_active_fields'] );
+			$raw     = wp_unslash( $_POST['wccp_active_fields'] );
 			$decoded = is_string( $raw ) ? json_decode( $raw, true ) : $raw;
 			if ( is_array( $decoded ) ) {
 				update_post_meta( $post_id, '_wccp_active_fields', array_map( 'sanitize_key', $decoded ) );

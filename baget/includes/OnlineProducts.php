@@ -67,16 +67,20 @@ class OnlineProducts {
 		if ( ! $post ) {
 			return;
 		}
+		$product_id = (int) $post->ID;
+		$tpl_key    = Templates::product_template_key( $product_id );
+		$css        = Templates::css_for( $tpl_key );
+
 		status_header( 200 );
 		nocache_headers();
 		echo '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
 		echo '<title>' . esc_html( get_the_title( $post ) ) . '</title>';
 		echo '<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">';
-		echo '<style>body{font-family:Vazirmatn,Tahoma,sans-serif;background:#f5f3ff;margin:0;padding:24px}.card{max-width:520px;margin:40px auto;background:#fff;border-radius:20px;padding:28px;box-shadow:0 16px 40px rgba(15,23,42,.08)}.wccp-field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;font-size:13px;color:#64748b}.wccp-field-label{font-weight:600;color:#334155}input,textarea,select{border:1px solid #e2e8f0;border-radius:12px;padding:12px;font-family:inherit}.wccp-choice-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}.wccp-choice{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:12px;background:#fafafa;cursor:pointer;font-weight:500;color:#334155}.wccp-choice input{margin:0}.wccp-radio-list .wccp-choice:has(input:checked),.wccp-checkbox-list .wccp-choice:has(input:checked){border-color:#6d28d9;background:#f5f3ff}button{background:#6d28d9;color:#fff;border:0;border-radius:14px;padding:12px 18px;font-weight:700;width:100%;cursor:pointer;font-family:inherit;margin-top:8px}</style>';
-		echo '</head><body><div class="card">';
+		echo '<style>' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '</head><body class="wccp-tpl-' . esc_attr( $tpl_key ) . '"><div class="card">';
 		echo '<h1>' . esc_html( get_the_title( $post ) ) . '</h1>';
 		echo wpautop( wp_kses_post( $post->post_content ) );
-		echo $this->render_product_form( (int) $post->ID ); // phpcs:ignore
+		echo $this->render_product_form( $product_id ); // phpcs:ignore
 		echo '</div></body></html>';
 		exit;
 	}
@@ -97,9 +101,9 @@ class OnlineProducts {
 			Fields::render_standalone_field( $key, $defs[ $key ] );
 		}
 		if ( $price > 0 ) {
-			echo '<p style="font-weight:700;color:#6d28d9">مبلغ: ' . esc_html( number_format_i18n( $price ) ) . ' تومان</p>';
+			echo '<p class="wccp-price">مبلغ: ' . esc_html( number_format_i18n( $price ) ) . ' تومان</p>';
 		}
-		echo '<button type="submit">ادامه و پرداخت</button></form>';
+		echo '<button type="submit" class="wccp-pay-btn">ادامه و پرداخت</button></form>';
 		return ob_get_clean();
 	}
 }
