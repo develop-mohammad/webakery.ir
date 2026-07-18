@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 		<header>
 			<div>
 				<strong>فیلدهای موجود</strong>
-				<small class="wccp-muted">هنوز در checkout نیستند</small>
+				<small class="wccp-muted">هنوز در این قالب فعال نیستند</small>
 			</div>
 			<button type="button" class="button button-primary" id="wccp-add-field">+ فیلد / سوال جدید</button>
 		</header>
