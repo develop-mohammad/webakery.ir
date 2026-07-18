@@ -31,6 +31,7 @@
 .wccp-tag.default{background:#dbeafe;color:#1d4ed8}
 .wccp-tag.custom{background:#ede9fe;color:#6d28d9}
 .wccp-tag.required{background:#fee2e2;color:#b91c1c}
+.wccp-tag.type{background:#ecfdf5;color:#047857}
 .wccp-drag-handle{color:#94a3b8;font-weight:700;letter-spacing:2px;cursor:grab}
 .wccp-toast{
 	position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;
@@ -42,3 +43,10 @@
 	.wccp-board{grid-template-columns:1fr}
 	.wccp-swap{padding:8px 0}
 }
+.wccp-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:100001;display:grid;place-items:center;padding:20px}
+.wccp-modal[hidden]{display:none!important}
+.wccp-modal-card{background:#fff;border-radius:16px;padding:20px;max-width:520px;width:100%;box-shadow:0 20px 50px rgba(15,23,42,.2)}
+.wccp-modal-card h3{margin:0 0 14px}
+.wccp-modal-card label{display:block;margin:10px 0;font-size:13px}
+.wccp-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.wccp-check-row{display:flex;align-items:center;gap:8px}

@@ -12,6 +12,7 @@ $required  = ! empty( $f['required'] );
 	<div class="wccp-item-actions">
 		<button type="button" class="wccp-icon-btn wccp-move-btn" title="افزودن/حذف" aria-label="جابه‌جا">+</button>
 		<?php if ( $is_custom ) : ?>
+			<button type="button" class="wccp-icon-btn wccp-edit-btn" title="ویرایش">✎</button>
 			<button type="button" class="wccp-icon-btn wccp-del-btn" title="حذف فیلد سفارشی">×</button>
 		<?php endif; ?>
 	</div>

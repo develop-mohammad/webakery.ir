@@ -32,7 +32,53 @@ class Fields {
 		);
 	}
 
-	/** ترتیب پیش‌فرض فیلدهای فعال */
+	/** @return string[] */
+	public static function allowed_types() {
+		return array( 'text', 'tel', 'email', 'number', 'textarea', 'select', 'radio', 'checkboxes', 'state' );
+	}
+
+	/** @return string[] */
+	public static function option_types() {
+		return array( 'select', 'radio', 'checkboxes' );
+	}
+
+	/**
+	 * @param string|array $options
+	 * @return string[]
+	 */
+	public static function parse_options( $options ) {
+		if ( is_array( $options ) ) {
+			return array_values( array_filter( array_map( 'trim', array_map( 'strval', $options ) ) ) );
+		}
+		$raw = (string) $options;
+		if ( '' === $raw ) {
+			return array();
+		}
+		$parts = preg_split( '/[\r\n,]+/', $raw );
+		return array_values( array_filter( array_map( 'trim', (array) $parts ) ) );
+	}
+
+	/** @return string */
+	public static function normalize_options_string( $options ) {
+		return implode( "\n", self::parse_options( $options ) );
+	}
+
+	/** @return string */
+	public static function type_label( $type ) {
+		$labels = array(
+			'text'       => 'متنی',
+			'textarea'   => 'چندخطی',
+			'tel'        => 'تلفن',
+			'email'      => 'ایمیل',
+			'number'     => 'عدد',
+			'select'     => 'انتخابی',
+			'radio'      => 'رادیو',
+			'checkboxes' => 'چندگزینه‌ای',
+			'state'      => 'استان',
+		);
+		return $labels[ $type ] ?? (string) $type;
+	}
+
 	public static function default_active() {
 		return array(
 			'billing_first_name',
@@ -96,12 +142,16 @@ class Fields {
 			if ( 0 !== strpos( $key, 'billing_' ) && 0 !== strpos( $key, 'wccp_' ) ) {
 				$key = 'wccp_' . $key;
 			}
+			$type = sanitize_key( $def['type'] ?? 'text' );
+			if ( ! in_array( $type, self::allowed_types(), true ) ) {
+				$type = 'text';
+			}
 			$clean_custom[ $key ] = array(
 				'label'       => sanitize_text_field( $def['label'] ?? $key ),
-				'type'        => sanitize_key( $def['type'] ?? 'text' ),
+				'type'        => $type,
 				'required'    => ! empty( $def['required'] ),
 				'placeholder' => sanitize_text_field( $def['placeholder'] ?? '' ),
-				'options'     => sanitize_text_field( $def['options'] ?? '' ),
+				'options'     => self::normalize_options_string( $def['options'] ?? '' ),
 				'custom'      => true,
 				'user_defined'=> true,
 			);

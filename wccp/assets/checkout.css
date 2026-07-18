@@ -1,0 +1,5 @@
+.wccp-choice-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.wccp-choice{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;background:#fafafa;cursor:pointer}
+.wccp-choice input{margin:0}
+.wccp-radio-list .wccp-choice:has(input:checked){border-color:#6d28d9;background:#f5f3ff}
+.wccp-checkbox-list .wccp-choice:has(input:checked){border-color:#6d28d9;background:#f5f3ff}

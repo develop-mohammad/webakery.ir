@@ -108,6 +108,7 @@ class Admin {
 		include WCCP_PATH . 'templates/admin-fields-board.php';
 		echo '</div>';
 		echo '<div id="wccp-toast" class="wccp-toast" hidden></div>';
+		include WCCP_PATH . 'templates/admin-field-modal.php';
 	}
 
 	public function render_product_settings_box( $post ) {

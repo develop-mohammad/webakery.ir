@@ -26,4 +26,5 @@ defined( 'ABSPATH' ) || exit;
 	</div>
 
 	<div id="wccp-toast" class="wccp-toast" hidden></div>
+	<?php include WCCP_PATH . 'templates/admin-field-modal.php'; ?>
 </div>

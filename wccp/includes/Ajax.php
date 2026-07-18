@@ -18,6 +18,7 @@ class Ajax {
 	private function __construct() {
 		add_action( 'wp_ajax_wccp_save_fields', array( $this, 'save_fields' ) );
 		add_action( 'wp_ajax_wccp_create_field', array( $this, 'create_field' ) );
+		add_action( 'wp_ajax_wccp_update_field', array( $this, 'update_field' ) );
 		add_action( 'wp_ajax_wccp_delete_field', array( $this, 'delete_field' ) );
 		add_action( 'wp_ajax_wccp_save_product_fields', array( $this, 'save_product_fields' ) );
 	}
@@ -85,6 +86,14 @@ class Ajax {
 		$this->guard();
 		$label = sanitize_text_field( wp_unslash( $_POST['label'] ?? 'فیلد جدید' ) );
 		$type  = sanitize_key( wp_unslash( $_POST['type'] ?? 'text' ) );
+		if ( ! in_array( $type, Fields::allowed_types(), true ) ) {
+			$type = 'text';
+		}
+		$options = Fields::normalize_options_string( wp_unslash( $_POST['options_text'] ?? '' ) );
+		if ( in_array( $type, Fields::option_types(), true ) && '' === trim( $options ) ) {
+			wp_send_json_error( array( 'message' => 'برای این نوع فیلد حداقل یک گزینه وارد کنید.' ) );
+		}
+
 		$key   = 'wccp_field_' . strtolower( wp_generate_password( 8, false, false ) );
 		$custom = get_option( Fields::CUSTOM_OPTION, array() );
 		if ( ! is_array( $custom ) ) {
@@ -97,15 +106,15 @@ class Ajax {
 			$i++;
 		}
 		$custom[ $key ] = array(
-			'label'    => $label,
-			'type'     => $type ?: 'text',
-			'required' => ! empty( $_POST['required'] ),
-			'custom'   => true,
+			'label'        => $label,
+			'type'         => $type,
+			'required'     => ! empty( $_POST['required'] ),
+			'options'      => $options,
+			'custom'       => true,
 			'user_defined' => true,
 		);
 		update_option( Fields::CUSTOM_OPTION, $custom, false );
 
-		// به‌صورت پیش‌فرض به فعال‌ها اضافه کن
 		$active   = Fields::get_active_keys();
 		$active[] = $key;
 		update_option( Fields::ACTIVE_OPTION, array_values( array_unique( $active ) ), false );
@@ -116,6 +125,47 @@ class Ajax {
 				'key'     => $key,
 				'field'   => $custom[ $key ],
 				'active'  => Fields::get_active_keys(),
+				'fields'  => CustomFields::merged_with_defaults(),
+			)
+		);
+	}
+
+	public function update_field() {
+		$this->guard();
+		$key = sanitize_key( wp_unslash( $_POST['key'] ?? '' ) );
+		if ( ! $key ) {
+			wp_send_json_error( array( 'message' => 'فیلد نامعتبر است.' ) );
+		}
+		$custom = get_option( Fields::CUSTOM_OPTION, array() );
+		if ( ! is_array( $custom ) || ! isset( $custom[ $key ] ) ) {
+			wp_send_json_error( array( 'message' => 'فقط فیلدهای سفارشی قابل ویرایش هستند.' ) );
+		}
+
+		$label = sanitize_text_field( wp_unslash( $_POST['label'] ?? $custom[ $key ]['label'] ?? '' ) );
+		$type  = sanitize_key( wp_unslash( $_POST['type'] ?? $custom[ $key ]['type'] ?? 'text' ) );
+		if ( ! in_array( $type, Fields::allowed_types(), true ) ) {
+			$type = $custom[ $key ]['type'] ?? 'text';
+		}
+		$options = Fields::normalize_options_string( wp_unslash( $_POST['options_text'] ?? $custom[ $key ]['options'] ?? '' ) );
+		if ( in_array( $type, Fields::option_types(), true ) && '' === trim( $options ) ) {
+			wp_send_json_error( array( 'message' => 'برای این نوع فیلد حداقل یک گزینه وارد کنید.' ) );
+		}
+
+		$custom[ $key ] = array(
+			'label'        => $label ?: $key,
+			'type'         => $type,
+			'required'     => ! empty( $_POST['required'] ),
+			'options'      => $options,
+			'custom'       => true,
+			'user_defined' => true,
+		);
+		update_option( Fields::CUSTOM_OPTION, $custom, false );
+
+		wp_send_json_success(
+			array(
+				'message' => 'فیلد به‌روز شد.',
+				'key'     => $key,
+				'field'   => $custom[ $key ],
 				'fields'  => CustomFields::merged_with_defaults(),
 			)
 		);

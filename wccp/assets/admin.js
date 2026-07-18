@@ -34,6 +34,19 @@
     });
   }
 
+  function typeLabel(type) {
+    var map = {
+      text: 'متنی',
+      textarea: 'چندخطی',
+      tel: 'تلفن',
+      email: 'ایمیل',
+      select: 'انتخابی',
+      radio: 'رادیو',
+      checkboxes: 'چندگزینه‌ای'
+    };
+    return map[type] || type || 'متنی';
+  }
+
   function renderItem(key) {
     var f = state.fields[key] || { label: key, type: 'text' };
     var isCustom = !!(f.custom || f.user_defined);
@@ -45,11 +58,13 @@
     li.innerHTML =
       '<div class="wccp-item-actions">' +
         '<button type="button" class="wccp-icon-btn wccp-move-btn" title="افزودن/حذف">+</button>' +
+        (isCustom ? '<button type="button" class="wccp-icon-btn wccp-edit-btn" title="ویرایش">✎</button>' : '') +
         (isCustom ? '<button type="button" class="wccp-icon-btn wccp-del-btn" title="حذف">×</button>' : '') +
       '</div>' +
       '<div class="wccp-item-meta">' +
         (isCustom ? '<span class="wccp-tag custom">سفارشی</span>' : '<span class="wccp-tag default">پیش‌فرض</span>') +
         (f.required ? '<span class="wccp-tag required">اجباری</span>' : '') +
+        '<span class="wccp-tag type">' + typeLabel(f.type) + '</span>' +
         '<span class="wccp-item-label"></span>' +
         '<code class="wccp-item-key" dir="ltr"></code>' +
       '</div>' +
@@ -167,6 +182,14 @@
         deleteField(key);
       });
     });
+
+    $$('.wccp-edit-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openFieldModal(btn.closest('.wccp-item').getAttribute('data-key'));
+      });
+    });
   }
 
   function bindLists() {
@@ -255,26 +278,67 @@
     return app ? (app.getAttribute('data-mode') || 'global') : 'global';
   }
 
-  function createField() {
-    var label = window.prompt('عنوان فیلد سفارشی:', 'فیلد جدید');
-    if (!label) return;
-    post('wccp_create_field', { label: label, type: 'text' }).then(function (res) {
+  function optionTypes() {
+    return ['select', 'radio', 'checkboxes'];
+  }
+
+  function toggleOptionsVisibility() {
+    var typeEl = $('#wccp-field-type');
+    var wrap = $('#wccp-field-options-wrap');
+    if (!typeEl || !wrap) return;
+    wrap.style.display = optionTypes().indexOf(typeEl.value) !== -1 ? 'block' : 'none';
+  }
+
+  function openFieldModal(key) {
+    var modal = $('#wccp-field-modal');
+    if (!modal) return;
+    var isEdit = !!key;
+    var f = isEdit ? (state.fields[key] || {}) : {};
+    $('#wccp-modal-title').textContent = isEdit ? 'ویرایش فیلد' : 'فیلد جدید';
+    $('#wccp-field-key').value = isEdit ? key : '';
+    $('#wccp-field-label').value = f.label || '';
+    $('#wccp-field-type').value = f.type || 'text';
+    $('#wccp-field-options').value = f.options ? String(f.options).replace(/,/g, '\n') : '';
+    $('#wccp-field-required').checked = !!f.required;
+    toggleOptionsVisibility();
+    modal.hidden = false;
+  }
+
+  function closeFieldModal() {
+    var modal = $('#wccp-field-modal');
+    if (modal) modal.hidden = true;
+  }
+
+  function submitFieldModal(e) {
+    e.preventDefault();
+    var key = $('#wccp-field-key').value;
+    var payload = {
+      label: $('#wccp-field-label').value,
+      type: $('#wccp-field-type').value,
+      options_text: $('#wccp-field-options').value,
+      required: $('#wccp-field-required').checked ? 1 : 0
+    };
+    var action = key ? 'wccp_update_field' : 'wccp_create_field';
+    if (key) payload.key = key;
+    post(action, payload).then(function (res) {
       if (!res || !res.success) {
         toast((res && res.data && res.data.message) || WCCP_ADMIN.i18n.error, 'error');
         return;
       }
       if (res.data.fields) state.fields = res.data.fields;
-      if (currentMode() === 'product') {
-        if (res.data.key && state.active.indexOf(res.data.key) === -1) {
-          state.active.push(res.data.key);
-        }
-        markDirty();
-      } else if (res.data.active) {
-        state.active = res.data.active;
+      if (!key && res.data.active) state.active = res.data.active;
+      else if (!key && res.data.key && state.active.indexOf(res.data.key) === -1) {
+        state.active.push(res.data.key);
       }
+      if (currentMode() === 'product') markDirty();
       render();
+      closeFieldModal();
       toast(res.data.message || WCCP_ADMIN.i18n.saved, 'ok');
     });
+  }
+
+  function createField() {
+    openFieldModal('');
   }
 
   function deleteField(key) {
@@ -305,10 +369,17 @@
     var addBtn = $('#wccp-add-field');
     if (addBtn) addBtn.addEventListener('click', function (e) { e.preventDefault(); createField(); });
 
+    var typeEl = $('#wccp-field-type');
+    if (typeEl) typeEl.addEventListener('change', toggleOptionsVisibility);
+    var cancelBtn = $('#wccp-modal-cancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', function (e) { e.preventDefault(); closeFieldModal(); });
+    var form = $('#wccp-field-form');
+    if (form) form.addEventListener('submit', submitFieldModal);
+
     // روی ذخیره پست وردپرس هم ترتیب فیلد محصول همراه می‌شود
-    var form = document.getElementById('post');
-    if (form) {
-      form.addEventListener('submit', function () { syncHidden(); });
+    var postForm = document.getElementById('post');
+    if (postForm) {
+      postForm.addEventListener('submit', function () { syncHidden(); });
     }
   }
 

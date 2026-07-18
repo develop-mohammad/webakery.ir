@@ -2,12 +2,17 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.3.4
+Stable tag: 1.3.5
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.3.5 =
+* فیلد سفارشی با نوع رادیو (یک گزینه) و چندگزینه‌ای (checkbox)
+* مودال ساخت/ویرایش فیلد با لیست گزینه‌ها
+* نمایش و ذخیره در checkout + اعتبارسنجی
 
 = 1.3.4 =
 * بازنویسی کامل جابه‌جایی فیلدها با HTML5 Drag&Drop (بدون وابستگی به jQuery UI)
