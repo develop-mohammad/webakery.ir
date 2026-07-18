@@ -18,6 +18,10 @@ $tabs = array(
 		'label' => 'لینک پرداخت',
 		'url'   => admin_url( 'edit.php?post_type=wccp_product' ),
 	),
+	'payments'    => array(
+		'label' => 'پرداخت',
+		'url'   => admin_url( 'admin.php?page=wccp&tab=payments' ),
+	),
 	'license'     => array(
 		'label' => 'خرید و لایسنس',
 		'url'   => admin_url( 'admin.php?page=wccp&tab=license' ),

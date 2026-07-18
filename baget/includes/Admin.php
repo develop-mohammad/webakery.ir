@@ -23,6 +23,7 @@ class Admin {
 		add_action( 'admin_post_wccp_save_template', array( $this, 'handle_save_template' ) );
 		add_action( 'admin_post_wccp_delete_template', array( $this, 'handle_delete_template' ) );
 		add_action( 'admin_post_wccp_save_wc_templates', array( $this, 'handle_save_wc_templates' ) );
+		add_action( 'admin_post_wccp_save_payments', array( $this, 'handle_save_payments' ) );
 	}
 
 	/** @return string */
@@ -50,7 +51,13 @@ class Admin {
 		add_submenu_page( 'wccp', 'محصولات فروشگاه', 'محصولات فروشگاه', $cap, 'wccp-wc-products', array( $this, 'render_wc_products_redirect' ) );
 		add_submenu_page( 'wccp', 'لینک پرداخت', 'لینک پرداخت', $cap, 'edit.php?post_type=wccp_product' );
 		add_submenu_page( 'wccp', 'افزودن لینک پرداخت', 'افزودن لینک پرداخت', $cap, 'post-new.php?post_type=wccp_product' );
+		add_submenu_page( 'wccp', 'پرداخت', 'پرداخت', $cap, 'wccp-payments', array( $this, 'render_payments_redirect' ) );
 		add_submenu_page( 'wccp', 'خرید و لایسنس', 'خرید و لایسنس', $cap, 'wccp-license', array( $this, 'render_license_page' ) );
+	}
+
+	public function render_payments_redirect() {
+		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=payments' ) );
+		exit;
 	}
 
 	public function render_templates_redirect() {
@@ -139,8 +146,40 @@ class Admin {
 			$this->render_wc_products_page();
 			return;
 		}
+		if ( 'payments' === $tab ) {
+			$this->render_payments_page();
+			return;
+		}
 
 		$this->render_fields_page();
+	}
+
+	public function render_payments_page() {
+		if ( ! current_user_can( self::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		$tab = 'payments';
+		include WCCP_PATH . 'templates/admin-payments.php';
+	}
+
+	public function handle_save_payments() {
+		if ( ! current_user_can( self::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		check_admin_referer( 'wccp_save_payments' );
+		$saved = Payments::save_settings(
+			array(
+				'zarinpal_merchant' => wp_unslash( $_POST['zarinpal_merchant'] ?? '' ), // phpcs:ignore
+				'sandbox'           => ! empty( $_POST['sandbox'] ) ? 1 : 0,
+			)
+		);
+		$msg = Payments::looks_like_merchant( $saved['zarinpal_merchant'] )
+			? 'تنظیمات پرداخت ذخیره شد. مرچنت زرین‌پال فعال است.'
+			: 'ذخیره شد، ولی مرچنت‌کد معتبر به‌نظر نمی‌رسد. کد ۳۶ کاراکتری زرین‌پال را بررسی کنید.';
+		add_settings_error( 'wccp_payments', 'ok', $msg, Payments::looks_like_merchant( $saved['zarinpal_merchant'] ) ? 'updated' : 'error' );
+		set_transient( 'settings_errors', get_settings_errors(), 30 );
+		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=payments' ) );
+		exit;
 	}
 
 	public function render_wc_products_page() {
@@ -282,7 +321,12 @@ class Admin {
 		$tpl_fields = Templates::fields_for( $selected );
 		wp_nonce_field( 'wccp_product_meta', 'wccp_product_nonce' );
 
-		echo '<p><label><strong>قیمت (تومان)</strong><br><input type="number" name="wccp_price" value="' . esc_attr( (string) $price ) . '" class="widefat" /></label></p>';
+		echo '<p><label><strong>قیمت (تومان)</strong><br><input type="number" name="wccp_price" min="1000" step="1000" value="' . esc_attr( (string) $price ) . '" class="widefat" /></label></p>';
+		if ( ! Payments::zarinpal_enabled() ) {
+			echo '<p class="description" style="color:#b91c1c">مرچنت زرین‌پال تنظیم نشده. برای پرداخت مستقیم به <a href="' . esc_url( admin_url( 'admin.php?page=wccp&tab=payments' ) ) . '">Baget ← پرداخت</a> بروید.</p>';
+		} else {
+			echo '<p class="description" style="color:#15803d">✓ مرچنت زرین‌پال فعال است — دکمه «ادامه و پرداخت» به درگاه وصل می‌شود.</p>';
+		}
 
 		echo '<p><label><strong>قالب صفحه پرداخت</strong><br>';
 		echo '<select name="wccp_template" class="widefat" id="wccp-product-template">';

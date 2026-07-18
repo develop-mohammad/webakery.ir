@@ -65,12 +65,12 @@ define( 'LS_PLUGIN_META', [
 // نسخهٔ سرور باید از نسخهٔ نصب‌شده روی سایت مشتری بالاتر باشد تا در «افزونه‌ها» آپدیت نمایش داده شود.
 define( 'LS_UPDATES', [
     'wccp' => [
-        'version'      => '1.5.3',
+        'version'      => '1.5.4',
         'package'      => 'https://webakery.ir/license-server/updates/baget.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۵.۳: فیلد متن ساده (اطلاع‌رسانی) بدون نیاز به پر کردن توسط مشتری.',
+        'changelog'    => 'نسخه ۱.۵.۴: رفع باگ لینک پرداخت مستقیم + تنظیم مرچنت زرین‌پال + صفحه خطای خوانا.',
     ],
     'access-levels' => [
         'version'      => '1.5.8',
