@@ -55,8 +55,10 @@ class WAP_Order_Service {
 	/** گزینه‌های کارهای دسته‌جمعی — مثل لیست سفارش‌های ووکامرس */
 	public static function bulk_action_options(): array {
 		$options = array(
-			''      => 'کارهای دسته‌جمعی',
-			'trash' => 'انتقال به زباله‌دان',
+			''                       => 'کارهای دسته‌جمعی',
+			'print_invoices'         => '🖨 چاپ فاکتورهای انتخاب‌شده (بدون محدودیت)',
+			'print_invoices_filtered'=> '🖨 چاپ همه فاکتورهای فیلتر فعلی (بدون محدودیت)',
+			'trash'                  => 'انتقال به زباله‌دان',
 		);
 		foreach ( wc_get_order_statuses() as $slug => $label ) {
 			$val = str_replace( 'wc-', '', $slug );
@@ -68,7 +70,7 @@ class WAP_Order_Service {
 	/**
 	 * @param string        $action
 	 * @param array<int>    $order_ids
-	 * @return array{ok:bool,message:string,count?:int}
+	 * @return array{ok:bool,message:string,count?:int,redirect?:string}
 	 */
 	public static function process_bulk_action( string $action, array $order_ids ): array {
 		$action    = sanitize_key( $action );
@@ -77,6 +79,26 @@ class WAP_Order_Service {
 		if ( $action === '' ) {
 			return array( 'ok' => false, 'message' => 'یک عملیات دسته‌جمعی انتخاب کنید.' );
 		}
+
+		// چاپ فاکتور — بدون سقف تعداد
+		if ( 'print_invoices' === $action || 'print_invoices_filtered' === $action ) {
+			if ( ! self::can_change_status() ) {
+				return array( 'ok' => false, 'message' => 'دسترسی چاپ فاکتور ندارید.' );
+			}
+			if ( empty( $order_ids ) ) {
+				return array(
+					'ok'      => false,
+					'message' => 'print_invoices_filtered' === $action
+						? 'با فیلتر فعلی سفارشی برای چاپ نیست.'
+						: 'حداقل یک سفارش انتخاب کنید یا «چاپ همه فاکتورهای فیلتر» را بزنید.',
+				);
+			}
+			if ( ! class_exists( 'WCI_Bulk_Invoice' ) ) {
+				return array( 'ok' => false, 'message' => 'ماژول چاپ دسته‌جمعی بارگذاری نشده.' );
+			}
+			return WCI_Bulk_Invoice::start( $order_ids );
+		}
+
 		if ( empty( $order_ids ) ) {
 			return array( 'ok' => false, 'message' => 'حداقل یک سفارش انتخاب کنید.' );
 		}

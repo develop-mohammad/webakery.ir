@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hesabdar
  * Description: مدیریت کامل مشتریان و فروش ووکامرس (سفارش‌ها، ایجاد/ویرایش سفارش، محصولات، گزارش مالی، فاکتور) از داخل پیشخوان + پرتال مستقل و مینیمال ورود حسابدار بدون دسترسی به پیشخوان.
- * Version:     1.9.7
+ * Version:     1.9.8
  * Plugin URI:  https://webakery.ir
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,7 +22,7 @@ if ( defined( 'HESABDAR_LOADED' ) ) {
 }
 define( 'HESABDAR_LOADED', true );
 
-define( 'WAP_VERSION', '1.9.7' );
+define( 'WAP_VERSION', '1.9.8' );
 define( 'WAP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WAP_URL', plugin_dir_url( __FILE__ ) );
 
@@ -175,6 +175,7 @@ function hesabdar_load_wci_module() {
 		$wci_files = array(
 			'class-wci-exporter.php',
 			'class-wci-invoice.php',
+			'class-wci-bulk-invoice.php',
 			'class-wap-order-service.php',
 			'class-wci-admin-pages.php',
 			'class-wci-order-edit.php',
@@ -487,6 +488,7 @@ add_action( 'template_redirect', function() {
 // ─── خروجی گزارش (CSV/XML/PDF) — از طریق admin-post.php ───────────────────────
 add_action( 'admin_post_wap_export', array( 'WAP_Portal', 'handle_export_admin_post' ) );
 add_action( 'admin_post_wap_invoice', array( 'WAP_Portal', 'handle_invoice_admin_post' ) );
+add_action( 'admin_post_wci_bulk_print', array( 'WCI_Bulk_Invoice', 'handle_admin_post' ) );
 
 // Google Sheets — داده برای ساخت شیت در مرورگر (ورود با گوگل)
 add_action( 'admin_post_wap_sheets_csv', array( 'WAP_Google_Sheets', 'handle_temp_csv_download' ) );

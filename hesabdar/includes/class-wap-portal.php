@@ -568,10 +568,27 @@ class WAP_Portal {
             && isset( $_POST['wci_bulk_apply'] )
             && check_admin_referer( 'wci_bulk_orders' )
         ) {
-            $result = WAP_Order_Service::process_bulk_action(
-                sanitize_key( wp_unslash( $_POST['wci_bulk_action'] ?? $_POST['wci_bulk_action2'] ?? '' ) ),
-                isset( $_POST['order_ids'] ) ? (array) wp_unslash( $_POST['order_ids'] ) : array()
-            );
+            $bulk_action = sanitize_key( wp_unslash( $_POST['wci_bulk_action'] ?? $_POST['wci_bulk_action2'] ?? '' ) );
+            $bulk_ids    = class_exists( 'WCI_Bulk_Invoice' )
+                ? WCI_Bulk_Invoice::parse_order_ids( wp_unslash( $_POST ) )
+                : array_map( 'absint', (array) ( $_POST['order_ids'] ?? array() ) );
+
+            if ( 'print_invoices_filtered' === $bulk_action ) {
+                $tmp_f = WAP_Data::get_order_list_filters();
+                list( , , $all_for_print ) = WAP_Data::get_filtered_order_list( $tmp_f );
+                $bulk_ids = array();
+                foreach ( (array) $all_for_print as $o ) {
+                    if ( is_object( $o ) && method_exists( $o, 'get_id' ) ) {
+                        $bulk_ids[] = (int) $o->get_id();
+                    }
+                }
+            }
+
+            $result = WAP_Order_Service::process_bulk_action( $bulk_action, $bulk_ids );
+            if ( ! empty( $result['redirect'] ) ) {
+                wp_safe_redirect( $result['redirect'] );
+                exit;
+            }
             $bulk_msg = $result['message'] ?? '';
         }
 
@@ -760,10 +777,26 @@ class WAP_Portal {
         </div>
         <script>
         (function(){
+            var form = document.getElementById('wap-orders-bulk-form');
             var all = document.getElementById('wap-cb-select-all');
             if (all) {
                 all.addEventListener('change', function(){
                     document.querySelectorAll('#wap-orders-bulk-form input[name="order_ids[]"]').forEach(function(cb){ cb.checked = all.checked; });
+                });
+            }
+            if (form) {
+                form.addEventListener('submit', function(){
+                    var ids = [];
+                    form.querySelectorAll('input[name="order_ids[]"]:checked').forEach(function(cb){ ids.push(cb.value); });
+                    var h = document.getElementById('wap-order-ids-json');
+                    if (!h) {
+                        h = document.createElement('input');
+                        h.type = 'hidden';
+                        h.name = 'order_ids_json';
+                        h.id = 'wap-order-ids-json';
+                        form.appendChild(h);
+                    }
+                    h.value = JSON.stringify(ids);
                 });
             }
         })();

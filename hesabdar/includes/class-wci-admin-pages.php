@@ -54,10 +54,27 @@ function wci_orders_page_render() {
         && isset( $_POST['wci_bulk_apply'] )
         && check_admin_referer( 'wci_bulk_orders' )
     ) {
-        $result = WAP_Order_Service::process_bulk_action(
-            sanitize_key( wp_unslash( $_POST['wci_bulk_action'] ?? $_POST['wci_bulk_action2'] ?? '' ) ),
-            isset( $_POST['order_ids'] ) ? (array) wp_unslash( $_POST['order_ids'] ) : array()
-        );
+        $bulk_action = sanitize_key( wp_unslash( $_POST['wci_bulk_action'] ?? $_POST['wci_bulk_action2'] ?? '' ) );
+        $bulk_ids    = class_exists( 'WCI_Bulk_Invoice' )
+            ? WCI_Bulk_Invoice::parse_order_ids( wp_unslash( $_POST ) )
+            : array_map( 'absint', (array) ( $_POST['order_ids'] ?? array() ) );
+
+        // چاپ همه نتایج فیلتر فعلی — بدون محدودیت تعداد
+        if ( 'print_invoices_filtered' === $bulk_action ) {
+            list( $all_filtered ) = wci_get_filtered_orders( true );
+            $bulk_ids = array();
+            foreach ( (array) $all_filtered as $o ) {
+                if ( is_object( $o ) && method_exists( $o, 'get_id' ) ) {
+                    $bulk_ids[] = (int) $o->get_id();
+                }
+            }
+        }
+
+        $result = WAP_Order_Service::process_bulk_action( $bulk_action, $bulk_ids );
+        if ( ! empty( $result['redirect'] ) ) {
+            wp_safe_redirect( $result['redirect'] );
+            exit;
+        }
         $bulk_msg      = $result['message'] ?? '';
         $bulk_msg_type = ! empty( $result['ok'] ) ? 'success' : 'error';
     }
@@ -321,6 +338,17 @@ function wci_orders_page_render() {
     jQuery(function($){
         $('#wci-cb-select-all').on('change', function(){
             $('#wci-orders-bulk-form input[name="order_ids[]"]').prop('checked', this.checked);
+        });
+        // بسته‌بندی همه شناسه‌ها در یک فیلد JSON تا محدودیت max_input_vars مانع چاپ زیاد نشود
+        $('#wci-orders-bulk-form').on('submit', function(){
+            var ids = [];
+            $(this).find('input[name="order_ids[]"]:checked').each(function(){ ids.push(this.value); });
+            var $h = $('#wci-order-ids-json');
+            if (!$h.length) {
+                $h = $('<input type="hidden" name="order_ids_json" id="wci-order-ids-json">');
+                $(this).append($h);
+            }
+            $h.val(JSON.stringify(ids));
         });
     });
     </script>

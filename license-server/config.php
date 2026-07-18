@@ -89,12 +89,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.9.1',
+        'version'      => '1.9.8',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
-        'tested'       => '6.6',
+        'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۹.۱: کارهای دسته‌جمعی تغییر وضعیت، لیست سفارش با ستون محصول، ویرایش/ایجاد سفارش.',
+        'changelog'    => 'نسخه ۱.۹.۸: چاپ دسته‌جمعی فاکتورها بدون محدودیت تعداد.',
     ],
     'nobat-man' => [
         'version'      => '1.0.9',
