@@ -108,29 +108,25 @@ class WAP_Portal {
             return;
         }
 
-        // کارهای دسته‌جمعی (دانلود/چاپ فاکتور) باید قبل از هر HTML اجرا شوند
-        self::maybe_process_bulk_orders_early();
-
         self::render_dashboard( $panel_type );
     }
 
-    /** پیام فلش بعد از bulk غیر فاکتوری */
-    private static $bulk_flash_msg = '';
-
     /**
-     * پردازش bulk قبل از خروجی HTML.
-     * علت صفحه سفید: قبلاً بعد از چاپ هدر، wp_safe_redirect صدا زده می‌شد و exit می‌خورد.
+     * هندل admin-post برای کارهای دسته‌جمعی پرتال — بدون رندر HTML پرتال (رفع صفحه سفید).
      */
-    private static function maybe_process_bulk_orders_early(): void {
+    public static function handle_bulk_orders_admin_post() {
+        if ( ! is_user_logged_in() || ! self::current_user_allowed() ) {
+            wp_die( 'دسترسی غیرمجاز.' );
+        }
         if (
             ! class_exists( 'WAP_Order_Service' )
             || ! isset( $_POST['wci_bulk_apply'] )
             || ! check_admin_referer( 'wci_bulk_orders' )
         ) {
-            return;
+            wp_die( 'درخواست نامعتبر است.' );
         }
 
-        $bulk_action = sanitize_key( wp_unslash( $_POST['wci_bulk_action'] ?? $_POST['wci_bulk_action2'] ?? '' ) );
+        $bulk_action = WAP_Order_Service::bulk_action_from_request();
         $bulk_ids    = class_exists( 'WCI_Bulk_Invoice' )
             ? WCI_Bulk_Invoice::parse_order_ids( wp_unslash( $_POST ) )
             : array_map( 'absint', (array) ( $_POST['order_ids'] ?? array() ) );
@@ -148,7 +144,6 @@ class WAP_Portal {
 
         $result = WAP_Order_Service::process_bulk_action( $bulk_action, $bulk_ids );
 
-        // دانلود/چاپ فاکتور: همان‌جا سرو کن (بدون ریدایرکت به admin-post)
         if (
             ! empty( $result['ok'] )
             && ! empty( $result['order_ids'] )
@@ -156,15 +151,25 @@ class WAP_Portal {
             && class_exists( 'WCI_Bulk_Invoice' )
         ) {
             WCI_Bulk_Invoice::serve( (array) $result['order_ids'], (string) $result['mode'] );
-            // exit داخل serve/download/render
         }
 
-        if ( ! empty( $result['redirect'] ) && ! headers_sent() ) {
-            wp_safe_redirect( $result['redirect'] );
-            exit;
+        $return = isset( $_POST['wap_return_url'] )
+            ? esc_url_raw( wp_unslash( $_POST['wap_return_url'] ) )
+            : self::panel_url();
+        if ( ! $return ) {
+            $return = self::panel_url();
         }
 
-        self::$bulk_flash_msg = (string) ( $result['message'] ?? '' );
+        $redirect = add_query_arg(
+            array(
+                'wap_view'    => 'orders',
+                'wap_bulk_ok' => ! empty( $result['ok'] ) ? '1' : '0',
+                'wap_bulk_msg'=> rawurlencode( (string) ( $result['message'] ?? '' ) ),
+            ),
+            $return
+        );
+        wp_safe_redirect( $redirect );
+        exit;
     }
 
     private static function render_license_locked( $panel_type = self::PANEL_ACCOUNTANT ) {
@@ -618,7 +623,10 @@ class WAP_Portal {
     }
 
     private static function render_orders_tab() {
-        $bulk_msg = self::$bulk_flash_msg;
+        $bulk_msg = '';
+        if ( isset( $_GET['wap_bulk_msg'] ) ) {
+            $bulk_msg = sanitize_text_field( wp_unslash( rawurldecode( (string) $_GET['wap_bulk_msg'] ) ) );
+        }
 
         $f              = WAP_Data::get_order_list_filters();
         list( $orders, $total, $all_orders ) = WAP_Data::get_filtered_order_list( $f );
@@ -637,7 +645,7 @@ class WAP_Portal {
         $can_bulk        = class_exists( 'WAP_Order_Service' ) && WAP_Order_Service::can_change_status();
         ?>
         <?php if ( $bulk_msg !== '' ) : ?>
-            <div class="wap-alert wap-alert-success"><?php echo esc_html( $bulk_msg ); ?></div>
+            <div class="wap-alert <?php echo ! empty( $_GET['wap_bulk_ok'] ) ? 'wap-alert-success' : 'wap-alert-error'; ?>"><?php echo esc_html( $bulk_msg ); ?></div>
         <?php endif; ?>
         <form method="get" action="<?php echo esc_url( self::panel_url() ); ?>" class="wap-filters">
             <input type="hidden" name="wap_view" value="orders">
@@ -731,8 +739,10 @@ class WAP_Portal {
         <?php endif; ?>
         </div>
 
-        <form method="post" id="wap-orders-bulk-form" action="<?php echo esc_url( add_query_arg( 'wap_view', 'orders', self::panel_url() ) ); ?>">
+        <form method="post" id="wap-orders-bulk-form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
             <?php wp_nonce_field( 'wci_bulk_orders' ); ?>
+            <input type="hidden" name="action" value="wap_bulk_orders">
+            <input type="hidden" name="wap_return_url" value="<?php echo esc_url( add_query_arg( 'wap_view', 'orders', self::panel_url() ) ); ?>">
             <input type="hidden" name="wap_view" value="orders">
             <?php foreach ( $f as $fk => $fv ) : ?>
                 <input type="hidden" name="<?php echo esc_attr( $fk ); ?>" value="<?php echo esc_attr( (string) $fv ); ?>">
@@ -826,10 +836,16 @@ class WAP_Portal {
                     }
                     h.value = JSON.stringify(ids);
 
-                    // دانلود/چاپ فاکتور در تب جدید تا صفحه لیست سفید نشود
                     var a1 = form.querySelector('select[name="wci_bulk_action"]');
                     var a2 = form.querySelector('select[name="wci_bulk_action2"]');
-                    var act = ((a1 && a1.value) ? a1.value : '') || ((a2 && a2.value) ? a2.value : '');
+                    // فقط یک select فعال بماند (بالا/پایین)
+                    if (a2 && a2.value) {
+                        if (a1) { a1.disabled = true; }
+                    } else if (a1 && a1.value) {
+                        if (a2) { a2.disabled = true; }
+                    }
+
+                    var act = ((a2 && a2.value) ? a2.value : '') || ((a1 && a1.value) ? a1.value : '');
                     if (act.indexOf('download_invoices') === 0 || act.indexOf('print_invoices') === 0) {
                         form.target = '_blank';
                     } else {

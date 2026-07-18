@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
 WC requires at least: 6.0
-Stable tag: 1.9.10
+Stable tag: 1.9.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,11 @@ Hesabdar دو بخش را در یک افزونه ترکیب می‌کند:
 خیر، نقش حسابدار کاملاً از پیشخوان وردپرس مسدود است و فقط پرتال اختصاصی خودش را می‌بیند.
 
 == Changelog ==
+
+= 1.9.11 =
+* رفع باگ انتخاب dropdown پایین (عملیات bulk خالی می‌شد)
+* ارسال bulk پرتال از admin-post.php — بدون صفحه سفید
+* دانلود/چاپ فاکتور در تب جدید؛ لیست سفارش‌ها دست‌نخورده می‌ماند
 
 = 1.9.10 =
 * رفع صفحه سفید بعد از «دانلود همه فاکتورها» در پرتال حسابدار

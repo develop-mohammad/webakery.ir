@@ -127,6 +127,7 @@ class WCI_Bulk_Invoice {
 		$mode = ( 'download' === $mode ) ? 'download' : 'print';
 		if ( 'download' === $mode ) {
 			self::download( $order_ids );
+			wp_die( 'خطا در ساخت فایل ZIP فاکتورها.' );
 		}
 		self::render( $order_ids );
 	}
@@ -376,7 +377,10 @@ class WCI_Bulk_Invoice {
 		$logo       = $s['logo_url'] ?? '';
 		$state_code = $order->get_billing_state();
 		$country    = $order->get_billing_country() ?: 'IR';
-		$states     = WC()->countries->get_states( $country ) ?? array();
+		$states     = array();
+		if ( function_exists( 'WC' ) && WC() && WC()->countries ) {
+			$states = WC()->countries->get_states( $country ) ?? array();
+		}
 		$state_name = $states[ $state_code ] ?? $state_code;
 		?>
 		<div class="invoice-wrap">

@@ -70,6 +70,18 @@ class WAP_Order_Service {
 	}
 
 	/**
+	 * خواندن عملیات bulk از POST — اگر هر دو select (بالا/پایین) ارسال شده، مقدار غیرخالی را بگیر.
+	 *
+	 * @param array<string,mixed>|null $src
+	 */
+	public static function bulk_action_from_request( $src = null ): string {
+		$src = is_array( $src ) ? $src : wp_unslash( $_POST );
+		$a1  = sanitize_key( (string) ( $src['wci_bulk_action'] ?? '' ) );
+		$a2  = sanitize_key( (string) ( $src['wci_bulk_action2'] ?? '' ) );
+		return $a2 !== '' ? $a2 : $a1;
+	}
+
+	/**
 	 * @param string        $action
 	 * @param array<int>    $order_ids
 	 * @return array{ok:bool,message:string,count?:int,redirect?:string}

@@ -54,7 +54,7 @@ function wci_orders_page_render() {
         && isset( $_POST['wci_bulk_apply'] )
         && check_admin_referer( 'wci_bulk_orders' )
     ) {
-        $bulk_action = sanitize_key( wp_unslash( $_POST['wci_bulk_action'] ?? $_POST['wci_bulk_action2'] ?? '' ) );
+        $bulk_action = WAP_Order_Service::bulk_action_from_request();
         $bulk_ids    = class_exists( 'WCI_Bulk_Invoice' )
             ? WCI_Bulk_Invoice::parse_order_ids( wp_unslash( $_POST ) )
             : array_map( 'absint', (array) ( $_POST['order_ids'] ?? array() ) );
@@ -358,7 +358,11 @@ function wci_orders_page_render() {
                 $(this).append($h);
             }
             $h.val(JSON.stringify(ids));
-            var act = ($(this).find('select[name="wci_bulk_action"]').val() || $(this).find('select[name="wci_bulk_action2"]').val() || '');
+            var $a1 = $(this).find('select[name="wci_bulk_action"]');
+            var $a2 = $(this).find('select[name="wci_bulk_action2"]');
+            if ($a2.val()) { $a1.prop('disabled', true); }
+            else if ($a1.val()) { $a2.prop('disabled', true); }
+            var act = ($a2.val() || $a1.val() || '');
             // دانلود/چاپ فاکتور در تب جدید تا صفحه لیست سفید نشود
             if (String(act).indexOf('download_invoices') === 0 || String(act).indexOf('print_invoices') === 0) {
                 this.target = '_blank';
