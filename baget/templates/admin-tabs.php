@@ -3,11 +3,11 @@ defined( 'ABSPATH' ) || exit;
 /** @var string $tab */
 $tabs = array(
 	'fields'      => array(
-		'label' => 'افزودن فیلدها',
+		'label' => 'قالب‌ها و فیلدها',
 		'url'   => admin_url( 'admin.php?page=wccp' ),
 	),
 	'templates'   => array(
-		'label' => 'افزودن قالب',
+		'label' => 'ساخت قالب',
 		'url'   => admin_url( 'admin.php?page=wccp&tab=templates' ),
 	),
 	'wc-products' => array(

@@ -45,8 +45,8 @@ class Admin {
 			'dashicons-forms',
 			56
 		);
-		add_submenu_page( 'wccp', 'افزودن فیلدها', 'افزودن فیلدها', $cap, 'wccp', array( $this, 'render_page' ) );
-		add_submenu_page( 'wccp', 'افزودن قالب', 'افزودن قالب', $cap, 'wccp-templates', array( $this, 'render_templates_redirect' ) );
+		add_submenu_page( 'wccp', 'قالب‌ها و فیلدها', 'قالب‌ها و فیلدها', $cap, 'wccp', array( $this, 'render_page' ) );
+		add_submenu_page( 'wccp', 'ساخت قالب', 'ساخت قالب', $cap, 'wccp-templates', array( $this, 'render_templates_redirect' ) );
 		add_submenu_page( 'wccp', 'محصولات فروشگاه', 'محصولات فروشگاه', $cap, 'wccp-wc-products', array( $this, 'render_wc_products_redirect' ) );
 		add_submenu_page( 'wccp', 'لینک پرداخت', 'لینک پرداخت', $cap, 'edit.php?post_type=wccp_product' );
 		add_submenu_page( 'wccp', 'افزودن لینک پرداخت', 'افزودن لینک پرداخت', $cap, 'post-new.php?post_type=wccp_product' );

@@ -563,6 +563,9 @@
     var addBtn = $('#wccp-add-field');
     if (addBtn) addBtn.addEventListener('click', function (e) { e.preventDefault(); createField('text'); });
 
+    var addBtnTop = $('#wccp-add-field-top');
+    if (addBtnTop) addBtnTop.addEventListener('click', function (e) { e.preventDefault(); createField('text'); });
+
     var addRadio = $('#wccp-add-radio');
     if (addRadio) addRadio.addEventListener('click', function (e) { e.preventDefault(); createField('radio'); });
 
