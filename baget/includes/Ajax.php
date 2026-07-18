@@ -21,6 +21,7 @@ class Ajax {
 		add_action( 'wp_ajax_wccp_update_field', array( $this, 'update_field' ) );
 		add_action( 'wp_ajax_wccp_delete_field', array( $this, 'delete_field' ) );
 		add_action( 'wp_ajax_wccp_save_product_fields', array( $this, 'save_product_fields' ) );
+		add_action( 'wp_ajax_wccp_set_default_template', array( $this, 'set_default_template' ) );
 	}
 
 	private function guard() {
@@ -33,11 +34,9 @@ class Ajax {
 		}
 	}
 
-	/** ذخیره ترتیب/فعال بودن فیلدهای سراسری */
-	public function save_fields() {
-		$this->guard();
-
-		$raw = wp_unslash( $_POST );
+	/** @return string[] */
+	private function parse_active_from_post() {
+		$raw    = wp_unslash( $_POST );
 		$active = array();
 		if ( ! empty( $raw['active'] ) ) {
 			if ( is_string( $raw['active'] ) ) {
@@ -47,29 +46,40 @@ class Ajax {
 				$active = $raw['active'];
 			}
 		}
+		return array_values( array_unique( array_map( 'sanitize_key', $active ) ) );
+	}
 
-		$custom = array();
-		if ( ! empty( $raw['custom'] ) ) {
-			$decoded = is_string( $raw['custom'] ) ? json_decode( $raw['custom'], true ) : $raw['custom'];
-			$custom  = is_array( $decoded ) ? $decoded : array();
-		} else {
-			$custom = get_option( Fields::CUSTOM_OPTION, array() );
-			if ( ! is_array( $custom ) ) {
-				$custom = array();
+	/** ذخیره فیلدهای یک قالب (یا سراسری) */
+	public function save_fields() {
+		$this->guard();
+		$active       = $this->parse_active_from_post();
+		$template_key = sanitize_key( wp_unslash( $_POST['template_key'] ?? '' ) );
+
+		if ( $template_key ) {
+			$res = Templates::update_fields( $template_key, $active );
+			if ( is_wp_error( $res ) ) {
+				wp_send_json_error( array( 'message' => $res->get_error_message() ) );
 			}
+			wp_send_json_success(
+				array(
+					'message'       => 'فیلدهای قالب ذخیره شد.',
+					'active'        => Templates::fields_for( $template_key ),
+					'template_key'  => $template_key,
+					'default_tpl'   => Templates::default_key(),
+					'fields'        => CustomFields::merged_with_defaults(),
+					'templates'     => Templates::all(),
+				)
+			);
 		}
 
-		$overrides = array();
-		if ( ! empty( $raw['overrides'] ) ) {
-			$decoded   = is_string( $raw['overrides'] ) ? json_decode( $raw['overrides'], true ) : $raw['overrides'];
-			$overrides = is_array( $decoded ) ? $decoded : array();
-		} else {
-			$overrides = get_option( Fields::OVERRIDE_OPTION, array() );
-			if ( ! is_array( $overrides ) ) {
-				$overrides = array();
-			}
+		$custom = get_option( Fields::CUSTOM_OPTION, array() );
+		if ( ! is_array( $custom ) ) {
+			$custom = array();
 		}
-
+		$overrides = get_option( Fields::OVERRIDE_OPTION, array() );
+		if ( ! is_array( $overrides ) ) {
+			$overrides = array();
+		}
 		$saved = Fields::save_state( $active, $custom, $overrides );
 
 		wp_send_json_success(
@@ -78,6 +88,22 @@ class Ajax {
 				'active'    => $saved['active'],
 				'available' => Fields::get_available_keys(),
 				'fields'    => CustomFields::merged_with_defaults(),
+			)
+		);
+	}
+
+	public function set_default_template() {
+		$this->guard();
+		$key = sanitize_key( wp_unslash( $_POST['template_key'] ?? '' ) );
+		$res = Templates::set_default_key( $key );
+		if ( is_wp_error( $res ) ) {
+			wp_send_json_error( array( 'message' => $res->get_error_message() ) );
+		}
+		wp_send_json_success(
+			array(
+				'message'     => 'قالب پیش‌فرض صفحه پرداخت تنظیم شد.',
+				'default_tpl' => Templates::default_key(),
+				'active'      => Templates::fields_for( Templates::default_key() ),
 			)
 		);
 	}
@@ -94,7 +120,7 @@ class Ajax {
 			wp_send_json_error( array( 'message' => 'برای این نوع فیلد حداقل یک گزینه وارد کنید.' ) );
 		}
 
-		$key   = 'wccp_field_' . strtolower( wp_generate_password( 8, false, false ) );
+		$key    = 'wccp_field_' . strtolower( wp_generate_password( 8, false, false ) );
 		$custom = get_option( Fields::CUSTOM_OPTION, array() );
 		if ( ! is_array( $custom ) ) {
 			$custom = array();
@@ -115,17 +141,25 @@ class Ajax {
 		);
 		update_option( Fields::CUSTOM_OPTION, $custom, false );
 
-		$active   = Fields::get_active_keys();
-		$active[] = $key;
-		update_option( Fields::ACTIVE_OPTION, array_values( array_unique( $active ) ), false );
+		$template_key = sanitize_key( wp_unslash( $_POST['template_key'] ?? '' ) );
+		if ( $template_key && isset( Templates::all()[ $template_key ] ) ) {
+			Templates::add_field_to_template( $template_key, $key );
+			$active = Templates::fields_for( $template_key );
+		} else {
+			$active   = Fields::get_active_keys();
+			$active[] = $key;
+			update_option( Fields::ACTIVE_OPTION, array_values( array_unique( $active ) ), false );
+			$active = Fields::get_active_keys();
+		}
 
 		wp_send_json_success(
 			array(
-				'message' => 'فیلد سفارشی ساخته شد.',
-				'key'     => $key,
-				'field'   => $custom[ $key ],
-				'active'  => Fields::get_active_keys(),
-				'fields'  => CustomFields::merged_with_defaults(),
+				'message'      => 'فیلد سفارشی ساخته شد و به قالب اضافه شد.',
+				'key'          => $key,
+				'field'        => $custom[ $key ],
+				'active'       => $active,
+				'fields'       => CustomFields::merged_with_defaults(),
+				'template_key' => $template_key,
 			)
 		);
 	}
@@ -182,8 +216,27 @@ class Ajax {
 			unset( $custom[ $key ] );
 			update_option( Fields::CUSTOM_OPTION, $custom, false );
 		}
-		$active = array_values( array_diff( Fields::get_active_keys(), array( $key ) ) );
-		update_option( Fields::ACTIVE_OPTION, $active, false );
+
+		$template_key = sanitize_key( wp_unslash( $_POST['template_key'] ?? '' ) );
+
+		// از لیست فیلد همه قالب‌ها حذف شود
+		foreach ( array_keys( Templates::all() ) as $tk ) {
+			$tf = array_values( array_diff( Templates::fields_for( $tk ), array( $key ) ) );
+			if ( empty( $tf ) ) {
+				$tf = Templates::default_fields();
+			}
+			// فقط اگر قالب قبلاً سفارشی شده یا همین قالب جاری است ذخیره کن
+			if ( $tk === $template_key || isset( Templates::custom()[ $tk ] ) ) {
+				Templates::update_fields( $tk, $tf );
+			}
+		}
+
+		$active = $template_key
+			? Templates::fields_for( $template_key )
+			: array_values( array_diff( Fields::get_active_keys(), array( $key ) ) );
+		if ( ! $template_key ) {
+			update_option( Fields::ACTIVE_OPTION, $active, false );
+		}
 
 		wp_send_json_success(
 			array(
@@ -194,7 +247,6 @@ class Ajax {
 		);
 	}
 
-	/** ذخیره فیلدهای یک محصول آنلاین */
 	public function save_product_fields() {
 		$this->guard();
 		$product_id = (int) ( $_POST['product_id'] ?? 0 );

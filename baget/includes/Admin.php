@@ -77,23 +77,38 @@ class Admin {
 			$product_id = (int) $_GET['post']; // phpcs:ignore
 		}
 
-		$active = $product_id ? OnlineProducts::product_active_fields( $product_id ) : Fields::get_active_keys();
+		$default_tpl = Templates::default_key();
+		$current_tpl = isset( $_GET['tpl'] ) ? sanitize_key( wp_unslash( $_GET['tpl'] ) ) : $default_tpl; // phpcs:ignore
+		if ( ! isset( Templates::all()[ $current_tpl ] ) ) {
+			$current_tpl = $default_tpl;
+		}
+
+		if ( $product_id ) {
+			$active = OnlineProducts::product_active_fields( $product_id );
+		} else {
+			$active = Templates::fields_for( $current_tpl );
+		}
 
 		wp_localize_script(
 			'wccp-admin',
 			'WCCP_ADMIN',
 			array(
-				'ajax'      => admin_url( 'admin-ajax.php' ),
-				'nonce'     => wp_create_nonce( 'wccp_admin' ),
-				'productId' => $product_id,
-				'active'    => $active,
-				'available' => array_values( array_diff( array_keys( CustomFields::merged_with_defaults() ), $active ) ),
-				'fields'    => CustomFields::merged_with_defaults(),
-				'i18n'      => array(
-					'saved'   => 'ذخیره شد',
-					'saving'  => 'در حال ذخیره…',
-					'error'   => 'خطا در ذخیره',
-					'confirm' => 'این فیلد سفارشی حذف شود؟',
+				'ajax'         => admin_url( 'admin-ajax.php' ),
+				'nonce'        => wp_create_nonce( 'wccp_admin' ),
+				'productId'    => $product_id,
+				'active'       => $active,
+				'available'    => array_values( array_diff( array_keys( CustomFields::merged_with_defaults() ), $active ) ),
+				'fields'       => CustomFields::merged_with_defaults(),
+				'templateKey'  => $product_id ? '' : $current_tpl,
+				'defaultTpl'   => $default_tpl,
+				'templates'    => Templates::all(),
+				'i18n'         => array(
+					'saved'     => 'ذخیره شد',
+					'saving'    => 'در حال ذخیره…',
+					'error'     => 'خطا در ذخیره',
+					'confirm'   => 'این فیلد سفارشی حذف شود؟',
+					'star_ok'   => 'قالب پیش‌فرض checkout تنظیم شد',
+					'save_tpl'  => 'ذخیره فیلدهای این قالب',
 				),
 			)
 		);
@@ -118,10 +133,7 @@ class Admin {
 	}
 
 	public function render_fields_page() {
-		$fields    = CustomFields::merged_with_defaults();
-		$active    = Fields::get_active_keys();
-		$available = Fields::get_available_keys();
-		$tab       = 'fields';
+		$tab = 'fields';
 		include WCCP_PATH . 'templates/admin-fields.php';
 	}
 

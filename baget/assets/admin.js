@@ -8,7 +8,9 @@
     active: (WCCP_ADMIN.active || []).slice(),
     dirty: false,
     dragKey: null,
-    optionSeed: 0
+    optionSeed: 0,
+    templateKey: WCCP_ADMIN.templateKey || '',
+    defaultTpl: WCCP_ADMIN.defaultTpl || ''
   };
 
   function $(sel, root) { return (root || document).querySelector(sel); }
@@ -240,6 +242,12 @@
       .then(function (r) { return r.json(); });
   }
 
+  function currentTemplateKey() {
+    var app = $('.wccp-app');
+    if (app && app.getAttribute('data-template')) return app.getAttribute('data-template');
+    return state.templateKey || '';
+  }
+
   function save() {
     var btn = $('#wccp-save-btn');
     if (btn) {
@@ -250,12 +258,15 @@
 
     var mode = ($('.wccp-app') || {}).getAttribute ? $('.wccp-app').getAttribute('data-mode') : 'global';
     var productId = WCCP_ADMIN.productId || (($('.wccp-app') || {}).getAttribute && parseInt($('.wccp-app').getAttribute('data-product-id') || '0', 10)) || 0;
+    var tplKey = currentTemplateKey();
 
     var req;
     if (mode === 'product' && productId) {
       req = post('wccp_save_product_fields', { product_id: productId, active: state.active });
+    } else if (mode === 'template' && tplKey) {
+      req = post('wccp_save_fields', { active: state.active, template_key: tplKey });
     } else {
-      req = post('wccp_save_fields', { active: state.active });
+      req = post('wccp_save_fields', { active: state.active, template_key: tplKey || '' });
     }
 
     return req.then(function (res) {
@@ -266,6 +277,7 @@
       state.dirty = false;
       if (res.data.fields) state.fields = res.data.fields;
       if (res.data.active) state.active = res.data.active;
+      if (res.data.default_tpl) state.defaultTpl = res.data.default_tpl;
       render();
       toast(res.data.message || WCCP_ADMIN.i18n.saved, 'ok');
     }).catch(function () {
@@ -273,8 +285,24 @@
     }).finally(function () {
       if (btn) {
         btn.classList.remove('is-busy');
-        btn.innerHTML = '<span class="dashicons dashicons-yes"></span> ذخیره تنظیمات';
+        btn.innerHTML = '<span class="dashicons dashicons-yes"></span> ' + (WCCP_ADMIN.i18n.save_tpl || 'ذخیره');
       }
+    });
+  }
+
+  function setDefaultTemplate(key) {
+    return post('wccp_set_default_template', { template_key: key }).then(function (res) {
+      if (!res || !res.success) {
+        toast((res && res.data && res.data.message) || WCCP_ADMIN.i18n.error, 'error');
+        return;
+      }
+      state.defaultTpl = res.data.default_tpl || key;
+      toast(res.data.message || WCCP_ADMIN.i18n.star_ok, 'ok');
+      var url = new URL(window.location.href);
+      url.searchParams.set('page', 'wccp');
+      url.searchParams.set('tpl', key);
+      url.searchParams.delete('tab');
+      window.location.href = url.toString();
     });
   }
 
@@ -468,7 +496,8 @@
       label: $('#wccp-field-label').value,
       type: type,
       options_text: optionsText,
-      required: $('#wccp-field-required').checked ? 1 : 0
+      required: $('#wccp-field-required').checked ? 1 : 0,
+      template_key: currentTemplateKey()
     };
     var action = key ? 'wccp_update_field' : 'wccp_create_field';
     if (key) payload.key = key;
@@ -508,7 +537,7 @@
   }
 
   function deleteField(key) {
-    post('wccp_delete_field', { key: key }).then(function (res) {
+    post('wccp_delete_field', { key: key, template_key: currentTemplateKey() }).then(function (res) {
       if (!res || !res.success) {
         toast((res && res.data && res.data.message) || WCCP_ADMIN.i18n.error, 'error');
         return;
@@ -574,6 +603,20 @@
     if (postForm) {
       postForm.addEventListener('submit', function () { syncHidden(); });
     }
+
+    $$('.wccp-tpl-star').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var key = btn.getAttribute('data-tpl');
+        if (!key) return;
+        if (key === state.defaultTpl) {
+          toast('این قالب همین حالا پیش‌فرض checkout است', 'ok');
+          return;
+        }
+        setDefaultTemplate(key);
+      });
+    });
   }
 
   if (document.readyState === 'loading') {

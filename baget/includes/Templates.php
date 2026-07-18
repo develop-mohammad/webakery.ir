@@ -8,11 +8,81 @@ defined( 'ABSPATH' ) || exit;
  */
 class Templates {
 
-	const OPTION = 'wccp_pay_templates';
+	const OPTION         = 'wccp_pay_templates';
+	const DEFAULT_OPTION = 'wccp_default_checkout_template';
 
 	/** @return string[] */
 	public static function default_fields() {
 		return Fields::default_active();
+	}
+
+	/** قالب پیش‌فرض صفحه پرداخت ووکامرس */
+	public static function default_key() {
+		$key = sanitize_key( (string) get_option( self::DEFAULT_OPTION, 'violet' ) );
+		$all = self::all();
+		return ( $key && isset( $all[ $key ] ) ) ? $key : 'violet';
+	}
+
+	/** @return true|\WP_Error */
+	public static function set_default_key( $key ) {
+		$key = sanitize_key( (string) $key );
+		$all = self::all();
+		if ( ! $key || ! isset( $all[ $key ] ) ) {
+			return new \WP_Error( 'tpl', 'قالب نامعتبر است.' );
+		}
+		update_option( self::DEFAULT_OPTION, $key, false );
+		// فیلدهای فعال checkout را با قالب پیش‌فرض همگام کن
+		$fields = self::fields_for( $key );
+		update_option( Fields::ACTIVE_OPTION, $fields, false );
+		return true;
+	}
+
+	/**
+	 * ذخیره فیلدهای یک قالب (از صفحه drag&drop).
+	 *
+	 * @param string   $key
+	 * @param string[] $fields
+	 * @return string|\WP_Error
+	 */
+	public static function update_fields( $key, array $fields ) {
+		$key = sanitize_key( (string) $key );
+		$all = self::all();
+		if ( ! $key || ! isset( $all[ $key ] ) ) {
+			return new \WP_Error( 'tpl', 'قالب نامعتبر است.' );
+		}
+		$tpl    = $all[ $key ];
+		$clean  = self::sanitize_fields( $fields );
+		if ( empty( $clean ) ) {
+			return new \WP_Error( 'fields', 'حداقل یک فیلد فعال لازم است.' );
+		}
+
+		$payload = array(
+			'label'       => $tpl['label'],
+			'primary'     => $tpl['primary'],
+			'background'  => $tpl['background'],
+			'card'        => $tpl['card'],
+			'text'        => $tpl['text'],
+			'muted'       => $tpl['muted'],
+			'button_text' => $tpl['button_text'],
+			'radius'      => $tpl['radius'],
+			'layout'      => $tpl['layout'],
+			'fields'      => $clean,
+		);
+		$saved = self::save_custom( $payload, $key );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
+		}
+		if ( $key === self::default_key() ) {
+			update_option( Fields::ACTIVE_OPTION, $clean, false );
+		}
+		return $saved;
+	}
+
+	/** افزودن یک فیلد به لیست فیلدهای قالب */
+	public static function add_field_to_template( $template_key, $field_key ) {
+		$fields   = self::fields_for( $template_key );
+		$fields[] = sanitize_key( $field_key );
+		return self::update_fields( $template_key, $fields );
 	}
 
 	/** @return array<string,array> */

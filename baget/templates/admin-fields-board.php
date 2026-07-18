@@ -28,8 +28,8 @@ defined( 'ABSPATH' ) || exit;
 	<section class="wccp-col wccp-col-active">
 		<header>
 			<div>
-				<strong>فیلدهای فعال در checkout</strong>
-				<small class="wccp-muted">برای تغییر ترتیب بکشید</small>
+				<strong>فیلدهای فعال این قالب</strong>
+				<small class="wccp-muted">برای تغییر ترتیب بکشید — روی checkout فقط قالب ★ پیش‌فرض می‌آید</small>
 			</div>
 		</header>
 		<ul class="wccp-list" id="wccp-active" data-list="active">
