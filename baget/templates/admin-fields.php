@@ -22,8 +22,8 @@ $tpl_label = $templates[ $current_tpl ]['label'] ?? $current_tpl;
 <div class="wrap wccp-wrap">
 	<div class="wccp-topbar">
 		<div>
-			<h1>Baget — افزودن فیلدها</h1>
-			<p class="wccp-muted">قالب‌های پیش‌فرض: <strong>محصولات دیجیتال</strong> و <strong>محصولات فیزیکی</strong>. قالب را انتخاب کنید، فیلدها را بسازید، بعد از تب «محصولات فروشگاه» روی هر محصول اعمال کنید.</p>
+			<h1>Baget — قالب‌ها و فیلدهای سفارشی</h1>
+			<p class="wccp-muted">اول قالب را از لیست انتخاب کنید، با ★ پیش‌فرض checkout را مشخص کنید، بعد برای همان قالب فیلد/سوال سفارشی اضافه کنید.</p>
 		</div>
 		<div class="wccp-topbar-actions">
 			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=wccp&tab=templates' ) ); ?>">+ افزودن قالب</a>
@@ -39,9 +39,12 @@ $tpl_label = $templates[ $current_tpl ]['label'] ?? $current_tpl;
 	<?php include WCCP_PATH . 'templates/admin-tabs.php'; ?>
 
 	<section class="wccp-tpl-picker" id="wccp-tpl-picker">
-		<header>
-			<strong>قالب‌ها</strong>
-			<span class="wccp-muted">روی ★ بزنید تا پیش‌فرض صفحه پرداخت شود · روی کارت بزنید تا فیلدهایش را ویرایش کنید</span>
+		<header class="wccp-tpl-picker-head">
+			<div>
+				<strong>۱) لیست قالب‌ها</strong>
+				<span class="wccp-muted">☆ / ★ = پیش‌فرض صفحه پرداخت · کلیک روی کارت = انتخاب برای افزودن فیلد</span>
+			</div>
+			<a class="button button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wccp&tab=templates' ) ); ?>">+ افزودن قالب جدید</a>
 		</header>
 		<div class="wccp-tpl-picker-list">
 			<?php foreach ( $templates as $key => $tpl ) :
@@ -51,7 +54,7 @@ $tpl_label = $templates[ $current_tpl ]['label'] ?? $current_tpl;
 				$url         = admin_url( 'admin.php?page=wccp&tpl=' . rawurlencode( $key ) );
 				?>
 				<div class="wccp-tpl-pick <?php echo $is_current ? 'is-current' : ''; ?> <?php echo $is_default ? 'is-default' : ''; ?>" data-tpl="<?php echo esc_attr( $key ); ?>">
-					<button type="button" class="wccp-tpl-star" title="<?php echo $is_default ? 'قالب پیش‌فرض checkout' : 'تبدیل به پیش‌فرض checkout'; ?>" data-tpl="<?php echo esc_attr( $key ); ?>" aria-label="پیش‌فرض">
+					<button type="button" class="wccp-tpl-star" title="<?php echo $is_default ? 'این قالب پیش‌فرض checkout است' : 'کلیک کنید تا پیش‌فرض checkout شود'; ?>" data-tpl="<?php echo esc_attr( $key ); ?>" aria-label="پیش‌فرض">
 						<?php echo $is_default ? '★' : '☆'; ?>
 					</button>
 					<a class="wccp-tpl-pick-main" href="<?php echo esc_url( $url ); ?>">
@@ -59,7 +62,10 @@ $tpl_label = $templates[ $current_tpl ]['label'] ?? $current_tpl;
 						<span class="wccp-tpl-pick-name"><?php echo esc_html( $tpl['label'] ); ?></span>
 						<span class="wccp-tpl-pick-count"><?php echo esc_html( (string) $field_count ); ?> فیلد</span>
 						<?php if ( $is_default ) : ?>
-							<span class="wccp-tag required">پیش‌فرض checkout</span>
+							<span class="wccp-tag required">★ پیش‌فرض checkout</span>
+						<?php endif; ?>
+						<?php if ( $is_current ) : ?>
+							<span class="wccp-tag custom">در حال ویرایش</span>
 						<?php endif; ?>
 					</a>
 				</div>
@@ -68,19 +74,14 @@ $tpl_label = $templates[ $current_tpl ]['label'] ?? $current_tpl;
 	</section>
 
 	<div class="wccp-current-tpl-bar">
-		<strong>در حال ویرایش فیلدهای قالب:</strong>
+		<strong>۲) افزودن فیلد سفارشی برای قالب:</strong>
 		<span class="wccp-current-tpl-name"><?php echo esc_html( $tpl_label ); ?></span>
 		<code dir="ltr"><?php echo esc_html( $current_tpl ); ?></code>
 		<?php if ( $current_tpl === $default_tpl ) : ?>
-			<span class="wccp-tag required">★ این قالب روی صفحه پرداخت فروشگاه اعمال می‌شود</span>
+			<span class="wccp-tag required">★ روی صفحه پرداخت فروشگاه اعمال می‌شود</span>
+		<?php else : ?>
+			<button type="button" class="button button-small wccp-tpl-star-inline" data-tpl="<?php echo esc_attr( $current_tpl ); ?>">☆ انتخاب به‌عنوان پیش‌فرض</button>
 		<?php endif; ?>
-	</div>
-
-	<div class="wccp-howto">
-		<div class="wccp-howto-step"><span>۱</span><div><strong>قالب را انتخاب کنید</strong><p>از لیست بالا</p></div></div>
-		<div class="wccp-howto-step"><span>۲</span><div><strong>ستاره پیش‌فرض</strong><p>کدام قالب checkout باشد</p></div></div>
-		<div class="wccp-howto-step"><span>۳</span><div><strong>فیلد/سوال اضافه کنید</strong><p>مخصوص همین قالب</p></div></div>
-		<div class="wccp-howto-step"><span>۴</span><div><strong>ذخیره فیلدهای این قالب</strong><p>دکمه بنفش</p></div></div>
 	</div>
 
 	<div class="wccp-app" data-mode="template" data-template="<?php echo esc_attr( $current_tpl ); ?>" id="wccp-app">

@@ -604,19 +604,22 @@
       postForm.addEventListener('submit', function () { syncHidden(); });
     }
 
-    $$('.wccp-tpl-star').forEach(function (btn) {
-      btn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var key = btn.getAttribute('data-tpl');
-        if (!key) return;
-        if (key === state.defaultTpl) {
-          toast('این قالب همین حالا پیش‌فرض checkout است', 'ok');
-          return;
-        }
-        setDefaultTemplate(key);
+    function bindStarButtons() {
+      $$('.wccp-tpl-star, .wccp-tpl-star-inline').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var key = btn.getAttribute('data-tpl');
+          if (!key) return;
+          if (key === state.defaultTpl) {
+            toast('این قالب همین حالا پیش‌فرض checkout است', 'ok');
+            return;
+          }
+          setDefaultTemplate(key);
+        });
       });
-    });
+    }
+    bindStarButtons();
   }
 
   if (document.readyState === 'loading') {
