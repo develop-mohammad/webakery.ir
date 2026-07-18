@@ -65,12 +65,12 @@ define( 'LS_PLUGIN_META', [
 // نسخهٔ سرور باید از نسخهٔ نصب‌شده روی سایت مشتری بالاتر باشد تا در «افزونه‌ها» آپدیت نمایش داده شود.
 define( 'LS_UPDATES', [
     'wccp' => [
-        'version'      => '1.4.4',
+        'version'      => '1.4.5',
         'package'      => 'https://webakery.ir/license-server/updates/baget.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۴.۴: فاصله و خط بین فیلدهای سوال + رفع خطای لایسنس.',
+        'changelog'    => 'نسخه ۱.۴.۵: رفع خطای Class WB_License not found.',
     ],
     'access-levels' => [
         'version'      => '1.5.8',

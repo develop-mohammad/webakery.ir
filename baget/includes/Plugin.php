@@ -76,7 +76,7 @@ class Plugin {
 	/** ثبت سیستم خرید و فعال‌سازی لایسنس */
 	public function boot_license() {
 		try {
-			if ( ! class_exists( 'WB_License' ) ) {
+			if ( ! class_exists( '\\WB_License', false ) ) {
 				$file = WCCP_PATH . 'includes/class-wb-license.php';
 				if ( ! is_readable( $file ) ) {
 					$this->notice( 'فایل لایسنس یافت نشد (includes/class-wb-license.php). ZIP کامل را نصب کنید.' );
@@ -84,12 +84,12 @@ class Plugin {
 				}
 				require_once $file;
 			}
-			if ( ! class_exists( 'WB_License' ) || ! method_exists( 'WB_License', 'init' ) ) {
+			if ( ! class_exists( '\\WB_License', false ) || ! method_exists( '\\WB_License', 'init' ) ) {
 				$this->notice( 'کلاس WB_License در دسترس نیست.' );
 				return;
 			}
 
-			WB_License::init(
+			\WB_License::init(
 				array(
 					'product'       => WCCP_PRODUCT,
 					'name'          => 'Baget | ادیت فیلدهای پرداخت',

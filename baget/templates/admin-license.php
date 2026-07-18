@@ -32,8 +32,8 @@ $pay_url = 'https://webakery.ir/license-server/pay/?' . http_build_query(
 	<div class="wccp-license-wrap">
 		<?php
 		$box = '';
-		if ( class_exists( 'WB_License' ) && method_exists( 'WB_License', 'render_box' ) ) {
-			$box = (string) WB_License::render_box( WCCP_PRODUCT );
+		if ( class_exists( '\\WB_License', false ) && method_exists( '\\WB_License', 'render_box' ) ) {
+			$box = (string) \WB_License::render_box( WCCP_PRODUCT );
 		}
 		if ( $box ) {
 			echo $box; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

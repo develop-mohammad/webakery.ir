@@ -2,12 +2,15 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.4.4
+Stable tag: 1.4.5
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.4.5 =
+* رفع خطای Class WCCP\WB_License not found در لایسنس
 
 = 1.4.4 =
 * فاصله و خط جداکننده بین فیلدهای سوال + رفع خطای محصول نامعتبر لایسنس
