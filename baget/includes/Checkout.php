@@ -23,10 +23,148 @@ class Checkout {
 		add_filter( 'woocommerce_form_field_wccp_radio', array( $this, 'render_choice_fields' ), 10, 4 );
 		add_filter( 'woocommerce_form_field_wccp_checkboxes', array( $this, 'render_choice_fields' ), 10, 4 );
 		add_filter( 'woocommerce_form_field_wccp_info', array( $this, 'render_info_field' ), 10, 4 );
+		// وقتی billing_phone از قالب حذف شده، از فیلدهای شماره سفارشی پر شود (رفع خطای افزونه پیامک/درگاه)
+		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'sync_missing_core_fields' ), 5 );
+		add_action( 'woocommerce_after_checkout_validation', array( $this, 'clear_orphan_phone_errors' ), 1, 2 );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_choice_fields' ), 10, 2 );
 		add_action( 'woocommerce_checkout_update_order_meta', array( $this, 'save_order_meta' ) );
 		add_action( 'woocommerce_admin_order_data_after_billing_address', array( $this, 'admin_display' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+	}
+
+	/** @return string[] */
+	private function active_keys() {
+		$active = Templates::fields_for( Templates::resolve_checkout_template() );
+		if ( empty( $active ) ) {
+			$active = Fields::get_active_keys();
+		}
+		return $active;
+	}
+
+	/**
+	 * اگر شماره تماس استاندارد در قالب نیست، اولین شماره معتبر از فیلدهای سفارشی را جایگزین کن.
+	 *
+	 * @param array $data
+	 * @return array
+	 */
+	public function sync_missing_core_fields( $data ) {
+		if ( ! is_array( $data ) ) {
+			return $data;
+		}
+		$active = $this->active_keys();
+		$defs   = CustomFields::merged_with_defaults();
+
+		$phone = isset( $data['billing_phone'] ) ? preg_replace( '/\D+/', '', (string) $data['billing_phone'] ) : '';
+		if ( ! in_array( 'billing_phone', $active, true ) || '' === $phone ) {
+			$found = $this->find_posted_mobile( $active, $defs );
+			if ( $found ) {
+				$data['billing_phone'] = $found;
+				$_POST['billing_phone'] = $found; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			}
+		}
+
+		// اگر نام/نام‌خانوادگی استاندارد نیست ولی یک فیلد متنی پر شده، از آن پر کن
+		$first = trim( (string) ( $data['billing_first_name'] ?? '' ) );
+		if ( ( ! in_array( 'billing_first_name', $active, true ) || '' === $first ) ) {
+			foreach ( $active as $key ) {
+				if ( empty( $defs[ $key ] ) || in_array( ( $defs[ $key ]['type'] ?? '' ), array( 'tel', 'email', 'info', 'radio', 'checkboxes', 'select' ), true ) ) {
+					continue;
+				}
+				$val = isset( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : ''; // phpcs:ignore
+				if ( '' === $val ) {
+					continue;
+				}
+				$parts = preg_split( '/\s+/u', $val, 2 );
+				$data['billing_first_name'] = $parts[0] ?? $val;
+				$data['billing_last_name']  = $parts[1] ?? ( $data['billing_last_name'] ?? '.' );
+				$_POST['billing_first_name'] = $data['billing_first_name']; // phpcs:ignore
+				$_POST['billing_last_name']  = $data['billing_last_name']; // phpcs:ignore
+				break;
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @param string[]             $active
+	 * @param array<string,array>  $defs
+	 * @return string
+	 */
+	private function find_posted_mobile( array $active, array $defs ) {
+		$candidates = array();
+		foreach ( $active as $key ) {
+			if ( empty( $defs[ $key ] ) ) {
+				continue;
+			}
+			$type  = $defs[ $key ]['type'] ?? 'text';
+			$label = (string) ( $defs[ $key ]['label'] ?? '' );
+			$raw   = isset( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : ''; // phpcs:ignore
+			$digits = preg_replace( '/\D+/', '', $raw );
+			if ( ! $digits ) {
+				continue;
+			}
+			$looks_phone = ( 'tel' === $type )
+				|| false !== stripos( $key, 'phone' )
+				|| false !== stripos( $key, 'mobile' )
+				|| false !== strpos( $label, 'شماره' )
+				|| false !== strpos( $label, 'موبایل' )
+				|| false !== strpos( $label, 'تلفن' );
+			if ( ! $looks_phone ) {
+				continue;
+			}
+			if ( preg_match( '/^09\d{9}$/', $digits ) || preg_match( '/^9\d{9}$/', $digits ) ) {
+				if ( 10 === strlen( $digits ) ) {
+					$digits = '0' . $digits;
+				}
+				$candidates[] = $digits;
+			}
+		}
+		return $candidates[0] ?? '';
+	}
+
+	/**
+	 * خطای «شماره موبایل معتبر نیست» وقتی فیلد استاندارد حذف شده و جایگزین پر شده.
+	 *
+	 * @param array     $data
+	 * @param \WP_Error $errors
+	 */
+	public function clear_orphan_phone_errors( $data, $errors ) {
+		if ( ! $errors instanceof \WP_Error ) {
+			return;
+		}
+		$active = $this->active_keys();
+		$phone  = isset( $data['billing_phone'] ) ? preg_replace( '/\D+/', '', (string) $data['billing_phone'] ) : '';
+		if ( ! $phone && isset( $_POST['billing_phone'] ) ) { // phpcs:ignore
+			$phone = preg_replace( '/\D+/', '', sanitize_text_field( wp_unslash( $_POST['billing_phone'] ) ) ); // phpcs:ignore
+		}
+
+		$phone_ok = (bool) preg_match( '/^09\d{9}$/', (string) $phone );
+
+		// اگر billing_phone در قالب نیست یا الان شماره معتبر داریم، خطاهای موبایل اضافه را بردار
+		if ( in_array( 'billing_phone', $active, true ) && ! $phone_ok ) {
+			return;
+		}
+
+		$codes = $errors->get_error_codes();
+		foreach ( $codes as $code ) {
+			$msgs = $errors->get_error_messages( $code );
+			foreach ( $msgs as $msg ) {
+				if (
+					false !== strpos( $msg, 'موبایل' )
+					|| false !== strpos( $msg, 'شماره تماس' )
+					|| false !== stripos( $msg, 'phone' )
+					|| false !== stripos( $msg, 'mobile' )
+					|| 'billing_phone' === $code
+					|| false !== strpos( (string) $code, 'billing_phone' )
+				) {
+					if ( $phone_ok || ! in_array( 'billing_phone', $active, true ) ) {
+						$errors->remove( $code );
+					}
+					break;
+				}
+			}
+		}
 	}
 
 	public function enqueue_assets() {
