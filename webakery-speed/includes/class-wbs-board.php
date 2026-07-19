@@ -204,13 +204,15 @@ class WBS_Board {
 				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-speed-fonts' ) ); ?>">فونت سوییپ</a>
 			</p>
 
-			<?php if ( ! empty( $_GET['saved'] ) || ! empty( $_GET['scanned'] ) ) : // phpcs:ignore ?>
-				<div class="wbsb-flash">ذخیره / اسکن انجام شد.</div>
+			<?php if ( ! empty( $_GET['saved'] ) || ! empty( $_GET['scanned'] ) || ! empty( $_GET['health'] ) ) : // phpcs:ignore ?>
+				<div class="wbsb-flash">ذخیره / اسکن / بررسی انجام شد.</div>
 			<?php endif; ?>
 
 			<?php if ( ! empty( $scan['error'] ) ) : ?>
 				<div class="wbsb-flash bad"><?php echo esc_html( $scan['error'] ); ?></div>
 			<?php endif; ?>
+
+			<?php WBS_Health::render_box(); ?>
 
 			<section class="wbsb-card">
 				<h2>شروع با سرچ‌کنسول / PageSpeed</h2>

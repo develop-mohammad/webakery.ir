@@ -2,7 +2,7 @@
 /**
  * Plugin Name: پنل سرعت | WebAkery Speed
  * Description: پنل یکپارچه سرعت: اولویت‌های CWV، دریافت خودکار از گوگل، اصلاح خودکار موارد امن، و فونت سوییپ.
- * Version:     1.1.0
+ * Version:     1.2.0
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'WBS_LOADED' ) ) {
 	return;
 }
 define( 'WBS_LOADED', true );
-define( 'WBS_VERSION', '1.1.0' );
+define( 'WBS_VERSION', '1.2.0' );
 define( 'WBS_FILE', __FILE__ );
 define( 'WBS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBS_URL', plugin_dir_url( __FILE__ ) );
@@ -29,6 +29,8 @@ require_once WBS_PATH . 'includes/class-wbs-board.php';
 require_once WBS_PATH . 'includes/class-wbs-fonts.php';
 require_once WBS_PATH . 'includes/class-wbs-cwv.php';
 require_once WBS_PATH . 'includes/class-wbs-autofix.php';
+require_once WBS_PATH . 'includes/class-wbs-buffer.php';
+require_once WBS_PATH . 'includes/class-wbs-health.php';
 
 /**
  * Bootstrap + conflict notices for legacy split plugins.
@@ -60,6 +62,8 @@ final class WBS_Plugin {
 		WBS_Fonts::instance();
 		WBS_CWV::instance();
 		WBS_AutoFix::instance();
+		WBS_Buffer::instance();
+		WBS_Health::instance();
 	}
 
 	public function action_links( $links ) {

@@ -47,11 +47,7 @@ class WBS_AutoFix {
 		add_action( 'admin_post_wbs_autofix_from_scan', array( $this, 'enable_from_scan' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
 
-		$s = self::settings();
-		if ( empty( $s['enabled'] ) ) {
-			return;
-		}
-		add_action( 'template_redirect', array( $this, 'start_buffer' ), -9985 );
+		// بافر از WBS_Buffer می‌آید؛ اینجا فقط تنظیمات/ادمین.
 	}
 
 	public function menu() {
@@ -127,13 +123,6 @@ class WBS_AutoFix {
 		exit;
 	}
 
-	public function start_buffer() {
-		if ( is_admin() || is_feed() || is_preview() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
-			return;
-		}
-		ob_start( array( $this, 'filter_html' ) );
-	}
-
 	/**
 	 * @param string $html
 	 * @return string
@@ -180,27 +169,30 @@ class WBS_AutoFix {
 				$is_first = ( 1 === $index );
 
 				$src = '';
+				$data_src = '';
+				if ( preg_match( '#\bdata-src=[\'"]([^\'"]+)#i', $attrs, $sm ) ) {
+					$data_src = $sm[1];
+				}
 				if ( preg_match( '#\bsrc=[\'"]([^\'"]+)#i', $attrs, $sm ) ) {
 					$src = $sm[1];
-				} elseif ( preg_match( '#\bdata-src=[\'"]([^\'"]+)#i', $attrs, $sm ) ) {
-					$src = $sm[1];
 				}
-				if ( ! $src || 0 === strpos( $src, 'data:' ) ) {
+				$real = $data_src ? $data_src : $src;
+				if ( ! $real || 0 === strpos( $real, 'data:' ) ) {
 					return $m[0];
 				}
 
 				if ( ! empty( $s['image_dimensions'] ) && ! preg_match( '#\bwidth=#i', $attrs ) ) {
-					$dims = $this->guess_dimensions( $src );
+					$dims = $this->guess_dimensions( $real );
 					if ( $dims ) {
 						$attrs .= ' width="' . (int) $dims[0] . '" height="' . (int) $dims[1] . '"';
 					}
 				}
 
+				// اولین تصویر واقعی محتوا (نه لوگو خیلی کوچک) — اگر لوگو بود، باز هم priority بده.
 				if ( ! empty( $s['lcp_priority'] ) && $is_first ) {
 					if ( ! preg_match( '#\bfetchpriority=#i', $attrs ) ) {
 						$attrs .= ' fetchpriority="high"';
 					}
-					// LCP candidate should not be lazy.
 					$attrs = preg_replace( '#\sloading=[\'"]lazy[\'"]#i', '', $attrs );
 					if ( ! preg_match( '#\bloading=#i', $attrs ) ) {
 						$attrs .= ' loading="eager"';
@@ -209,7 +201,7 @@ class WBS_AutoFix {
 						$attrs .= ' decoding="async"';
 					}
 				} elseif ( ! empty( $s['lazy_images'] ) && ! $is_first ) {
-					if ( ! preg_match( '#\bloading=#i', $attrs ) ) {
+					if ( ! preg_match( '#\bloading=#i', $attrs ) && false === stripos( $attrs, 'perfmatters-lazy' ) ) {
 						$attrs .= ' loading="lazy"';
 					}
 					if ( ! preg_match( '#\bdecoding=#i', $attrs ) ) {
