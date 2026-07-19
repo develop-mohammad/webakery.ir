@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: تنظیمات Perfmatters | گین استور
- * Description: اعمال اجباری + دیباگ داخل view-source برای gainstore.ir (علت نبودن pmdelayedscript را نشان می‌دهد).
- * Version:     1.2.0
+ * Description: اعمال تنظیمات + دیباگ + Fallback Delay/CSS وقتی WP Rocket بافر Perfmatters را خنثی می‌کند.
+ * Version:     1.3.0
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'GSPS_VERSION', '1.2.0' );
+define( 'GSPS_VERSION', '1.3.0' );
 define( 'GSPS_FILE', __FILE__ );
 define( 'GSPS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'GSPS_DEBUG_KEY', 'gspsdebug' );
@@ -54,7 +54,6 @@ function gsps_apply_settings() {
 		update_option( 'gsps_backup_tools', $current_tools, false );
 	}
 
-	// Bust object cache / stubborn options.
 	delete_option( 'perfmatters_options' );
 	add_option( 'perfmatters_options', $data['perfmatters_options'], '', false );
 	if ( isset( $data['perfmatters_tools'] ) && is_array( $data['perfmatters_tools'] ) ) {
@@ -65,9 +64,6 @@ function gsps_apply_settings() {
 	if ( function_exists( 'wp_cache_delete' ) ) {
 		wp_cache_delete( 'perfmatters_options', 'options' );
 		wp_cache_delete( 'alloptions', 'options' );
-	}
-	if ( function_exists( 'opcache_reset' ) ) {
-		@opcache_reset();
 	}
 
 	$saved = get_option( 'perfmatters_options', array() );
@@ -94,43 +90,17 @@ function gsps_apply_settings() {
 
 	$result = array(
 		'ok'      => $ok,
-		'message' => $ok
-			? 'ذخیره شد: delay_js=ON, behavior=all, rucss=ON. حالا این لینک را در Incognito باز کن و view-source را بفرست: ' . home_url( '/?' . GSPS_DEBUG_KEY . '=1&nowprocket=1' )
-			: 'ذخیره تأیید نشد. Perfmatters را فعال/آپدیت کن و دوباره Apply بزن.',
+		'message' => 'v1.3 اعمال شد. کش Rocket را پاک کن، Incognito بزن، view-source را برای pmdelayedscript چک کن. اگر Perfmatters نزند، Fallback خود افزونه Delay را اعمال می‌کند.',
 		'time'    => time(),
-		'debug'   => array(
-			'delay_js'          => $delay ? '1' : '0',
-			'delay_js_behavior' => $beh,
-			'remove_unused_css' => $rucss ? '1' : '0',
-			'pm_version'        => defined( 'PERFMATTERS_VERSION' ) ? PERFMATTERS_VERSION : '',
-		),
 	);
 	update_option( 'gsps_import_result', $result, false );
 	return $result;
 }
 
-/**
- * Collect runtime diagnostics for view-source comment.
- */
 function gsps_collect_debug() {
 	$opts   = get_option( 'perfmatters_options', array() );
 	$assets = ( isset( $opts['assets'] ) && is_array( $opts['assets'] ) ) ? $opts['assets'] : array();
-
-	$post_id = get_queried_object_id();
-	$meta_delay = $post_id ? get_post_meta( $post_id, 'perfmatters_exclude_delay_js', true ) : '';
-	$meta_rucss = $post_id ? get_post_meta( $post_id, 'perfmatters_exclude_unused_css', true ) : '';
-
-	$buffer_filters = 0;
-	if ( function_exists( 'has_filter' ) ) {
-		$buffer_filters = (int) has_filter( 'perfmatters_output_buffer_template_redirect' );
-	}
-
-	$allow_buffer = apply_filters( 'perfmatters_allow_buffer', true );
-	$allow_delay  = apply_filters( 'perfmatters_delay_js', ! empty( $assets['delay_js'] ) );
-	$allow_rucss  = apply_filters( 'perfmatters_remove_unused_css', ! empty( $assets['remove_unused_css'] ) );
-
-	$dynamic = function_exists( 'perfmatters_is_dynamic_request' ) ? (bool) perfmatters_is_dynamic_request() : null;
-	$builder = function_exists( 'perfmatters_is_page_builder' ) ? (bool) perfmatters_is_page_builder() : null;
+	$buffer_filters = function_exists( 'has_filter' ) ? (int) has_filter( 'perfmatters_output_buffer_template_redirect' ) : 0;
 
 	return array(
 		'gsps_version'        => GSPS_VERSION,
@@ -139,36 +109,21 @@ function gsps_collect_debug() {
 		'delay_js_db'         => ! empty( $assets['delay_js'] ) ? 1 : 0,
 		'delay_behavior_db'   => isset( $assets['delay_js_behavior'] ) ? (string) $assets['delay_js_behavior'] : '',
 		'rucss_db'            => ! empty( $assets['remove_unused_css'] ) ? 1 : 0,
-		'rucss_method_db'     => isset( $assets['rucss_method'] ) ? (string) $assets['rucss_method'] : '',
 		'logged_in'           => is_user_logged_in() ? 1 : 0,
-		'is_admin'            => is_admin() ? 1 : 0,
-		'post_id'             => (int) $post_id,
-		'meta_exclude_delay'  => $meta_delay ? 1 : 0,
-		'meta_exclude_rucss'  => $meta_rucss ? 1 : 0,
 		'buffer_filter_count' => $buffer_filters,
-		'allow_buffer'        => $allow_buffer ? 1 : 0,
-		'allow_delay_filter'  => $allow_delay ? 1 : 0,
-		'allow_rucss_filter'  => $allow_rucss ? 1 : 0,
-		'dynamic_request'     => null === $dynamic ? 'n/a' : ( $dynamic ? 1 : 0 ),
-		'page_builder'        => null === $builder ? 'n/a' : ( $builder ? 1 : 0 ),
-		'has_get_perfmatters' => isset( $_GET['perfmatters'] ) ? 1 : 0,
+		'allow_buffer'        => apply_filters( 'perfmatters_allow_buffer', true ) ? 1 : 0,
 		'wp_rocket_active'    => defined( 'WP_ROCKET_VERSION' ) ? WP_ROCKET_VERSION : 0,
-		'litespeed_active'    => defined( 'LSCWP_V' ) ? LSCWP_V : 0,
+		'fallback'            => 1,
 	);
 }
 
-/**
- * Print debug into HTML so it appears in view-source.
- * Always prints a short comment; full dump with ?gspsdebug=1
- */
 add_action( 'wp_head', function () {
 	if ( is_admin() ) {
 		return;
 	}
-
 	$d = gsps_collect_debug();
 	$short = sprintf(
-		'GSPS v%s | pm=%s(%s) | delay_db=%s behavior=%s rucss_db=%s | buffer_filters=%s allow_buffer=%s | logged_in=%s | rocket=%s',
+		'GSPS v%s | pm=%s(%s) | delay_db=%s behavior=%s rucss_db=%s | buffer_filters=%s allow_buffer=%s | logged_in=%s | rocket=%s | fallback=ON',
 		$d['gsps_version'],
 		$d['pm_active'],
 		$d['pm_version'],
@@ -181,50 +136,160 @@ add_action( 'wp_head', function () {
 		$d['wp_rocket_active']
 	);
 	echo "\n<!-- " . esc_html( $short ) . " -->\n";
-
 	if ( isset( $_GET[ GSPS_DEBUG_KEY ] ) ) {
 		echo '<!-- GSPS_DEBUG_JSON ' . esc_html( wp_json_encode( $d ) ) . " -->\n";
 	}
 }, 0 );
 
 /**
- * After output, if delay should run but markers missing, leave a footer note.
- * (We inspect via a shutdown buffer only when debug query present.)
+ * Fallback output buffer: if Perfmatters options say Delay All but markers missing, apply delay ourselves.
+ * Also async non-critical stylesheets and strip Google Fonts CSS links when configured.
  */
-add_action( 'template_redirect', function () {
-	if ( is_admin() || ! isset( $_GET[ GSPS_DEBUG_KEY ] ) ) {
+add_action( 'template_redirect', 'gsps_start_fallback_buffer', -9998 );
+
+function gsps_start_fallback_buffer() {
+	if ( is_admin() || is_feed() || is_preview() || ( function_exists( 'is_customize_preview' ) && is_customize_preview() ) ) {
 		return;
 	}
-	ob_start( function ( $html ) {
-		$d = gsps_collect_debug();
-		$has_delay = ( false !== strpos( $html, 'pmdelayedscript' ) );
-		$has_rucss = ( false !== strpos( $html, 'perfmatters-used-css' ) );
-		$note      = sprintf(
-			'GSPS_RESULT delay_marker=%s rucss_marker=%s delay_db=%s behavior=%s buffer_filters=%s allow_buffer=%s',
-			$has_delay ? 'YES' : 'NO',
-			$has_rucss ? 'YES' : 'NO',
-			$d['delay_js_db'],
-			$d['delay_behavior_db'] !== '' ? $d['delay_behavior_db'] : 'empty',
-			$d['buffer_filter_count'],
-			$d['allow_buffer']
-		);
-		if ( false !== stripos( $html, '</body>' ) ) {
-			$html = str_ireplace( '</body>', "<!-- {$note} -->\n</body>", $html );
-		} else {
-			$html .= "\n<!-- {$note} -->\n";
-		}
+	if ( is_user_logged_in() ) {
+		return; // match Perfmatters RUCSS behavior; keep admin views clean
+	}
+
+	ob_start( 'gsps_fallback_buffer_callback' );
+}
+
+function gsps_fallback_buffer_callback( $html ) {
+	if ( ! is_string( $html ) || strlen( $html ) < 100 ) {
 		return $html;
-	} );
-}, -10000 );
+	}
+
+	$opts   = get_option( 'perfmatters_options', array() );
+	$assets = ( isset( $opts['assets'] ) && is_array( $opts['assets'] ) ) ? $opts['assets'] : array();
+	$fonts  = ( isset( $opts['fonts'] ) && is_array( $opts['fonts'] ) ) ? $opts['fonts'] : array();
+
+	$want_delay = ! empty( $assets['delay_js'] ) && ( ( $assets['delay_js_behavior'] ?? '' ) === 'all' );
+	$want_rucss = ! empty( $assets['remove_unused_css'] );
+	$disable_gf = ! empty( $fonts['disable_google_fonts'] );
+
+	$did_delay = false;
+	$did_css   = false;
+	$did_gf    = false;
+
+	// --- Google Fonts strip ---
+	if ( $disable_gf && ( false !== strpos( $html, 'fonts.googleapis.com' ) || false !== strpos( $html, 'fonts.gstatic.com' ) ) ) {
+		$html = preg_replace( '#<link[^>]+fonts\.googleapis\.com[^>]*>#i', '', $html );
+		$html = preg_replace( '#<link[^>]+fonts\.gstatic\.com[^>]*>#i', '', $html );
+		$html = preg_replace( '#<style[^>]*id=[\'"]wbfs-font-swap[\'"][^>]*>.*?</style>#is', '', $html );
+		$did_gf = true;
+	}
+
+	// --- Delay JS fallback ---
+	if ( $want_delay && false === strpos( $html, 'pmdelayedscript' ) ) {
+		$exclusions = array(
+			'lazyload.min.js',
+			'lazyLoadOptions',
+			'lazyLoadInstance',
+			'perfmatters-lazy-load',
+			'jquery.min.js',
+			'jquery-core',
+			'gsps-',
+		);
+		if ( ! empty( $assets['delay_js_exclusions'] ) && is_array( $assets['delay_js_exclusions'] ) ) {
+			$exclusions = array_merge( $exclusions, $assets['delay_js_exclusions'] );
+		}
+
+		$html = preg_replace_callback(
+			'#<script(\b[^>]*)>(.*?)</script>#is',
+			function ( $m ) use ( $exclusions ) {
+				$attrs = $m[1];
+				$body  = $m[2];
+				$full  = $m[0];
+
+				// Skip already delayed / JSON / templates.
+				if ( preg_match( '#type\s*=\s*[\'"](application/ld\+json|application/json|text/template|text/x-|pmdelayedscript|speculationrules)[\'"]#i', $attrs ) ) {
+					return $full;
+				}
+				if ( preg_match( '#type\s*=\s*[\'"]module[\'"]#i', $attrs ) ) {
+					return $full;
+				}
+
+				$hay = $attrs . ' ' . $body;
+				foreach ( $exclusions as $ex ) {
+					$ex = trim( (string) $ex );
+					if ( $ex !== '' && stripos( $hay, $ex ) !== false ) {
+						return $full;
+					}
+				}
+
+				// Keep original type in data-type.
+				$type = 'text/javascript';
+				if ( preg_match( '#type\s*=\s*[\'"]([^\'"]+)[\'"]#i', $attrs, $tm ) ) {
+					$type  = $tm[1];
+					$attrs = preg_replace( '#\s*type\s*=\s*[\'"][^\'"]*[\'"]#i', '', $attrs );
+				}
+				$attrs = trim( $attrs );
+				return '<script type="pmdelayedscript" data-type="' . esc_attr( $type ) . '" ' . $attrs . '>' . $body . '</script>';
+			},
+			$html
+		);
+
+		if ( false !== strpos( $html, 'pmdelayedscript' ) && false === strpos( $html, 'id="perfmatters-delayed-scripts-js"' ) && false === strpos( $html, 'id="gsps-delayed-scripts-js"' ) ) {
+			$loader = '<script type="text/javascript" id="gsps-delayed-scripts-js">!function(){var t=setTimeout(n,1e4),e=["keydown","mousedown","mousemove","wheel","touchstart","touchmove","touchend"];function n(){clearTimeout(t),e.forEach(function(t){window.removeEventListener(t,n,{passive:!0})}),document.querySelectorAll("script[type=pmdelayedscript]").forEach(function(t){var e=document.createElement("script");[...t.attributes].forEach(function(t){var n=t.nodeName;"type"!==n&&("data-type"===n?e.type=t.nodeValue:e.setAttribute(n,t.nodeValue))}),t.text&&(e.text=t.text),t.parentNode.replaceChild(e,t)})}e.forEach(function(t){window.addEventListener(t,n,{passive:!0})})}();</script>';
+			if ( false !== stripos( $html, '</body>' ) ) {
+				$html = str_ireplace( '</body>', $loader . "\n</body>", $html );
+			} else {
+				$html .= $loader;
+			}
+			$did_delay = true;
+		} elseif ( false !== strpos( $html, 'pmdelayedscript' ) ) {
+			$did_delay = true;
+		}
+	}
+
+	// --- CSS async fallback when Used CSS missing ---
+	if ( $want_rucss && false === strpos( $html, 'perfmatters-used-css' ) ) {
+		$html = preg_replace_callback(
+			'#<link\b([^>]*rel=[\'"]stylesheet[\'"][^>]*)>#i',
+			function ( $m ) {
+				$tag = $m[0];
+				$attrs = $m[1];
+				if ( stripos( $attrs, 'fonts.googleapis.com' ) !== false ) {
+					return ''; // drop if still present
+				}
+				// skip if already async/print trick
+				if ( stripos( $attrs, 'onload=' ) !== false ) {
+					return $tag;
+				}
+				// Keep tiny critical? Async all stylesheets for PSI render-blocking win.
+				$new = $tag;
+				$new = preg_replace( '#\smedia=[\'"][^\'"]*[\'"]#i', '', $new );
+				$new = rtrim( substr( $new, 0, -1 ) ) . ' media="print" onload="this.media=\'all\'">';
+				return $new . '<noscript>' . $tag . '</noscript>';
+			},
+			$html
+		);
+		$did_css = true;
+	}
+
+	$flag = sprintf(
+		'GSPS_FALLBACK delay=%s css_async=%s strip_gfonts=%s has_pmdelay=%s has_usedcss=%s',
+		$did_delay ? 'YES' : 'NO',
+		$did_css ? 'YES' : 'NO',
+		$did_gf ? 'YES' : 'NO',
+		( false !== strpos( $html, 'pmdelayedscript' ) ) ? 'YES' : 'NO',
+		( false !== strpos( $html, 'perfmatters-used-css' ) ) ? 'YES' : 'NO'
+	);
+	if ( false !== stripos( $html, '</body>' ) ) {
+		$html = str_ireplace( '</body>', '<!-- ' . $flag . " -->\n</body>", $html );
+	} else {
+		$html .= "\n<!-- {$flag} -->\n";
+	}
+
+	return $html;
+}
 
 add_action( 'admin_menu', function () {
-	add_management_page(
-		'گین استور Perfmatters',
-		'گین استور Perfmatters',
-		'manage_options',
-		'gainstore-perfmatters-setup',
-		'gsps_render_admin_page'
-	);
+	add_management_page( 'گین استور Perfmatters', 'گین استور Perfmatters', 'manage_options', 'gainstore-perfmatters-setup', 'gsps_render_admin_page' );
 } );
 
 add_action( 'admin_post_gsps_force_apply', function () {
@@ -237,77 +302,31 @@ add_action( 'admin_post_gsps_force_apply', function () {
 	exit;
 } );
 
-add_action( 'admin_post_gsps_restore_backup', function () {
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Forbidden' );
-	}
-	check_admin_referer( 'gsps_restore_backup' );
-	$backup_options = get_option( 'gsps_backup_options', null );
-	$backup_tools   = get_option( 'gsps_backup_tools', null );
-	if ( null !== $backup_options ) {
-		delete_option( 'perfmatters_options' );
-		add_option( 'perfmatters_options', $backup_options, '', false );
-	}
-	if ( null !== $backup_tools ) {
-		delete_option( 'perfmatters_tools' );
-		add_option( 'perfmatters_tools', $backup_tools, '', false );
-	}
-	update_option( 'gsps_import_result', array(
-		'ok'      => true,
-		'message' => 'بکاپ قبلی بازگردانی شد.',
-		'time'    => time(),
-	), false );
-	wp_safe_redirect( admin_url( 'tools.php?page=gainstore-perfmatters-setup&restored=1' ) );
-	exit;
-} );
-
 function gsps_render_admin_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
 	$opts   = get_option( 'perfmatters_options', array() );
-	$result = get_option( 'gsps_import_result', array() );
 	$assets = isset( $opts['assets'] ) && is_array( $opts['assets'] ) ? $opts['assets'] : array();
-	$delay  = ! empty( $assets['delay_js'] ) ? 'ON' : 'OFF';
-	$beh    = isset( $assets['delay_js_behavior'] ) ? (string) $assets['delay_js_behavior'] : '(empty)';
-	$rucss  = ! empty( $assets['remove_unused_css'] ) ? 'ON' : 'OFF';
-
-	$apply_url   = wp_nonce_url( admin_url( 'admin-post.php?action=gsps_force_apply' ), 'gsps_force_apply' );
-	$restore_url = wp_nonce_url( admin_url( 'admin-post.php?action=gsps_restore_backup' ), 'gsps_restore_backup' );
-	$debug_url   = home_url( '/?' . GSPS_DEBUG_KEY . '=1&nowprocket=1' );
+	$apply  = wp_nonce_url( admin_url( 'admin-post.php?action=gsps_force_apply' ), 'gsps_force_apply' );
+	$debug  = home_url( '/?' . GSPS_DEBUG_KEY . '=1&nowprocket=1' );
 
 	echo '<div class="wrap"><h1>گین استور Perfmatters v' . esc_html( GSPS_VERSION ) . '</h1>';
-	if ( ! empty( $_GET['applied'] ) ) {
-		echo '<div class="notice notice-success"><p>اعمال شد.</p></div>';
-	}
-	if ( ! empty( $result['message'] ) ) {
-		echo '<div class="notice notice-info"><p>' . esc_html( $result['message'] ) . '</p></div>';
-	}
-
-	echo '<table class="widefat striped" style="max-width:820px"><tbody>';
-	echo '<tr><td>Perfmatters</td><td>' . esc_html( defined( 'PERFMATTERS_VERSION' ) ? PERFMATTERS_VERSION : 'INACTIVE' ) . '</td></tr>';
-	echo '<tr><td>Delay JS (DB)</td><td><strong>' . esc_html( $delay ) . '</strong></td></tr>';
-	echo '<tr><td>Delay Behavior (DB)</td><td><strong>' . esc_html( $beh ) . '</strong> ← باید all باشد</td></tr>';
-	echo '<tr><td>Remove Unused CSS (DB)</td><td><strong>' . esc_html( $rucss ) . '</strong></td></tr>';
-	echo '</tbody></table>';
-
-	echo '<p style="margin-top:18px"><a class="button button-primary button-hero" href="' . esc_url( $apply_url ) . '">۱) اعمال اجباری + پاک‌کردن کش</a> ';
-	if ( get_option( 'gsps_backup_options', false ) ) {
-		echo '<a class="button" href="' . esc_url( $restore_url ) . '">بازگردانی بکاپ</a>';
-	}
-	echo '</p>';
-
-	echo '<h2>۲) دیباگ داخل view-source</h2>';
-	echo '<p>این لینک را در <strong>Incognito</strong> باز کن، بعد View Source بگیر و خطی که با <code>GSPS</code> شروع می‌شود را کپی کن برام بفرست:</p>';
-	echo '<p><a class="button button-secondary" href="' . esc_url( $debug_url ) . '" target="_blank" rel="noopener">' . esc_html( $debug_url ) . '</a></p>';
-	echo '<p>در view-source جستجو کن: <code>GSPS</code> و <code>GSPS_RESULT</code> و <code>pmdelayedscript</code></p>';
-	echo '<p><strong>مهم:</strong> اسکرین قبلی از kianstock بود. این کارها باید روی <code>gainstore.ir/wp-admin</code> باشد.</p>';
-	echo '</div>';
+	echo '<div class="notice notice-success"><p><strong>تشخیص از GSPS:</strong> تنظیمات DB درست است (delay=ON / all / rucss=ON) ولی WP Rocket 3.16 بافر Perfmatters را خنثی می‌کند. نسخه ۱.۳ Fallback Delay/CSS دارد.</p></div>';
+	echo '<p>Delay DB: <strong>' . ( ! empty( $assets['delay_js'] ) ? 'ON' : 'OFF' ) . '</strong> | Behavior: <strong>' . esc_html( $assets['delay_js_behavior'] ?? '' ) . '</strong> | RUCSS: <strong>' . ( ! empty( $assets['remove_unused_css'] ) ? 'ON' : 'OFF' ) . '</strong></p>';
+	echo '<p><a class="button button-primary button-hero" href="' . esc_url( $apply ) . '">اعمال اجباری + پاک‌کردن کش</a></p>';
+	echo '<h2>الان این کارها را بزن</h2><ol>';
+	echo '<li>در WP Rocket این‌ها را <strong>خاموش</strong> کن: Delay JS، Load JS deferred، Remove Unused CSS، Minify/Combine CSS/JS، LazyLoad</li>';
+	echo '<li>Clear cache کامل Rocket</li>';
+	echo '<li>این افزونه را به ۱.۳ آپدیت و فعال کن، بعد Apply</li>';
+	echo '<li>Incognito: <a href="' . esc_url( $debug ) . '" target="_blank">' . esc_html( $debug ) . '</a></li>';
+	echo '<li>View Source → باید <code>pmdelayedscript</code> و <code>GSPS_FALLBACK delay=YES</code> را ببینی</li>';
+	echo '</ol></div>';
 }
 
 add_action( 'admin_notices', function () {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
-	echo '<div class="notice notice-warning"><p><strong>گین استور:</strong> Delay JS روی فرانت نیست. برو <a href="' . esc_url( admin_url( 'tools.php?page=gainstore-perfmatters-setup' ) ) . '">ابزارها → گین استور Perfmatters</a> → اعمال اجباری، بعد لینک دیباگ را در Incognito باز کن و متن <code>GSPS</code> داخل view-source را بفرست.</p></div>';
+	echo '<div class="notice notice-error"><p><strong>گین استور:</strong> از دیباگ معلوم شد WP Rocket جلوی Delay پرفمترز را گرفته. ZIP نسخه <strong>1.3</strong> را نصب کن (Fallback). همچنین بهینه‌سازی فایل Rocket را خاموش کن. <a href="' . esc_url( admin_url( 'tools.php?page=gainstore-perfmatters-setup' ) ) . '">صفحه ابزار</a></p></div>';
 } );
