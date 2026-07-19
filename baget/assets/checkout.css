@@ -52,3 +52,7 @@
 .wccp-info-text p{margin:0 0 8px}
 .wccp-info-text p:last-child{margin-bottom:0}
 .wccp-field-info .wccp-info-box{width:100%}
+.woocommerce-checkout .form-row.wccp-hidden-billing-phone,
+.woocommerce-checkout p#billing_phone_field.wccp-hidden-billing-phone{
+	position:absolute!important;left:-9999px!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;border:0!important
+}

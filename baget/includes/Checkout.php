@@ -24,9 +24,12 @@ class Checkout {
 		add_filter( 'woocommerce_form_field_wccp_checkboxes', array( $this, 'render_choice_fields' ), 10, 4 );
 		add_filter( 'woocommerce_form_field_wccp_info', array( $this, 'render_info_field' ), 10, 4 );
 		// هر فیلد نوع «تلفن» = billing_phone برای درگاه/پیامک
-		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'sync_missing_core_fields' ), 5 );
-		add_action( 'woocommerce_checkout_process', array( $this, 'force_sync_phone_early' ), 1 );
+		add_filter( 'woocommerce_checkout_fields', array( $this, 'ensure_hidden_billing_phone' ), 1001 );
+		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'sync_missing_core_fields' ), 1 );
+		add_action( 'woocommerce_checkout_process', array( $this, 'force_sync_phone_early' ), 0 );
+		add_action( 'woocommerce_checkout_process', array( $this, 'strip_false_mobile_notices' ), 999 );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'clear_orphan_phone_errors' ), 1, 2 );
+		add_action( 'woocommerce_after_checkout_validation', array( $this, 'clear_orphan_phone_errors' ), 999, 2 );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_choice_fields' ), 10, 2 );
 		add_action( 'woocommerce_checkout_update_order_meta', array( $this, 'save_order_meta' ) );
 		add_action( 'woocommerce_admin_order_data_after_billing_address', array( $this, 'admin_display' ) );
@@ -121,7 +124,7 @@ class Checkout {
 	}
 
 	/**
-	 * اولویت: billing_phone معتبر → بعد هر فیلد type=tel → بعد فیلدهایی با نام/برچسب شماره.
+	 * اولویت: billing_phone → type=tel → برچسب شماره → هر مقدار 09 در POST.
 	 *
 	 * @param string[]            $active
 	 * @param array<string,array> $defs
@@ -163,7 +166,121 @@ class Checkout {
 				return $mobile;
 			}
 		}
+
+		// آخرین راه: هر مقدار شبیه موبایل ایران در POST (کلیدهای wccp_ / billing_)
+		foreach ( (array) wp_unslash( $_POST ) as $key => $raw ) { // phpcs:ignore
+			$key = (string) $key;
+			if ( is_array( $raw ) ) {
+				continue;
+			}
+			if (
+				0 !== strpos( $key, 'wccp' )
+				&& 0 !== strpos( $key, 'billing_' )
+				&& false === stripos( $key, 'phone' )
+				&& false === stripos( $key, 'mobile' )
+			) {
+				continue;
+			}
+			$mobile = self::normalize_ir_mobile( $raw );
+			if ( $mobile ) {
+				return $mobile;
+			}
+		}
 		return '';
+	}
+
+	/**
+	 * اگر billing_phone در قالب نیست ولی فیلد تلفن داریم، فیلد مخفی billing_phone بساز.
+	 *
+	 * @param array $fields
+	 * @return array
+	 */
+	public function ensure_hidden_billing_phone( $fields ) {
+		if ( ! is_array( $fields ) ) {
+			return $fields;
+		}
+		$active = $this->active_keys();
+		$defs   = CustomFields::merged_with_defaults();
+		$has_tel = false;
+		foreach ( $active as $key ) {
+			if ( 'billing_phone' === $key ) {
+				return $fields;
+			}
+			if ( ! empty( $defs[ $key ]['type'] ) && 'tel' === $defs[ $key ]['type'] ) {
+				$has_tel = true;
+			}
+		}
+		if ( ! $has_tel ) {
+			return $fields;
+		}
+		if ( ! isset( $fields['billing'] ) || ! is_array( $fields['billing'] ) ) {
+			$fields['billing'] = array();
+		}
+		$fields['billing']['billing_phone'] = array(
+			'type'              => 'tel',
+			'required'          => false,
+			'label'             => 'شماره موبایل',
+			'class'             => array( 'form-row-wide', 'wccp-hidden-billing-phone', 'wccp-maps-billing-phone' ),
+			'priority'          => 5,
+			'custom_attributes' => array( 'data-wccp-synced' => '1', 'autocomplete' => 'tel' ),
+		);
+		return $fields;
+	}
+
+	/** پاک کردن noticeهای اشتباه افزونه پیامک وقتی شماره معتبر از فیلد تلفن داریم */
+	public function strip_false_mobile_notices() {
+		if ( ! function_exists( 'wc_get_notices' ) || ! function_exists( 'wc_clear_notices' ) ) {
+			return;
+		}
+		$this->force_sync_phone_early();
+		$phone = self::normalize_ir_mobile( $_POST['billing_phone'] ?? '' ); // phpcs:ignore
+		if ( ! $phone ) {
+			$phone = $this->find_posted_mobile( $this->active_keys(), CustomFields::merged_with_defaults() );
+		}
+		if ( ! $phone ) {
+			return;
+		}
+
+		$all = wc_get_notices();
+		if ( empty( $all['error'] ) || ! is_array( $all['error'] ) ) {
+			return;
+		}
+		$kept = array();
+		foreach ( $all['error'] as $item ) {
+			$msg = is_array( $item ) ? (string) ( $item['notice'] ?? '' ) : (string) $item;
+			if (
+				false !== strpos( $msg, 'موبایل' )
+				|| false !== strpos( $msg, 'شماره موبایل' )
+				|| false !== stripos( $msg, 'mobile' )
+			) {
+				continue;
+			}
+			$kept[] = $item;
+		}
+		if ( count( $kept ) === count( $all['error'] ) ) {
+			return;
+		}
+		wc_clear_notices();
+		foreach ( $all as $type => $items ) {
+			if ( 'error' === $type ) {
+				foreach ( $kept as $item ) {
+					$msg = is_array( $item ) ? (string) ( $item['notice'] ?? '' ) : (string) $item;
+					if ( $msg !== '' ) {
+						wc_add_notice( $msg, 'error' );
+					}
+				}
+				continue;
+			}
+			if ( ! is_array( $items ) ) {
+				continue;
+			}
+			foreach ( $items as $item ) {
+				$msg = is_array( $item ) ? (string) ( $item['notice'] ?? '' ) : (string) $item;
+				if ( $msg !== '' ) {
+					wc_add_notice( $msg, $type );
+				}
+			}
+		}
 	}
 
 	/**
@@ -218,6 +335,7 @@ class Checkout {
 			return;
 		}
 		wp_enqueue_style( 'wccp-checkout', WCCP_URL . 'assets/checkout.css', array(), WCCP_VERSION );
+		wp_enqueue_script( 'wccp-checkout', WCCP_URL . 'assets/checkout.js', array( 'jquery' ), WCCP_VERSION, true );
 	}
 
 	public function filter_fields( $fields ) {

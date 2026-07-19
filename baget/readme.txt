@@ -2,12 +2,16 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.5.7
+Stable tag: 1.5.8
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.5.8 =
+* همگام‌سازی قطعی شماره پدر/مادر/هر تلفن با billing_phone (JS + سرور)
+* حذف خودکار خطای اشتباه «شماره موبایل معتبر نیست» افزونه پیامک
 
 = 1.5.7 =
 * هر فیلد نوع «تلفن» مثل billing_phone برای پیامک و درگاه همگام می‌شود
