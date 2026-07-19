@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Baget | ادیت فیلدهای پرداخت
  * Description: مدیریت فیلدهای صفحه پرداخت و محصولات آنلاین — جابه‌جایی و ذخیره فیلدهای پیش‌فرض و سفارشی.
- * Version:     1.5.6
+ * Version:     1.5.7
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir

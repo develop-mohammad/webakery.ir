@@ -2,12 +2,15 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.5.6
+Stable tag: 1.5.7
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.5.7 =
+* هر فیلد نوع «تلفن» مثل billing_phone برای پیامک و درگاه همگام می‌شود
 
 = 1.5.6 =
 * رفع خطای «شماره موبایل معتبر نیست» وقتی billing_phone از قالب حذف شده

@@ -65,12 +65,12 @@ define( 'LS_PLUGIN_META', [
 // نسخهٔ سرور باید از نسخهٔ نصب‌شده روی سایت مشتری بالاتر باشد تا در «افزونه‌ها» آپدیت نمایش داده شود.
 define( 'LS_UPDATES', [
     'wccp' => [
-        'version'      => '1.5.6',
+        'version'      => '1.5.7',
         'package'      => 'https://webakery.ir/license-server/updates/baget.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۵.۶: رفع خطای «شماره موبایل معتبر نیست» وقتی فیلد استاندارد تلفن حذف شده.',
+        'changelog'    => 'نسخه ۱.۵.۷: هر فیلد نوع تلفن مثل billing_phone برای پیامک و درگاه همگام می‌شود.',
     ],
     'access-levels' => [
         'version'      => '1.5.8',
