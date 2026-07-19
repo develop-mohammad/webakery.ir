@@ -6,13 +6,14 @@ defined( 'ABSPATH' ) || exit;
 		<div class="wccp-modal-head">
 			<div>
 				<h3 id="wccp-modal-title">ساخت سوال / فیلد</h3>
-				<p class="wccp-muted">مثل فرم‌ساز وردپرس: عنوان را بنویسید، نوع را انتخاب کنید، گزینه‌ها را اضافه کنید.</p>
+				<p class="wccp-muted" id="wccp-modal-help">مثل فرم‌ساز وردپرس: عنوان را بنویسید، نوع را انتخاب کنید، گزینه‌ها را اضافه کنید.</p>
 			</div>
 			<button type="button" class="wccp-icon-btn" id="wccp-modal-close" title="بستن">×</button>
 		</div>
 
 		<form id="wccp-field-form">
 			<input type="hidden" id="wccp-field-key" value="" />
+			<input type="hidden" id="wccp-field-is-default" value="0" />
 
 			<div class="wccp-form-grid">
 				<div class="wccp-form-main">
@@ -21,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 						<input type="text" id="wccp-field-label" class="widefat" placeholder="مثلاً: نحوه آشنایی با ما؟ / اطلاعات بیشتر سفارش" />
 					</label>
 
-					<div class="wccp-field-block">
+					<div class="wccp-field-block" id="wccp-field-type-wrap">
 						<span class="wccp-label">۲) نوع فیلد را انتخاب کنید</span>
 						<input type="hidden" id="wccp-field-type" value="text" />
 						<div class="wccp-type-grid" id="wccp-type-grid">

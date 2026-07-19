@@ -20,8 +20,30 @@ class Ajax {
 		add_action( 'wp_ajax_wccp_create_field', array( $this, 'create_field' ) );
 		add_action( 'wp_ajax_wccp_update_field', array( $this, 'update_field' ) );
 		add_action( 'wp_ajax_wccp_delete_field', array( $this, 'delete_field' ) );
+		add_action( 'wp_ajax_wccp_restore_field', array( $this, 'restore_field' ) );
 		add_action( 'wp_ajax_wccp_save_product_fields', array( $this, 'save_product_fields' ) );
 		add_action( 'wp_ajax_wccp_set_default_template', array( $this, 'set_default_template' ) );
+	}
+
+	/** حذف کلید از فیلدهای همه قالب‌ها + active سراسری */
+	private function purge_key_from_templates( $key, $template_key = '' ) {
+		$key = sanitize_key( (string) $key );
+		foreach ( array_keys( Templates::all() ) as $tk ) {
+			$current = Templates::fields_for( $tk );
+			if ( $tk !== $template_key && ! in_array( $key, $current, true ) ) {
+				continue;
+			}
+			$tf = array_values( array_diff( $current, array( $key ) ) );
+			if ( empty( $tf ) ) {
+				$tf = array_values( array_diff( Templates::default_fields(), array( $key ) ) );
+			}
+			if ( empty( $tf ) ) {
+				$tf = ( 'billing_first_name' === $key ) ? array( 'billing_phone' ) : array( 'billing_first_name' );
+			}
+			Templates::update_fields( $tk, $tf );
+		}
+		$active = array_values( array_diff( Fields::get_active_keys(), array( $key ) ) );
+		update_option( Fields::ACTIVE_OPTION, $active, false );
 	}
 
 	private function guard() {
@@ -175,9 +197,41 @@ class Ajax {
 		if ( ! $key ) {
 			wp_send_json_error( array( 'message' => 'فیلد نامعتبر است.' ) );
 		}
-		$custom = get_option( Fields::CUSTOM_OPTION, array() );
-		if ( ! is_array( $custom ) || ! isset( $custom[ $key ] ) ) {
-			wp_send_json_error( array( 'message' => 'فقط فیلدهای سفارشی قابل ویرایش هستند.' ) );
+
+		$is_default = isset( Fields::defaults()[ $key ] );
+		$custom     = get_option( Fields::CUSTOM_OPTION, array() );
+		if ( ! is_array( $custom ) ) {
+			$custom = array();
+		}
+
+		// فیلد پیش‌فرض: فقط برچسب + اجباری/اختیاری
+		if ( $is_default && ! isset( $custom[ $key ] ) ) {
+			$label = sanitize_text_field( wp_unslash( $_POST['label'] ?? Fields::defaults()[ $key ]['label'] ) );
+			$res   = CustomFields::save_override(
+				$key,
+				array(
+					'label'    => $label ?: Fields::defaults()[ $key ]['label'],
+					'required' => ! empty( $_POST['required'] ) ? 1 : 0,
+					'enabled'  => 1,
+				)
+			);
+			if ( is_wp_error( $res ) ) {
+				wp_send_json_error( array( 'message' => $res->get_error_message() ) );
+			}
+			$fields = CustomFields::merged_with_defaults();
+			wp_send_json_success(
+				array(
+					'message' => 'فیلد پیش‌فرض به‌روز شد (اجباری/اختیاری و عنوان).',
+					'key'     => $key,
+					'field'   => $fields[ $key ] ?? array(),
+					'fields'  => $fields,
+					'hidden'  => CustomFields::hidden_default_keys(),
+				)
+			);
+		}
+
+		if ( ! isset( $custom[ $key ] ) ) {
+			wp_send_json_error( array( 'message' => 'فیلد قابل ویرایش نیست.' ) );
 		}
 
 		$label = sanitize_text_field( wp_unslash( $_POST['label'] ?? $custom[ $key ]['label'] ?? '' ) );
@@ -211,6 +265,7 @@ class Ajax {
 				'key'     => $key,
 				'field'   => $custom[ $key ],
 				'fields'  => CustomFields::merged_with_defaults(),
+				'hidden'  => CustomFields::hidden_default_keys(),
 			)
 		);
 	}
@@ -218,41 +273,82 @@ class Ajax {
 	public function delete_field() {
 		$this->guard();
 		$key = sanitize_key( wp_unslash( $_POST['key'] ?? '' ) );
-		if ( ! $key || isset( Fields::defaults()[ $key ] ) ) {
-			wp_send_json_error( array( 'message' => 'فقط فیلد سفارشی قابل حذف است.' ) );
+		if ( ! $key ) {
+			wp_send_json_error( array( 'message' => 'فیلد نامعتبر است.' ) );
 		}
+
+		$template_key = sanitize_key( wp_unslash( $_POST['template_key'] ?? '' ) );
+		$is_default   = isset( Fields::defaults()[ $key ] );
+
+		if ( $is_default ) {
+			// مخفی‌سازی قابل بازیابی — نه حذف فیزیکی تعریف پیش‌فرض
+			CustomFields::save_override(
+				$key,
+				array(
+					'enabled'  => 0,
+					'required' => ! empty( Fields::defaults()[ $key ]['required'] ) ? 1 : 0,
+					'label'    => Fields::defaults()[ $key ]['label'],
+				)
+			);
+			$this->purge_key_from_templates( $key, $template_key );
+			$active = $template_key ? Templates::fields_for( $template_key ) : Fields::get_active_keys();
+			wp_send_json_success(
+				array(
+					'message' => 'فیلد پیش‌فرض حذف شد (قابل بازیابی است).',
+					'active'  => $active,
+					'fields'  => CustomFields::merged_with_defaults(),
+					'hidden'  => CustomFields::hidden_default_keys(),
+				)
+			);
+		}
+
 		$custom = get_option( Fields::CUSTOM_OPTION, array() );
 		if ( is_array( $custom ) && isset( $custom[ $key ] ) ) {
 			unset( $custom[ $key ] );
 			update_option( Fields::CUSTOM_OPTION, $custom, false );
+		} else {
+			wp_send_json_error( array( 'message' => 'فیلد یافت نشد.' ) );
 		}
 
-		$template_key = sanitize_key( wp_unslash( $_POST['template_key'] ?? '' ) );
-
-		// از لیست فیلد همه قالب‌ها حذف شود
-		foreach ( array_keys( Templates::all() ) as $tk ) {
-			$tf = array_values( array_diff( Templates::fields_for( $tk ), array( $key ) ) );
-			if ( empty( $tf ) ) {
-				$tf = Templates::default_fields();
-			}
-			// فقط اگر قالب قبلاً سفارشی شده یا همین قالب جاری است ذخیره کن
-			if ( $tk === $template_key || isset( Templates::custom()[ $tk ] ) ) {
-				Templates::update_fields( $tk, $tf );
-			}
-		}
-
-		$active = $template_key
-			? Templates::fields_for( $template_key )
-			: array_values( array_diff( Fields::get_active_keys(), array( $key ) ) );
-		if ( ! $template_key ) {
-			update_option( Fields::ACTIVE_OPTION, $active, false );
-		}
+		$this->purge_key_from_templates( $key, $template_key );
+		$active = $template_key ? Templates::fields_for( $template_key ) : Fields::get_active_keys();
 
 		wp_send_json_success(
 			array(
-				'message' => 'فیلد حذف شد.',
+				'message' => 'فیلد سفارشی حذف شد.',
 				'active'  => $active,
 				'fields'  => CustomFields::merged_with_defaults(),
+				'hidden'  => CustomFields::hidden_default_keys(),
+			)
+		);
+	}
+
+	public function restore_field() {
+		$this->guard();
+		$key = sanitize_key( wp_unslash( $_POST['key'] ?? '' ) );
+		if ( ! $key || ! isset( Fields::defaults()[ $key ] ) ) {
+			wp_send_json_error( array( 'message' => 'فقط فیلد پیش‌فرض مخفی قابل بازیابی است.' ) );
+		}
+		$ov = CustomFields::overrides();
+		$cur = isset( $ov[ $key ] ) && is_array( $ov[ $key ] ) ? $ov[ $key ] : array();
+		CustomFields::save_override(
+			$key,
+			array(
+				'enabled'  => 1,
+				'required' => array_key_exists( 'required', $cur ) ? (int) ! empty( $cur['required'] ) : ( ! empty( Fields::defaults()[ $key ]['required'] ) ? 1 : 0 ),
+				'label'    => (string) ( $cur['label'] ?? Fields::defaults()[ $key ]['label'] ),
+			)
+		);
+
+		$template_key = sanitize_key( wp_unslash( $_POST['template_key'] ?? '' ) );
+		$active       = $template_key ? Templates::fields_for( $template_key ) : Fields::get_active_keys();
+
+		wp_send_json_success(
+			array(
+				'message' => 'فیلد پیش‌فرض بازیابی شد — می‌توانید به ستون فعال اضافه کنید.',
+				'active'  => $active,
+				'fields'  => CustomFields::merged_with_defaults(),
+				'hidden'  => CustomFields::hidden_default_keys(),
 			)
 		);
 	}

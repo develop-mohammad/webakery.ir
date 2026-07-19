@@ -10,11 +10,9 @@ $required  = ! empty( $f['required'] );
 	data-key="<?php echo esc_attr( $key ); ?>"
 	data-custom="<?php echo $is_custom ? '1' : '0'; ?>">
 	<div class="wccp-item-actions">
-		<button type="button" class="wccp-icon-btn wccp-move-btn" title="افزودن/حذف" aria-label="جابه‌جا">+</button>
-		<?php if ( $is_custom ) : ?>
-			<button type="button" class="wccp-icon-btn wccp-edit-btn" title="ویرایش">✎</button>
-			<button type="button" class="wccp-icon-btn wccp-del-btn" title="حذف فیلد سفارشی">×</button>
-		<?php endif; ?>
+		<button type="button" class="wccp-icon-btn wccp-move-btn" title="افزودن/حذف از قالب" aria-label="جابه‌جا">+</button>
+		<button type="button" class="wccp-icon-btn wccp-edit-btn" title="<?php echo $is_custom ? 'ویرایش' : 'اجباری / اختیاری / عنوان'; ?>">✎</button>
+		<button type="button" class="wccp-icon-btn wccp-del-btn" title="<?php echo $is_custom ? 'حذف فیلد سفارشی' : 'حذف فیلد پیش‌فرض (قابل بازیابی)'; ?>">×</button>
 	</div>
 	<div class="wccp-item-meta">
 		<?php if ( $is_custom ) : ?>
@@ -24,6 +22,8 @@ $required  = ! empty( $f['required'] );
 		<?php endif; ?>
 		<?php if ( $required ) : ?>
 			<span class="wccp-tag required">اجباری</span>
+		<?php else : ?>
+			<span class="wccp-tag type">اختیاری</span>
 		<?php endif; ?>
 		<span class="wccp-item-label"><?php echo esc_html( $f['label'] ?? $key ); ?></span>
 		<code class="wccp-item-key" dir="ltr"><?php echo esc_html( $key ); ?></code>

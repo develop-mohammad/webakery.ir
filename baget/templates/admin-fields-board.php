@@ -20,7 +20,11 @@ defined( 'ABSPATH' ) || exit;
 				include WCCP_PATH . 'templates/admin-field-row.php';
 			endforeach; ?>
 		</ul>
-		<p class="wccp-muted" style="padding:8px 12px">برای فعال‌سازی: دکمه + یا کشیدن به ستون راست.</p>
+		<p class="wccp-muted" style="padding:8px 12px">برای فعال‌سازی: دکمه + یا کشیدن به ستون راست. روی ✎ اجباری/اختیاری کنید.</p>
+		<div id="wccp-hidden-defaults" class="wccp-hidden-defaults" hidden>
+			<strong>فیلدهای پیش‌فرض حذف‌شده</strong>
+			<ul id="wccp-hidden-list"></ul>
+		</div>
 	</section>
 
 	<div class="wccp-swap" aria-hidden="true">⇄</div>

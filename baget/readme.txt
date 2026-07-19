@@ -2,12 +2,15 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.5.4
+Stable tag: 1.5.5
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.5.5 =
+* فیلدهای پیش‌فرض: اجباری/اختیاری + ویرایش عنوان + حذف قابل بازیابی
 
 = 1.5.4 =
 * رفع باگ صفحه خالی admin-post در لینک پرداخت مستقیم

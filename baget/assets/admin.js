@@ -10,8 +10,15 @@
     dragKey: null,
     optionSeed: 0,
     templateKey: WCCP_ADMIN.templateKey || '',
-    defaultTpl: WCCP_ADMIN.defaultTpl || ''
+    defaultTpl: WCCP_ADMIN.defaultTpl || '',
+    defaultKeys: WCCP_ADMIN.defaultKeys || [],
+    hidden: (WCCP_ADMIN.hidden || []).slice(),
+    defaultDefs: WCCP_ADMIN.defaultDefs || {}
   };
+
+  function isDefaultKey(key) {
+    return state.defaultKeys.indexOf(key) !== -1;
+  }
 
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
@@ -69,13 +76,13 @@
     li.setAttribute('data-custom', isCustom ? '1' : '0');
     li.innerHTML =
       '<div class="wccp-item-actions">' +
-        '<button type="button" class="wccp-icon-btn wccp-move-btn" title="افزودن/حذف">+</button>' +
-        (isCustom ? '<button type="button" class="wccp-icon-btn wccp-edit-btn" title="ویرایش">✎</button>' : '') +
-        (isCustom ? '<button type="button" class="wccp-icon-btn wccp-del-btn" title="حذف">×</button>' : '') +
+        '<button type="button" class="wccp-icon-btn wccp-move-btn" title="افزودن/حذف از قالب">+</button>' +
+        '<button type="button" class="wccp-icon-btn wccp-edit-btn" title="' + (isCustom ? 'ویرایش' : 'اجباری / اختیاری / عنوان') + '">✎</button>' +
+        '<button type="button" class="wccp-icon-btn wccp-del-btn" title="' + (isCustom ? 'حذف' : 'حذف پیش‌فرض (قابل بازیابی)') + '">×</button>' +
       '</div>' +
       '<div class="wccp-item-meta">' +
         (isCustom ? '<span class="wccp-tag custom">سفارشی</span>' : '<span class="wccp-tag default">پیش‌فرض</span>') +
-        (f.required ? '<span class="wccp-tag required">اجباری</span>' : '') +
+        (f.required ? '<span class="wccp-tag required">اجباری</span>' : '<span class="wccp-tag type">اختیاری</span>') +
         '<span class="wccp-tag type">' + typeLabel(f.type) + '</span>' +
         '<span class="wccp-item-label"></span>' +
         '<code class="wccp-item-key" dir="ltr"></code>' +
@@ -84,6 +91,30 @@
     li.querySelector('.wccp-item-label').textContent = f.label || key;
     li.querySelector('.wccp-item-key').textContent = key;
     return li;
+  }
+
+  function renderHiddenDefaults() {
+    var box = $('#wccp-hidden-defaults');
+    var list = $('#wccp-hidden-list');
+    if (!box || !list) return;
+    list.innerHTML = '';
+    var hidden = state.hidden || [];
+    if (!hidden.length) {
+      box.hidden = true;
+      return;
+    }
+    box.hidden = false;
+    hidden.forEach(function (key) {
+      var def = state.defaultDefs[key] || { label: key };
+      var li = document.createElement('li');
+      li.innerHTML = '<span></span><button type="button" class="button button-small wccp-restore-btn">بازیابی</button>';
+      li.querySelector('span').textContent = (def.label || key) + ' (' + key + ')';
+      li.querySelector('.wccp-restore-btn').addEventListener('click', function (e) {
+        e.preventDefault();
+        restoreField(key);
+      });
+      list.appendChild(li);
+    });
   }
 
   function syncHidden() {
@@ -107,6 +138,7 @@
     });
     syncHidden();
     bindItemEvents();
+    renderHiddenDefaults();
   }
 
   function markDirty() {
@@ -189,8 +221,11 @@
       btn.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        if (!window.confirm(WCCP_ADMIN.i18n.confirm)) return;
         var key = btn.closest('.wccp-item').getAttribute('data-key');
+        var msg = isDefaultKey(key)
+          ? (WCCP_ADMIN.i18n.confirm_default || 'فیلد پیش‌فرض مخفی شود؟')
+          : (WCCP_ADMIN.i18n.confirm || 'حذف شود؟');
+        if (!window.confirm(msg)) return;
         deleteField(key);
       });
     });
@@ -474,9 +509,22 @@
     if (!modal) return;
     var isEdit = !!key;
     var f = isEdit ? (state.fields[key] || {}) : {};
+    var isDefault = isEdit && isDefaultKey(key) && !(f.custom || f.user_defined);
     var title = $('#wccp-modal-title');
-    if (title) title.textContent = isEdit ? 'ویرایش سوال / فیلد' : 'ساخت سوال / فیلد جدید';
+    var help = $('#wccp-modal-help');
+    if (title) {
+      title.textContent = isEdit
+        ? (isDefault ? 'ویرایش فیلد پیش‌فرض' : 'ویرایش سوال / فیلد')
+        : 'ساخت سوال / فیلد جدید';
+    }
+    if (help) {
+      help.textContent = isDefault
+        ? 'برای فیلدهای پیش‌فرض می‌توانید عنوان و اجباری/اختیاری بودن را تغییر دهید.'
+        : 'مثل فرم‌ساز وردپرس: عنوان را بنویسید، نوع را انتخاب کنید، گزینه‌ها را اضافه کنید.';
+    }
     $('#wccp-field-key').value = isEdit ? key : '';
+    var isDefaultInput = $('#wccp-field-is-default');
+    if (isDefaultInput) isDefaultInput.value = isDefault ? '1' : '0';
     $('#wccp-field-label').value = f.label || (presetType === 'info' ? 'اطلاعات بیشتر سفارش' : '');
     $('#wccp-field-required').checked = !!f.required;
     var contentEl = $('#wccp-field-content');
@@ -485,10 +533,21 @@
     var type = presetType || f.type || 'text';
     setType(type);
 
-    if (optionTypes().indexOf(type) !== -1) {
+    var typeWrap = $('#wccp-field-type-wrap');
+    var typeGrid = $('#wccp-type-grid');
+    if (typeWrap) typeWrap.hidden = false;
+    if (typeGrid) typeGrid.classList.toggle('is-locked', !!isDefault);
+    if (isDefault) {
+      var optWrap = $('#wccp-field-options-wrap');
+      var contentWrap = $('#wccp-field-content-wrap');
+      if (optWrap) optWrap.hidden = true;
+      if (contentWrap) contentWrap.hidden = true;
+    }
+
+    if (!isDefault && optionTypes().indexOf(type) !== -1) {
       var opts = parseOptionsText(f.options || '');
       setOptions(opts.length ? opts : ['گزینه ۱', 'گزینه ۲', 'گزینه ۳']);
-    } else {
+    } else if (!isDefault) {
       setOptions([]);
       var list = $('#wccp-options-list');
       if (list) list.innerHTML = '';
@@ -552,6 +611,7 @@
         return;
       }
       if (res.data.fields) state.fields = res.data.fields;
+      if (res.data.hidden) state.hidden = res.data.hidden;
       if (!key && res.data.active) state.active = res.data.active;
       else if (!key && res.data.key && state.active.indexOf(res.data.key) === -1) {
         state.active.push(res.data.key);
@@ -583,9 +643,24 @@
       if (res.data.fields) state.fields = res.data.fields;
       if (res.data.active) state.active = res.data.active;
       else state.active = state.active.filter(function (k) { return k !== key; });
+      if (res.data.hidden) state.hidden = res.data.hidden;
       delete state.fields[key];
       render();
       toast(res.data.message || 'حذف شد', 'ok');
+    });
+  }
+
+  function restoreField(key) {
+    post('wccp_restore_field', { key: key, template_key: currentTemplateKey() }).then(function (res) {
+      if (!res || !res.success) {
+        toast((res && res.data && res.data.message) || WCCP_ADMIN.i18n.error, 'error');
+        return;
+      }
+      if (res.data.fields) state.fields = res.data.fields;
+      if (res.data.active) state.active = res.data.active;
+      if (res.data.hidden) state.hidden = res.data.hidden;
+      render();
+      toast(res.data.message || 'بازیابی شد', 'ok');
     });
   }
 

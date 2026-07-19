@@ -289,7 +289,7 @@ class Templates {
 
 	/** @return string[] */
 	public static function sanitize_fields( $fields ) {
-		$defs = array_keys( CustomFields::merged_with_defaults() );
+		$defs = array_keys( CustomFields::merged_with_defaults( false ) );
 		$out  = array();
 		foreach ( (array) $fields as $key ) {
 			$key = sanitize_key( (string) $key );
