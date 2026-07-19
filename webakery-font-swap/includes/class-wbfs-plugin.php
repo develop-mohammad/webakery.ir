@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * فونت سوییپ — تشخیص سبک، Preload و font-display:swap با یک تیک.
+ * فونت سوییپ — بهینه‌سازی فونت‌ها از یک پنل.
  */
 class WBFS_Plugin {
 
@@ -20,14 +20,25 @@ class WBFS_Plugin {
 	}
 
 	public static function activate() {
-		if ( false === get_option( self::OPTION, false ) ) {
+		$current = get_option( self::OPTION, false );
+		if ( false === $current ) {
 			add_option( self::OPTION, self::defaults(), '', false );
+			return;
 		}
+		// ارتقا از 1.0: گزینه‌های جدید را پر کن.
+		update_option( self::OPTION, wp_parse_args( (array) $current, self::defaults() ), false );
+		delete_transient( self::TRANSIENT );
 	}
 
 	public static function defaults() {
 		return array(
-			'enabled' => 1,
+			'enabled'             => 1,
+			'font_display_swap'   => 1,
+			'preload_woff2_only'  => 1,
+			'max_preload'         => 3,
+			'strip_bad_preloads'  => 1,
+			'disable_google_fonts'=> 1,
+			'prefer_local_fonts'  => 1,
 		);
 	}
 
@@ -42,9 +53,22 @@ class WBFS_Plugin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_assets' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( WBFS_FILE ), array( $this, 'action_links' ) );
 
-		if ( ! empty( self::settings()['enabled'] ) ) {
-			add_action( 'wp_head', array( $this, 'print_preload_and_swap' ), 1 );
+		$s = self::settings();
+		if ( empty( $s['enabled'] ) ) {
+			return;
+		}
+
+		if ( ! empty( $s['disable_google_fonts'] ) ) {
+			add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_google_fonts' ), 100 );
+			add_filter( 'style_loader_src', array( $this, 'block_google_font_src' ), 100, 2 );
+		} else {
 			add_filter( 'style_loader_src', array( $this, 'force_google_display_swap' ), 20, 2 );
+		}
+
+		add_action( 'wp_head', array( $this, 'print_preload_and_swap' ), 1 );
+
+		if ( ! empty( $s['strip_bad_preloads'] ) || ! empty( $s['disable_google_fonts'] ) ) {
+			add_action( 'template_redirect', array( $this, 'start_buffer' ), -9990 );
 		}
 	}
 
@@ -71,9 +95,27 @@ class WBFS_Plugin {
 	}
 
 	public function sanitize( $input ) {
-		return array(
-			'enabled' => ! empty( $input['enabled'] ) ? 1 : 0,
+		$input = is_array( $input ) ? $input : array();
+		$max   = isset( $input['max_preload'] ) ? (int) $input['max_preload'] : 3;
+		if ( $max < 0 ) {
+			$max = 0;
+		}
+		if ( $max > 8 ) {
+			$max = 8;
+		}
+
+		$out = array(
+			'enabled'              => ! empty( $input['enabled'] ) ? 1 : 0,
+			'font_display_swap'    => ! empty( $input['font_display_swap'] ) ? 1 : 0,
+			'preload_woff2_only'   => ! empty( $input['preload_woff2_only'] ) ? 1 : 0,
+			'max_preload'          => $max,
+			'strip_bad_preloads'   => ! empty( $input['strip_bad_preloads'] ) ? 1 : 0,
+			'disable_google_fonts' => ! empty( $input['disable_google_fonts'] ) ? 1 : 0,
+			'prefer_local_fonts'   => ! empty( $input['prefer_local_fonts'] ) ? 1 : 0,
 		);
+
+		delete_transient( self::TRANSIENT );
+		return $out;
 	}
 
 	public function admin_assets( $hook ) {
@@ -100,6 +142,96 @@ class WBFS_Plugin {
 		$this->detect_fonts( true );
 		wp_safe_redirect( admin_url( 'options-general.php?page=webakery-font-swap&scanned=1' ) );
 		exit;
+	}
+
+	public function dequeue_google_fonts() {
+		global $wp_styles;
+		if ( ! ( $wp_styles instanceof WP_Styles ) ) {
+			return;
+		}
+		foreach ( $wp_styles->registered as $handle => $obj ) {
+			$src = isset( $obj->src ) ? (string) $obj->src : '';
+			if ( false !== stripos( $src, 'fonts.googleapis.com' ) || false !== stripos( $src, 'fonts.gstatic.com' ) ) {
+				wp_dequeue_style( $handle );
+				wp_deregister_style( $handle );
+			}
+		}
+	}
+
+	public function block_google_font_src( $src, $handle ) {
+		if ( ! is_string( $src ) ) {
+			return $src;
+		}
+		if ( false !== stripos( $src, 'fonts.googleapis.com' ) || false !== stripos( $src, 'fonts.gstatic.com' ) ) {
+			return false;
+		}
+		return $src;
+	}
+
+	public function force_google_display_swap( $src, $handle ) {
+		if ( ! is_string( $src ) || false === stripos( $src, 'fonts.googleapis.com' ) ) {
+			return $src;
+		}
+		if ( false !== stripos( $src, 'display=' ) ) {
+			return preg_replace( '/display=[^&]*/i', 'display=swap', $src );
+		}
+		return add_query_arg( 'display', 'swap', $src );
+	}
+
+	public function start_buffer() {
+		if ( is_admin() || is_feed() || is_preview() ) {
+			return;
+		}
+		ob_start( array( $this, 'filter_html' ) );
+	}
+
+	/**
+	 * Strip harmful font preloads / Google font tags from final HTML.
+	 *
+	 * @param string $html
+	 * @return string
+	 */
+	public function filter_html( $html ) {
+		if ( ! is_string( $html ) || strlen( $html ) < 50 ) {
+			return $html;
+		}
+
+		$s = self::settings();
+
+		if ( ! empty( $s['strip_bad_preloads'] ) ) {
+			$html = preg_replace_callback(
+				'#<link\b[^>]*rel=[\'"]preload[\'"][^>]*>#i',
+				function ( $m ) {
+					$tag = $m[0];
+					$as_font = (bool) preg_match( '#\bas=[\'"]font[\'"]#i', $tag );
+					$href_font = (bool) preg_match( '#\.(?:woff2?|ttf|otf|eot)(?:\?|\'|"|\s|>)#i', $tag );
+					if ( ! $as_font && ! $href_font ) {
+						return $tag;
+					}
+					// Keep only local woff2.
+					if ( preg_match( '#\bhref=[\'"]([^\'"]+)#i', $tag, $hm ) ) {
+						$href = $hm[1];
+						$is_woff2 = (bool) preg_match( '#\.woff2(?:\?|$)#i', $href );
+						$is_remote = (bool) preg_match( '#fonts\.gstatic\.com|fonts\.googleapis\.com#i', $href );
+						$is_ttf_woff = (bool) preg_match( '#\.(?:ttf|otf|eot|woff)(?:\?|$)#i', $href ) && ! $is_woff2;
+						if ( $is_remote || $is_ttf_woff || ! $is_woff2 ) {
+							return '';
+						}
+						return $tag;
+					}
+					return '';
+				},
+				$html
+			);
+		}
+
+		if ( ! empty( $s['disable_google_fonts'] ) ) {
+			$html = preg_replace( '#<link\b[^>]+fonts\.googleapis\.com[^>]*>#i', '', $html );
+			$html = preg_replace( '#<link\b[^>]+fonts\.gstatic\.com[^>]*>#i', '', $html );
+			$html = preg_replace( '#<style[^>]*>[^<]*fonts\.googleapis\.com[^<]*</style>#is', '', $html );
+		}
+
+		return $html;
 	}
 
 	/**
@@ -137,7 +269,6 @@ class WBFS_Plugin {
 		$result['google']   = array_values( array_unique( $result['google'] ) );
 		$result['sources']  = array_values( array_unique( $result['sources'] ) );
 
-		// یکتا کردن faces بر اساس family+src
 		$uniq  = array();
 		$faces = array();
 		foreach ( $result['faces'] as $face ) {
@@ -158,7 +289,6 @@ class WBFS_Plugin {
 	private function collect_css_urls() {
 		$urls = array();
 
-		// ۱) لینک‌های CSS صفحه اصلی
 		$home = wp_remote_get(
 			home_url( '/' ),
 			array(
@@ -175,29 +305,18 @@ class WBFS_Plugin {
 					}
 				}
 			}
-			if ( preg_match_all( '/@import\s+(?:url\()?[\'"]?([^\'"\);]+)/i', $html, $im ) ) {
-				foreach ( $im[1] as $href ) {
-					$urls[] = $this->absolutize_url( $href, home_url( '/' ) );
-				}
-			}
 		}
 
-		// ۲) استایل تم
 		$urls[] = get_stylesheet_directory_uri() . '/style.css';
 		if ( get_template_directory_uri() !== get_stylesheet_directory_uri() ) {
 			$urls[] = get_template_directory_uri() . '/style.css';
 		}
+		$urls = array_merge( $urls, $this->scan_theme_css( get_stylesheet_directory(), 2 ) );
 
-		// ۳) چند فایل CSS تم (سبک، عمق کم)
-		$theme_dir = get_stylesheet_directory();
-		$urls      = array_merge( $urls, $this->scan_theme_css( $theme_dir, 2 ) );
-
-		// ۴) CSS سفارشی‌ساز
 		if ( wp_get_custom_css() ) {
 			$urls[] = 'custom-css://inline';
 		}
 
-		// ۵) استایل‌های ثبت‌شده وردپرس (اگر در ادمین هم باشند)
 		global $wp_styles;
 		if ( $wp_styles instanceof WP_Styles ) {
 			foreach ( $wp_styles->registered as $obj ) {
@@ -219,11 +338,6 @@ class WBFS_Plugin {
 		return array_values( array_unique( array_filter( $urls ) ) );
 	}
 
-	/**
-	 * @param string $dir
-	 * @param int    $depth
-	 * @return string[]
-	 */
 	private function scan_theme_css( $dir, $depth = 2 ) {
 		$out = array();
 		if ( $depth < 0 || ! is_dir( $dir ) ) {
@@ -236,21 +350,15 @@ class WBFS_Plugin {
 			}
 			$path = $dir . '/' . $item;
 			$rel  = str_replace( '\\', '/', substr( $path, strlen( get_stylesheet_directory() ) ) );
-			$bad  = false;
 			foreach ( $skip as $s ) {
 				if ( false !== stripos( $rel, $s ) ) {
-					$bad = true;
-					break;
+					continue 2;
 				}
-			}
-			if ( $bad ) {
-				continue;
 			}
 			if ( is_dir( $path ) ) {
 				$out = array_merge( $out, $this->scan_theme_css( $path, $depth - 1 ) );
 			} elseif ( preg_match( '/\.css$/i', $item ) ) {
-				$url = get_stylesheet_directory_uri() . $rel;
-				$out[] = $url;
+				$out[] = get_stylesheet_directory_uri() . $rel;
 			}
 		}
 		return $out;
@@ -291,7 +399,6 @@ class WBFS_Plugin {
 				$style = trim( $sm[1] );
 			}
 			if ( preg_match_all( '/url\(\s*[\'"]?([^\'"\)]+\.(?:woff2|woff|ttf|otf))[\'"]?\s*\)/i', $block, $um ) ) {
-				// ترجیح woff2
 				$best = '';
 				foreach ( $um[1] as $u ) {
 					$abs = $this->absolutize_url( $u, $css_url );
@@ -299,7 +406,10 @@ class WBFS_Plugin {
 						continue;
 					}
 					$result['files'][] = $abs;
-					if ( ! $best || preg_match( '/\.woff2($|\?)/i', $abs ) ) {
+					// همیشه woff2 را ترجیح بده.
+					if ( preg_match( '/\.woff2($|\?)/i', $abs ) ) {
+						$best = $abs;
+					} elseif ( ! $best ) {
 						$best = $abs;
 					}
 				}
@@ -320,18 +430,15 @@ class WBFS_Plugin {
 		}
 	}
 
-	/** @return string */
 	private function fetch_css( $url ) {
 		if ( 'custom-css://inline' === $url ) {
 			return (string) wp_get_custom_css();
 		}
-
 		$local = $this->url_to_path( $url );
 		if ( $local && is_readable( $local ) ) {
-			$raw = file_get_contents( $local ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$raw = file_get_contents( $local ); // phpcs:ignore
 			return is_string( $raw ) ? $raw : '';
 		}
-
 		$resp = wp_remote_get(
 			$url,
 			array(
@@ -345,7 +452,6 @@ class WBFS_Plugin {
 		return (string) wp_remote_retrieve_body( $resp );
 	}
 
-	/** @return string */
 	private function url_to_path( $url ) {
 		$url = strtok( $url, '?' );
 		$content_url = content_url();
@@ -359,7 +465,6 @@ class WBFS_Plugin {
 		return '';
 	}
 
-	/** @return string */
 	private function absolutize_url( $font_url, $css_url ) {
 		$font_url = trim( html_entity_decode( (string) $font_url ) );
 		if ( '' === $font_url || 0 === strpos( $font_url, 'data:' ) ) {
@@ -385,14 +490,93 @@ class WBFS_Plugin {
 		return $base . $font_url;
 	}
 
-	public function force_google_display_swap( $src, $handle ) {
-		if ( ! is_string( $src ) || false === stripos( $src, 'fonts.googleapis.com' ) ) {
-			return $src;
+	/**
+	 * انتخاب فایل‌های preload: فقط woff2 محلی، حداکثر N، یکتا per family.
+	 *
+	 * @param array $fonts
+	 * @return string[]
+	 */
+	private function select_preload_files( array $fonts ) {
+		$s     = self::settings();
+		$max   = isset( $s['max_preload'] ) ? (int) $s['max_preload'] : 3;
+		$faces = (array) ( $fonts['faces'] ?? array() );
+		$files = (array) ( $fonts['files'] ?? array() );
+
+		$candidates = array();
+
+		foreach ( $faces as $face ) {
+			$src    = (string) ( $face['src'] ?? '' );
+			$family = (string) ( $face['family'] ?? '' );
+			if ( ! $src ) {
+				continue;
+			}
+			$candidates[] = array(
+				'src'    => $src,
+				'family' => $family,
+				'score'  => $this->score_font_file( $src, $family ),
+			);
 		}
-		if ( false !== stripos( $src, 'display=' ) ) {
-			return preg_replace( '/display=[^&]*/i', 'display=swap', $src );
+		foreach ( $files as $src ) {
+			$candidates[] = array(
+				'src'    => (string) $src,
+				'family' => '',
+				'score'  => $this->score_font_file( (string) $src, '' ),
+			);
 		}
-		return add_query_arg( 'display', 'swap', $src );
+
+		usort(
+			$candidates,
+			function ( $a, $b ) {
+				return $b['score'] <=> $a['score'];
+			}
+		);
+
+		$picked   = array();
+		$families = array();
+		foreach ( $candidates as $c ) {
+			if ( $c['score'] < 50 ) {
+				continue; // رد TTF/Google/WOFF در حالت بهینه‌سازی.
+			}
+			if ( ! empty( $s['preload_woff2_only'] ) && ! preg_match( '/\.woff2($|\?)/i', $c['src'] ) ) {
+				continue;
+			}
+			if ( ! empty( $s['prefer_local_fonts'] ) && preg_match( '#fonts\.gstatic\.com|fonts\.googleapis\.com#i', $c['src'] ) ) {
+				continue;
+			}
+			$fam_key = strtolower( $c['family'] !== '' ? $c['family'] : $c['src'] );
+			if ( isset( $families[ $fam_key ] ) ) {
+				continue;
+			}
+			$families[ $fam_key ] = true;
+			$picked[]               = $c['src'];
+			if ( count( $picked ) >= $max ) {
+				break;
+			}
+		}
+
+		return array_values( array_unique( $picked ) );
+	}
+
+	private function score_font_file( $src, $family ) {
+		$score = 0;
+		if ( preg_match( '/\.woff2($|\?)/i', $src ) ) {
+			$score += 100;
+		} elseif ( preg_match( '/\.woff($|\?)/i', $src ) ) {
+			$score += 40;
+		} elseif ( preg_match( '/\.ttf($|\?)/i', $src ) ) {
+			$score += 10;
+		}
+		if ( preg_match( '#fonts\.gstatic\.com|fonts\.googleapis\.com#i', $src ) ) {
+			$score -= 80;
+		}
+		if ( preg_match( '#/uploads/|/themes/|/plugins/.+iransans|/fonts/dana|/fonts/anjoman#i', $src ) ) {
+			$score += 20;
+		}
+		// Font Awesome معمولاً critical نیست برای LCP متن فارسی.
+		if ( preg_match( '#fontawesome|fa-solid|fa-brands|fa-regular|eicons|tinvwl-webfont#i', $src . $family ) ) {
+			$score -= 30;
+		}
+		return $score;
 	}
 
 	public function print_preload_and_swap() {
@@ -400,49 +584,51 @@ class WBFS_Plugin {
 			return;
 		}
 
+		$s     = self::settings();
 		$fonts = $this->detect_fonts( false );
-		$files = array_slice( (array) ( $fonts['files'] ?? array() ), 0, 12 );
+		$files = $this->select_preload_files( $fonts );
 
 		foreach ( $files as $file ) {
-			$type = 'font/woff2';
-			if ( preg_match( '/\.woff($|\?)/i', $file ) && ! preg_match( '/\.woff2($|\?)/i', $file ) ) {
-				$type = 'font/woff';
-			} elseif ( preg_match( '/\.ttf($|\?)/i', $file ) ) {
-				$type = 'font/ttf';
-			} elseif ( preg_match( '/\.otf($|\?)/i', $file ) ) {
-				$type = 'font/otf';
-			}
 			printf(
-				'<link rel="preload" href="%s" as="font" type="%s" crossorigin>' . "\n",
-				esc_url( $file ),
-				esc_attr( $type )
+				'<link rel="preload" href="%s" as="font" type="font/woff2" crossorigin>' . "\n",
+				esc_url( $file )
 			);
 		}
 
-		$faces = array_slice( (array) ( $fonts['faces'] ?? array() ), 0, 24 );
-		if ( empty( $faces ) ) {
+		if ( empty( $s['font_display_swap'] ) ) {
+			return;
+		}
+
+		// فقط faceهای woff2 محلی برای swap.
+		$faces_out = array();
+		foreach ( (array) ( $fonts['faces'] ?? array() ) as $face ) {
+			$src = (string) ( $face['src'] ?? '' );
+			if ( ! preg_match( '/\.woff2($|\?)/i', $src ) ) {
+				continue;
+			}
+			if ( preg_match( '#fonts\.gstatic\.com|fonts\.googleapis\.com#i', $src ) ) {
+				continue;
+			}
+			$faces_out[] = $face;
+			if ( count( $faces_out ) >= 16 ) {
+				break;
+			}
+		}
+
+		if ( empty( $faces_out ) ) {
 			return;
 		}
 
 		echo "<style id=\"wbfs-font-swap\">\n";
-		foreach ( $faces as $face ) {
+		foreach ( $faces_out as $face ) {
 			$family = trim( (string) ( $face['family'] ?? '' ) );
 			$src    = trim( (string) ( $face['src'] ?? '' ) );
 			if ( ! $family || ! $src ) {
 				continue;
 			}
-			$format = 'woff2';
-			if ( preg_match( '/\.woff($|\?)/i', $src ) && ! preg_match( '/\.woff2($|\?)/i', $src ) ) {
-				$format = 'woff';
-			} elseif ( preg_match( '/\.ttf($|\?)/i', $src ) ) {
-				$format = 'truetype';
-			} elseif ( preg_match( '/\.otf($|\?)/i', $src ) ) {
-				$format = 'opentype';
-			}
-
 			echo '@font-face{';
 			echo 'font-family:' . $this->css_quote( $family ) . ';';
-			echo 'src:url(' . $this->css_quote( $src ) . ') format(' . $this->css_quote( $format ) . ');';
+			echo 'src:url(' . $this->css_quote( $src ) . ') format("woff2");';
 			echo 'font-display:swap;';
 			if ( ! empty( $face['weight'] ) ) {
 				echo 'font-weight:' . esc_attr( $face['weight'] ) . ';';
@@ -455,10 +641,20 @@ class WBFS_Plugin {
 		echo "</style>\n";
 	}
 
-	/** @return string */
 	private function css_quote( $value ) {
 		$value = str_replace( array( '\\', '"' ), array( '\\\\', '\\"' ), (string) $value );
 		return '"' . $value . '"';
+	}
+
+	private function render_toggle( $key, $label, $help, $checked ) {
+		printf(
+			'<label class="wbfs-toggle"><input type="checkbox" name="%1$s[%2$s]" value="1" %3$s /><span class="wbfs-toggle-ui" aria-hidden="true"></span><span class="wbfs-toggle-text"><strong>%4$s</strong><small>%5$s</small></span></label>',
+			esc_attr( self::OPTION ),
+			esc_attr( $key ),
+			checked( $checked, true, false ),
+			esc_html( $label ),
+			wp_kses_post( $help )
+		);
 	}
 
 	public function render_page() {
@@ -467,38 +663,47 @@ class WBFS_Plugin {
 		}
 		$s     = self::settings();
 		$fonts = $this->detect_fonts( false );
+		$pre   = $this->select_preload_files( $fonts );
 		$ok    = isset( $_GET['settings-updated'] ) || isset( $_GET['scanned'] ); // phpcs:ignore
 		?>
 		<div class="wrap wbfs-wrap">
 			<div class="wbfs-hero">
 				<div>
 					<h1>فونت سوییپ</h1>
-					<p>فونت‌های سایت را پیدا می‌کند، Preload می‌کند و با یک تیک Swap را روشن می‌کند.</p>
+					<p>مدیریت و بهینه‌سازی فونت‌ها از یک جا: فقط woff2، حذف TTF/Google preload، و font-display:swap.</p>
 				</div>
-				<span class="wbfs-badge">سبک · v<?php echo esc_html( WBFS_VERSION ); ?></span>
+				<span class="wbfs-badge">بهینه · v<?php echo esc_html( WBFS_VERSION ); ?></span>
 			</div>
 
 			<?php if ( $ok ) : ?>
-				<div class="wbfs-notice">ذخیره / اسکن انجام شد.</div>
+				<div class="wbfs-notice">ذخیره / اسکن انجام شد. کش سایت را پاک کنید و صفحه را در Incognito چک کنید.</div>
 			<?php endif; ?>
 
 			<form method="post" action="options.php" class="wbfs-card">
 				<?php settings_fields( 'wbfs_settings_group' ); ?>
-				<label class="wbfs-toggle">
-					<input type="checkbox" name="<?php echo esc_attr( self::OPTION ); ?>[enabled]" value="1" <?php checked( ! empty( $s['enabled'] ) ); ?> />
-					<span class="wbfs-toggle-ui" aria-hidden="true"></span>
-					<span class="wbfs-toggle-text">
-						<strong>فعال‌سازی Preload + Swap</strong>
-						<small>فونت‌ها زودتر لود می‌شوند و با <code>font-display:swap</code> جابه‌جا می‌شوند — متن زودتر دیده می‌شود.</small>
-					</span>
+
+				<?php
+				$this->render_toggle( 'enabled', 'فعال‌سازی افزونه', 'اگر خاموش باشد هیچ بهینه‌سازی فونتی اعمال نمی‌شود.', ! empty( $s['enabled'] ) );
+				$this->render_toggle( 'disable_google_fonts', 'حذف Google Fonts', 'لینک‌ها و preloadهای fonts.googleapis / gstatic (مثل Noto Serif با TTF) حذف می‌شوند.', ! empty( $s['disable_google_fonts'] ) );
+				$this->render_toggle( 'strip_bad_preloads', 'حذف Preloadهای مضر', 'preloadهای <code>.ttf</code> و <code>.woff</code> و فونت‌های ریموت از HTML پاک می‌شوند؛ فقط woff2 محلی می‌ماند.', ! empty( $s['strip_bad_preloads'] ) );
+				$this->render_toggle( 'preload_woff2_only', 'Preload فقط woff2', 'هیچ فایل TTF/WOFF از این افزونه preload نمی‌شود.', ! empty( $s['preload_woff2_only'] ) );
+				$this->render_toggle( 'prefer_local_fonts', 'ترجیح فونت محلی', 'فونت‌های روی هاست خودت اولویت دارند؛ Google کنار گذاشته می‌شود.', ! empty( $s['prefer_local_fonts'] ) );
+				$this->render_toggle( 'font_display_swap', 'font-display: swap', 'متن زودتر با فونت جایگزین دیده می‌شود (کمک به FCP/LCP).', ! empty( $s['font_display_swap'] ) );
+				?>
+
+				<label style="display:block;margin:8px 0 16px">
+					<strong>حداکثر تعداد Preload</strong>
+					<input type="number" min="0" max="8" name="<?php echo esc_attr( self::OPTION ); ?>[max_preload]" value="<?php echo esc_attr( (string) (int) $s['max_preload'] ); ?>" style="width:80px;margin-right:8px" />
+					<small class="wbfs-muted">پیشنهاد برای موبایل: ۲ یا ۳</small>
 				</label>
-				<?php submit_button( 'ذخیره', 'primary', 'submit', false ); ?>
+
+				<?php submit_button( 'ذخیره تنظیمات', 'primary', 'submit', false ); ?>
 			</form>
 
 			<div class="wbfs-grid">
 				<div class="wbfs-card">
 					<div class="wbfs-card-head">
-						<strong>فونت‌های تشخیص‌داده‌شده</strong>
+						<strong>خانواده‌های تشخیص‌داده‌شده</strong>
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 							<?php wp_nonce_field( 'wbfs_rescan' ); ?>
 							<input type="hidden" name="action" value="wbfs_rescan" />
@@ -506,7 +711,7 @@ class WBFS_Plugin {
 						</form>
 					</div>
 					<?php if ( empty( $fonts['families'] ) ) : ?>
-						<p class="wbfs-muted">هنوز فونتی پیدا نشد. «اسکن دوباره» را بزنید (صفحه اصلی سایت خوانده می‌شود).</p>
+						<p class="wbfs-muted">فونتی پیدا نشد. اسکن دوباره را بزنید.</p>
 					<?php else : ?>
 						<ul class="wbfs-list">
 							<?php foreach ( $fonts['families'] as $family ) : ?>
@@ -514,15 +719,18 @@ class WBFS_Plugin {
 							<?php endforeach; ?>
 						</ul>
 					<?php endif; ?>
+					<?php if ( ! empty( $fonts['google'] ) ) : ?>
+						<p class="wbfs-muted" style="margin-top:12px;color:#b45309">Google Fonts یافت شد: <?php echo esc_html( (string) count( $fonts['google'] ) ); ?> مورد — با گزینه «حذف Google Fonts» قطع می‌شود.</p>
+					<?php endif; ?>
 				</div>
 
 				<div class="wbfs-card">
-					<div class="wbfs-card-head"><strong>فایل‌های Preload</strong></div>
-					<?php if ( empty( $fonts['files'] ) ) : ?>
-						<p class="wbfs-muted">فایل woff2 مستقیمی پیدا نشد. اگر Google Fonts دارید، با روشن بودن تیک، <code>display=swap</code> اضافه می‌شود.</p>
+					<div class="wbfs-card-head"><strong>Preload نهایی (woff2)</strong></div>
+					<?php if ( empty( $pre ) ) : ?>
+						<p class="wbfs-muted">هیچ woff2 محلی برای preload انتخاب نشد (این برای سرعت خوب است اگر فونت بحرانی بالای صفحه نداری).</p>
 					<?php else : ?>
 						<ul class="wbfs-files">
-							<?php foreach ( array_slice( $fonts['files'], 0, 12 ) as $file ) : ?>
+							<?php foreach ( $pre as $file ) : ?>
 								<li dir="ltr"><?php echo esc_html( $file ); ?></li>
 							<?php endforeach; ?>
 						</ul>
@@ -531,9 +739,10 @@ class WBFS_Plugin {
 						<?php
 						echo esc_html(
 							sprintf(
-								'%d خانواده · %d فایل · اسکن: %s',
+								'%d خانواده · %d فایل خام · %d preload نهایی · اسکن: %s',
 								count( $fonts['families'] ),
 								count( $fonts['files'] ),
+								count( $pre ),
 								! empty( $fonts['scanned'] ) ? wp_date( 'Y/m/d H:i', (int) $fonts['scanned'] ) : '—'
 							)
 						);
