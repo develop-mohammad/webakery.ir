@@ -117,7 +117,7 @@ defined( 'ABSPATH' ) || exit;
 
 			<div class="wccp-modal-actions">
 				<button type="button" class="button" id="wccp-modal-cancel">انصراف</button>
-				<button type="submit" class="button button-primary" id="wccp-modal-submit">ذخیره سوال / فیلد</button>
+				<button type="button" class="button button-primary" id="wccp-modal-submit">ذخیره سوال / فیلد</button>
 			</div>
 		</form>
 	</div>

@@ -165,35 +165,64 @@ class Ajax {
 			$key = $base . '_' . $i;
 			$i++;
 		}
+		$required = false;
+		if ( 'info' !== $type ) {
+			$req_raw  = wp_unslash( $_POST['required'] ?? '' );
+			$required = ( '1' === (string) $req_raw || 'true' === (string) $req_raw || 1 === $req_raw || true === $req_raw );
+		}
+
 		$custom[ $key ] = array(
 			'label'        => $label,
 			'type'         => $type,
-			'required'     => ( 'info' === $type ) ? false : ! empty( $_POST['required'] ),
+			'required'     => $required,
 			'options'      => $options,
 			'content'      => in_array( $type, Fields::content_types(), true ) ? $content : '',
 			'custom'       => true,
 			'user_defined' => true,
 		);
-		update_option( Fields::CUSTOM_OPTION, $custom, false );
+		$saved = update_option( Fields::CUSTOM_OPTION, $custom, false );
+		// بعضی کش‌ها مقدار قبلی را نگه می‌دارند — مقدار همین درخواست را دوباره بنویس
+		if ( false === $saved ) {
+			update_option( Fields::CUSTOM_OPTION, $custom, false );
+		}
+		wp_cache_delete( Fields::CUSTOM_OPTION, 'options' );
 
 		$template_key = sanitize_key( wp_unslash( $_POST['template_key'] ?? '' ) );
+		$attach_error = '';
 		if ( $template_key && isset( Templates::all()[ $template_key ] ) ) {
-			Templates::add_field_to_template( $template_key, $key );
+			$res = Templates::add_field_to_template( $template_key, $key );
+			if ( is_wp_error( $res ) ) {
+				$attach_error = $res->get_error_message();
+			}
 			$active = Templates::fields_for( $template_key );
+			if ( ! in_array( $key, $active, true ) ) {
+				$active[] = $key;
+			}
 		} else {
 			$active   = Fields::get_active_keys();
 			$active[] = $key;
 			update_option( Fields::ACTIVE_OPTION, array_values( array_unique( $active ) ), false );
 			$active = Fields::get_active_keys();
+			if ( ! in_array( $key, $active, true ) ) {
+				$active[] = $key;
+			}
+		}
+
+		$merged = CustomFields::merged_with_defaults();
+		// تضمین حضور فیلد تازه‌ساخته در پاسخ UI حتی اگر فیلتر/کش merged را ندهد
+		if ( ! isset( $merged[ $key ] ) ) {
+			$merged[ $key ] = $custom[ $key ];
 		}
 
 		wp_send_json_success(
 			array(
-				'message'      => 'فیلد سفارشی ساخته شد و به قالب اضافه شد.',
+				'message'      => $attach_error
+					? ( 'فیلد ذخیره شد، اما افزودن به قالب کامل نشد: ' . $attach_error )
+					: 'فیلد سفارشی ساخته شد و به قالب اضافه شد.',
 				'key'          => $key,
-				'field'        => $custom[ $key ],
-				'active'       => $active,
-				'fields'       => CustomFields::merged_with_defaults(),
+				'field'        => $merged[ $key ],
+				'active'       => array_values( array_unique( $active ) ),
+				'fields'       => $merged,
 				'template_key' => $template_key,
 			)
 		);
@@ -264,23 +293,35 @@ class Ajax {
 			}
 		}
 
+		$required = false;
+		if ( 'info' !== $type ) {
+			$req_raw  = wp_unslash( $_POST['required'] ?? '' );
+			$required = ( '1' === (string) $req_raw || 'true' === (string) $req_raw || 1 === $req_raw || true === $req_raw );
+		}
+
 		$custom[ $key ] = array(
 			'label'        => $label ?: $key,
 			'type'         => $type,
-			'required'     => ( 'info' === $type ) ? false : ! empty( $_POST['required'] ),
+			'required'     => $required,
 			'options'      => $options,
 			'content'      => in_array( $type, Fields::content_types(), true ) ? $content : '',
 			'custom'       => true,
 			'user_defined' => true,
 		);
 		update_option( Fields::CUSTOM_OPTION, $custom, false );
+		wp_cache_delete( Fields::CUSTOM_OPTION, 'options' );
+
+		$merged = CustomFields::merged_with_defaults();
+		if ( ! isset( $merged[ $key ] ) ) {
+			$merged[ $key ] = $custom[ $key ];
+		}
 
 		wp_send_json_success(
 			array(
 				'message' => 'فیلد به‌روز شد.',
 				'key'     => $key,
-				'field'   => $custom[ $key ],
-				'fields'  => CustomFields::merged_with_defaults(),
+				'field'   => $merged[ $key ],
+				'fields'  => $merged,
 				'hidden'  => CustomFields::hidden_default_keys(),
 			)
 		);

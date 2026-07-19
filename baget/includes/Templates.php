@@ -120,9 +120,26 @@ class Templates {
 
 	/** افزودن یک فیلد به لیست فیلدهای قالب */
 	public static function add_field_to_template( $template_key, $field_key ) {
-		$fields   = self::fields_for( $template_key );
-		$fields[] = sanitize_key( $field_key );
-		return self::update_fields( $template_key, $fields );
+		$template_key = sanitize_key( (string) $template_key );
+		$field_key    = sanitize_key( (string) $field_key );
+		if ( ! $template_key || ! $field_key ) {
+			return new \WP_Error( 'tpl', 'قالب یا فیلد نامعتبر است.' );
+		}
+		$fields = self::fields_for( $template_key );
+		if ( ! in_array( $field_key, $fields, true ) ) {
+			$fields[] = $field_key;
+		}
+		$res = self::update_fields( $template_key, $fields );
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		// اگر به‌هر دلیل sanitize کلید را انداخت، یک‌بار دیگر مستقیم ذخیره کن
+		$after = self::fields_for( $template_key );
+		if ( ! in_array( $field_key, $after, true ) ) {
+			$fields[] = $field_key;
+			$res      = self::update_fields( $template_key, array_values( array_unique( $fields ) ) );
+		}
+		return $res;
 	}
 
 	/** @return array<string,array> */
@@ -290,10 +307,28 @@ class Templates {
 	/** @return string[] */
 	public static function sanitize_fields( $fields ) {
 		$defs = array_keys( CustomFields::merged_with_defaults( false ) );
+
+		// کلیدهای خام آپشن سفارشی — حتی اگر کش/فیلتر merged عقب باشد
+		$custom = get_option( Fields::CUSTOM_OPTION, array() );
+		if ( is_array( $custom ) ) {
+			foreach ( array_keys( $custom ) as $ck ) {
+				$defs[] = sanitize_key( (string) $ck );
+			}
+		}
+
+		$defs = array_values( array_unique( array_filter( $defs ) ) );
 		$out  = array();
 		foreach ( (array) $fields as $key ) {
 			$key = sanitize_key( (string) $key );
-			if ( $key && in_array( $key, $defs, true ) ) {
+			if ( ! $key ) {
+				continue;
+			}
+			// فیلدهای سفارشی baget همیشه با پیشوند wccp_field_ ساخته می‌شوند —
+			// نباید هنگام attach به قالب به‌خاطر تأخیر کش حذف شوند.
+			$allowed = in_array( $key, $defs, true )
+				|| isset( Fields::defaults()[ $key ] )
+				|| ( 0 === strpos( $key, 'wccp_field_' ) );
+			if ( $allowed ) {
 				$out[] = $key;
 			}
 		}

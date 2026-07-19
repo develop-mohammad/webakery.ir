@@ -275,16 +275,46 @@
     });
   }
 
+  function toFormValue(v) {
+    if (v === null || v === undefined) return '';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+    return JSON.stringify(v);
+  }
+
   function post(action, data) {
     var body = new FormData();
     body.append('action', action);
     body.append('nonce', WCCP_ADMIN.nonce);
     Object.keys(data || {}).forEach(function (k) {
-      var v = data[k];
-      body.append(k, typeof v === 'string' ? v : JSON.stringify(v));
+      body.append(k, toFormValue(data[k]));
     });
-    return fetch(WCCP_ADMIN.ajax, { method: 'POST', body: body, credentials: 'same-origin' })
-      .then(function (r) { return r.json(); });
+    return fetch(WCCP_ADMIN.ajax, {
+      method: 'POST',
+      body: body,
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function (r) {
+      return r.text().then(function (text) {
+        var trimmed = String(text || '').replace(/^\uFEFF/, '').trim();
+        if (!trimmed) {
+          throw new Error('پاسخ خالی از سرور');
+        }
+        try {
+          return JSON.parse(trimmed);
+        } catch (err) {
+          // گاهی قبل از JSON، اخطار PHP می‌آید — آخرین آبجکت JSON را بردار
+          var start = trimmed.lastIndexOf('{');
+          var end = trimmed.lastIndexOf('}');
+          if (start !== -1 && end > start) {
+            try {
+              return JSON.parse(trimmed.slice(start, end + 1));
+            } catch (e2) {}
+          }
+          throw new Error('پاسخ نامعتبر سرور');
+        }
+      });
+    });
   }
 
   function currentTemplateKey() {
@@ -550,6 +580,10 @@
   function openFieldModal(key, presetType) {
     var modal = $('#wccp-field-modal');
     if (!modal) return;
+    // خروج از فرم #post وردپرس (metabox محصول) تا submit مودال خراب نشود
+    if (modal.parentElement !== document.body) {
+      document.body.appendChild(modal);
+    }
     var isEdit = !!key;
     var f = isEdit ? (state.fields[key] || {}) : {};
     var isDefault = isEdit && isDefaultKey(key) && !(f.custom || f.user_defined);
@@ -651,8 +685,8 @@
       type: type,
       options_text: optionsText,
       content: contentVal,
-      required: (type === 'info') ? 0 : ($('#wccp-field-required').checked ? 1 : 0),
-      template_key: currentTemplateKey()
+      required: (type === 'info') ? '0' : ($('#wccp-field-required').checked ? '1' : '0'),
+      template_key: currentTemplateKey() || state.templateKey || ''
     };
     var action = key ? 'wccp_update_field' : 'wccp_create_field';
     if (key) payload.key = key;
@@ -680,18 +714,28 @@
         return;
       }
       if (res.data.fields) state.fields = res.data.fields;
+      if (res.data.key && res.data.field) {
+        state.fields[res.data.key] = res.data.field;
+      }
       if (res.data.hidden) state.hidden = res.data.hidden;
-      if (!key && res.data.active) state.active = res.data.active;
-      else if (!key && res.data.key && state.active.indexOf(res.data.key) === -1) {
+      if (!key && res.data.active) {
+        state.active = res.data.active;
+      } else if (!key && res.data.key && state.active.indexOf(res.data.key) === -1) {
         state.active.push(res.data.key);
       }
-      if (currentMode() === 'product') markDirty();
+      // در حالت قالب، ساخت فیلد خودش persist می‌شود؛ در محصول فقط dirty
+      if (currentMode() === 'product') {
+        markDirty();
+      } else if (!key && currentMode() === 'template') {
+        // همگام‌سازی مطمئن ستون فعال با سرور
+        state.dirty = false;
+      }
       render();
       closeFieldModal();
       toast(res.data.message || WCCP_ADMIN.i18n.saved, 'ok');
-    }).catch(function () {
+    }).catch(function (err) {
       clearTimeout(hangTimer);
-      toast(WCCP_ADMIN.i18n.error, 'error');
+      toast((err && err.message) || WCCP_ADMIN.i18n.error, 'error');
     }).finally(function () {
       clearTimeout(hangTimer);
       unlockSubmit();
@@ -790,6 +834,14 @@
 
     var form = $('#wccp-field-form');
     if (form) form.addEventListener('submit', submitFieldModal);
+    var modalSubmit = $('#wccp-modal-submit');
+    if (modalSubmit) {
+      modalSubmit.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        submitFieldModal(e);
+      });
+    }
 
     var postForm = document.getElementById('post');
     if (postForm) {
