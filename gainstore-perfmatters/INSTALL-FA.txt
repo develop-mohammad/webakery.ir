@@ -13,25 +13,17 @@ https://pagespeed.web.dev/analysis/https-gainstore-ir/5ifl25i5hb?form_factor=mob
 ==================================================
 نصب ZIP وردپرس (نسخه 1.1 - اعمال اجباری)
 ==================================================
-فایل: gainstore-perfmatters-setup.zip
+فایل: gainstore-perfmatters-setup.zip (نسخه 1.2)
 
-1) اول Perfmatters را نصب و فعال کن
-2) وردپرس → افزونه‌ها → افزودن → بارگذاری افزونه
-3) ZIP را نصب و فعال کن (اگر نسخه قبلی هست، حذف و دوباره نصب کن)
-4) برو به: ابزارها → گین استور Perfmatters
-5) دکمه «اعمال اجباری تنظیمات + پاک کردن کش» را بزن
-6) در همان صفحه چک کن:
-   - Delay JavaScript = ON
-   - Delay Behavior = all
-   - Remove Unused CSS = ON
-7) در WP Rocket این‌ها را خاموش کن:
-   Delay JS / Load JS deferred / Remove Unused CSS / Minify-Combine / LazyLoad
-8) با Incognito (خارج از لاگین ادمین) صفحه اصلی را باز کن
-9) View Source → جستجو: pmdelayedscript و perfmatters-used-css
+1) نسخه قبلی افزونه کمکی را حذف کن
+2) ZIP جدید را روی gainstore.ir نصب/فعال کن (نه کیان‌استوک)
+3) ابزارها → گین استور Perfmatters → اعمال اجباری
+4) لینک دیباگ را در Incognito باز کن:
+   https://gainstore.ir/?gspsdebug=1&nowprocket=1
+5) View Source → خط شامل GSPS و GSPS_RESULT را کپی کن بفرست
+6) همچنین pmdelayedscript را جستجو کن
 
-نکته مهم:
-Remove Unused CSS برای کاربر لاگین‌شده اجرا نمی‌شود.
-حتماً با پنجره ناشناس تست کن.
+اگر GSPS در سورس نبود، افزونه 1.2 نصب نشده است.
 
 ==================================================
 این تنظیمات چه کار می‌کند
