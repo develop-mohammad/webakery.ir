@@ -1,4 +1,4 @@
-فونت سوییپ v1.2 — بهینه‌سازی فونت‌ها (IRANSansX)
+فونت سوییپ v1.3 — حالت اجباری بهینه‌سازی فونت (IRANSansX)
 
 ==================================================
 نصب
@@ -7,28 +7,32 @@
    (افزونه‌ها → افزودن → بارگذاری افزونه)
 2) فعال کن
 3) برو به: تنظیمات → فونت سوییپ
-4) این گزینه‌ها را روشن بگذار (پیشنهادی برای PageSpeed):
-   - فعال‌سازی افزونه
-   - حذف Google Fonts
-   - حذف Preloadهای مضر
-   - Preload فقط woff2
-   - ترجیح فونت محلی
-   - font-display: swap
-   - حداکثر Preload: 2 یا 3
-5) ذخیره کن → اسکن دوباره
-6) کش سایت / WP Rocket را پاک کن
-7) Incognito → View Source
-   نباید preload با .ttf یا fonts.gstatic ببینی
+4) فقط «فعال‌سازی افزونه» را روشن بگذار
+   (بقیه بهینه‌سازی‌ها اجباری‌اند و تیک جداگانه ندارند)
+5) حداکثر Preload: 2 یا 3
+6) ذخیره کن → اسکن دوباره
+7) کش سایت / WP Rocket را پاک کن
+8) Incognito → View Source
+   باید ببینی:
+   - <!-- WBFS_FORCE_MODE=1 -->
+   - <style id="wbfs-force-iransans">
+   - preload فقط برای .woff2 محلی (نه .ttf و نه fonts.gstatic)
+
+==================================================
+چه چیزهایی اجباری اعمال می‌شوند؟
+==================================================
+- حذف Google Fonts از HTML و enqueue
+- حذف preloadهای مضر (TTF/WOFF/Google/Font Awesome)
+- بازنویسی CSS فونت محلی با font-display:swap
+- تزریق اجباری @font-face برای IRANSansX Regular/Bold
+- Preload فقط woff2 محلی (اولویت با IRANSansX متن)
 
 ==================================================
 نکته برای gainstore.ir
 ==================================================
 اگر ابزار ShetabWP برای IRANSansX می‌گوید No Swap / No Preload:
-1) حتماً نسخه 1.2 را نصب کن
+1) حتماً نسخه 1.3 را نصب کن
 2) ذخیره + اسکن دوباره
 3) کش Rocket را پاک کن
 4) باید IRANSansX-Regular.woff2 در Preload نهایی دیده شود
-5) CSS ایران‌سنس از مسیر uploads/wbfs-font-swap با font-display:swap لود شود
-
-Roboto را با گزینه «حذف Google Fonts» قطع کن.
-Font Awesome نیاز به preload ندارد (آیکون است، نه متن LCP).
+5) در HTML باید wbfs-force-iransans و WBFS_FORCE_MODE=1 باشد

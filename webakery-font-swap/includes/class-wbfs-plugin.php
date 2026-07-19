@@ -32,18 +32,33 @@ class WBFS_Plugin {
 
 	public static function defaults() {
 		return array(
-			'enabled'             => 1,
-			'font_display_swap'   => 1,
-			'preload_woff2_only'  => 1,
-			'max_preload'         => 3,
-			'strip_bad_preloads'  => 1,
-			'disable_google_fonts'=> 1,
-			'prefer_local_fonts'  => 1,
+			'enabled'              => 1,
+			// همه بهینه‌سازی‌ها اجباری‌اند؛ فقط کلید اصلی روشن/خاموش می‌شود.
+			'font_display_swap'    => 1,
+			'preload_woff2_only'   => 1,
+			'max_preload'          => 3,
+			'strip_bad_preloads'   => 1,
+			'disable_google_fonts' => 1,
+			'prefer_local_fonts'   => 1,
+			'force_mode'           => 1,
 		);
 	}
 
+	/**
+	 * تنظیمات با اجبار همیشگی بهینه‌سازی‌ها (حتی اگر در DB خاموش ذخیره شده باشند).
+	 */
 	public static function settings() {
-		return wp_parse_args( (array) get_option( self::OPTION, array() ), self::defaults() );
+		$s = wp_parse_args( (array) get_option( self::OPTION, array() ), self::defaults() );
+		// حالت اجباری: همه قابلیت‌ها ON.
+		$s['force_mode']           = 1;
+		$s['font_display_swap']    = 1;
+		$s['preload_woff2_only']   = 1;
+		$s['strip_bad_preloads']   = 1;
+		$s['disable_google_fonts'] = 1;
+		$s['prefer_local_fonts']   = 1;
+		$max = isset( $s['max_preload'] ) ? (int) $s['max_preload'] : 3;
+		$s['max_preload'] = ( $max < 1 ) ? 3 : min( 8, $max );
+		return $s;
 	}
 
 	private function __construct() {
@@ -58,23 +73,13 @@ class WBFS_Plugin {
 			return;
 		}
 
-		if ( ! empty( $s['disable_google_fonts'] ) ) {
-			add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_google_fonts' ), 100 );
-			add_filter( 'style_loader_src', array( $this, 'block_google_font_src' ), 100, 2 );
-		} else {
-			add_filter( 'style_loader_src', array( $this, 'force_google_display_swap' ), 20, 2 );
-		}
-
-		// بازنویسی CSS فونت‌های محلی (مثل IRANSansX) با افزودن font-display:swap داخل خود فایل.
-		if ( ! empty( $s['font_display_swap'] ) ) {
-			add_filter( 'style_loader_src', array( $this, 'rewrite_local_font_css_src' ), 60, 2 );
-		}
-
+		// === اعمال اجباری همه قابلیت‌ها ===
+		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_google_fonts' ), 100 );
+		add_filter( 'style_loader_src', array( $this, 'block_google_font_src' ), 100, 2 );
+		add_filter( 'style_loader_src', array( $this, 'rewrite_local_font_css_src' ), 60, 2 );
 		add_action( 'wp_head', array( $this, 'print_preload_and_swap' ), 1 );
-
-		if ( ! empty( $s['strip_bad_preloads'] ) || ! empty( $s['disable_google_fonts'] ) ) {
-			add_action( 'template_redirect', array( $this, 'start_buffer' ), -9990 );
-		}
+		add_action( 'wp_head', array( $this, 'print_force_iransans_faces' ), 2 );
+		add_action( 'template_redirect', array( $this, 'start_buffer' ), -9990 );
 	}
 
 	public function menu() {
@@ -102,21 +107,23 @@ class WBFS_Plugin {
 	public function sanitize( $input ) {
 		$input = is_array( $input ) ? $input : array();
 		$max   = isset( $input['max_preload'] ) ? (int) $input['max_preload'] : 3;
-		if ( $max < 0 ) {
-			$max = 0;
+		if ( $max < 1 ) {
+			$max = 3;
 		}
 		if ( $max > 8 ) {
 			$max = 8;
 		}
 
+		// فقط enabled و max_preload قابل تنظیم‌اند؛ بقیه همیشه اجباری ON ذخیره می‌شوند.
 		$out = array(
 			'enabled'              => ! empty( $input['enabled'] ) ? 1 : 0,
-			'font_display_swap'    => ! empty( $input['font_display_swap'] ) ? 1 : 0,
-			'preload_woff2_only'   => ! empty( $input['preload_woff2_only'] ) ? 1 : 0,
+			'font_display_swap'    => 1,
+			'preload_woff2_only'   => 1,
 			'max_preload'          => $max,
-			'strip_bad_preloads'   => ! empty( $input['strip_bad_preloads'] ) ? 1 : 0,
-			'disable_google_fonts' => ! empty( $input['disable_google_fonts'] ) ? 1 : 0,
-			'prefer_local_fonts'   => ! empty( $input['prefer_local_fonts'] ) ? 1 : 0,
+			'strip_bad_preloads'   => 1,
+			'disable_google_fonts' => 1,
+			'prefer_local_fonts'   => 1,
+			'force_mode'           => 1,
 		);
 
 		delete_transient( self::TRANSIENT );
@@ -285,7 +292,78 @@ class WBFS_Plugin {
 	}
 
 	/**
+	 * Force IRANSansX Regular/Bold @font-face into head so Swap cannot be skipped.
+	 */
+	public function print_force_iransans_faces() {
+		if ( is_admin() ) {
+			return;
+		}
+
+		$faces = $this->resolve_iransans_faces();
+		if ( empty( $faces ) ) {
+			return;
+		}
+
+		echo "<style id=\"wbfs-force-iransans\">\n";
+		foreach ( $faces as $face ) {
+			printf(
+				"@font-face{font-family:%s;font-style:normal;font-weight:%s;font-display:swap;src:url(%s) format(\"woff2\")}\n",
+				$this->css_quote( $face['family'] ),
+				esc_attr( $face['weight'] ),
+				$this->css_quote( $face['src'] )
+			);
+		}
+		echo "</style>\n";
+	}
+
+	/**
+	 * Resolve local IRANSansX woff2 URLs from common med-persian paths.
+	 *
+	 * @return array<int,array{family:string,weight:string,src:string}>
+	 */
+	private function resolve_iransans_faces() {
+		$pairs = array(
+			array(
+				'family' => 'IRANSansX',
+				'weight' => '400',
+				'files'  => array(
+					WP_PLUGIN_DIR . '/med-persian/assets/fonts/iransans/fonts/woff2/IRANSansX-Regular.woff2',
+					WP_PLUGIN_DIR . '/med-persian/assets/fonts/IRANSansX-Regular.woff2',
+					WP_PLUGIN_DIR . '/med-persian/assets/fonts/woff2/IRANSansX-Regular.woff2',
+				),
+			),
+			array(
+				'family' => 'IRANSansX',
+				'weight' => '700',
+				'files'  => array(
+					WP_PLUGIN_DIR . '/med-persian/assets/fonts/iransans/fonts/woff2/IRANSansX-Bold.woff2',
+					WP_PLUGIN_DIR . '/med-persian/assets/fonts/IRANSansX-Bold.woff2',
+					WP_PLUGIN_DIR . '/med-persian/assets/fonts/woff2/IRANSansX-Bold.woff2',
+				),
+			),
+		);
+
+		$out = array();
+		foreach ( $pairs as $pair ) {
+			foreach ( $pair['files'] as $abs ) {
+				if ( ! is_readable( $abs ) ) {
+					continue;
+				}
+				$url = plugins_url( ltrim( str_replace( WP_PLUGIN_DIR, '', $abs ), '/' ) );
+				$out[] = array(
+					'family' => $pair['family'],
+					'weight' => $pair['weight'],
+					'src'    => $url,
+				);
+				break;
+			}
+		}
+		return $out;
+	}
+
+	/**
 	 * Strip harmful font preloads / Google font tags from final HTML.
+	 * Also force-rewrite hardcoded local font stylesheet links to swapped CSS.
 	 *
 	 * @param string $html
 	 * @return string
@@ -295,39 +373,71 @@ class WBFS_Plugin {
 			return $html;
 		}
 
-		$s = self::settings();
+		// Force rewrite hardcoded local font stylesheet <link> tags.
+		$html = preg_replace_callback(
+			'#<link\b[^>]*rel=[\'"]stylesheet[\'"][^>]*>#i',
+			function ( $m ) {
+				$tag = $m[0];
+				if ( ! preg_match( '#\bhref=[\'"]([^\'"]+)#i', $tag, $hm ) ) {
+					return $tag;
+				}
+				$href = html_entity_decode( $hm[1], ENT_QUOTES );
+				if ( false !== stripos( $href, 'fonts.googleapis.com' ) || false !== stripos( $href, 'fonts.gstatic.com' ) ) {
+					return $tag;
+				}
+				if ( false !== stripos( $href, 'wbfs-font-swap' ) ) {
+					return $tag;
+				}
+				if ( ! preg_match( '#(?:fonts?|font-awesome|fontawesome|iransans|iran\-sans|elementor/assets/lib/font|woocommerce.*font|webfont)#i', $href ) ) {
+					return $tag;
+				}
+				$abs = $href;
+				if ( 0 === strpos( $abs, '//' ) ) {
+					$abs = ( is_ssl() ? 'https:' : 'http:' ) . $abs;
+				} elseif ( 0 === strpos( $abs, '/' ) ) {
+					$abs = home_url( $abs );
+				}
+				$swapped = $this->ensure_swap_css_file( $abs );
+				if ( ! $swapped || $swapped === $abs ) {
+					return $tag;
+				}
+				return str_replace( $hm[1], esc_url( $swapped ), $tag );
+			},
+			$html
+		);
 
-		if ( ! empty( $s['strip_bad_preloads'] ) ) {
-			$html = preg_replace_callback(
-				'#<link\b[^>]*rel=[\'"]preload[\'"][^>]*>#i',
-				function ( $m ) {
-					$tag = $m[0];
-					$as_font = (bool) preg_match( '#\bas=[\'"]font[\'"]#i', $tag );
-					$href_font = (bool) preg_match( '#\.(?:woff2?|ttf|otf|eot)(?:\?|\'|"|\s|>)#i', $tag );
-					if ( ! $as_font && ! $href_font ) {
-						return $tag;
+		$html = preg_replace_callback(
+			'#<link\b[^>]*rel=[\'"]preload[\'"][^>]*>#i',
+			function ( $m ) {
+				$tag = $m[0];
+				$as_font = (bool) preg_match( '#\bas=[\'"]font[\'"]#i', $tag );
+				$href_font = (bool) preg_match( '#\.(?:woff2?|ttf|otf|eot)(?:\?|\'|"|\s|>)#i', $tag );
+				if ( ! $as_font && ! $href_font ) {
+					return $tag;
+				}
+				// Keep only local woff2.
+				if ( preg_match( '#\bhref=[\'"]([^\'"]+)#i', $tag, $hm ) ) {
+					$href = $hm[1];
+					$is_woff2 = (bool) preg_match( '#\.woff2(?:\?|$)#i', $href );
+					$is_remote = (bool) preg_match( '#fonts\.gstatic\.com|fonts\.googleapis\.com#i', $href );
+					$is_ttf_woff = (bool) preg_match( '#\.(?:ttf|otf|eot|woff)(?:\?|$)#i', $href ) && ! $is_woff2;
+					if ( $is_remote || $is_ttf_woff || ! $is_woff2 ) {
+						return '';
 					}
-					// Keep only local woff2.
-					if ( preg_match( '#\bhref=[\'"]([^\'"]+)#i', $tag, $hm ) ) {
-						$href = $hm[1];
-						$is_woff2 = (bool) preg_match( '#\.woff2(?:\?|$)#i', $href );
-						$is_remote = (bool) preg_match( '#fonts\.gstatic\.com|fonts\.googleapis\.com#i', $href );
-						$is_ttf_woff = (bool) preg_match( '#\.(?:ttf|otf|eot|woff)(?:\?|$)#i', $href ) && ! $is_woff2;
-						if ( $is_remote || $is_ttf_woff || ! $is_woff2 ) {
-							return '';
-						}
-						return $tag;
-					}
-					return '';
-				},
-				$html
-			);
-		}
+					return $tag;
+				}
+				return '';
+			},
+			$html
+		);
 
-		if ( ! empty( $s['disable_google_fonts'] ) ) {
-			$html = preg_replace( '#<link\b[^>]+fonts\.googleapis\.com[^>]*>#i', '', $html );
-			$html = preg_replace( '#<link\b[^>]+fonts\.gstatic\.com[^>]*>#i', '', $html );
-			$html = preg_replace( '#<style[^>]*>[^<]*fonts\.googleapis\.com[^<]*</style>#is', '', $html );
+		$html = preg_replace( '#<link\b[^>]+fonts\.googleapis\.com[^>]*>#i', '', $html );
+		$html = preg_replace( '#<link\b[^>]+fonts\.gstatic\.com[^>]*>#i', '', $html );
+		$html = preg_replace( '#<style[^>]*>[^<]*fonts\.googleapis\.com[^<]*</style>#is', '', $html );
+
+		// Marker so View Source proves forced mode is active.
+		if ( false === stripos( $html, 'WBFS_FORCE_MODE=1' ) ) {
+			$html = preg_replace( '#</head>#i', "<!-- WBFS_FORCE_MODE=1 -->\n</head>", $html, 1 );
 		}
 
 		return $html;
@@ -391,26 +501,7 @@ class WBFS_Plugin {
 	 * افزودن مسیرهای قطعی IRANSansX و مشابه.
 	 */
 	private function append_known_critical_fonts( array &$result ) {
-		$candidates = array(
-			array(
-				'family' => 'IRANSansX',
-				'weight' => '400',
-				'src'    => plugins_url( 'med-persian/assets/fonts/iransans/fonts/woff2/IRANSansX-Regular.woff2' ),
-			),
-			array(
-				'family' => 'IRANSansX',
-				'weight' => '700',
-				'src'    => plugins_url( 'med-persian/assets/fonts/iransans/fonts/woff2/IRANSansX-Bold.woff2' ),
-			),
-		);
-
-		foreach ( $candidates as $face ) {
-			$path = $this->url_to_path( $face['src'] );
-			// اگر مسیر محلی خوانا نبود، باز هم URL را نگه می‌داریم (ممکن است روی CDN باشد).
-			$exists = $path ? is_readable( $path ) : true;
-			if ( ! $exists ) {
-				continue;
-			}
+		foreach ( $this->resolve_iransans_faces() as $face ) {
 			$result['families'][] = $face['family'];
 			$result['files'][]    = $face['src'];
 			$result['faces'][]    = array(
@@ -817,9 +908,9 @@ class WBFS_Plugin {
 			<div class="wbfs-hero">
 				<div>
 					<h1>فونت سوییپ</h1>
-					<p>مدیریت و بهینه‌سازی فونت‌ها از یک جا: فقط woff2، حذف TTF/Google preload، و font-display:swap.</p>
+					<p>حالت اجباری: با روشن بودن افزونه، همه بهینه‌سازی‌های فونت بدون تیک جداگانه اعمال می‌شوند.</p>
 				</div>
-					<span class="wbfs-badge">بهینه · v<?php echo esc_html( WBFS_VERSION ); ?> · IRANSansX</span>
+					<span class="wbfs-badge">اجباری · v<?php echo esc_html( WBFS_VERSION ); ?> · IRANSansX</span>
 			</div>
 
 			<?php if ( $ok ) : ?>
@@ -829,19 +920,21 @@ class WBFS_Plugin {
 			<form method="post" action="options.php" class="wbfs-card">
 				<?php settings_fields( 'wbfs_settings_group' ); ?>
 
+				<div class="wbfs-notice" style="margin-bottom:16px">
+					<strong>حالت اجباری فعال است.</strong>
+					وقتی افزونه روشن باشد این‌ها همیشه اعمال می‌شوند (تیک جداگانه ندارند):
+					حذف Google Fonts، حذف preloadهای مضر، بازنویسی CSS فونت با <code>font-display:swap</code>،
+					تزریق اجباری IRANSansX، و preload فقط woff2 محلی.
+				</div>
+
 				<?php
-				$this->render_toggle( 'enabled', 'فعال‌سازی افزونه', 'اگر خاموش باشد هیچ بهینه‌سازی فونتی اعمال نمی‌شود.', ! empty( $s['enabled'] ) );
-				$this->render_toggle( 'disable_google_fonts', 'حذف Google Fonts', 'لینک‌ها و preloadهای fonts.googleapis / gstatic (مثل Noto Serif با TTF) حذف می‌شوند.', ! empty( $s['disable_google_fonts'] ) );
-				$this->render_toggle( 'strip_bad_preloads', 'حذف Preloadهای مضر', 'preloadهای <code>.ttf</code> و <code>.woff</code> و فونت‌های ریموت از HTML پاک می‌شوند؛ فقط woff2 محلی می‌ماند.', ! empty( $s['strip_bad_preloads'] ) );
-				$this->render_toggle( 'preload_woff2_only', 'Preload فقط woff2', 'هیچ فایل TTF/WOFF از این افزونه preload نمی‌شود.', ! empty( $s['preload_woff2_only'] ) );
-				$this->render_toggle( 'prefer_local_fonts', 'ترجیح فونت محلی', 'فونت‌های روی هاست خودت اولویت دارند؛ Google کنار گذاشته می‌شود.', ! empty( $s['prefer_local_fonts'] ) );
-				$this->render_toggle( 'font_display_swap', 'font-display: swap', 'متن زودتر با فونت جایگزین دیده می‌شود (کمک به FCP/LCP).', ! empty( $s['font_display_swap'] ) );
+				$this->render_toggle( 'enabled', 'فعال‌سازی افزونه (کل کلید)', 'اگر خاموش باشد هیچ بهینه‌سازی فونتی اعمال نمی‌شود. اگر روشن باشد همه بهینه‌سازی‌ها اجباری‌اند.', ! empty( $s['enabled'] ) );
 				?>
 
 				<label style="display:block;margin:8px 0 16px">
 					<strong>حداکثر تعداد Preload</strong>
-					<input type="number" min="0" max="8" name="<?php echo esc_attr( self::OPTION ); ?>[max_preload]" value="<?php echo esc_attr( (string) (int) $s['max_preload'] ); ?>" style="width:80px;margin-right:8px" />
-					<small class="wbfs-muted">پیشنهاد برای موبایل: ۲ یا ۳</small>
+					<input type="number" min="1" max="8" name="<?php echo esc_attr( self::OPTION ); ?>[max_preload]" value="<?php echo esc_attr( (string) (int) $s['max_preload'] ); ?>" style="width:80px;margin-right:8px" />
+					<small class="wbfs-muted">پیشنهاد برای موبایل: ۲ یا ۳ — تنها مقدار قابل تنظیم علاوه بر کلید اصلی</small>
 				</label>
 
 				<?php submit_button( 'ذخیره تنظیمات', 'primary', 'submit', false ); ?>
@@ -867,7 +960,7 @@ class WBFS_Plugin {
 						</ul>
 					<?php endif; ?>
 					<?php if ( ! empty( $fonts['google'] ) ) : ?>
-						<p class="wbfs-muted" style="margin-top:12px;color:#b45309">Google Fonts یافت شد: <?php echo esc_html( (string) count( $fonts['google'] ) ); ?> مورد — با گزینه «حذف Google Fonts» قطع می‌شود.</p>
+						<p class="wbfs-muted" style="margin-top:12px;color:#b45309">Google Fonts یافت شد: <?php echo esc_html( (string) count( $fonts['google'] ) ); ?> مورد — در حالت اجباری از HTML حذف می‌شوند.</p>
 					<?php endif; ?>
 				</div>
 
