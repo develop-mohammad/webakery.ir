@@ -2,7 +2,7 @@
 /**
  * Plugin Name: فونت سوییپ | Font Swap
  * Description: بهینه‌سازی فونت‌ها: فقط woff2، حذف preloadهای TTF/WOFF/Google، و font-display:swap — همه از یک پنل.
- * Version:     1.1.0
+ * Version:     1.2.0
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'WBFS_LOADED' ) ) {
 	return;
 }
 define( 'WBFS_LOADED', true );
-define( 'WBFS_VERSION', '1.1.0' );
+define( 'WBFS_VERSION', '1.2.0' );
 define( 'WBFS_FILE', __FILE__ );
 define( 'WBFS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBFS_URL', plugin_dir_url( __FILE__ ) );
