@@ -306,6 +306,7 @@ class Admin {
 		echo '<p class="wccp-muted">سوالات و فیلدهای این لینک پرداخت را تنظیم کنید، بعد ذخیره بزنید.</p>';
 		echo '<div class="wccp-topbar-actions">';
 		echo '<button type="button" class="button" id="wccp-add-info">+ متن ساده</button>';
+		echo '<button type="button" class="button" id="wccp-add-consent">+ رضایت‌نامه</button>';
 		echo '<button type="button" class="button" id="wccp-add-radio">+ سوال رادیو</button>';
 		echo '<button type="button" class="button" id="wccp-add-checkboxes">+ چندگزینه‌ای</button>';
 		echo '<button type="button" class="wccp-btn-save" id="wccp-save-btn"><span class="dashicons dashicons-yes"></span> ذخیره تنظیمات</button>';

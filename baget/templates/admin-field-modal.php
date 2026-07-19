@@ -66,21 +66,26 @@ defined( 'ABSPATH' ) || exit;
 								<strong>متن ساده</strong>
 								<small>فقط اطلاع‌رسانی — بدون پر کردن</small>
 							</button>
+							<button type="button" class="wccp-type-card is-consent" data-type="consent">
+								<span class="wccp-type-ic">✓</span>
+								<strong>رضایت‌نامه</strong>
+								<small>متن + تیک «رضایت دارم»</small>
+							</button>
 						</div>
 					</div>
 
 					<div class="wccp-field-block" id="wccp-field-options-wrap" hidden>
-						<span class="wccp-label">۳) گزینه‌های پاسخ</span>
-						<p class="wccp-help">هر ردیف یک گزینه است. دکمه «+ گزینه» بزنید. حداقل یک گزینه لازم است.</p>
+						<span class="wccp-label" id="wccp-options-label">۳) گزینه‌های پاسخ</span>
+						<p class="wccp-help" id="wccp-options-help">هر ردیف یک گزینه است. دکمه «+ گزینه» بزنید. حداقل یک گزینه لازم است.</p>
 						<div id="wccp-options-list" class="wccp-options-list"></div>
 						<button type="button" class="button" id="wccp-add-option">+ افزودن گزینه</button>
 						<textarea id="wccp-field-options" class="wccp-options-hidden" hidden rows="3"></textarea>
 					</div>
 
 					<div class="wccp-field-block" id="wccp-field-content-wrap" hidden>
-						<label class="wccp-label" for="wccp-field-content">۳) متن اطلاع‌رسانی (اطلاعات بیشتر سفارش)</label>
-						<p class="wccp-help">این متن فقط نمایش داده می‌شود؛ مشتری چیزی پر نمی‌کند.</p>
-						<textarea id="wccp-field-content" class="widefat" rows="5" placeholder="مثلاً: پس از پرداخت، لینک دانلود تا ۱۵ دقیقه برای شما ایمیل می‌شود."></textarea>
+						<label class="wccp-label" for="wccp-field-content" id="wccp-content-label">۳) متن اطلاع‌رسانی</label>
+						<p class="wccp-help" id="wccp-content-help">این متن فقط نمایش داده می‌شود؛ مشتری چیزی پر نمی‌کند.</p>
+						<textarea id="wccp-field-content" class="widefat" rows="5" placeholder="متن رضایت‌نامه یا اطلاعات بیشتر…"></textarea>
 					</div>
 
 					<label class="wccp-check-row wccp-field-block" id="wccp-field-required-wrap">
@@ -101,9 +106,10 @@ defined( 'ABSPATH' ) || exit;
 						<ul>
 							<li><b>رادیو:</b> کاربر فقط یک گزینه انتخاب می‌کند.</li>
 							<li><b>چندگزینه‌ای:</b> کاربر می‌تواند چند گزینه بزند.</li>
-							<li><b>متن ساده:</b> فقط توضیح/اطلاع‌رسانی است و پر نمی‌شود.</li>
-							<li><b>تلفن:</b> هر فیلد تلفن مثل <code>billing_phone</code> برای درگاه و پیامک استفاده می‌شود.</li>
-							<li>بعد از ذخیره، فیلد در ستون «فعال» می‌آید — صفحه checkout را رفرش کنید.</li>
+							<li><b>متن ساده:</b> فقط توضیح است و کاربر چیزی پر نمی‌کند.</li>
+							<li><b>رضایت‌نامه:</b> متن قانونی + تیک «رضایت دارم» (برای اجبار مناسب است).</li>
+							<li><b>تلفن:</b> مثل <code>billing_phone</code> برای درگاه و پیامک همگام می‌شود.</li>
+							<li>بعد از ذخیره، صفحه checkout را رفرش کنید.</li>
 						</ul>
 					</div>
 				</aside>

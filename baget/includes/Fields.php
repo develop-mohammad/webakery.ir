@@ -34,7 +34,7 @@ class Fields {
 
 	/** @return string[] */
 	public static function allowed_types() {
-		return array( 'text', 'tel', 'email', 'number', 'textarea', 'select', 'radio', 'checkboxes', 'state', 'info' );
+		return array( 'text', 'tel', 'email', 'number', 'textarea', 'select', 'radio', 'checkboxes', 'state', 'info', 'consent' );
 	}
 
 	/** @return string[] */
@@ -45,6 +45,11 @@ class Fields {
 	/** فیلدهایی که فقط نمایش داده می‌شوند و ورودی کاربر ندارند */
 	public static function display_only_types() {
 		return array( 'info' );
+	}
+
+	/** فیلدهایی که متن اطلاع‌رسانی (content) دارند */
+	public static function content_types() {
+		return array( 'info', 'consent' );
 	}
 
 	/**
@@ -83,14 +88,23 @@ class Fields {
 
 		echo '<div class="wccp-field wccp-field-' . esc_attr( sanitize_key( $type ) ) . '">';
 
-		if ( 'info' === $type ) {
-			$content = (string) ( $def['content'] ?? $def['options'] ?? '' );
-			echo '<div class="wccp-info-box">';
+		if ( 'info' === $type || 'consent' === $type ) {
+			$content = (string) ( $def['content'] ?? '' );
+			$agree   = self::parse_options( $def['options'] ?? '' );
+			$agree   = $agree[0] ?? 'رضایت دارم';
+			echo '<div class="wccp-info-box' . ( 'consent' === $type ? ' wccp-consent-box' : '' ) . '">';
 			if ( '' !== trim( $label ) ) {
 				echo '<strong class="wccp-info-title">' . esc_html( $label ) . '</strong>';
 			}
 			if ( '' !== trim( $content ) ) {
 				echo '<div class="wccp-info-text">' . wp_kses_post( wpautop( $content ) ) . '</div>';
+			}
+			if ( 'consent' === $type ) {
+				$id = $key . '_agree';
+				echo '<label class="wccp-consent-check" for="' . esc_attr( $id ) . '">';
+				echo '<input type="checkbox" name="' . esc_attr( $key ) . '" id="' . esc_attr( $id ) . '" value="' . esc_attr( $agree ) . '"' . $req_attr . ' /> ';
+				echo '<span>' . esc_html( $agree ) . '</span>';
+				echo '</label>';
 			}
 			echo '</div></div>';
 			return;
@@ -158,6 +172,7 @@ class Fields {
 			'checkboxes' => 'چندگزینه‌ای',
 			'state'      => 'استان',
 			'info'       => 'متن ساده',
+			'consent'    => 'رضایت‌نامه',
 		);
 		return $labels[ $type ] ?? (string) $type;
 	}
@@ -235,7 +250,7 @@ class Fields {
 				'required'    => ( 'info' === $type ) ? false : ! empty( $def['required'] ),
 				'placeholder' => sanitize_text_field( $def['placeholder'] ?? '' ),
 				'options'     => self::normalize_options_string( $def['options'] ?? '' ),
-				'content'     => ( 'info' === $type ) ? sanitize_textarea_field( $def['content'] ?? '' ) : '',
+				'content'     => in_array( $type, self::content_types(), true ) ? sanitize_textarea_field( $def['content'] ?? '' ) : '',
 				'custom'      => true,
 				'user_defined'=> true,
 			);

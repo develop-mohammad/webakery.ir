@@ -65,12 +65,12 @@ define( 'LS_PLUGIN_META', [
 // نسخهٔ سرور باید از نسخهٔ نصب‌شده روی سایت مشتری بالاتر باشد تا در «افزونه‌ها» آپدیت نمایش داده شود.
 define( 'LS_UPDATES', [
     'wccp' => [
-        'version'      => '1.5.8',
+        'version'      => '1.5.9',
         'package'      => 'https://webakery.ir/license-server/updates/baget.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۵.۸: همگام‌سازی قطعی فیلدهای تلفن با billing_phone + حذف خطای پیامک.',
+        'changelog'    => 'نسخه ۱.۵.۹: فیلد رضایت‌نامه (متن + تیک رضایت دارم) + رفع گیر کردن ذخیره.',
     ],
     'access-levels' => [
         'version'      => '1.5.8',

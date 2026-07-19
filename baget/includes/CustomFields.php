@@ -75,7 +75,7 @@ class CustomFields {
 					'required'     => ( 'info' === $type ) ? false : ! empty( $def['required'] ),
 					'placeholder'  => (string) ( $def['placeholder'] ?? '' ),
 					'options'      => (string) ( $def['options'] ?? '' ),
-					'content'      => (string) ( $def['content'] ?? '' ),
+					'content'      => in_array( $type, Fields::content_types(), true ) ? (string) ( $def['content'] ?? '' ) : '',
 					'custom'       => true,
 					'user_defined' => true,
 					'icon'         => 'custom',

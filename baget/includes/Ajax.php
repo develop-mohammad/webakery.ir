@@ -142,8 +142,16 @@ class Ajax {
 		if ( in_array( $type, Fields::option_types(), true ) && '' === trim( $options ) ) {
 			wp_send_json_error( array( 'message' => 'برای این نوع فیلد حداقل یک گزینه وارد کنید.' ) );
 		}
-		if ( 'info' === $type && '' === trim( $content ) && '' === trim( $label ) ) {
-			wp_send_json_error( array( 'message' => 'برای متن ساده، عنوان یا متن اطلاع‌رسانی را وارد کنید.' ) );
+		if ( in_array( $type, Fields::content_types(), true ) && '' === trim( $content ) && '' === trim( $label ) ) {
+			wp_send_json_error( array( 'message' => 'عنوان یا متن اطلاع‌رسانی را وارد کنید.' ) );
+		}
+		if ( 'consent' === $type ) {
+			if ( '' === trim( $options ) ) {
+				$options = 'رضایت دارم';
+			}
+			if ( '' === trim( $content ) ) {
+				wp_send_json_error( array( 'message' => 'متن رضایت‌نامه را وارد کنید.' ) );
+			}
 		}
 
 		$key    = 'wccp_field_' . strtolower( wp_generate_password( 8, false, false ) );
@@ -162,7 +170,7 @@ class Ajax {
 			'type'         => $type,
 			'required'     => ( 'info' === $type ) ? false : ! empty( $_POST['required'] ),
 			'options'      => $options,
-			'content'      => ( 'info' === $type ) ? $content : '',
+			'content'      => in_array( $type, Fields::content_types(), true ) ? $content : '',
 			'custom'       => true,
 			'user_defined' => true,
 		);
@@ -244,8 +252,16 @@ class Ajax {
 		if ( in_array( $type, Fields::option_types(), true ) && '' === trim( $options ) ) {
 			wp_send_json_error( array( 'message' => 'برای این نوع فیلد حداقل یک گزینه وارد کنید.' ) );
 		}
-		if ( 'info' === $type && '' === trim( $content ) && '' === trim( $label ) ) {
-			wp_send_json_error( array( 'message' => 'برای متن ساده، عنوان یا متن اطلاع‌رسانی را وارد کنید.' ) );
+		if ( in_array( $type, Fields::content_types(), true ) && '' === trim( $content ) && '' === trim( $label ) ) {
+			wp_send_json_error( array( 'message' => 'عنوان یا متن اطلاع‌رسانی را وارد کنید.' ) );
+		}
+		if ( 'consent' === $type ) {
+			if ( '' === trim( $options ) ) {
+				$options = 'رضایت دارم';
+			}
+			if ( '' === trim( $content ) ) {
+				wp_send_json_error( array( 'message' => 'متن رضایت‌نامه را وارد کنید.' ) );
+			}
 		}
 
 		$custom[ $key ] = array(
@@ -253,7 +269,7 @@ class Ajax {
 			'type'         => $type,
 			'required'     => ( 'info' === $type ) ? false : ! empty( $_POST['required'] ),
 			'options'      => $options,
-			'content'      => ( 'info' === $type ) ? $content : '',
+			'content'      => in_array( $type, Fields::content_types(), true ) ? $content : '',
 			'custom'       => true,
 			'user_defined' => true,
 		);

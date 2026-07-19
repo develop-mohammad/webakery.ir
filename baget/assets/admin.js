@@ -53,7 +53,8 @@
       select: 'کشویی',
       radio: 'رادیو',
       checkboxes: 'چندگزینه‌ای',
-      info: 'متن ساده'
+      info: 'متن ساده',
+      consent: 'رضایت‌نامه'
     };
     return map[type] || type || 'متنی';
   }
@@ -64,6 +65,10 @@
 
   function displayOnlyTypes() {
     return ['info'];
+  }
+
+  function contentTypes() {
+    return ['info', 'consent'];
   }
 
   function renderItem(key) {
@@ -371,20 +376,53 @@
     var wrap = $('#wccp-field-options-wrap');
     var contentWrap = $('#wccp-field-content-wrap');
     var requiredWrap = $('#wccp-field-required-wrap');
+    var addOptBtn = $('#wccp-add-option');
     var needOpts = optionTypes().indexOf(type) !== -1;
     var isInfo = displayOnlyTypes().indexOf(type) !== -1;
+    var isConsent = type === 'consent';
+    var needContent = contentTypes().indexOf(type) !== -1;
 
     if (wrap) {
-      wrap.hidden = !needOpts;
+      // رضایت‌نامه: فقط یک برچسب تیک؛ چندگزینه‌ای/رادیو: لیست گزینه
+      wrap.hidden = !(needOpts || isConsent);
       if (needOpts && !$$('.wccp-option-row').length) {
         setOptions(['گزینه ۱', 'گزینه ۲', 'گزینه ۳']);
       }
+      if (isConsent) {
+        var cur = collectOptions();
+        setOptions(cur.length ? [cur[0]] : ['رضایت دارم']);
+        if (addOptBtn) addOptBtn.hidden = true;
+        var optLabel = $('#wccp-options-label');
+        var optHelp = $('#wccp-options-help');
+        if (optLabel) optLabel.textContent = '۳) متن تیک رضایت';
+        if (optHelp) optHelp.textContent = 'مثلاً: رضایت دارم — کاربر باید این تیک را بزند.';
+      } else if (needOpts) {
+        if (addOptBtn) addOptBtn.hidden = false;
+        var optLabel2 = $('#wccp-options-label');
+        var optHelp2 = $('#wccp-options-help');
+        if (optLabel2) optLabel2.textContent = '۳) گزینه‌های پاسخ';
+        if (optHelp2) optHelp2.textContent = 'هر ردیف یک گزینه است. دکمه «+ گزینه» بزنید. حداقل یک گزینه لازم است.';
+      }
     }
-    if (contentWrap) contentWrap.hidden = !isInfo;
+    if (contentWrap) {
+      contentWrap.hidden = !needContent;
+      var cLabel = $('#wccp-content-label');
+      var cHelp = $('#wccp-content-help');
+      if (isConsent) {
+        if (cLabel) cLabel.textContent = '۴) متن رضایت‌نامه';
+        if (cHelp) cHelp.textContent = 'متن قانونی/توضیح را بنویسید؛ زیر آن تیک رضایت نمایش داده می‌شود.';
+      } else if (isInfo) {
+        if (cLabel) cLabel.textContent = '۳) متن اطلاع‌رسانی';
+        if (cHelp) cHelp.textContent = 'این متن فقط نمایش داده می‌شود؛ مشتری چیزی پر نمی‌کند.';
+      }
+    }
     if (requiredWrap) {
-      requiredWrap.hidden = isInfo;
+      requiredWrap.hidden = isInfo; // رضایت‌نامه می‌تواند اجباری باشد
       if (isInfo && $('#wccp-field-required')) {
         $('#wccp-field-required').checked = false;
+      }
+      if (isConsent && $('#wccp-field-required') && !$('#wccp-field-key').value) {
+        $('#wccp-field-required').checked = true;
       }
     }
   }
@@ -475,9 +513,14 @@
     var opts = collectOptions();
     var html = '<div class="wccp-pv-label">' + escapeHtml(label) + (required ? ' <span>*</span>' : '') + '</div>';
 
-    if (type === 'info') {
-      var content = ($('#wccp-field-content') && $('#wccp-field-content').value) || 'متن اطلاع‌رسانی اینجا نمایش داده می‌شود…';
-      html = '<div class="wccp-pv-info"><div class="wccp-pv-label">' + escapeHtml(label) + '</div><div class="wccp-pv-info-text">' + escapeHtml(content).replace(/\n/g, '<br>') + '</div></div>';
+    if (type === 'info' || type === 'consent') {
+      var content = ($('#wccp-field-content') && $('#wccp-field-content').value) || 'متن اینجا نمایش داده می‌شود…';
+      var agree = (collectOptions()[0] || 'رضایت دارم');
+      if (type === 'consent') {
+        html = '<div class="wccp-pv-consent"><div class="wccp-pv-label">' + escapeHtml(label) + (required ? ' <span>*</span>' : '') + '</div><div class="wccp-pv-info-text">' + escapeHtml(content).replace(/\n/g, '<br>') + '</div><label class="wccp-pv-consent-check"><input type="checkbox" disabled /> ' + escapeHtml(agree) + '</label></div>';
+      } else {
+        html = '<div class="wccp-pv-info"><div class="wccp-pv-label">' + escapeHtml(label) + '</div><div class="wccp-pv-info-text">' + escapeHtml(content).replace(/\n/g, '<br>') + '</div></div>';
+      }
       box.innerHTML = html;
       return;
     } else if (type === 'textarea') {
@@ -525,8 +568,8 @@
     $('#wccp-field-key').value = isEdit ? key : '';
     var isDefaultInput = $('#wccp-field-is-default');
     if (isDefaultInput) isDefaultInput.value = isDefault ? '1' : '0';
-    $('#wccp-field-label').value = f.label || (presetType === 'info' ? 'اطلاعات بیشتر سفارش' : '');
-    $('#wccp-field-required').checked = !!f.required;
+    $('#wccp-field-label').value = f.label || (presetType === 'info' ? 'اطلاعات بیشتر سفارش' : (presetType === 'consent' ? 'رضایت‌نامه والدین' : ''));
+    $('#wccp-field-required').checked = presetType === 'consent' ? true : !!f.required;
     var contentEl = $('#wccp-field-content');
     if (contentEl) contentEl.value = f.content || '';
 
@@ -547,11 +590,15 @@
     if (!isDefault && optionTypes().indexOf(type) !== -1) {
       var opts = parseOptionsText(f.options || '');
       setOptions(opts.length ? opts : ['گزینه ۱', 'گزینه ۲', 'گزینه ۳']);
+    } else if (!isDefault && type === 'consent') {
+      var cOpts = parseOptionsText(f.options || '');
+      setOptions(cOpts.length ? [cOpts[0]] : ['رضایت دارم']);
     } else if (!isDefault) {
       setOptions([]);
       var list = $('#wccp-options-list');
       if (list) list.innerHTML = '';
     }
+    toggleOptionsVisibility();
 
     updatePreview();
     modal.hidden = false;
@@ -583,6 +630,17 @@
         toast('برای متن ساده، عنوان یا متن اطلاع‌رسانی را وارد کنید', 'error');
         return;
       }
+    } else if (type === 'consent') {
+      if (!String(contentVal).trim()) {
+        toast('متن رضایت‌نامه را وارد کنید', 'error');
+        return;
+      }
+      if (!collectOptions().length) {
+        setOptions(['رضایت دارم']);
+        syncOptionsTextarea();
+        optionsText = ($('#wccp-field-options') && $('#wccp-field-options').value) || 'رضایت دارم';
+      }
+      if (!String(labelVal).trim()) labelVal = 'رضایت‌نامه';
     } else if (!String(labelVal).trim()) {
       toast('عنوان سوال / فیلد را وارد کنید', 'error');
       return;
@@ -600,12 +658,23 @@
     if (key) payload.key = key;
 
     var submitBtn = $('#wccp-modal-submit');
+    function unlockSubmit() {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'ذخیره سوال / فیلد';
+      }
+    }
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.textContent = 'در حال ذخیره…';
     }
+    var hangTimer = setTimeout(function () {
+      unlockSubmit();
+      toast('ذخیره طول کشید — اتصال یا خطا را بررسی کنید', 'error');
+    }, 20000);
 
     post(action, payload).then(function (res) {
+      clearTimeout(hangTimer);
       if (!res || !res.success) {
         toast((res && res.data && res.data.message) || WCCP_ADMIN.i18n.error, 'error');
         return;
@@ -621,12 +690,11 @@
       closeFieldModal();
       toast(res.data.message || WCCP_ADMIN.i18n.saved, 'ok');
     }).catch(function () {
+      clearTimeout(hangTimer);
       toast(WCCP_ADMIN.i18n.error, 'error');
     }).finally(function () {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'ذخیره سوال / فیلد';
-      }
+      clearTimeout(hangTimer);
+      unlockSubmit();
     });
   }
 
@@ -681,6 +749,9 @@
 
     var addInfo = $('#wccp-add-info');
     if (addInfo) addInfo.addEventListener('click', function (e) { e.preventDefault(); createField('info'); });
+
+    var addConsent = $('#wccp-add-consent');
+    if (addConsent) addConsent.addEventListener('click', function (e) { e.preventDefault(); createField('consent'); });
 
     var addRadio = $('#wccp-add-radio');
     if (addRadio) addRadio.addEventListener('click', function (e) { e.preventDefault(); createField('radio'); });

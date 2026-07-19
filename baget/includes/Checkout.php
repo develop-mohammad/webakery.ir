@@ -23,6 +23,7 @@ class Checkout {
 		add_filter( 'woocommerce_form_field_wccp_radio', array( $this, 'render_choice_fields' ), 10, 4 );
 		add_filter( 'woocommerce_form_field_wccp_checkboxes', array( $this, 'render_choice_fields' ), 10, 4 );
 		add_filter( 'woocommerce_form_field_wccp_info', array( $this, 'render_info_field' ), 10, 4 );
+		add_filter( 'woocommerce_form_field_wccp_consent', array( $this, 'render_consent_field' ), 10, 4 );
 		// هر فیلد نوع «تلفن» = billing_phone برای درگاه/پیامک
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'ensure_hidden_billing_phone' ), 1001 );
 		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'sync_missing_core_fields' ), 1 );
@@ -388,6 +389,8 @@ class Checkout {
 				$wc_type = 'wccp_checkboxes';
 			} elseif ( 'info' === $type ) {
 				$wc_type = 'wccp_info';
+			} elseif ( 'consent' === $type ) {
+				$wc_type = 'wccp_consent';
 			} elseif ( in_array( $type, array( 'text', 'tel', 'email', 'number', 'checkbox' ), true ) ) {
 				$wc_type = $type;
 			} else {
@@ -409,9 +412,15 @@ class Checkout {
 				$field['class'][]   = 'wccp-maps-billing-phone';
 				$field['autocomplete'] = 'tel';
 			}
-			if ( 'info' === $raw_type ) {
+			if ( 'info' === $raw_type || 'consent' === $raw_type ) {
 				$field['wccp_content'] = (string) ( $def['content'] ?? '' );
-				$field['required']    = false;
+			}
+			if ( 'info' === $raw_type ) {
+				$field['required'] = false;
+			}
+			if ( 'consent' === $raw_type ) {
+				$agree = Fields::parse_options( $def['options'] ?? '' );
+				$field['wccp_agree_label'] = $agree[0] ?? 'رضایت دارم';
 			}
 			if ( in_array( $raw_type, Fields::option_types(), true ) ) {
 				$field['wccp_options'] = $options;
@@ -451,6 +460,36 @@ class Checkout {
 		if ( '' !== trim( $content ) ) {
 			echo '<div class="wccp-info-text">' . wp_kses_post( wpautop( $content ) ) . '</div>';
 		}
+		echo '</div></div>';
+		return ob_get_clean();
+	}
+
+	public function render_consent_field( $field, $key, $args, $value ) {
+		$classes = isset( $args['class'] ) ? (array) $args['class'] : array( 'form-row-wide', 'wccp-field', 'wccp-field-consent' );
+		$label   = isset( $args['label'] ) ? (string) $args['label'] : '';
+		$content = isset( $args['wccp_content'] ) ? (string) $args['wccp_content'] : '';
+		$agree   = isset( $args['wccp_agree_label'] ) ? (string) $args['wccp_agree_label'] : 'رضایت دارم';
+		$required = ! empty( $args['required'] );
+		$checked  = (string) $value !== '' && (string) $value === (string) $agree;
+
+		ob_start();
+		echo '<div class="form-row ' . esc_attr( implode( ' ', $classes ) ) . '" id="' . esc_attr( $key ) . '_field" data-priority="' . esc_attr( (string) ( $args['priority'] ?? '' ) ) . '">';
+		echo '<div class="wccp-info-box wccp-consent-box">';
+		if ( '' !== trim( $label ) ) {
+			echo '<strong class="wccp-info-title">' . esc_html( $label );
+			if ( $required ) {
+				echo ' <abbr class="required" title="required">*</abbr>';
+			}
+			echo '</strong>';
+		}
+		if ( '' !== trim( $content ) ) {
+			echo '<div class="wccp-info-text">' . wp_kses_post( wpautop( $content ) ) . '</div>';
+		}
+		$id = $key . '_agree';
+		echo '<label class="wccp-consent-check" for="' . esc_attr( $id ) . '">';
+		echo '<input type="checkbox" class="input-checkbox" name="' . esc_attr( $key ) . '" id="' . esc_attr( $id ) . '" value="' . esc_attr( $agree ) . '" ' . checked( $checked, true, false ) . ( $required ? ' required' : '' ) . ' /> ';
+		echo '<span>' . esc_html( $agree ) . '</span>';
+		echo '</label>';
 		echo '</div></div>';
 		return ob_get_clean();
 	}
@@ -533,6 +572,12 @@ class Checkout {
 				$val = array_filter( array_map( 'sanitize_text_field', $val ) );
 				if ( empty( $val ) ) {
 					$errors->add( 'wccp_' . $key, sprintf( 'لطفاً حداقل یک گزینه برای «%s» انتخاب کنید.', $defs[ $key ]['label'] ) );
+				}
+			}
+			if ( 'consent' === $type ) {
+				$val = isset( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : ''; // phpcs:ignore
+				if ( '' === $val ) {
+					$errors->add( 'wccp_' . $key, sprintf( 'برای ادامه، باید «%s» را تأیید کنید.', $defs[ $key ]['label'] ?: 'رضایت‌نامه' ) );
 				}
 			}
 		}
