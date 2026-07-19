@@ -11,15 +11,27 @@ https://pagespeed.web.dev/analysis/https-gainstore-ir/5ifl25i5hb?form_factor=mob
 - بزرگ‌ترین مشکلات: CSS بلاک‌کننده (~3s) + تصاویر PNG خیلی سنگین (~3.3MB)
 
 ==================================================
-نصب ZIP وردپرس
+نصب ZIP وردپرس (نسخه 1.1 - اعمال اجباری)
 ==================================================
 فایل: gainstore-perfmatters-setup.zip
 
 1) اول Perfmatters را نصب و فعال کن
 2) وردپرس → افزونه‌ها → افزودن → بارگذاری افزونه
-3) ZIP را نصب و فعال کن
-4) کش را پاک کن و صفحه اصلی را یک‌بار باز کن (برای ساخت Used CSS)
-5) بعد از تست می‌توانی این افزونه کمکی را حذف کنی
+3) ZIP را نصب و فعال کن (اگر نسخه قبلی هست، حذف و دوباره نصب کن)
+4) برو به: ابزارها → گین استور Perfmatters
+5) دکمه «اعمال اجباری تنظیمات + پاک کردن کش» را بزن
+6) در همان صفحه چک کن:
+   - Delay JavaScript = ON
+   - Delay Behavior = all
+   - Remove Unused CSS = ON
+7) در WP Rocket این‌ها را خاموش کن:
+   Delay JS / Load JS deferred / Remove Unused CSS / Minify-Combine / LazyLoad
+8) با Incognito (خارج از لاگین ادمین) صفحه اصلی را باز کن
+9) View Source → جستجو: pmdelayedscript و perfmatters-used-css
+
+نکته مهم:
+Remove Unused CSS برای کاربر لاگین‌شده اجرا نمی‌شود.
+حتماً با پنجره ناشناس تست کن.
 
 ==================================================
 این تنظیمات چه کار می‌کند
