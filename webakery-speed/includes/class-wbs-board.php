@@ -193,12 +193,14 @@ class WBS_Board {
 			<div class="wbsb-hero">
 				<div>
 					<h1>پنل سرعت</h1>
-					<p>از گزارش سرچ‌کنسول شروع کن، بعد یکی‌یکی با اولویت جلو برو.</p>
+					<p>CWV را از گوگل بگیر، اسکن کن، بعد اصلاح خودکار را برای موارد امن روشن کن.</p>
 				</div>
-					<span class="wbsb-badge">v<?php echo esc_html( WBS_VERSION ); ?> · یکپارچه</span>
+				<span class="wbsb-badge">v<?php echo esc_html( WBS_VERSION ); ?> · AutoFix · CWV</span>
 			</div>
 			<p class="wbsb-navline">
 				<a class="button button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-speed' ) ); ?>">اولویت‌ها</a>
+				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-speed-cwv' ) ); ?>">گوگل / CWV</a>
+				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-speed-autofix' ) ); ?>">اصلاح خودکار</a>
 				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-speed-fonts' ) ); ?>">فونت سوییپ</a>
 			</p>
 
@@ -212,6 +214,13 @@ class WBS_Board {
 
 			<section class="wbsb-card">
 				<h2>شروع با سرچ‌کنسول / PageSpeed</h2>
+				<p class="wbsb-hint" style="margin:0 0 12px">می‌توانی دستی وارد کنی، یا از منوی <a href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-speed-cwv' ) ); ?>">گوگل / CWV</a> به‌صورت خودکار بگیری.</p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:14px">
+					<?php wp_nonce_field( 'wbs_fetch_cwv' ); ?>
+					<input type="hidden" name="action" value="wbs_fetch_cwv" />
+					<button class="button button-primary">دریافت خودکار CWV از گوگل</button>
+					<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-speed-autofix' ) ); ?>">رفتن به اصلاح خودکار</a>
+				</form>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wbsb-form">
 					<?php wp_nonce_field( 'wbsb_save_gsc' ); ?>
 					<input type="hidden" name="action" value="wbsb_save_gsc" />

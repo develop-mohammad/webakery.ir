@@ -2,32 +2,24 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 
-افزونه یکپارچه سرعت: پنل اولویت‌های Core Web Vitals + بهینه‌سازی اجباری فونت.
+افزونه یکپارچه سرعت: اولویت‌های CWV، دریافت از گوگل، اصلاح خودکار، فونت سوییپ.
 
 == Description ==
 
-جایگزین دو افزونه جداگانه:
-* پنل سرعت (Speed Board)
-* فونت سوییپ (Font Swap)
-
-قابلیت‌ها:
-* پنل اولویت‌ها: سرچ‌کنسول → Render-blocking → تصاویر → فونت → LCP → ...
-* اسکن HTML صفحه اصلی
-* بهینه‌سازی اجباری فونت وقتی ماژول فونت روشن باشد
-* حذف Google Fonts / preloadهای مضر / font-display:swap / تزریق IRANSansX
-
-== Installation ==
-
-1. webakery-speed.zip را نصب و فعال کن
-2. اگر «فونت سوییپ» یا «پنل سرعت» قدیمی فعال است، آن‌ها را غیرفعال/حذف کن
-3. منوی «پنل سرعت» را باز کن
+* پنل اولویت‌ها + اسکن HTML
+* دریافت خودکار Core Web Vitals از PageSpeed Insights API (منبع فیلد دیتا = CrUX / مشابه Search Console)
+* اصلاح خودکار موارد امن: ابعاد تصویر، lazy، LCP priority، async CSS آیکون
+* فونت سوییپ اجباری
 
 == Changelog ==
 
+= 1.1.0 =
+* منوی گوگل / CWV با دریافت خودکار LCP/INP/CLS
+* منوی اصلاح خودکار بر اساس اسکن
+* مارکر WBS_AUTOFIX=1 در HTML
+
 = 1.0.0 =
-* ادغام Font Swap + Speed Board در یک افزونه
-* منوی واحد: اولویت‌ها + فونت سوییپ
-* هشدار تداخل با افزونه‌های قدیمی
+* ادغام Font Swap + Speed Board

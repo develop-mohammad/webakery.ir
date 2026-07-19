@@ -1,5 +1,13 @@
 .wbsb-wrap{max-width:980px;margin:18px 20px 40px 0;font-family:Tahoma,Arial,sans-serif;color:#0f172a}
 .wbsb-navline{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.wbsb-hint{display:block;margin-top:6px;color:#64748b;font-weight:400;line-height:1.6}
+.wbsb-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:14px 0}
+.wbsb-metrics div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px;text-align:center}
+.wbsb-metrics strong{display:block;font-size:12px;color:#64748b;margin-bottom:6px}
+.wbsb-metrics span{font-size:20px;font-weight:700;color:#0f172a}
+.wbsb-check{display:flex;align-items:flex-start;gap:10px;margin:0 0 12px;font-size:14px;line-height:1.6}
+.wbsb-check input{margin-top:3px}
+@media (max-width:820px){.wbsb-metrics{grid-template-columns:1fr 1fr}}
 .wbsb-hero{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
 .wbsb-hero h1{margin:0 0 6px;font-size:26px}
 .wbsb-hero p{margin:0;color:#64748b;line-height:1.7}
