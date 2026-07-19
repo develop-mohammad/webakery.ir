@@ -1,0 +1,23 @@
+.wbfs-wrap{max-width:920px;margin:20px 20px 40px 0;font-family:Tahoma,Arial,sans-serif}
+.wbfs-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}
+.wbfs-hero h1{margin:0 0 6px;font-size:26px;color:#0f172a}
+.wbfs-hero p{margin:0;color:#64748b;font-size:14px;line-height:1.7}
+.wbfs-badge{background:linear-gradient(135deg,#6d28d9,#2563eb);color:#fff;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;white-space:nowrap}
+.wbfs-notice{background:#ecfdf5;border:1px solid #bbf7d0;color:#166534;border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.wbfs-card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:20px;box-shadow:0 10px 30px rgba(15,23,42,.05);margin-bottom:16px}
+.wbfs-card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.wbfs-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.wbfs-toggle{display:flex;align-items:flex-start;gap:14px;cursor:pointer;margin-bottom:16px}
+.wbfs-toggle input{position:absolute;opacity:0;pointer-events:none}
+.wbfs-toggle-ui{width:52px;height:30px;border-radius:999px;background:#cbd5e1;position:relative;flex-shrink:0;transition:.2s;margin-top:2px}
+.wbfs-toggle-ui:after{content:"";position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15);transition:.2s}
+.wbfs-toggle input:checked + .wbfs-toggle-ui{background:#6d28d9}
+.wbfs-toggle input:checked + .wbfs-toggle-ui:after{right:25px}
+.wbfs-toggle-text strong{display:block;font-size:15px;color:#0f172a;margin-bottom:4px}
+.wbfs-toggle-text small{display:block;color:#64748b;font-size:12.5px;line-height:1.7}
+.wbfs-list,.wbfs-files{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.wbfs-list li{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-weight:700;color:#0f172a}
+.wbfs-dot{width:8px;height:8px;border-radius:50%;background:#6d28d9;flex-shrink:0}
+.wbfs-files li{font-size:11px;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px;word-break:break-all}
+.wbfs-muted{color:#64748b;font-size:13px;margin:0;line-height:1.7}
+@media (max-width:800px){.wbfs-grid{grid-template-columns:1fr}.wbfs-hero{flex-direction:column}}
