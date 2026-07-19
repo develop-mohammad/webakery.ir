@@ -1,0 +1,200 @@
+{
+  "host": "gainstore.ir",
+  "perfmatters_options": {
+    "disable_emojis": "1",
+    "disable_dashicons": "1",
+    "disable_embeds": "1",
+    "disable_xmlrpc": "1",
+    "remove_jquery_migrate": "1",
+    "hide_wp_version": "1",
+    "remove_wlwmanifest_link": "1",
+    "remove_rsd_link": "1",
+    "remove_shortlink": "1",
+    "disable_rss_feeds": "0",
+    "remove_feed_links": "0",
+    "disable_self_pingbacks": "1",
+    "disable_rest_api": "",
+    "remove_rest_api_links": "1",
+    "disable_google_maps": "1",
+    "disable_google_maps_exclusions": "",
+    "disable_password_strength_meter": "1",
+    "disable_comments": "0",
+    "remove_comment_urls": "1",
+    "blank_favicon": "0",
+    "remove_global_styles": "1",
+    "disable_heartbeat": "allow_posts",
+    "heartbeat_frequency": "60",
+    "limit_post_revisions": "3",
+    "autosave_interval": "3",
+    "login_url": "",
+    "login_url_behavior": "",
+    "login_url_message": "",
+    "disable_woocommerce_scripts": "0",
+    "disable_woocommerce_cart_fragmentation": "1",
+    "disable_woocommerce_status": "1",
+    "disable_woocommerce_widgets": "1",
+    "assets": {
+      "script_manager": "1",
+      "defer_js": "1",
+      "defer_jquery": "0",
+      "js_exclusions": [
+        "wp-includes/js/jquery/jquery.min.js",
+        "jquery-core"
+      ],
+      "delay_js": "1",
+      "delay_js_behavior": "all",
+      "delay_js_inclusions": [],
+      "delay_js_exclusions": [
+        "lazyload.min.js",
+        "lazyLoadOptions",
+        "lazyLoadInstance",
+        "perfmatters-lazy-load",
+        "jquery.min.js",
+        "jquery-core"
+      ],
+      "delay_timeout": "1",
+      "minify_js": "1",
+      "minify_js_exclusions": [
+        "jquery.min.js",
+        "webpack.runtime"
+      ],
+      "minify_css": "1",
+      "minify_css_exclusions": [],
+      "remove_unused_css": "1",
+      "rucss_method": "file",
+      "rucss_stylesheet_behavior": "async",
+      "rucss_excluded_stylesheets": [],
+      "rucss_excluded_selectors": [
+        ".slick-",
+        ".mfp-",
+        ".wow",
+        ".animated",
+        ".navbar",
+        ".menu-",
+        ".mobile-menu",
+        ".offcanvas",
+        ".modal",
+        ".tinv-",
+        ".tinvwl-",
+        ".chatbox",
+        ".wp-chatbox",
+        ".wpcf7",
+        ".woocommerce-message",
+        ".woocommerce-error",
+        ".woocommerce-info",
+        ".widget_shopping_cart",
+        ".cart-contents",
+        ".elementor-location-popup",
+        ".dialog-widget",
+        ".bt_cc_",
+        ".ddcommon",
+        ".zibal",
+        ".sticky",
+        ".is-sticky",
+        ".active",
+        ".open",
+        ".show"
+      ],
+      "header_code": "",
+      "body_code": "",
+      "footer_code": ""
+    },
+    "preload": {
+      "instant_page": "1",
+      "critical_images": "1",
+      "preload": [
+        {
+          "url": "https://gainstore.ir/wp-content/uploads/2022/12/banner_img01.png",
+          "as": "image",
+          "device": "",
+          "locations": "home",
+          "crossorigin": ""
+        },
+        {
+          "url": "https://gainstore.ir/wp-content/plugins/ti-woocommerce-wishlist/assets/fonts/tinvwl-webfont.woff2",
+          "as": "font",
+          "device": "",
+          "locations": "",
+          "crossorigin": "1"
+        }
+      ],
+      "preconnect": [
+        {
+          "url": "https://fonts.gstatic.com",
+          "crossorigin": "1"
+        }
+      ],
+      "dns_prefetch": [
+        "//zibal.ir",
+        "//www.zarinpal.com",
+        "//fonts.gstatic.com"
+      ]
+    },
+    "lazyload": {
+      "lazy_loading": "1",
+      "exclude_leading_images": "2",
+      "lazy_loading_iframes": "1",
+      "youtube_preview_thumbnails": "1",
+      "lazy_loading_exclusions": [
+        "banner_img01.png",
+        "favicon.png",
+        "skip-lazy",
+        "data-no-lazy"
+      ],
+      "threshold": "0px 250px",
+      "lazy_loading_dom_monitoring": "1",
+      "image_dimensions": "1",
+      "fade_in": "0",
+      "css_background_images": "1",
+      "css_background_selectors": [
+        ".banner",
+        ".banner-bg",
+        ".features",
+        ".formula",
+        ".ingredients",
+        ".elementor-section",
+        ".elementor-column"
+      ]
+    },
+    "fonts": {
+      "disable_google_fonts": "0",
+      "display_swap": "1",
+      "local_google_fonts": "1",
+      "cdn_url": ""
+    },
+    "cdn": {
+      "enable_cdn": "0",
+      "cdn_url": "",
+      "cdn_directories": "wp-content,wp-includes",
+      "cdn_exclusions": ".php"
+    },
+    "analytics": {
+      "enable_local_ga": "0",
+      "tracking_id": "",
+      "tracking_code_position": "footer",
+      "script_type": "gtagv4",
+      "disable_display_features": "0",
+      "anonymize_ip": "0",
+      "track_admins": "0",
+      "adjusted_bounce_rate": "",
+      "cdn_url": "",
+      "use_monster_insights": "0",
+      "enable_amp": "0",
+      "dual_tracking": "0",
+      "measurement_id": ""
+    }
+  },
+  "perfmatters_tools": {
+    "clean_uninstall": "0",
+    "accessibility_mode": "0",
+    "post_revisions": "0",
+    "post_auto_drafts": "0",
+    "trashed_posts": "0",
+    "spam_comments": "0",
+    "trashed_comments": "0",
+    "expired_transients": "0",
+    "all_transients": "0",
+    "tables": "0",
+    "optimize_schedule": ""
+  }
+}
