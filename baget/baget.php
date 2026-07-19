@@ -32,7 +32,7 @@ if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 }
 
 if ( ! defined( 'WCCP_VERSION' ) ) {
-	define( 'WCCP_VERSION', '1.5.6' );
+	define( 'WCCP_VERSION', '1.5.7' );
 }
 if ( ! defined( 'WCCP_FILE' ) ) {
 	define( 'WCCP_FILE', __FILE__ );
