@@ -3,12 +3,24 @@
 https://pagespeed.web.dev/analysis/https-kianstock-ir/dvmqiad7b8?form_factor=desktop
 
 ==================================================
-قبل از ایمپورت (مهم)
+روش پیشنهادی: نصب ZIP وردپرس
 ==================================================
-1) از تنظیمات فعلی Perfmatters بکاپ بگیر:
-   وردپرس → Settings → Perfmatters → Tools → Export Plugin Settings
+فایل:
+  kianstock-perfmatters-setup.zip
 
-2) اگر WP Rocket هم روشنه، این گزینه‌ها را در Rocket خاموش کن
+1) Perfmatters باید از قبل نصب و فعال باشد.
+2) وردپرس → افزونه‌ها → افزودن → بارگذاری افزونه
+3) ZIP را انتخاب و نصب کن، بعد فعال کن.
+4) با فعال‌سازی، تنظیمات Perfmatters خودکار اعمال می‌شود.
+5) کش را پاک کن و صفحه اصلی را یک‌بار باز کن.
+6) بعد از تست می‌توانی این افزونهٔ کمکی را حذف کنی
+   (تنظیمات Perfmatters باقی می‌ماند).
+7) اگر لازم شد، از نوتیس پیشخوان «بازگردانی تنظیمات قبلی» را بزن.
+
+==================================================
+قبل از نصب (مهم)
+==================================================
+1) اگر WP Rocket هم روشنه، این گزینه‌ها را در Rocket خاموش کن
    تا با Perfmatters تداخل نکند:
    - Delay JavaScript execution
    - Load JavaScript deferred
@@ -17,7 +29,7 @@ https://pagespeed.web.dev/analysis/https-kianstock-ir/dvmqiad7b8?form_factor=des
    - Minify CSS / JS (اگر در Perfmatters روشن است)
 
 ==================================================
-نحوه آپلود / ایمپورت
+روش جایگزین: ایمپورت JSON دستی
 ==================================================
 1) برو به:
    وردپرس → Settings → Perfmatters → Tools
