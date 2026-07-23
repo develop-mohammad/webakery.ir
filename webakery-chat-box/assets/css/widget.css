@@ -1,0 +1,251 @@
+:root {
+	--wbcb-primary: #6d28d9;
+	--wbcb-text: #0f172a;
+	--wbcb-muted: #64748b;
+	--wbcb-card: #fff;
+	--wbcb-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
+}
+
+.wbcb-root {
+	position: fixed;
+	z-index: 99990;
+	font-family: Vazirmatn, Tahoma, sans-serif;
+	color: var(--wbcb-text);
+}
+
+.wbcb-root.is-left {
+	left: 20px;
+	right: auto;
+	bottom: 20px;
+}
+
+.wbcb-root.is-right {
+	right: 20px;
+	left: auto;
+	bottom: 20px;
+}
+
+.wbcb-launcher {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	border: 0;
+	border-radius: 999px;
+	padding: 12px 18px;
+	background: linear-gradient(120deg, var(--wbcb-primary), #0891b2);
+	color: #fff;
+	box-shadow: var(--wbcb-shadow);
+	cursor: pointer;
+	font: inherit;
+	font-weight: 700;
+}
+
+.wbcb-launcher-icon {
+	font-size: 18px;
+}
+
+.wbcb-panel {
+	position: absolute;
+	bottom: calc(100% + 12px);
+	width: min(360px, calc(100vw - 32px));
+	max-height: min(520px, 70vh);
+	background: var(--wbcb-card);
+	border-radius: 20px;
+	box-shadow: var(--wbcb-shadow);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border: 1px solid rgba(109, 40, 217, 0.12);
+}
+
+.wbcb-root.is-left .wbcb-panel {
+	left: 0;
+}
+
+.wbcb-root.is-right .wbcb-panel {
+	right: 0;
+}
+
+.wbcb-head {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 14px 14px 10px;
+	background: linear-gradient(120deg, var(--wbcb-primary), #7c3aed);
+	color: #fff;
+}
+
+.wbcb-head-title {
+	display: block;
+	font-size: 15px;
+}
+
+.wbcb-head-sub {
+	display: block;
+	font-size: 11px;
+	opacity: 0.9;
+	margin-top: 2px;
+}
+
+.wbcb-status-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: #94a3b8;
+	margin-top: 6px;
+	margin-inline-start: auto;
+	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
+
+.wbcb-status-dot[data-online="1"] {
+	background: #22c55e;
+}
+
+.wbcb-icon-btn {
+	border: 0;
+	background: rgba(255, 255, 255, 0.2);
+	color: #fff;
+	width: 32px;
+	height: 32px;
+	border-radius: 10px;
+	cursor: pointer;
+	font-size: 20px;
+	line-height: 1;
+}
+
+.wbcb-intro {
+	padding: 12px 14px;
+	border-bottom: 1px dashed #e2e8f0;
+	display: grid;
+	gap: 10px;
+}
+
+.wbcb-field span {
+	display: block;
+	font-size: 12px;
+	color: var(--wbcb-muted);
+	margin-bottom: 4px;
+}
+
+.wbcb-field input {
+	width: 100%;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 10px 12px;
+	font: inherit;
+}
+
+.wbcb-btn-primary {
+	border: 0;
+	border-radius: 12px;
+	padding: 10px 14px;
+	background: var(--wbcb-primary);
+	color: #fff;
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.wbcb-messages {
+	flex: 1;
+	overflow: auto;
+	padding: 12px 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	background: #f8fafc;
+	min-height: 180px;
+}
+
+.wbcb-msg {
+	max-width: 88%;
+	padding: 10px 12px;
+	border-radius: 14px;
+	font-size: 13px;
+	line-height: 1.6;
+	word-break: break-word;
+}
+
+.wbcb-msg.is-visitor {
+	align-self: flex-start;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-bottom-right-radius: 4px;
+}
+
+.wbcb-msg.is-admin,
+.wbcb-msg.is-system {
+	align-self: flex-end;
+	background: #ede9fe;
+	border: 1px solid #ddd6fe;
+	border-bottom-left-radius: 4px;
+}
+
+.wbcb-msg time {
+	display: block;
+	font-size: 10px;
+	color: var(--wbcb-muted);
+	margin-top: 4px;
+}
+
+.wbcb-foot {
+	border-top: 1px solid #e2e8f0;
+	padding: 10px 12px 12px;
+	background: #fff;
+}
+
+.wbcb-form {
+	display: flex;
+	gap: 8px;
+	align-items: flex-end;
+}
+
+.wbcb-form textarea {
+	flex: 1;
+	resize: none;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 10px 12px;
+	font: inherit;
+	max-height: 120px;
+}
+
+.wbcb-send {
+	border: 0;
+	width: 42px;
+	height: 42px;
+	border-radius: 14px;
+	background: var(--wbcb-primary);
+	color: #fff;
+	cursor: pointer;
+	font-size: 16px;
+}
+
+.wbcb-links {
+	display: flex;
+	gap: 8px;
+	margin-top: 8px;
+	flex-wrap: wrap;
+}
+
+.wbcb-links a {
+	font-size: 11px;
+	color: var(--wbcb-primary);
+	text-decoration: none;
+	font-weight: 600;
+}
+
+@media (max-width: 480px) {
+	.wbcb-launcher-label {
+		display: none;
+	}
+	.wbcb-root.is-left,
+	.wbcb-root.is-right {
+		left: 12px;
+		right: 12px;
+		bottom: 12px;
+	}
+	.wbcb-panel {
+		width: calc(100vw - 24px);
+	}
+}

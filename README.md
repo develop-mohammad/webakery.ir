@@ -36,3 +36,13 @@
 - سازنده: **webakery.ir**
 - مسیر: `webakery-quiet-notices/`
 - ZIP: `webakery-quiet-notices.zip`
+
+## چت باکس (Webakery Chat)
+
+ویجت پشتیبانی آنلاین با صندوق پیام در پیشخوان.
+
+- نسخه: **1.0.0**
+- سازنده: **webakery.ir**
+- مسیر: `webakery-chat-box/`
+- ZIP: `webakery-chat-box.zip`
+- شناسه لایسنس: `webakery-chat`

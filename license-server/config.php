@@ -20,6 +20,7 @@ define( 'LS_PRICES', [
     'sokhte-jet'    => 0,         // TODO: قیمت واقعی سوخت جت رو قبل از انتشار اینجا بذارید (به ریال)
     'hesabdar'      => 7990000,   // حسابدار — ۷۹۹,۰۰۰ تومان
     'nobat-man'     => 5990000,   // نوبت من پرو — ۵۹۹,۰۰۰ تومان
+    'webakery-chat' => 990000,    // چت باکس — ۹۹,۰۰۰ تومان
 ] );
 
 // ─── تخفیفِ زمان‌دار — تا لحظه‌ی «until» با قیمتِ «price» فروخته می‌شود،
@@ -35,6 +36,7 @@ define( 'LS_PLUGIN_LABELS', [
     'sokhte-jet'    => 'Sokhte Jet — تحلیل و بهینه‌سازی عملکرد',
     'hesabdar'      => 'Hesabdar — پرتال حسابدار',
     'nobat-man'     => 'نوبت من — رزرو نوبت مشاوره',
+    'webakery-chat' => 'چت باکس — پشتیبانی آنلاین سایت',
 ] );
 
 // ─── توضیح کوتاه + آیکون (صفحه پرداخت — سایر محصولات) ───────────
@@ -58,6 +60,10 @@ define( 'LS_PLUGIN_META', [
     'nobat-man' => [
         'icon' => '📅',
         'desc' => 'رزرو نوبت مشاوره با تقویم شمسی، پرداخت و نسخه پرو',
+    ],
+    'webakery-chat' => [
+        'icon' => '💬',
+        'desc' => 'ویجت چت RTL، صندوق پیام پیشخوان و اعلان ایمیل',
     ],
 ] );
 
@@ -103,6 +109,14 @@ define( 'LS_UPDATES', [
         'tested'       => '6.7',
         'requires_php' => '7.4',
         'changelog'    => 'نسخه ۱.۰.۱۳: تب سوالات با UI Baget — جابه‌جایی و ذخیره فیلدها.',
+    ],
+    'webakery-chat' => [
+        'version'      => '1.0.0',
+        'package'      => 'https://webakery.ir/license-server/updates/webakery-chat-box.zip',
+        'requires'     => '5.8',
+        'tested'       => '6.7',
+        'requires_php' => '7.4',
+        'changelog'    => 'نسخه ۱.۰.۰: ویجت چت، صندوق پیام پیشخوان، ایمیل و واتساپ/تلگرام.',
     ],
 ] );
 
