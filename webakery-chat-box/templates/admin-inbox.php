@@ -9,6 +9,7 @@ $conv_id = isset( $_GET['conv'] ) ? (int) $_GET['conv'] : 0; // phpcs:ignore
 			<p class="description">پیام‌های بازدیدکنندگان سایت اینجا می‌آید. پاسخ دهید یا گفتگو را ببندید.</p>
 		</div>
 		<a class="button button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-chat-box-settings' ) ); ?>">تنظیمات ویجت</a>
+		<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-chat-box-license' ) ); ?>">خرید / لایسنس</a>
 	</div>
 
 	<div class="wbcb-inbox" id="wbcb-inbox">

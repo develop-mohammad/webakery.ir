@@ -12,6 +12,10 @@ class WBCB_Install {
 		if ( ! get_option( WBCB_Settings::OPTION ) ) {
 			add_option( WBCB_Settings::OPTION, WBCB_Settings::defaults(), '', false );
 		}
+		$opt = 'wbl_webakery-chat_install_time';
+		if ( ! get_option( $opt ) ) {
+			add_option( $opt, time(), '', false );
+		}
 	}
 
 	public static function deactivate() {

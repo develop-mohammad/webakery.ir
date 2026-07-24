@@ -98,6 +98,9 @@ class WBCB_Settings {
 		if ( is_admin() ) {
 			return false;
 		}
+		if ( class_exists( 'WBCB_Plugin' ) && ! WBCB_Plugin::is_licensed() ) {
+			return false;
+		}
 		if ( ! empty( $s['hide_logged_in_admins'] ) && current_user_can( 'manage_options' ) ) {
 			return false;
 		}

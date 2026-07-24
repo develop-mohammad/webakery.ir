@@ -51,6 +51,15 @@ class WBCB_Admin {
 			'webakery-chat-box-settings',
 			array( $this, 'render_settings' )
 		);
+
+		add_submenu_page(
+			'webakery-chat-box',
+			'خرید و لایسنس',
+			'خرید و لایسنس',
+			'manage_options',
+			'webakery-chat-box-license',
+			array( $this, 'render_license' )
+		);
 	}
 
 	public function register_settings() {
@@ -142,5 +151,12 @@ class WBCB_Admin {
 			wp_die( 'دسترسی غیرمجاز' );
 		}
 		include WBCB_PATH . 'templates/admin-settings.php';
+	}
+
+	public function render_license() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		include WBCB_PATH . 'templates/admin-license.php';
 	}
 }
