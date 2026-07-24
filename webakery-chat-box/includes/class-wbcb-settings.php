@@ -7,25 +7,34 @@ class WBCB_Settings {
 
 	public static function defaults() {
 		return array(
-			'enabled'           => 1,
-			'title'             => 'پشتیبانی آنلاین',
-			'subtitle'          => 'معمولاً در کمتر از چند دقیقه پاسخ می‌دهیم',
-			'welcome'           => 'سلام! 👋 چطور می‌تونیم کمکتون کنیم؟',
-			'placeholder'       => 'پیام خود را بنویسید…',
-			'ask_name'          => 1,
-			'ask_email'         => 0,
-			'primary'           => '#6d28d9',
-			'position'          => 'left',
-			'show_on'           => 'all',
-			'hide_logged_in_admins' => 1,
-			'email_notify'      => 1,
-			'email_to'          => '',
-			'whatsapp'          => '',
-			'telegram'          => '',
-			'offline_note'      => 'در حال حاضر آفلاین هستیم؛ پیام بگذارید تا برگردیم پاسخ می‌دهیم.',
+			'enabled'                => 1,
+			'title'                  => 'پشتیبانی آنلاین',
+			'subtitle'               => 'معمولاً در کمتر از چند دقیقه پاسخ می‌دهیم',
+			'welcome'                => 'سلام! 👋 چطور می‌تونیم کمکتون کنیم؟',
+			'placeholder'            => 'پیام خود را بنویسید…',
+			'ask_name'               => 1,
+			'ask_email'              => 0,
+			'primary'                => '#6d28d9',
+			'position'               => 'left',
+			'show_on'                => 'all',
+			'hide_logged_in_admins'  => 1,
+			'email_notify'           => 1,
+			'email_to'               => '',
+			'whatsapp'               => '',
+			'telegram'               => '',
+			'tg_notify'              => 0,
+			'tg_bot_token'           => '',
+			'tg_chat_id'             => '',
+			'wa_notify'              => 0,
+			'wa_provider'            => 'callmebot',
+			'wa_notify_phone'        => '',
+			'wa_callmebot_key'       => '',
+			'wa_ultramsg_instance'   => '',
+			'wa_ultramsg_token'      => '',
+			'offline_note'           => 'در حال حاضر آفلاین هستیم؛ پیام بگذارید تا برگردیم پاسخ می‌دهیم.',
 			'business_hours_enabled' => 0,
-			'business_hours'    => '9-18',
-			'auto_reply'        => '',
+			'business_hours'         => '9-18',
+			'auto_reply'             => '',
 		);
 	}
 
@@ -60,6 +69,18 @@ class WBCB_Settings {
 
 		$out['whatsapp'] = preg_replace( '/[^0-9+]/', '', (string) ( $input['whatsapp'] ?? '' ) );
 		$out['telegram'] = sanitize_text_field( $input['telegram'] ?? '' );
+
+		$out['tg_notify']    = ! empty( $input['tg_notify'] ) ? 1 : 0;
+		$out['tg_bot_token'] = sanitize_text_field( $input['tg_bot_token'] ?? '' );
+		$out['tg_chat_id']   = sanitize_text_field( $input['tg_chat_id'] ?? '' );
+
+		$out['wa_notify']       = ! empty( $input['wa_notify'] ) ? 1 : 0;
+		$wa_provider            = sanitize_key( $input['wa_provider'] ?? 'callmebot' );
+		$out['wa_provider']     = in_array( $wa_provider, array( 'callmebot', 'ultramsg' ), true ) ? $wa_provider : 'callmebot';
+		$out['wa_notify_phone'] = preg_replace( '/\D+/', '', (string) ( $input['wa_notify_phone'] ?? '' ) );
+		$out['wa_callmebot_key'] = sanitize_text_field( $input['wa_callmebot_key'] ?? '' );
+		$out['wa_ultramsg_instance'] = sanitize_text_field( $input['wa_ultramsg_instance'] ?? '' );
+		$out['wa_ultramsg_token']    = sanitize_text_field( $input['wa_ultramsg_token'] ?? '' );
 
 		$out['offline_note'] = sanitize_textarea_field( $input['offline_note'] ?? $d['offline_note'] );
 		$out['business_hours_enabled'] = ! empty( $input['business_hours_enabled'] ) ? 1 : 0;

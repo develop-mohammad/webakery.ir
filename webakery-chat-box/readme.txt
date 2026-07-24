@@ -2,12 +2,17 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 
-ویجت چت RTL برای وردپرس — پیام بازدیدکننده، پاسخ از پیشخوان، اعلان ایمیل.
+ویجت چت RTL برای وردپرس — پیام بازدیدکننده، پاسخ از پیشخوان، اعلان ایمیل/تلگرام/واتساپ.
 
 == Changelog ==
+
+= 1.1.0 =
+* اعلان پیام جدید به تلگرام (Bot API)
+* اعلان واتساپ با CallMeBot یا Ultramsg
+* دکمه تست اعلان در تنظیمات
 
 = 1.0.0 =
 * ویجت شناور با پیام خوش‌آمد

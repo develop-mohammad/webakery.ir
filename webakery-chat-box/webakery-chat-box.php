@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: چت باکس | Webakery Chat
- * Description: ویجت چت زیبا برای سایت — پیام بازدیدکننده، پاسخ از پیشخوان، اعلان ایمیل.
- * Version:     1.0.0
+ * Description: ویجت چت زیبا برای سایت — پیام بازدیدکننده، پاسخ از پیشخوان، اعلان ایمیل/تلگرام/واتساپ.
+ * Version:     1.1.0
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'WBCB_LOADED' ) ) {
 	return;
 }
 define( 'WBCB_LOADED', true );
-define( 'WBCB_VERSION', '1.0.0' );
+define( 'WBCB_VERSION', '1.1.0' );
 define( 'WBCB_FILE', __FILE__ );
 define( 'WBCB_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBCB_URL', plugin_dir_url( __FILE__ ) );
@@ -29,6 +29,7 @@ require_once WBCB_PATH . 'includes/class-wbcb-install.php';
 require_once WBCB_PATH . 'includes/class-wbcb-settings.php';
 require_once WBCB_PATH . 'includes/class-wbcb-conversations.php';
 require_once WBCB_PATH . 'includes/class-wbcb-messages.php';
+require_once WBCB_PATH . 'includes/class-wbcb-notify.php';
 require_once WBCB_PATH . 'includes/class-wbcb-ajax.php';
 require_once WBCB_PATH . 'includes/class-wbcb-admin.php';
 require_once WBCB_PATH . 'includes/class-wbcb-frontend.php';

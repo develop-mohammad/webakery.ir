@@ -27,6 +27,7 @@ class WBCB_Ajax {
 		add_action( 'wp_ajax_wbcb_admin_send', array( $this, 'admin_send' ) );
 		add_action( 'wp_ajax_wbcb_admin_close', array( $this, 'admin_close' ) );
 		add_action( 'wp_ajax_wbcb_admin_list', array( $this, 'admin_list' ) );
+		add_action( 'wp_ajax_wbcb_test_notify', array( $this, 'test_notify' ) );
 	}
 
 	private function verify_visitor_nonce() {
@@ -165,7 +166,8 @@ class WBCB_Ajax {
 			);
 		}
 
-		self::maybe_notify_admin( $conv, $body );
+		$fresh = WBCB_Conversations::get( (int) $conv['id'] );
+		WBCB_Notify::new_visitor_message( is_array( $fresh ) ? $fresh : $conv, $body );
 
 		$s = WBCB_Settings::get();
 		if ( ! empty( $s['auto_reply'] ) && WBCB_Settings::is_online() ) {
@@ -304,32 +306,19 @@ class WBCB_Ajax {
 		);
 	}
 
-	private static function maybe_notify_admin( array $conv, $body ) {
-		$s = WBCB_Settings::get();
-		if ( empty( $s['email_notify'] ) ) {
-			return;
+	public function test_notify() {
+		$this->verify_admin();
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => 'دسترسی غیرمجاز' ), 403 );
 		}
-		$to = ! empty( $s['email_to'] ) ? $s['email_to'] : get_option( 'admin_email' );
-		if ( ! is_email( $to ) ) {
-			return;
+		$channel = sanitize_key( wp_unslash( $_POST['channel'] ?? 'all' ) );
+		if ( ! in_array( $channel, array( 'all', 'email', 'telegram', 'whatsapp' ), true ) ) {
+			$channel = 'all';
 		}
-		$key = 'wbcb_mail_' . (int) $conv['id'];
-		if ( get_transient( $key ) ) {
-			return;
+		$res = WBCB_Notify::send_test( $channel );
+		if ( empty( $res['ok'] ) ) {
+			wp_send_json_error( array( 'message' => $res['message'] ?? 'ارسال ناموفق' ) );
 		}
-		set_transient( $key, 1, 5 * MINUTE_IN_SECONDS );
-
-		$name = $conv['visitor_name'] ?: 'مهمان';
-		$subj = sprintf( '[%s] پیام جدید چت از %s', wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ), $name );
-		$link = admin_url( 'admin.php?page=webakery-chat-box&conv=' . (int) $conv['id'] );
-		$msg  = "پیام جدید در چت باکس:\n\n";
-		$msg .= $name . "\n";
-		if ( ! empty( $conv['visitor_email'] ) ) {
-			$msg .= $conv['visitor_email'] . "\n";
-		}
-		$msg .= "\n" . wp_strip_all_tags( $body ) . "\n\n";
-		$msg .= "مشاهده: " . $link . "\n";
-
-		wp_mail( $to, $subj, $msg );
+		wp_send_json_success( array( 'message' => $res['message'] ) );
 	}
 }

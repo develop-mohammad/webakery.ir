@@ -70,6 +70,25 @@ class WBCB_Admin {
 			return;
 		}
 		wp_enqueue_style( 'wbcb-admin', WBCB_URL . 'assets/css/admin.css', array(), WBCB_VERSION );
+
+		$is_settings = false !== strpos( (string) $hook, 'webakery-chat-box-settings' );
+		if ( $is_settings ) {
+			wp_enqueue_script( 'wbcb-settings', WBCB_URL . 'assets/js/admin-settings.js', array(), WBCB_VERSION, true );
+			wp_localize_script(
+				'wbcb-settings',
+				'WBCB_ADMIN',
+				array(
+					'ajax'  => admin_url( 'admin-ajax.php' ),
+					'nonce' => wp_create_nonce( 'wbcb_admin' ),
+					'i18n'  => array(
+						'testing' => 'در حال ارسال…',
+						'error'   => 'خطا',
+					),
+				)
+			);
+			return;
+		}
+
 		wp_enqueue_script( 'wbcb-admin', WBCB_URL . 'assets/js/admin-inbox.js', array(), WBCB_VERSION, true );
 
 		$conv_id = isset( $_GET['conv'] ) ? (int) $_GET['conv'] : 0; // phpcs:ignore
@@ -78,19 +97,19 @@ class WBCB_Admin {
 			'wbcb-admin',
 			'WBCB_ADMIN',
 			array(
-				'ajax'       => admin_url( 'admin-ajax.php' ),
-				'nonce'      => wp_create_nonce( 'wbcb_admin' ),
-				'convId'     => $conv_id,
-				'unread'     => WBCB_Conversations::unread_count(),
-				'pollMs'     => 4000,
-				'i18n'       => array(
-					'send'    => 'ارسال پاسخ',
-					'close'   => 'بستن گفتگو',
-					'search'  => 'جستجو…',
-					'empty'   => 'هنوز پیامی نیست',
-					'error'   => 'خطا',
-					'open'    => 'باز',
-					'closed'  => 'بسته',
+				'ajax'   => admin_url( 'admin-ajax.php' ),
+				'nonce'  => wp_create_nonce( 'wbcb_admin' ),
+				'convId' => $conv_id,
+				'unread' => WBCB_Conversations::unread_count(),
+				'pollMs' => 4000,
+				'i18n'   => array(
+					'send'   => 'ارسال پاسخ',
+					'close'  => 'بستن گفتگو',
+					'search' => 'جستجو…',
+					'empty'  => 'هنوز پیامی نیست',
+					'error'  => 'خطا',
+					'open'   => 'باز',
+					'closed' => 'بسته',
 				),
 			)
 		);

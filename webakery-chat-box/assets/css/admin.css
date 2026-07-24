@@ -172,3 +172,29 @@
 		max-height: 220px;
 	}
 }
+
+.wbcb-help-box {
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 12px 14px;
+	margin: 10px 0;
+	max-width: 640px;
+}
+
+.wbcb-help-box ol {
+	margin: 8px 0 0 1.2em;
+}
+
+.wbcb-test-result {
+	margin-inline-start: 12px;
+	font-weight: 600;
+}
+
+.wbcb-test-result.is-ok {
+	color: #15803d;
+}
+
+.wbcb-test-result.is-error {
+	color: #b91c1c;
+}

@@ -41,8 +41,9 @@
 
 ویجت پشتیبانی آنلاین با صندوق پیام در پیشخوان.
 
-- نسخه: **1.0.0**
+- نسخه: **1.1.0**
 - سازنده: **webakery.ir**
 - مسیر: `webakery-chat-box/`
 - ZIP: `webakery-chat-box.zip`
 - شناسه لایسنس: `webakery-chat`
+- اعلان: ایمیل + تلگرام Bot + واتساپ (CallMeBot/Ultramsg)

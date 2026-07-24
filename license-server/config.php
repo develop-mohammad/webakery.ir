@@ -111,12 +111,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه ۱.۰.۱۳: تب سوالات با UI Baget — جابه‌جایی و ذخیره فیلدها.',
     ],
     'webakery-chat' => [
-        'version'      => '1.0.0',
+        'version'      => '1.1.0',
         'package'      => 'https://webakery.ir/license-server/updates/webakery-chat-box.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۰.۰: ویجت چت، صندوق پیام پیشخوان، ایمیل و واتساپ/تلگرام.',
+        'changelog'    => 'نسخه ۱.۱.۰: اعلان پیام چت به تلگرام و واتساپ + دکمه تست.',
     ],
 ] );
 
