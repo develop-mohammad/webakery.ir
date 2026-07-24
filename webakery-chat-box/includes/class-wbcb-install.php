@@ -3,7 +3,7 @@ defined( 'ABSPATH' ) || exit;
 
 class WBCB_Install {
 
-	const DB_VERSION = '1.0.0';
+	const DB_VERSION = '1.2.0';
 	const VERSION_OPTION = 'wbcb_db_version';
 
 	public static function activate() {
@@ -31,6 +31,10 @@ class WBCB_Install {
 			visitor_name VARCHAR(190) NULL,
 			visitor_email VARCHAR(190) NULL,
 			page_url TEXT NULL,
+			page_title VARCHAR(255) NULL,
+			product_id BIGINT UNSIGNED NULL,
+			product_name VARCHAR(255) NULL,
+			product_url TEXT NULL,
 			status VARCHAR(20) NOT NULL DEFAULT 'open',
 			unread_admin TINYINT(1) NOT NULL DEFAULT 1,
 			last_message_at DATETIME NULL,
@@ -40,6 +44,7 @@ class WBCB_Install {
 			UNIQUE KEY visitor_token (visitor_token),
 			KEY status (status),
 			KEY unread_admin (unread_admin),
+			KEY product_id (product_id),
 			KEY last_message_at (last_message_at)
 		) $charset;";
 

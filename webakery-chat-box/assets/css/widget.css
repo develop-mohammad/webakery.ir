@@ -101,6 +101,38 @@
 	background: #22c55e;
 }
 
+.wbcb-product-chip {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 14px;
+	background: #f5f3ff;
+	border-bottom: 1px solid #ede9fe;
+}
+
+.wbcb-product-chip-ic {
+	font-size: 18px;
+}
+
+.wbcb-product-chip-text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.wbcb-product-chip-text small {
+	font-size: 10px;
+	color: var(--wbcb-muted);
+}
+
+.wbcb-product-chip-text strong {
+	font-size: 12px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .wbcb-icon-btn {
 	border: 0;
 	background: rgba(255, 255, 255, 0.2);

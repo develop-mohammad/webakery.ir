@@ -63,13 +63,17 @@ class WBCB_Conversations {
 				'visitor_name'    => sanitize_text_field( $data['visitor_name'] ?? '' ),
 				'visitor_email'   => sanitize_email( $data['visitor_email'] ?? '' ),
 				'page_url'        => esc_url_raw( $data['page_url'] ?? '' ),
+				'page_title'      => sanitize_text_field( $data['page_title'] ?? '' ),
+				'product_id'      => max( 0, (int) ( $data['product_id'] ?? 0 ) ),
+				'product_name'    => sanitize_text_field( $data['product_name'] ?? '' ),
+				'product_url'     => esc_url_raw( $data['product_url'] ?? '' ),
 				'status'          => 'open',
 				'unread_admin'    => 0,
 				'last_message_at' => null,
 				'created_at'      => $now,
 				'updated_at'      => $now,
 			),
-			array( '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' )
+			array( '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s' )
 		);
 		return self::get_by_token( $token );
 	}
@@ -96,12 +100,116 @@ class WBCB_Conversations {
 			$fields['page_url'] = esc_url_raw( (string) $data['page_url'] );
 			$format[]           = '%s';
 		}
+		if ( array_key_exists( 'page_title', $data ) ) {
+			$fields['page_title'] = sanitize_text_field( (string) $data['page_title'] );
+			$format[]             = '%s';
+		}
+		if ( array_key_exists( 'product_id', $data ) ) {
+			$fields['product_id'] = max( 0, (int) $data['product_id'] );
+			$format[]             = '%d';
+		}
+		if ( array_key_exists( 'product_name', $data ) ) {
+			$fields['product_name'] = sanitize_text_field( (string) $data['product_name'] );
+			$format[]               = '%s';
+		}
+		if ( array_key_exists( 'product_url', $data ) ) {
+			$fields['product_url'] = esc_url_raw( (string) $data['product_url'] );
+			$format[]              = '%s';
+		}
 		if ( array_key_exists( 'status', $data ) ) {
 			$st = sanitize_key( (string) $data['status'] );
 			$fields['status'] = in_array( $st, array( 'open', 'closed' ), true ) ? $st : 'open';
 			$format[]         = '%s';
 		}
 		return false !== $wpdb->update( self::table(), $fields, array( 'id' => $id ), $format, array( '%d' ) );
+	}
+
+	/**
+	 * به‌روزرسانی زمینه صفحه/محصول + پیام سیستمی برای ادمین.
+	 *
+	 * @return array گفتگوی به‌روز
+	 */
+	public static function sync_page_context( $conversation_id, array $ctx ) {
+		$conv = self::get( (int) $conversation_id );
+		if ( ! $conv ) {
+			return null;
+		}
+
+		$page_url     = esc_url_raw( (string) ( $ctx['page_url'] ?? '' ) );
+		$page_title   = sanitize_text_field( (string) ( $ctx['page_title'] ?? '' ) );
+		$product_id   = max( 0, (int) ( $ctx['product_id'] ?? 0 ) );
+		$product_name = sanitize_text_field( (string) ( $ctx['product_name'] ?? '' ) );
+		$product_url  = esc_url_raw( (string) ( $ctx['product_url'] ?? '' ) );
+
+		if ( $product_id > 0 && '' === $product_name && function_exists( 'wc_get_product' ) ) {
+			$p = wc_get_product( $product_id );
+			if ( $p ) {
+				$product_name = $p->get_name();
+				if ( ! $product_url ) {
+					$product_url = get_permalink( $product_id );
+				}
+			}
+		}
+		if ( $product_id > 0 && ! $product_url ) {
+			$product_url = get_permalink( $product_id ) ?: $page_url;
+		}
+		if ( ! $page_url && $product_url ) {
+			$page_url = $product_url;
+		}
+		if ( ! $page_title && $product_name ) {
+			$page_title = $product_name;
+		}
+
+		$prev_pid = (int) ( $conv['product_id'] ?? 0 );
+		$prev_url = (string) ( $conv['page_url'] ?? '' );
+
+		self::update_visitor(
+			(int) $conv['id'],
+			array(
+				'page_url'     => $page_url ?: $prev_url,
+				'page_title'   => $page_title,
+				'product_id'   => $product_id,
+				'product_name' => $product_name,
+				'product_url'  => $product_url,
+			)
+		);
+
+		$changed_product = $product_id > 0 && $product_id !== $prev_pid;
+		$first_product   = $product_id > 0 && $prev_pid <= 0;
+		$changed_page    = $page_url && $page_url !== $prev_url && ! $product_id;
+
+		if ( $changed_product || $first_product ) {
+			$body = "🛒 بازدید از محصول\n"
+				. 'نام: ' . ( $product_name ?: ( 'محصول #' . $product_id ) ) . "\n"
+				. 'لینک: ' . ( $product_url ?: $page_url );
+			WBCB_Messages::add(
+				(int) $conv['id'],
+				'system',
+				$body,
+				array(
+					'type'         => 'product_context',
+					'product_id'   => $product_id,
+					'product_name' => $product_name,
+					'product_url'  => $product_url,
+				)
+			);
+		} elseif ( $changed_page && $page_title ) {
+			$body = "📄 صفحه فعلی\n"
+				. 'عنوان: ' . $page_title . "\n"
+				. 'لینک: ' . $page_url;
+			WBCB_Messages::add(
+				(int) $conv['id'],
+				'system',
+				$body,
+				array(
+					'type'       => 'page_context',
+					'page_title' => $page_title,
+					'page_url'   => $page_url,
+				)
+			);
+		}
+
+		return self::get( (int) $conv['id'] );
 	}
 
 	public static function touch_message( $id, $unread_admin = null ) {
@@ -160,7 +268,9 @@ class WBCB_Conversations {
 		}
 		if ( $search ) {
 			$like    = '%' . $wpdb->esc_like( $search ) . '%';
-			$where[] = '(visitor_name LIKE %s OR visitor_email LIKE %s OR visitor_token LIKE %s)';
+			$where[] = '(visitor_name LIKE %s OR visitor_email LIKE %s OR visitor_token LIKE %s OR product_name LIKE %s OR page_title LIKE %s)';
+			$bind[]  = $like;
+			$bind[]  = $like;
 			$bind[]  = $like;
 			$bind[]  = $like;
 			$bind[]  = $like;

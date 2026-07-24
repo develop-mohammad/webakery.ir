@@ -25,14 +25,16 @@ class WBCB_Frontend {
 		wp_enqueue_style( 'wbcb-widget', WBCB_URL . 'assets/css/widget.css', array(), WBCB_VERSION );
 		wp_enqueue_script( 'wbcb-widget', WBCB_URL . 'assets/js/widget.js', array(), WBCB_VERSION, true );
 
-		$s = WBCB_Settings::get();
+		$s       = WBCB_Settings::get();
+		$context = self::current_page_context();
 		wp_localize_script(
 			'wbcb-widget',
 			'WBCB',
 			array(
-				'ajax'    => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'wbcb_visitor' ),
-				'online'  => WBCB_Settings::is_online(),
+				'ajax'     => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'wbcb_visitor' ),
+				'online'   => WBCB_Settings::is_online(),
+				'context'  => $context,
 				'settings' => array(
 					'title'       => $s['title'],
 					'subtitle'    => $s['subtitle'],
@@ -45,16 +47,71 @@ class WBCB_Frontend {
 					'whatsapp'    => $s['whatsapp'],
 					'telegram'    => $s['telegram'],
 				),
-				'i18n'    => array(
-					'send'     => 'ارسال',
-					'close'    => 'بستن',
-					'typing'   => 'در حال نوشتن…',
-					'error'    => 'خطا — دوباره تلاش کنید',
-					'name'     => 'نام شما',
-					'email'    => 'ایمیل (اختیاری)',
-					'start'    => 'شروع گفتگو',
+				'i18n'     => array(
+					'send'    => 'ارسال',
+					'close'   => 'بستن',
+					'typing'  => 'در حال نوشتن…',
+					'error'   => 'خطا — دوباره تلاش کنید',
+					'name'    => 'نام شما',
+					'email'   => 'ایمیل (اختیاری)',
+					'start'   => 'شروع گفتگو',
+					'product' => 'محصول فعلی',
 				),
 			)
+		);
+	}
+
+	/**
+	 * زمینه صفحه فعلی — مخصوص محصول ووکامرس.
+	 *
+	 * @return array{page_url:string,page_title:string,product_id:int,product_name:string,product_url:string}
+	 */
+	public static function current_page_context() {
+		$page_url   = '';
+		$page_title = '';
+		if ( function_exists( 'wp_get_canonical_url' ) ) {
+			$canon = wp_get_canonical_url();
+			if ( $canon ) {
+				$page_url = $canon;
+			}
+		}
+		if ( ! $page_url ) {
+			$page_url = home_url( add_query_arg( array() ) );
+		}
+		$page_title = wp_get_document_title();
+
+		$product_id   = 0;
+		$product_name = '';
+		$product_url  = '';
+
+		if ( function_exists( 'is_product' ) && is_product() ) {
+			$product_id = (int) get_queried_object_id();
+			if ( $product_id <= 0 && function_exists( 'wc_get_product' ) ) {
+				global $product;
+				if ( $product && is_object( $product ) && method_exists( $product, 'get_id' ) ) {
+					$product_id = (int) $product->get_id();
+				}
+			}
+			if ( $product_id > 0 ) {
+				$product_name = get_the_title( $product_id );
+				$product_url  = get_permalink( $product_id ) ?: $page_url;
+				$page_title   = $product_name ?: $page_title;
+				$page_url     = $product_url ?: $page_url;
+				if ( function_exists( 'wc_get_product' ) ) {
+					$p = wc_get_product( $product_id );
+					if ( $p ) {
+						$product_name = $p->get_name();
+					}
+				}
+			}
+		}
+
+		return array(
+			'page_url'     => $page_url,
+			'page_title'   => $page_title,
+			'product_id'   => $product_id,
+			'product_name' => $product_name,
+			'product_url'  => $product_url,
 		);
 	}
 
@@ -62,9 +119,11 @@ class WBCB_Frontend {
 		if ( ! WBCB_Settings::should_show_widget() ) {
 			return;
 		}
-		$s    = WBCB_Settings::get();
-		$pos  = ( 'right' === $s['position'] ) ? 'is-right' : 'is-left';
-		$prim = esc_attr( $s['primary'] );
+		$s       = WBCB_Settings::get();
+		$ctx     = self::current_page_context();
+		$pos     = ( 'right' === $s['position'] ) ? 'is-right' : 'is-left';
+		$prim    = esc_attr( $s['primary'] );
+		$has_prod = ! empty( $ctx['product_id'] ) && ! empty( $ctx['product_name'] );
 		?>
 		<div id="wbcb-root" class="wbcb-root <?php echo esc_attr( $pos ); ?>" style="--wbcb-primary:<?php echo $prim; ?>;" dir="rtl" lang="fa">
 			<button type="button" class="wbcb-launcher" id="wbcb-launcher" aria-expanded="false" aria-controls="wbcb-panel">
@@ -80,6 +139,17 @@ class WBCB_Frontend {
 					<span class="wbcb-status-dot" data-online="<?php echo WBCB_Settings::is_online() ? '1' : '0'; ?>"></span>
 					<button type="button" class="wbcb-icon-btn" id="wbcb-close" aria-label="بستن">×</button>
 				</header>
+				<?php if ( $has_prod ) : ?>
+					<div class="wbcb-product-chip" id="wbcb-product-chip">
+						<span class="wbcb-product-chip-ic" aria-hidden="true">🛒</span>
+						<div class="wbcb-product-chip-text">
+							<small>در حال مشاهده محصول</small>
+							<strong><?php echo esc_html( $ctx['product_name'] ); ?></strong>
+						</div>
+					</div>
+				<?php else : ?>
+					<div class="wbcb-product-chip" id="wbcb-product-chip" hidden></div>
+				<?php endif; ?>
 				<div class="wbcb-intro" id="wbcb-intro" hidden>
 					<label class="wbcb-field">
 						<span><?php esc_html_e( 'نام', 'webakery-chat-box' ); ?></span>

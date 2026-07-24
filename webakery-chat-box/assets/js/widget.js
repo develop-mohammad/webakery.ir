@@ -103,9 +103,25 @@
     if (emailWrap) emailWrap.hidden = !WBCB.settings.askEmail;
   }
 
+  function pageContext() {
+    var c = WBCB.context || {};
+    return {
+      page_url: c.page_url || window.location.href,
+      page_title: c.page_title || (document.title || ''),
+      product_id: c.product_id || 0,
+      product_name: c.product_name || '',
+      product_url: c.product_url || ''
+    };
+  }
+
   function bootstrap() {
+    var ctx = pageContext();
     var payload = {
-      page_url: window.location.href,
+      page_url: ctx.page_url,
+      page_title: ctx.page_title,
+      product_id: ctx.product_id,
+      product_name: ctx.product_name,
+      product_url: ctx.product_url,
       name: nameEl ? nameEl.value : '',
       email: emailEl ? emailEl.value : ''
     };
@@ -191,11 +207,17 @@
 
   function send(text) {
     input.disabled = true;
+    var ctx = pageContext();
     return post('wbcb_visitor_send', {
       token: state.token,
       body: text,
       name: nameEl ? nameEl.value : '',
-      email: emailEl ? emailEl.value : ''
+      email: emailEl ? emailEl.value : '',
+      page_url: ctx.page_url,
+      page_title: ctx.page_title,
+      product_id: ctx.product_id,
+      product_name: ctx.product_name,
+      product_url: ctx.product_url
     }).then(function (res) {
       input.disabled = false;
       if (!res || !res.success) {

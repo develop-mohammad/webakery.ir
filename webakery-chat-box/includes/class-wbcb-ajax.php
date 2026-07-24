@@ -77,11 +77,18 @@ class WBCB_Ajax {
 		);
 	}
 
+	private function page_context_from_request() {
+		return array(
+			'page_url'     => esc_url_raw( wp_unslash( $_POST['page_url'] ?? '' ) ),
+			'page_title'   => sanitize_text_field( wp_unslash( $_POST['page_title'] ?? '' ) ),
+			'product_id'   => (int) ( $_POST['product_id'] ?? 0 ),
+			'product_name' => sanitize_text_field( wp_unslash( $_POST['product_name'] ?? '' ) ),
+			'product_url'  => esc_url_raw( wp_unslash( $_POST['product_url'] ?? '' ) ),
+		);
+	}
+
 	public function visitor_bootstrap() {
 		$this->verify_visitor_nonce();
-		if ( ! WBCB_Settings::should_show_widget() && ! is_user_logged_in() ) {
-			// Allow bootstrap if enabled globally but current user is admin (hidden widget)
-		}
 
 		$token = $this->visitor_token_from_request();
 		if ( ! $token ) {
@@ -90,14 +97,18 @@ class WBCB_Ajax {
 
 		$name  = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
 		$email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
-		$page  = esc_url_raw( wp_unslash( $_POST['page_url'] ?? '' ) );
+		$ctx   = $this->page_context_from_request();
+		$page  = $ctx['page_url'] ? $ctx['page_url'] : ( wp_get_referer() ?: home_url( '/' ) );
 
 		$conv = WBCB_Conversations::get_or_create(
 			$token,
-			array(
-				'visitor_name'  => $name,
-				'visitor_email' => $email,
-				'page_url'      => $page ? $page : ( wp_get_referer() ?: home_url( '/' ) ),
+			array_merge(
+				$ctx,
+				array(
+					'visitor_name'  => $name,
+					'visitor_email' => $email,
+					'page_url'      => $page,
+				)
 			)
 		);
 		if ( ! $conv ) {
@@ -114,18 +125,24 @@ class WBCB_Ajax {
 					'visitor_email' => $email ?: $conv['visitor_email'],
 				)
 			);
-			$conv = WBCB_Conversations::get( (int) $conv['id'] );
 		}
 
+		// پیام خوش‌آمد اول، بعد زمینه محصول (تا ادمین محصول را زیر خوش‌آمد ببیند)
 		$messages = WBCB_Messages::for_conversation( (int) $conv['id'], 0, 80 );
 		if ( empty( $messages ) ) {
 			$s       = WBCB_Settings::get();
 			$welcome = trim( (string) ( $s['welcome'] ?? '' ) );
 			if ( $welcome ) {
 				WBCB_Messages::add( (int) $conv['id'], 'system', $welcome );
-				$messages = WBCB_Messages::for_conversation( (int) $conv['id'], 0, 80 );
 			}
 		}
+
+		$conv = WBCB_Conversations::sync_page_context( (int) $conv['id'], $ctx );
+		if ( ! $conv ) {
+			wp_send_json_error( array( 'message' => 'شروع گفتگو ناموفق بود.' ) );
+		}
+
+		$messages = WBCB_Messages::for_conversation( (int) $conv['id'], 0, 80 );
 
 		wp_send_json_success(
 			array(
@@ -133,6 +150,7 @@ class WBCB_Ajax {
 				'conversation' => self::public_conversation( $conv ),
 				'messages'     => WBCB_Messages::format_list( $messages ),
 				'online'       => WBCB_Settings::is_online(),
+				'context'      => self::context_payload( $conv ),
 			)
 		);
 	}
@@ -147,6 +165,9 @@ class WBCB_Ajax {
 		if ( 'closed' === $conv['status'] ) {
 			wp_send_json_error( array( 'message' => 'این گفتگو بسته شده است.' ) );
 		}
+
+		$ctx  = $this->page_context_from_request();
+		$conv = WBCB_Conversations::sync_page_context( (int) $conv['id'], $ctx ) ?: $conv;
 
 		$body = wp_unslash( $_POST['body'] ?? '' );
 		$res  = WBCB_Messages::add( (int) $conv['id'], 'visitor', $body );
@@ -164,6 +185,7 @@ class WBCB_Ajax {
 					'visitor_email' => $email,
 				)
 			);
+			$conv = WBCB_Conversations::get( (int) $conv['id'] ) ?: $conv;
 		}
 
 		$fresh = WBCB_Conversations::get( (int) $conv['id'] );
@@ -180,7 +202,8 @@ class WBCB_Ajax {
 		wp_send_json_success(
 			array(
 				'message_id' => $res,
-				'messages'   => WBCB_Messages::format_list( WBCB_Messages::for_conversation( (int) $conv['id'], max( 0, (int) $res - 5 ), 10 ) ),
+				'messages'   => WBCB_Messages::format_list( WBCB_Messages::for_conversation( (int) $conv['id'], max( 0, (int) $res - 5 ), 20 ) ),
+				'context'    => self::context_payload( is_array( $fresh ) ? $fresh : $conv ),
 			)
 		);
 	}
@@ -282,13 +305,30 @@ class WBCB_Ajax {
 		);
 	}
 
+	private static function context_payload( array $conv ) {
+		return array(
+			'page_url'     => (string) ( $conv['page_url'] ?? '' ),
+			'page_title'   => (string) ( $conv['page_title'] ?? '' ),
+			'product_id'   => (int) ( $conv['product_id'] ?? 0 ),
+			'product_name' => (string) ( $conv['product_name'] ?? '' ),
+			'product_url'  => (string) ( $conv['product_url'] ?? '' ),
+		);
+	}
+
 	private static function admin_conversation( array $conv ) {
+		$product_url = (string) ( $conv['product_url'] ?? '' );
+		$page_url    = (string) ( $conv['page_url'] ?? '' );
 		return array(
 			'id'              => (int) $conv['id'],
 			'status'          => (string) $conv['status'],
 			'visitor_name'    => (string) ( $conv['visitor_name'] ?: 'مهمان' ),
 			'visitor_email'   => (string) ( $conv['visitor_email'] ?? '' ),
-			'page_url'        => (string) ( $conv['page_url'] ?? '' ),
+			'page_url'        => $page_url,
+			'page_title'      => (string) ( $conv['page_title'] ?? '' ),
+			'product_id'      => (int) ( $conv['product_id'] ?? 0 ),
+			'product_name'    => (string) ( $conv['product_name'] ?? '' ),
+			'product_url'     => $product_url,
+			'view_url'        => $product_url ?: $page_url,
 			'unread_admin'    => ! empty( $conv['unread_admin'] ),
 			'last_message_at' => (string) ( $conv['last_message_at'] ?? $conv['created_at'] ),
 			'created_at'      => (string) $conv['created_at'],

@@ -49,8 +49,10 @@
       btn.type = 'button';
       btn.className = 'wbcb-conv-item' + (state.convId === c.id ? ' is-active' : '');
       var badge = c.unread_admin ? '<span class="wbcb-badge-unread">جدید</span>' : '';
-      btn.innerHTML = '<strong>' + escapeHtml(c.visitor_name || 'مهمان') + badge + '</strong>' +
-        '<small>' + escapeHtml(c.visitor_email || c.page_url || '') + '</small>';
+      var productLine = c.product_name
+        ? '<small class="wbcb-conv-product">🛒 ' + escapeHtml(c.product_name) + '</small>'
+        : '<small>' + escapeHtml(c.visitor_email || c.page_title || c.page_url || '') + '</small>';
+      btn.innerHTML = '<strong>' + escapeHtml(c.visitor_name || 'مهمان') + badge + '</strong>' + productLine;
       btn.addEventListener('click', function () {
         selectConv(c.id);
       });
@@ -115,10 +117,17 @@
       var c = res.data.conversation;
       if (c) {
         nameEl.textContent = c.visitor_name || 'مهمان';
-        metaEl.textContent = (c.visitor_email || '') + (c.status === 'closed' ? ' · بسته' : ' · باز');
+        var metaParts = [];
+        if (c.visitor_email) metaParts.push(c.visitor_email);
+        if (c.product_name) metaParts.push('🛒 ' + c.product_name);
+        else if (c.page_title) metaParts.push(c.page_title);
+        metaParts.push(c.status === 'closed' ? 'بسته' : 'باز');
+        metaEl.textContent = metaParts.join(' · ');
         if (pageLink) {
-          pageLink.href = c.page_url || '#';
-          pageLink.hidden = !c.page_url;
+          var href = c.product_url || c.view_url || c.page_url || '#';
+          pageLink.href = href;
+          pageLink.hidden = !href || href === '#';
+          pageLink.textContent = c.product_name ? 'مشاهده محصول' : 'صفحه بازدید';
         }
       }
       renderMessages(res.data.messages, !!replace);

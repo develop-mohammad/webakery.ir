@@ -78,6 +78,13 @@
 	font-size: 11px;
 }
 
+.wbcb-conv-product {
+	display: block;
+	color: #6d28d9 !important;
+	font-weight: 600;
+	margin-top: 2px;
+}
+
 .wbcb-badge-unread {
 	display: inline-block;
 	background: #6d28d9;

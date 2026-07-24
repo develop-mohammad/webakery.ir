@@ -93,6 +93,9 @@ class WBCB_Notify {
 		$name  = ! empty( $conv['visitor_name'] ) ? $conv['visitor_name'] : 'مهمان';
 		$email = ! empty( $conv['visitor_email'] ) ? $conv['visitor_email'] : '';
 		$page  = ! empty( $conv['page_url'] ) ? $conv['page_url'] : '';
+		$ptitle = ! empty( $conv['page_title'] ) ? $conv['page_title'] : '';
+		$pname = ! empty( $conv['product_name'] ) ? $conv['product_name'] : '';
+		$purl  = ! empty( $conv['product_url'] ) ? $conv['product_url'] : '';
 		$link  = admin_url( 'admin.php?page=webakery-chat-box&conv=' . (int) ( $conv['id'] ?? 0 ) );
 		$body  = wp_strip_all_tags( (string) $body );
 		if ( function_exists( 'mb_substr' ) ) {
@@ -108,8 +111,18 @@ class WBCB_Notify {
 		if ( $email ) {
 			$lines[] = 'ایمیل: ' . $email;
 		}
-		if ( $page ) {
-			$lines[] = 'صفحه: ' . $page;
+		if ( $pname ) {
+			$lines[] = '🛒 محصول: ' . $pname;
+			if ( $purl ) {
+				$lines[] = 'لینک محصول: ' . $purl;
+			}
+		} elseif ( $ptitle || $page ) {
+			if ( $ptitle ) {
+				$lines[] = '📄 صفحه: ' . $ptitle;
+			}
+			if ( $page ) {
+				$lines[] = 'لینک صفحه: ' . $page;
+			}
 		}
 		$lines[] = '';
 		$lines[] = $body;
