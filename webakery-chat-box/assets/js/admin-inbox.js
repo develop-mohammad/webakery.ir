@@ -49,10 +49,14 @@
       btn.type = 'button';
       btn.className = 'wbcb-conv-item' + (state.convId === c.id ? ' is-active' : '');
       var badge = c.unread_admin ? '<span class="wbcb-badge-unread">جدید</span>' : '';
+      var thumb = c.product_image
+        ? '<img class="wbcb-conv-thumb" src="' + escapeHtml(c.product_image) + '" alt="" loading="lazy" />'
+        : '';
       var productLine = c.product_name
         ? '<small class="wbcb-conv-product">🛒 ' + escapeHtml(c.product_name) + '</small>'
         : '<small>' + escapeHtml(c.visitor_email || c.page_title || c.page_url || '') + '</small>';
-      btn.innerHTML = '<strong>' + escapeHtml(c.visitor_name || 'مهمان') + badge + '</strong>' + productLine;
+      btn.innerHTML = '<div class="wbcb-conv-row">' + thumb + '<div class="wbcb-conv-main"><strong>' +
+        escapeHtml(c.visitor_name || 'مهمان') + badge + '</strong>' + productLine + '</div></div>';
       btn.addEventListener('click', function () {
         selectConv(c.id);
       });
@@ -71,7 +75,22 @@
       if (!replace && m.id <= state.lastId) return;
       var div = document.createElement('div');
       div.className = 'wbcb-thread-msg is-' + (m.sender || 'visitor');
-      div.textContent = m.body || '';
+      var meta = m.meta || {};
+      if (meta.type === 'product_context' && (meta.product_image || meta.product_name)) {
+        var html = '<div class="wbcb-thread-product">';
+        if (meta.product_image) {
+          html += '<img src="' + escapeHtml(meta.product_image) + '" alt="" loading="lazy" />';
+        }
+        html += '<div><strong>' + escapeHtml(meta.product_name || 'محصول') + '</strong>';
+        if (meta.product_url) {
+          html += '<br><a href="' + escapeHtml(meta.product_url) + '" target="_blank" rel="noopener">مشاهده محصول</a>';
+        }
+        html += '</div></div>';
+        html += '<div class="wbcb-thread-text">' + escapeHtml(m.body || '').replace(/\n/g, '<br>') + '</div>';
+        div.innerHTML = html;
+      } else {
+        div.textContent = m.body || '';
+      }
       messagesEl.appendChild(div);
       messagesEl.scrollTop = messagesEl.scrollHeight;
       state.lastId = Math.max(state.lastId, m.id || 0);
@@ -123,6 +142,23 @@
         else if (c.page_title) metaParts.push(c.page_title);
         metaParts.push(c.status === 'closed' ? 'بسته' : 'باز');
         metaEl.textContent = metaParts.join(' · ');
+
+        var card = document.getElementById('wbcb-thread-product');
+        if (card) {
+          if (c.product_name || c.product_image) {
+            card.hidden = false;
+            card.innerHTML = (c.product_image
+              ? '<img src="' + escapeHtml(c.product_image) + '" alt="" />'
+              : '') +
+              '<div><strong>' + escapeHtml(c.product_name || 'محصول') + '</strong>' +
+              (c.product_url ? '<br><a href="' + escapeHtml(c.product_url) + '" target="_blank" rel="noopener">باز کردن صفحه محصول</a>' : '') +
+              '</div>';
+          } else {
+            card.hidden = true;
+            card.innerHTML = '';
+          }
+        }
+
         if (pageLink) {
           var href = c.product_url || c.view_url || c.page_url || '#';
           pageLink.href = href;

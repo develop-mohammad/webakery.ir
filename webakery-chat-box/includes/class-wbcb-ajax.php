@@ -79,11 +79,12 @@ class WBCB_Ajax {
 
 	private function page_context_from_request() {
 		return array(
-			'page_url'     => esc_url_raw( wp_unslash( $_POST['page_url'] ?? '' ) ),
-			'page_title'   => sanitize_text_field( wp_unslash( $_POST['page_title'] ?? '' ) ),
-			'product_id'   => (int) ( $_POST['product_id'] ?? 0 ),
-			'product_name' => sanitize_text_field( wp_unslash( $_POST['product_name'] ?? '' ) ),
-			'product_url'  => esc_url_raw( wp_unslash( $_POST['product_url'] ?? '' ) ),
+			'page_url'       => esc_url_raw( wp_unslash( $_POST['page_url'] ?? '' ) ),
+			'page_title'     => sanitize_text_field( wp_unslash( $_POST['page_title'] ?? '' ) ),
+			'product_id'     => (int) ( $_POST['product_id'] ?? 0 ),
+			'product_name'   => sanitize_text_field( wp_unslash( $_POST['product_name'] ?? '' ) ),
+			'product_url'    => esc_url_raw( wp_unslash( $_POST['product_url'] ?? '' ) ),
+			'product_image'  => esc_url_raw( wp_unslash( $_POST['product_image'] ?? '' ) ),
 		);
 	}
 
@@ -307,11 +308,12 @@ class WBCB_Ajax {
 
 	private static function context_payload( array $conv ) {
 		return array(
-			'page_url'     => (string) ( $conv['page_url'] ?? '' ),
-			'page_title'   => (string) ( $conv['page_title'] ?? '' ),
-			'product_id'   => (int) ( $conv['product_id'] ?? 0 ),
-			'product_name' => (string) ( $conv['product_name'] ?? '' ),
-			'product_url'  => (string) ( $conv['product_url'] ?? '' ),
+			'page_url'       => (string) ( $conv['page_url'] ?? '' ),
+			'page_title'     => (string) ( $conv['page_title'] ?? '' ),
+			'product_id'     => (int) ( $conv['product_id'] ?? 0 ),
+			'product_name'   => (string) ( $conv['product_name'] ?? '' ),
+			'product_url'    => (string) ( $conv['product_url'] ?? '' ),
+			'product_image'  => (string) ( $conv['product_image'] ?? '' ),
 		);
 	}
 
@@ -328,6 +330,7 @@ class WBCB_Ajax {
 			'product_id'      => (int) ( $conv['product_id'] ?? 0 ),
 			'product_name'    => (string) ( $conv['product_name'] ?? '' ),
 			'product_url'     => $product_url,
+			'product_image'   => (string) ( $conv['product_image'] ?? '' ),
 			'view_url'        => $product_url ?: $page_url,
 			'unread_admin'    => ! empty( $conv['unread_admin'] ),
 			'last_message_at' => (string) ( $conv['last_message_at'] ?? $conv['created_at'] ),

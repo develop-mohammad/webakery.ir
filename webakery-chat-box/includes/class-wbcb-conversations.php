@@ -67,13 +67,14 @@ class WBCB_Conversations {
 				'product_id'      => max( 0, (int) ( $data['product_id'] ?? 0 ) ),
 				'product_name'    => sanitize_text_field( $data['product_name'] ?? '' ),
 				'product_url'     => esc_url_raw( $data['product_url'] ?? '' ),
+				'product_image'   => esc_url_raw( $data['product_image'] ?? '' ),
 				'status'          => 'open',
 				'unread_admin'    => 0,
 				'last_message_at' => null,
 				'created_at'      => $now,
 				'updated_at'      => $now,
 			),
-			array( '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s' )
+			array( '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' )
 		);
 		return self::get_by_token( $token );
 	}
@@ -116,6 +117,10 @@ class WBCB_Conversations {
 			$fields['product_url'] = esc_url_raw( (string) $data['product_url'] );
 			$format[]              = '%s';
 		}
+		if ( array_key_exists( 'product_image', $data ) ) {
+			$fields['product_image'] = esc_url_raw( (string) $data['product_image'] );
+			$format[]                = '%s';
+		}
 		if ( array_key_exists( 'status', $data ) ) {
 			$st = sanitize_key( (string) $data['status'] );
 			$fields['status'] = in_array( $st, array( 'open', 'closed' ), true ) ? $st : 'open';
@@ -135,19 +140,40 @@ class WBCB_Conversations {
 			return null;
 		}
 
-		$page_url     = esc_url_raw( (string) ( $ctx['page_url'] ?? '' ) );
-		$page_title   = sanitize_text_field( (string) ( $ctx['page_title'] ?? '' ) );
-		$product_id   = max( 0, (int) ( $ctx['product_id'] ?? 0 ) );
-		$product_name = sanitize_text_field( (string) ( $ctx['product_name'] ?? '' ) );
-		$product_url  = esc_url_raw( (string) ( $ctx['product_url'] ?? '' ) );
+		$page_url      = esc_url_raw( (string) ( $ctx['page_url'] ?? '' ) );
+		$page_title    = sanitize_text_field( (string) ( $ctx['page_title'] ?? '' ) );
+		$product_id    = max( 0, (int) ( $ctx['product_id'] ?? 0 ) );
+		$product_name  = sanitize_text_field( (string) ( $ctx['product_name'] ?? '' ) );
+		$product_url   = esc_url_raw( (string) ( $ctx['product_url'] ?? '' ) );
+		$product_image = esc_url_raw( (string) ( $ctx['product_image'] ?? '' ) );
 
-		if ( $product_id > 0 && '' === $product_name && function_exists( 'wc_get_product' ) ) {
+		if ( $product_id > 0 && function_exists( 'wc_get_product' ) ) {
 			$p = wc_get_product( $product_id );
 			if ( $p ) {
-				$product_name = $p->get_name();
+				if ( '' === $product_name ) {
+					$product_name = $p->get_name();
+				}
 				if ( ! $product_url ) {
 					$product_url = get_permalink( $product_id );
 				}
+				if ( ! $product_image ) {
+					$img_id = (int) $p->get_image_id();
+					if ( $img_id ) {
+						$product_image = (string) wp_get_attachment_image_url( $img_id, 'medium' );
+					}
+					if ( ! $product_image ) {
+						$product_image = (string) wp_get_attachment_image_url( $img_id, 'woocommerce_thumbnail' );
+					}
+					if ( ! $product_image && function_exists( 'wc_placeholder_img_src' ) ) {
+						$product_image = (string) wc_placeholder_img_src( 'woocommerce_thumbnail' );
+					}
+				}
+			}
+		}
+		if ( $product_id > 0 && ! $product_image ) {
+			$thumb = get_the_post_thumbnail_url( $product_id, 'medium' );
+			if ( $thumb ) {
+				$product_image = $thumb;
 			}
 		}
 		if ( $product_id > 0 && ! $product_url ) {
@@ -166,11 +192,12 @@ class WBCB_Conversations {
 		self::update_visitor(
 			(int) $conv['id'],
 			array(
-				'page_url'     => $page_url ?: $prev_url,
-				'page_title'   => $page_title,
-				'product_id'   => $product_id,
-				'product_name' => $product_name,
-				'product_url'  => $product_url,
+				'page_url'       => $page_url ?: $prev_url,
+				'page_title'     => $page_title,
+				'product_id'     => $product_id,
+				'product_name'   => $product_name,
+				'product_url'    => $product_url,
+				'product_image'  => $product_image,
 			)
 		);
 
@@ -187,10 +214,11 @@ class WBCB_Conversations {
 				'system',
 				$body,
 				array(
-					'type'         => 'product_context',
-					'product_id'   => $product_id,
-					'product_name' => $product_name,
-					'product_url'  => $product_url,
+					'type'           => 'product_context',
+					'product_id'     => $product_id,
+					'product_name'   => $product_name,
+					'product_url'    => $product_url,
+					'product_image'  => $product_image,
 				)
 			);
 		} elseif ( $changed_page && $page_title ) {

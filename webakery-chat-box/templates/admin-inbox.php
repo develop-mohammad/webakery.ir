@@ -38,6 +38,7 @@ $conv_id = isset( $_GET['conv'] ) ? (int) $_GET['conv'] : 0; // phpcs:ignore
 						<button type="button" class="button button-small" id="wbcb-thread-close">بستن گفتگو</button>
 					</div>
 				</header>
+				<div class="wbcb-thread-product-card" id="wbcb-thread-product" hidden></div>
 				<div class="wbcb-thread-messages" id="wbcb-thread-messages"></div>
 				<form class="wbcb-thread-form" id="wbcb-thread-form">
 					<textarea id="wbcb-thread-input" rows="2" placeholder="پاسخ شما…"></textarea>

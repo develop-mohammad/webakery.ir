@@ -83,10 +83,18 @@ class WBCB_Messages {
 	}
 
 	public static function format_row( array $row ) {
+		$meta = array();
+		if ( ! empty( $row['meta'] ) ) {
+			$decoded = json_decode( (string) $row['meta'], true );
+			if ( is_array( $decoded ) ) {
+				$meta = $decoded;
+			}
+		}
 		return array(
 			'id'         => (int) $row['id'],
 			'sender'     => (string) $row['sender'],
 			'body'       => (string) $row['body'],
+			'meta'       => $meta,
 			'created_at' => (string) $row['created_at'],
 			'time_label' => mysql2date( 'H:i', $row['created_at'], true ),
 		);

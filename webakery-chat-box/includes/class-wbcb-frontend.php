@@ -80,9 +80,10 @@ class WBCB_Frontend {
 		}
 		$page_title = wp_get_document_title();
 
-		$product_id   = 0;
-		$product_name = '';
-		$product_url  = '';
+		$product_id    = 0;
+		$product_name  = '';
+		$product_url   = '';
+		$product_image = '';
 
 		if ( function_exists( 'is_product' ) && is_product() ) {
 			$product_id = (int) get_queried_object_id();
@@ -101,17 +102,28 @@ class WBCB_Frontend {
 					$p = wc_get_product( $product_id );
 					if ( $p ) {
 						$product_name = $p->get_name();
+						$img_id       = (int) $p->get_image_id();
+						if ( $img_id ) {
+							$product_image = (string) wp_get_attachment_image_url( $img_id, 'medium' );
+							if ( ! $product_image ) {
+								$product_image = (string) wp_get_attachment_image_url( $img_id, 'woocommerce_thumbnail' );
+							}
+						}
 					}
+				}
+				if ( ! $product_image ) {
+					$product_image = (string) get_the_post_thumbnail_url( $product_id, 'medium' );
 				}
 			}
 		}
 
 		return array(
-			'page_url'     => $page_url,
-			'page_title'   => $page_title,
-			'product_id'   => $product_id,
-			'product_name' => $product_name,
-			'product_url'  => $product_url,
+			'page_url'       => $page_url,
+			'page_title'     => $page_title,
+			'product_id'     => $product_id,
+			'product_name'   => $product_name,
+			'product_url'    => $product_url,
+			'product_image'  => $product_image,
 		);
 	}
 
@@ -141,7 +153,11 @@ class WBCB_Frontend {
 				</header>
 				<?php if ( $has_prod ) : ?>
 					<div class="wbcb-product-chip" id="wbcb-product-chip">
-						<span class="wbcb-product-chip-ic" aria-hidden="true">🛒</span>
+						<?php if ( ! empty( $ctx['product_image'] ) ) : ?>
+							<img class="wbcb-product-chip-img" src="<?php echo esc_url( $ctx['product_image'] ); ?>" alt="" width="44" height="44" loading="lazy" />
+						<?php else : ?>
+							<span class="wbcb-product-chip-ic" aria-hidden="true">🛒</span>
+						<?php endif; ?>
 						<div class="wbcb-product-chip-text">
 							<small>در حال مشاهده محصول</small>
 							<strong><?php echo esc_html( $ctx['product_name'] ); ?></strong>

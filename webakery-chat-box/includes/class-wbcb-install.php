@@ -3,7 +3,7 @@ defined( 'ABSPATH' ) || exit;
 
 class WBCB_Install {
 
-	const DB_VERSION = '1.2.0';
+	const DB_VERSION = '1.3.0';
 	const VERSION_OPTION = 'wbcb_db_version';
 
 	public static function activate() {
@@ -35,6 +35,7 @@ class WBCB_Install {
 			product_id BIGINT UNSIGNED NULL,
 			product_name VARCHAR(255) NULL,
 			product_url TEXT NULL,
+			product_image TEXT NULL,
 			status VARCHAR(20) NOT NULL DEFAULT 'open',
 			unread_admin TINYINT(1) NOT NULL DEFAULT 1,
 			last_message_at DATETIME NULL,

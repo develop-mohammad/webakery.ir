@@ -50,7 +50,21 @@
     var div = document.createElement('div');
     var sender = m.sender || 'visitor';
     div.className = 'wbcb-msg is-' + sender;
-    div.innerHTML = escapeHtml(m.body || '') + '<time>' + escapeHtml(m.time_label || '') + '</time>';
+    var meta = m.meta || {};
+    if (meta.type === 'product_context' && (meta.product_image || meta.product_name)) {
+      var card = '<div class="wbcb-msg-product">';
+      if (meta.product_image) {
+        card += '<img src="' + escapeHtml(meta.product_image) + '" alt="" loading="lazy" />';
+      }
+      card += '<div><strong>' + escapeHtml(meta.product_name || 'محصول') + '</strong>';
+      if (meta.product_url) {
+        card += '<br><a href="' + escapeHtml(meta.product_url) + '" target="_blank" rel="noopener">مشاهده</a>';
+      }
+      card += '</div></div>';
+      div.innerHTML = card + '<div class="wbcb-msg-text">' + escapeHtml(m.body || '').replace(/\n/g, '<br>') + '</div><time>' + escapeHtml(m.time_label || '') + '</time>';
+    } else {
+      div.innerHTML = '<div class="wbcb-msg-text">' + escapeHtml(m.body || '').replace(/\n/g, '<br>') + '</div><time>' + escapeHtml(m.time_label || '') + '</time>';
+    }
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
     if (m.id) state.lastId = Math.max(state.lastId, m.id);
@@ -110,7 +124,8 @@
       page_title: c.page_title || (document.title || ''),
       product_id: c.product_id || 0,
       product_name: c.product_name || '',
-      product_url: c.product_url || ''
+      product_url: c.product_url || '',
+      product_image: c.product_image || ''
     };
   }
 
@@ -122,6 +137,7 @@
       product_id: ctx.product_id,
       product_name: ctx.product_name,
       product_url: ctx.product_url,
+      product_image: ctx.product_image,
       name: nameEl ? nameEl.value : '',
       email: emailEl ? emailEl.value : ''
     };
@@ -217,7 +233,8 @@
       page_title: ctx.page_title,
       product_id: ctx.product_id,
       product_name: ctx.product_name,
-      product_url: ctx.product_url
+      product_url: ctx.product_url,
+      product_image: ctx.product_image
     }).then(function (res) {
       input.disabled = false;
       if (!res || !res.success) {

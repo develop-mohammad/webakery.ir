@@ -110,6 +110,42 @@
 	border-bottom: 1px solid #ede9fe;
 }
 
+.wbcb-product-chip-img {
+	width: 44px;
+	height: 44px;
+	border-radius: 10px;
+	object-fit: cover;
+	flex: 0 0 auto;
+	background: #ede9fe;
+}
+
+.wbcb-msg-product,
+.wbcb-thread-product {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	margin-bottom: 8px;
+	padding: 8px;
+	background: rgba(255, 255, 255, 0.7);
+	border-radius: 12px;
+}
+
+.wbcb-msg-product img,
+.wbcb-thread-product img {
+	width: 56px;
+	height: 56px;
+	border-radius: 10px;
+	object-fit: cover;
+}
+
+.wbcb-msg-product a,
+.wbcb-thread-product a {
+	color: var(--wbcb-primary);
+	font-size: 12px;
+	text-decoration: none;
+	font-weight: 600;
+}
+
 .wbcb-product-chip-ic {
 	font-size: 18px;
 }
