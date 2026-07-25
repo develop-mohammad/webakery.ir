@@ -47,6 +47,61 @@ function ls_promo_hours_left( string $slug ): ?int {
     return max( 1, (int) ceil( ( (int) $promo['until'] - time() ) / 3600 ) );
 }
 
+/** پلن‌های اشتراکی یک محصول (آرایه خالی = مادام‌العمر) */
+function ls_plans_for( string $slug ): array {
+    $all = defined( 'LS_PLANS' ) && is_array( LS_PLANS ) ? LS_PLANS : [];
+    $plans = $all[ $slug ] ?? [];
+    return is_array( $plans ) ? $plans : [];
+}
+
+function ls_has_plans( string $slug ): bool {
+    return ! empty( ls_plans_for( $slug ) );
+}
+
+/** @return array{id:string,months:int,price:int,label:string,hint:string,badge:string}|null */
+function ls_plan( string $slug, string $plan_id ): ?array {
+    $plans = ls_plans_for( $slug );
+    if ( ! isset( $plans[ $plan_id ] ) || ! is_array( $plans[ $plan_id ] ) ) {
+        return null;
+    }
+    $p = $plans[ $plan_id ];
+    return [
+        'id'     => $plan_id,
+        'months' => max( 1, (int) ( $p['months'] ?? 1 ) ),
+        'price'  => (int) ( $p['price'] ?? 0 ),
+        'label'  => (string) ( $p['label'] ?? $plan_id ),
+        'hint'   => (string) ( $p['hint'] ?? '' ),
+        'badge'  => (string) ( $p['badge'] ?? '' ),
+    ];
+}
+
+function ls_default_plan_id( string $slug ): string {
+    $plans = ls_plans_for( $slug );
+    if ( ! $plans ) {
+        return '';
+    }
+    foreach ( $plans as $id => $p ) {
+        if ( ! empty( $p['badge'] ) ) {
+            return (string) $id;
+        }
+    }
+    return (string) array_key_first( $plans );
+}
+
+/** قیمت نهایی با احتساب پلن (و پرومو فقط برای محصولات بدون پلن) */
+function ls_amount_for( string $slug, string $plan_id = '' ): int {
+    if ( ls_has_plans( $slug ) ) {
+        if ( $plan_id === '' ) {
+            $plan_id = ls_default_plan_id( $slug );
+        }
+        $plan = ls_plan( $slug, $plan_id );
+        if ( $plan && $plan['price'] > 0 ) {
+            return $plan['price'];
+        }
+    }
+    return ls_price_for( $slug );
+}
+
 // تشخیص base URL سرور
 if ( defined('LS_BASE_URL') ) {
     $SERVER = rtrim(LS_BASE_URL, '/');
@@ -61,7 +116,15 @@ $SELF_URL = $SERVER . '/license-server/pay/';
 $plugin     = preg_replace('/[^a-z0-9_-]/i', '', $_GET['plugin']  ?? 'wccp');
 $domain_get = trim($_GET['domain']  ?? '');
 $return_get = trim($_GET['return']  ?? '');
-$BASE_PRICE = ls_price_for($plugin); // قیمت پایه (پس از تخفیف زمان‌دار، اگر هست)
+$plan_get   = preg_replace('/[^a-z0-9_-]/i', '', $_GET['plan'] ?? '');
+if ( ls_has_plans( $plugin ) ) {
+    if ( ! ls_plan( $plugin, $plan_get ) ) {
+        $plan_get = ls_default_plan_id( $plugin );
+    }
+} else {
+    $plan_get = '';
+}
+$BASE_PRICE = ls_amount_for( $plugin, $plan_get );
 
 /* ─── کالبک زیبال ──────────────────────────────────────────────── */
 if ( isset($_GET['zibal_cb']) ) {
@@ -87,7 +150,8 @@ if ( isset($_GET['zibal_cb']) ) {
         Database::payment_update($track_id, ['status' => 'failed']);
         $retry = $SELF_URL . '?plugin=' . urlencode($pay['plugin'])
                . '&domain=' . urlencode($pay['domain'])
-               . '&return=' . urlencode($pay['return_url']);
+               . '&return=' . urlencode($pay['return_url'])
+               . ( ! empty( $pay['plan'] ) ? '&plan=' . urlencode( (string) $pay['plan'] ) : '' );
         show_error('پرداخت ناموفق', 'پرداخت لغو شد یا با خطا مواجه شد.',
             '<a href="' . htmlspecialchars($retry) . '" class="btn">تلاش مجدد</a>');
     }
@@ -103,8 +167,20 @@ if ( isset($_GET['zibal_cb']) ) {
         show_error('خطای تأیید', 'پرداخت تأیید نشد. کد: ' . $result_code);
     }
 
-    $lic = LicenseManager::create($pay['email'], $pay['plugin']);
-    LicenseManager::activate($lic['license_key'], $pay['domain']);
+    $lic_months = max( 0, (int) ( $pay['months'] ?? 0 ) );
+    $lic_plan   = (string) ( $pay['plan'] ?? '' );
+    if ( $lic_months > 0 ) {
+        $lic = LicenseManager::create_or_extend_subscription(
+            $pay['email'],
+            $pay['plugin'],
+            $lic_months,
+            $pay['domain'] ?? '',
+            'اشتراک ' . ( $lic_plan ?: ( $lic_months . 'm' ) )
+        );
+    } else {
+        $lic = LicenseManager::create( $pay['email'], $pay['plugin'] );
+        LicenseManager::activate( $lic['license_key'], $pay['domain'] );
+    }
 
     Database::payment_update($track_id, ['status' => 'paid', 'license_key' => $lic['license_key']]);
 
@@ -118,17 +194,25 @@ if ( isset($_GET['zibal_cb']) ) {
 
     // نمایش کلید + redirect خودکار به سایت مشتری
     $portal_url = rtrim($SERVER, '/') . '/license-server/portal/?email=' . urlencode($pay['email']);
+    $exp_line = ! empty( $lic['expires_at'] )
+        ? '<p style="color:#166534;font-size:13px;margin:8px 0">📅 اعتبار تا: <strong>' . htmlspecialchars( $lic['expires_at'] ) . '</strong></p>'
+        : '<p style="color:#6b7280;font-size:13px;margin:8px 0">♾ لایسنس مادام‌العمر</p>';
     $key_html = '<div class="key-box">'
         . '<span id="lk">' . htmlspecialchars($lic['license_key']) . '</span>'
         . '<button onclick="navigator.clipboard.writeText(document.getElementById(\'lk\').innerText);this.textContent=\'✓\'" class="btn-copy">کپی</button>'
         . '</div>'
+        . $exp_line
         . '<p style="color:#6b7280;font-size:13px">این کلید را در پلاگین سایت خود وارد کنید.</p>'
         . '<p style="color:#6b7280;font-size:12px;margin-top:8px">همچنین می‌توانید از <a href="' . htmlspecialchars($portal_url) . '">پورتال مشتری</a> به لایسنس‌های خود دسترسی داشته باشید.</p>';
 
     if ( $pay['return_url'] ) {
         $redirect_url = $pay['return_url'];
         $sep = strpos($redirect_url, '?') !== false ? '&' : '?';
-        $redirect_url .= $sep . http_build_query(['wccp_activate' => '1', 'wccp_key' => $lic['license_key']]);
+        $redirect_url .= $sep . http_build_query([
+            'wccp_activate' => '1',
+            'wccp_key'      => $lic['license_key'],
+            'wbl_product'   => $pay['plugin'],
+        ]);
         $key_html .= '<p style="margin-top:14px;font-size:13px;color:#374151">⏳ در حال انتقال به سایت شما برای فعال‌سازی خودکار...</p>'
             . '<script>setTimeout(function(){ window.location="' . addslashes($redirect_url) . '"; }, 4000);</script>';
     }
@@ -145,7 +229,23 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
     $plugin_p   = preg_replace('/[^a-z0-9_-]/i', '', $_POST['plugin']     ?? 'wccp');
     $return_p   = trim($_POST['return_url'] ?? '');
     $coupon_raw = trim($_POST['coupon_code'] ?? '');
-    $BASE_PRICE = ls_price_for($plugin_p); // قیمت پایه‌ی محصولِ واقعی
+    $plan_p     = preg_replace('/[^a-z0-9_-]/i', '', $_POST['plan'] ?? '');
+
+    $plan_months = 0;
+    $plan_label  = '';
+    if ( ls_has_plans( $plugin_p ) ) {
+        if ( ! ls_plan( $plugin_p, $plan_p ) ) {
+            $plan_p = ls_default_plan_id( $plugin_p );
+        }
+        $sel_plan    = ls_plan( $plugin_p, $plan_p );
+        $plan_months = $sel_plan ? (int) $sel_plan['months'] : 0;
+        $plan_label  = $sel_plan ? (string) $sel_plan['label'] : '';
+        $BASE_PRICE  = ls_amount_for( $plugin_p, $plan_p );
+        $plan_get    = $plan_p;
+    } else {
+        $plan_p     = '';
+        $BASE_PRICE = ls_price_for( $plugin_p );
+    }
 
     $email_val  = filter_var($email_raw, FILTER_VALIDATE_EMAIL);
 
@@ -154,16 +254,18 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
         $domain_get  = $domain_raw;
     } else {
         $clean_domain = LicenseManager::clean_domain($domain_raw);
+        $is_subscription = $plan_months > 0;
 
-        // چک تکراری بودن: ایمیل یا دامنه قبلاً لایسنس فعال دارند؟
+        // برای محصولات مادام‌العمر: جلوگیری از خرید تکراری
+        // برای اشتراک: تمدید مجاز است (create_or_extend_subscription)
         $existing_email  = Database::license_find_by_email($email_val, $plugin_p);
         $existing_domain = Database::license_find_by_domain($clean_domain, $plugin_p);
 
-        if ( $existing_email ) {
+        if ( ! $is_subscription && $existing_email ) {
             $key_masked = substr($existing_email['license_key'], 0, 9) . '●●●●●●●●●';
             $form_error = 'این ایمیل قبلاً لایسنس فعال دارد (' . $key_masked . '). برای دریافت کلید با پشتیبانی تماس بگیرید.';
             $domain_get = $domain_raw;
-        } elseif ( $existing_domain ) {
+        } elseif ( ! $is_subscription && $existing_domain ) {
             $key_masked = substr($existing_domain['license_key'], 0, 9) . '●●●●●●●●●';
             $form_error = 'این دامنه قبلاً لایسنس فعال دارد (' . $key_masked . '). برای انتقال به دامنه دیگر با پشتیبانی تماس بگیرید.';
             $domain_get = $domain_raw;
@@ -182,13 +284,17 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
             }
 
             if ( ! $form_error ) {
-                $cb   = $SELF_URL . '?zibal_cb=1&plugin=' . urlencode($plugin_p) . '&domain=' . urlencode($domain_raw);
+                $cb   = $SELF_URL . '?zibal_cb=1&plugin=' . urlencode($plugin_p) . '&domain=' . urlencode($domain_raw)
+                      . ( $plan_p !== '' ? '&plan=' . urlencode( $plan_p ) : '' );
+                $desc = ( $is_subscription ? 'اشتراک ' : 'لایسنس ' ) . $plugin_p
+                      . ( $plan_label !== '' ? ' (' . $plan_label . ')' : '' )
+                      . ' — ' . $domain_raw
+                      . ( $coupon_info ? ' (کد تخفیف: ' . $coupon_info['coupon']['code'] . ')' : '' );
                 $resp = zibal_post('https://gateway.zibal.ir/v1/request', [
                     'merchant'    => $MERCHANT,
                     'amount'      => $final_amount,
                     'callbackUrl' => $cb,
-                    'description' => 'لایسنس ' . $plugin_p . ' — ' . $domain_raw
-                                   . ( $coupon_info ? ' (کد تخفیف: ' . $coupon_info['coupon']['code'] . ')' : '' ),
+                    'description' => $desc,
                 ]);
 
                 $res_code = $resp['result'] ?? -1;
@@ -205,6 +311,8 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
                         'return_url'     => $return_p,
                         'amount'         => $final_amount,
                         'base_amount'    => $BASE_PRICE,
+                        'plan'           => $plan_p !== '' ? $plan_p : null,
+                        'months'         => $plan_months > 0 ? $plan_months : 0,
                         'coupon_id'      => $coupon_info ? $coupon_info['coupon']['id'] : null,
                         'coupon_code'    => $coupon_info ? $coupon_info['coupon']['code'] : null,
                         'coupon_discount'=> $coupon_info ? $coupon_info['discount'] : 0,
@@ -217,7 +325,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
                     exit;
                 }
             }
-        } // end else (no existing license)
+        }
     }
 }
 
@@ -228,16 +336,23 @@ if ( defined('LS_PLUGIN_LABELS') && is_array(LS_PLUGIN_LABELS) ) {
 }
 $plugin_label = $labels[$plugin] ?? $plugin;
 $amount_toman = number_format((int)($BASE_PRICE / 10));
+$has_plans    = ls_has_plans( $plugin );
+$plans_list   = ls_plans_for( $plugin );
 
-$original_amount = ls_original_price_for($plugin);
-$price_html = '<div class="price">' . $amount_toman . ' تومان</div>';
-if ( $original_amount !== null && $original_amount > $BASE_PRICE ) {
+$original_amount = $has_plans ? null : ls_original_price_for($plugin);
+$price_html = '<div class="price" id="header_price">' . $amount_toman . ' تومان</div>';
+if ( $has_plans ) {
+    $cur_plan = ls_plan( $plugin, $plan_get );
+    $sub_lbl  = $cur_plan ? $cur_plan['label'] : 'اشتراکی';
+    $price_html = '<div class="price" id="header_price">' . $amount_toman . ' تومان</div>'
+        . '<div class="price-sub" id="header_plan_lbl">پلن ' . htmlspecialchars( $sub_lbl ) . ' — قابل تمدید</div>';
+} elseif ( $original_amount !== null && $original_amount > $BASE_PRICE ) {
     $original_toman = number_format((int)($original_amount / 10));
     $off_percent    = round( ( 1 - $BASE_PRICE / $original_amount ) * 100 );
     $hours_left     = ls_promo_hours_left($plugin);
     $price_html = '<div class="price-row">'
         . '<span class="price-original">' . $original_toman . ' تومان</span>'
-        . '<span class="price">' . $amount_toman . ' تومان</span>'
+        . '<span class="price" id="header_price">' . $amount_toman . ' تومان</span>'
         . '<span class="price-badge">' . $off_percent . '% تخفیف</span>'
         . '</div>';
     if ( $hours_left !== null ) {
@@ -248,6 +363,34 @@ if ( $original_amount !== null && $original_amount > $BASE_PRICE ) {
 $error_html = $form_error
     ? '<div class="notice-error">' . htmlspecialchars($form_error) . '</div>'
     : '';
+
+// انتخاب پلن اشتراکی
+$plans_html = '';
+$plans_js   = [];
+if ( $has_plans ) {
+    $plans_html = '<div class="plans" id="plans_box"><div class="plans-title">مدت اشتراک را انتخاب کنید</div><div class="plans-grid">';
+    foreach ( $plans_list as $pid => $pdata ) {
+        $pinfo = ls_plan( $plugin, (string) $pid );
+        if ( ! $pinfo ) continue;
+        $checked = ( $plan_get === $pinfo['id'] ) ? ' checked' : '';
+        $active  = ( $plan_get === $pinfo['id'] ) ? ' is-active' : '';
+        $badge   = $pinfo['badge'] !== '' ? '<span class="plan-badge">' . htmlspecialchars( $pinfo['badge'] ) . '</span>' : '';
+        $toman   = number_format( (int) ( $pinfo['price'] / 10 ) );
+        $plans_html .= '<label class="plan-card' . $active . '">'
+            . '<input type="radio" name="plan" value="' . htmlspecialchars( $pinfo['id'] ) . '"' . $checked . '>'
+            . $badge
+            . '<div class="plan-label">' . htmlspecialchars( $pinfo['label'] ) . '</div>'
+            . '<div class="plan-price">' . $toman . ' <small>تومان</small></div>'
+            . ( $pinfo['hint'] !== '' ? '<div class="plan-hint">' . htmlspecialchars( $pinfo['hint'] ) . '</div>' : '' )
+            . '</label>';
+        $plans_js[ $pinfo['id'] ] = [
+            'price' => (int) $pinfo['price'],
+            'label' => $pinfo['label'],
+            'toman' => (int) ( $pinfo['price'] / 10 ),
+        ];
+    }
+    $plans_html .= '</div></div>';
+}
 
 // فیلد کد تخفیف — AJAX برای پیش‌نمایش
 $coupon_html = '
@@ -264,6 +407,10 @@ $coupon_html = '
 $current_meta  = ( defined('LS_PLUGIN_META') && is_array(LS_PLUGIN_META) ) ? ( LS_PLUGIN_META[ $plugin ] ?? [] ) : [];
 $current_icon  = $current_meta['icon'] ?? '🔑';
 
+$features_html = $has_plans
+    ? '<span>✅ اشتراک ماهانه / ۳ ماهه</span><span>✅ تمدید آسان</span><span>✅ آپدیت در دوره اشتراک</span><span>✅ پشتیبانی</span>'
+    : '<span>✅ لایسنس مادام‌العمر</span><span>✅ آپدیت خودکار</span><span>✅ پشتیبانی ۶ ماهه</span>';
+
 $form_html = '
 <div class="card">
     <div class="product-header">
@@ -277,6 +424,7 @@ $form_html = '
     <form method="post" autocomplete="on" id="pay_form">
         <input type="hidden" name="plugin"     value="' . htmlspecialchars($plugin) . '">
         <input type="hidden" name="return_url" value="' . htmlspecialchars($return_get) . '">
+        ' . $plans_html . '
         <div class="field">
             <label>ایمیل شما</label>
             <input type="email" name="email" placeholder="name@example.com" required autofocus>
@@ -296,11 +444,7 @@ $form_html = '
         </div>
         <button type="submit" class="btn-pay" id="pay_btn">پرداخت با زیبال 💳</button>
     </form>
-    <div class="features">
-        <span>✅ لایسنس مادام‌العمر</span>
-        <span>✅ آپدیت خودکار</span>
-        <span>✅ پشتیبانی ۶ ماهه</span>
-    </div>
+    <div class="features">' . $features_html . '</div>
     <p class="login-hint">لایسنس دارید؟ <a href="' . htmlspecialchars(rtrim($SERVER, '/') . '/license-server/portal/') . '">وارد شوید</a></p>
 </div>
 
@@ -313,10 +457,41 @@ $form_html = '
     var finalPrice = document.getElementById("final_price");
     var discountEl = document.getElementById("discount_detail");
     var payBtn     = document.getElementById("pay_btn");
+    var headerPrice = document.getElementById("header_price");
+    var headerPlan  = document.getElementById("header_plan_lbl");
     var baseToman  = ' . (int)($BASE_PRICE/10) . ';
     var pluginSlug = ' . json_encode($plugin) . ';
+    var plansMap   = ' . json_encode( $plans_js, JSON_UNESCAPED_UNICODE ) . ';
 
     function fmt(n){ return n.toLocaleString("fa-IR"); }
+
+    function currentAmountRial(){
+        var sel = document.querySelector("input[name=plan]:checked");
+        if ( sel && plansMap && plansMap[sel.value] ) {
+            return plansMap[sel.value].price;
+        }
+        return baseToman * 10;
+    }
+
+    function syncPlanUI(){
+        var sel = document.querySelector("input[name=plan]:checked");
+        document.querySelectorAll(".plan-card").forEach(function(c){
+            c.classList.toggle("is-active", c.contains(sel));
+        });
+        if ( sel && plansMap && plansMap[sel.value] ) {
+            var p = plansMap[sel.value];
+            baseToman = p.toman;
+            if ( headerPrice ) headerPrice.textContent = fmt(p.toman) + " تومان";
+            if ( headerPlan ) headerPlan.textContent = "پلن " + p.label + " — قابل تمدید";
+            payBtn.textContent = "پرداخت " + fmt(p.toman) + " تومان با زیبال 💳";
+        }
+        finalBox.style.display = "none";
+    }
+
+    document.querySelectorAll("input[name=plan]").forEach(function(r){
+        r.addEventListener("change", syncPlanUI);
+    });
+    if ( Object.keys(plansMap || {}).length ) syncPlanUI();
 
     checkBtn.addEventListener("click", function(){
         var code = codeInput.value.trim();
@@ -331,10 +506,11 @@ $form_html = '
         checkBtn.disabled = true;
         checkBtn.textContent = "صبر کنید...";
 
+        var amountRial = currentAmountRial();
         fetch("' . htmlspecialchars($SELF_URL) . 'check-coupon.php", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "code=" + encodeURIComponent(code) + "&plugin=" + encodeURIComponent(pluginSlug) + "&amount=" + encodeURIComponent(baseToman * 10)
+            body: "code=" + encodeURIComponent(code) + "&plugin=" + encodeURIComponent(pluginSlug) + "&amount=" + encodeURIComponent(amountRial)
         })
         .then(function(r){ return r.json(); })
         .then(function(data){
@@ -345,7 +521,7 @@ $form_html = '
                 hint.style.color = "#16a34a";
                 finalBox.style.display = "block";
                 finalPrice.textContent = fmt(data.final_toman) + " تومان";
-                var line = "قیمت اصلی: " + fmt(baseToman) + " تومان";
+                var line = "قیمت اصلی: " + fmt(Math.round(amountRial/10)) + " تومان";
                 if ( data.discount_toman > 0 ) {
                     line += " — تخفیف: " + fmt(data.discount_toman) + " تومان";
                 }
@@ -368,9 +544,9 @@ $form_html = '
     });
 
     codeInput.addEventListener("input", function(){
-        // وقتی کاربر کد را عوض کرد، پیش‌نمایش قدیمی نامعتبر است
         finalBox.style.display = "none";
-        payBtn.textContent = "پرداخت با زیبال 💳";
+        if ( Object.keys(plansMap || {}).length ) syncPlanUI();
+        else payBtn.textContent = "پرداخت با زیبال 💳";
         if ( codeInput.value.trim() === "" ) {
             hint.textContent = "اگر کد تخفیف دارید وارد کنید و «بررسی» را بزنید.";
             hint.style.color = "#9ca3af";
@@ -388,7 +564,7 @@ $all_slugs   = array_unique( array_merge(
 $other_cards = '';
 foreach ( $all_slugs as $slug ) {
     if ( $slug === $plugin ) continue;
-    $price = ls_price_for( $slug );
+    $price = ls_amount_for( $slug, ls_has_plans( $slug ) ? ls_default_plan_id( $slug ) : '' );
     if ( $price <= 0 ) continue;
 
     $meta      = $plugin_meta[ $slug ] ?? [];
@@ -396,8 +572,8 @@ foreach ( $all_slugs as $slug ) {
     $desc      = $meta['desc'] ?? '';
     $name      = $labels[ $slug ] ?? $slug;
     $toman     = number_format( (int)( $price / 10 ) );
-    $orig      = ls_original_price_for( $slug );
-    $price_tag = $toman . ' تومان';
+    $orig      = ls_has_plans( $slug ) ? null : ls_original_price_for( $slug );
+    $price_tag = ( ls_has_plans( $slug ) ? 'از ' : '' ) . $toman . ' تومان';
     if ( $orig !== null && $orig > $price ) {
         $price_tag = '<span class="oc-price-old">' . number_format( (int)( $orig / 10 ) ) . '</span> ' . $toman . ' تومان';
     }
@@ -467,6 +643,19 @@ body{font-family:"Vazirmatn",Tahoma,sans-serif;background:linear-gradient(160deg
 .card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.09);padding:32px;width:100%}
 .product-header{display:flex;align-items:center;gap:16px;padding-bottom:20px;border-bottom:1px solid #f3f4f6;margin-bottom:20px}
 .icon{font-size:40px}.price{font-size:22px;font-weight:bold;color:#6c63ff}
+.price-sub{font-size:12px;color:#6b7280;margin-top:4px}
+.plans{margin:0 0 18px}
+.plans-title{font-size:13px;font-weight:700;color:#374151;margin-bottom:10px}
+.plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.plan-card{position:relative;display:block;border:1.5px solid #e5e7eb;border-radius:12px;padding:14px 12px;cursor:pointer;background:#fafafa;transition:border-color .15s,box-shadow .15s,background .15s}
+.plan-card input{position:absolute;opacity:0;pointer-events:none}
+.plan-card:hover{border-color:#c4b5fd;background:#f5f3ff}
+.plan-card.is-active{border-color:#6c63ff;background:#f5f3ff;box-shadow:0 0 0 3px rgba(108,99,255,.12)}
+.plan-badge{position:absolute;top:-9px;left:10px;font-size:10px;font-weight:800;color:#fff;background:#ef4444;border-radius:20px;padding:2px 8px}
+.plan-label{font-size:14px;font-weight:800;color:#111827;margin-bottom:6px}
+.plan-price{font-size:18px;font-weight:800;color:#6c63ff}
+.plan-price small{font-size:11px;font-weight:600;color:#6b7280}
+.plan-hint{font-size:11px;color:#6b7280;margin-top:6px;line-height:1.5}
 .price-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .price-original{font-size:14px;color:#9ca3af;text-decoration:line-through}
 .price-badge{font-size:11px;font-weight:bold;color:#fff;background:#ef4444;border-radius:20px;padding:2px 9px}

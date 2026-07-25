@@ -2,7 +2,7 @@
 /**
  * Plugin Name: چت باکس | Webakery Chat
  * Description: ویجت چت زیبا برای سایت — لایسنس، عکس محصول، اعلان ایمیل/تلگرام/واتساپ.
- * Version:     1.4.0
+ * Version:     1.4.1
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'WBCB_LOADED' ) ) {
 	return;
 }
 define( 'WBCB_LOADED', true );
-define( 'WBCB_VERSION', '1.4.0' );
+define( 'WBCB_VERSION', '1.4.1' );
 define( 'WBCB_FILE', __FILE__ );
 define( 'WBCB_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBCB_URL', plugin_dir_url( __FILE__ ) );

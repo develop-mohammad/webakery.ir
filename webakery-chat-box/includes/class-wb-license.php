@@ -24,6 +24,8 @@ class WB_License {
             'product'       => '',
             'name'          => '',
             'price'         => '۹۹,۹۹۹ تومان',
+            'price_sub'     => 'پرداخت یکباره', // یا «اشتراکی»
+            'plans'         => [], // [ ['id'=>'1m','label'=>'ماهانه','price'=>'۱۹۹,۰۰۰ تومان'], ... ]
             'file'          => '',
             'version'       => '',     // خالی = از هدر افزونه خوانده می‌شود
             'trial_days'    => 3,
@@ -273,7 +275,7 @@ class WB_License {
                     <?php if ( ! $valid ) : ?>
                     <div class="wbl-hero-price">
                         <span class="wbl-price"><?php echo esc_html( $cfg['price'] ); ?></span>
-                        <span class="wbl-price-sub">پرداخت یکباره</span>
+                        <span class="wbl-price-sub"><?php echo esc_html( $cfg['price_sub'] ?? 'پرداخت یکباره' ); ?></span>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -307,6 +309,20 @@ class WB_License {
                         </div>
                     </div>
                     <div class="wbl-key-show"><?php echo esc_html( $key ); ?></div>
+                    <?php if ( ! empty( $cfg['plans'] ) ) : ?>
+                        <div class="wbl-plans" style="margin-top:14px">
+                            <div class="wbl-plans-title">تمدید اشتراک</div>
+                            <?php foreach ( (array) $cfg['plans'] as $pl ) :
+                                $pl_id = sanitize_key( $pl['id'] ?? '' );
+                                $pl_url = esc_url( self::pay_url( $slug, $pl_id ) );
+                                ?>
+                                <a href="<?php echo $pl_url; ?>" class="wbl-btn-plan" target="_blank" rel="noopener">
+                                    <span><?php echo esc_html( $pl['label'] ?? $pl_id ); ?></span>
+                                    <strong><?php echo esc_html( $pl['price'] ?? '' ); ?></strong>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                     <form method="post" action="<?php echo $post; ?>" style="text-align:center;margin-top:12px">
                         <?php wp_nonce_field( 'wb_license_deactivate' ); ?>
                         <input type="hidden" name="action"  value="wb_license_deactivate">
@@ -322,11 +338,28 @@ class WB_License {
                         <?php endforeach; ?>
                     </ul>
 
+                    <?php if ( ! empty( $cfg['plans'] ) ) : ?>
+                        <div class="wbl-plans">
+                            <div class="wbl-plans-title">انتخاب مدت اشتراک</div>
+                            <?php foreach ( (array) $cfg['plans'] as $pl ) :
+                                $pl_id = sanitize_key( $pl['id'] ?? '' );
+                                $pl_url = esc_url( self::pay_url( $slug, $pl_id ) );
+                                $badge  = ! empty( $pl['badge'] ) ? '<em class="wbl-plan-badge">' . esc_html( $pl['badge'] ) . '</em>' : '';
+                                ?>
+                                <a href="<?php echo $pl_url; ?>" class="wbl-btn-plan<?php echo ! empty( $pl['badge'] ) ? ' is-featured' : ''; ?>" target="_blank" rel="noopener">
+                                    <?php echo $badge; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                    <span><?php echo esc_html( $pl['label'] ?? $pl_id ); ?></span>
+                                    <strong><?php echo esc_html( $pl['price'] ?? '' ); ?></strong>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else : ?>
                     <a href="<?php echo $pay; ?>" class="wbl-btn-pay">
                         <span class="wbl-btn-pay-ic">💳</span>
                         پرداخت و فعال‌سازی آنی
                         <span class="wbl-btn-pay-amt"><?php echo esc_html( $cfg['price'] ); ?></span>
                     </a>
+                    <?php endif; ?>
                     <div class="wbl-secure">🔒 پرداخت امن از طریق درگاه زیبال — بعد از پرداخت، لایسنس خودکار روی همین سایت فعال می‌شود</div>
 
                     <details class="wbl-have-key">
@@ -384,13 +417,17 @@ class WB_License {
         return $u;
     }
 
-    public static function pay_url( $slug ) {
+    public static function pay_url( $slug, $plan = '' ) {
         $cfg = self::$products[ $slug ];
-        return rtrim( $cfg['server'], '/' ) . '/pay/?' . http_build_query( [
+        $q   = [
             'plugin' => $slug,
             'domain' => self::site_domain(),
             'return' => self::page_url( $slug ),
-        ] );
+        ];
+        if ( $plan !== '' ) {
+            $q['plan'] = $plan;
+        }
+        return rtrim( $cfg['server'], '/' ) . '/pay/?' . http_build_query( $q );
     }
 
     protected static function api( $slug, $action, array $body ) {
@@ -531,6 +568,16 @@ class WB_License {
 .wbl-btn-pay-ic{font-size:20px}
 .wbl-btn-pay-amt{position:absolute;left:16px;font-size:12.5px;font-weight:700;background:rgba(255,255,255,.22);
  padding:3px 10px;border-radius:99px}
+.wbl-plans{display:grid;gap:10px;margin:0 0 8px}
+.wbl-plans-title{font-size:13px;font-weight:800;color:#334155;margin-bottom:2px;text-align:center}
+.wbl-btn-plan{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;
+ padding:14px 16px;border-radius:12px;text-decoration:none;border:1.6px solid #e2e8f0;background:#f8fafc;
+ color:#1e293b;font-family:inherit;font-weight:700;transition:border-color .15s,box-shadow .15s,transform .15s}
+.wbl-btn-plan:hover{border-color:#a78bfa;box-shadow:0 6px 18px rgba(124,58,237,.12);transform:translateY(-1px);color:#1e293b}
+.wbl-btn-plan.is-featured{border-color:#7c3aed;background:linear-gradient(135deg,#f5f3ff,#ede9fe)}
+.wbl-btn-plan strong{color:#7c3aed;font-size:14px;white-space:nowrap}
+.wbl-plan-badge{position:absolute;top:-9px;left:12px;font-style:normal;font-size:10px;font-weight:800;
+ color:#fff;background:#ef4444;border-radius:99px;padding:2px 8px}
 .wbl-secure{text-align:center;font-size:11.5px;color:#94a3b8;margin-top:12px;line-height:1.7}
 .wbl-have-key{margin-top:18px;border-top:1px dashed #e2e8f0;padding-top:14px}
 .wbl-have-key summary{cursor:pointer;font-size:12.5px;color:#7c3aed;font-weight:700;list-style:none;text-align:center}

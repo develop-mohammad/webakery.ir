@@ -51,6 +51,57 @@ class LicenseManager {
         return $lic;
     }
 
+    /**
+     * تمدید اشتراک موجود یا ساخت لایسنس جدید با تاریخ انقضا.
+     *
+     * @param int $months تعداد ماه
+     */
+    public static function create_or_extend_subscription(
+        string $email,
+        string $product,
+        int $months,
+        string $domain = '',
+        string $note = ''
+    ): array {
+        $months  = max( 1, $months );
+        $product = strtolower( trim( $product ) );
+        $email   = strtolower( trim( $email ) );
+        $domain  = $domain !== '' ? self::clean_domain( $domain ) : '';
+
+        $existing = Database::license_find_by_email( $email, $product );
+        if ( ! $existing && $domain !== '' ) {
+            $existing = Database::license_find_by_domain( $domain, $product );
+        }
+
+        if ( $existing && ( $existing['status'] ?? '' ) === 'active' ) {
+            $base_ts = time();
+            if ( ! empty( $existing['expires_at'] ) ) {
+                $exp_ts = strtotime( $existing['expires_at'] . ' 23:59:59' );
+                if ( $exp_ts && $exp_ts > $base_ts ) {
+                    $base_ts = $exp_ts;
+                }
+            }
+            $new_exp = date( 'Y-m-d', strtotime( '+' . $months . ' months', $base_ts ) );
+            Database::license_update(
+                $existing['license_key'],
+                array(
+                    'expires_at' => $new_exp,
+                    'status'     => 'active',
+                    'note'       => trim( ( $existing['note'] ?? '' ) . ' | تمدید ' . $months . 'ماهه ' . date( 'Y-m-d' ) ),
+                )
+            );
+            if ( $domain !== '' ) {
+                self::activate( $existing['license_key'], $domain, '' );
+            }
+            $fresh = Database::license_find( $existing['license_key'] );
+            return is_array( $fresh ) ? $fresh : $existing;
+        }
+
+        $expires = date( 'Y-m-d', strtotime( '+' . $months . ' months' ) );
+        $note    = $note !== '' ? $note : ( 'اشتراک ' . $months . ' ماهه' );
+        return self::create( $email, $product, $note, $expires, $domain );
+    }
+
     public static function find( string $key ): ?array {
         return Database::license_find($key);
     }

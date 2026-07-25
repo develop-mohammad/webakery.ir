@@ -8,19 +8,21 @@ if ( class_exists( 'WBCB_Plugin' ) ) {
 	}
 }
 
-$pay_url = 'https://webakery.ir/license-server/pay/?' . http_build_query(
-	array(
-		'plugin' => WBCB_PRODUCT,
-		'domain' => preg_replace( '/^www\./i', '', (string) wp_parse_url( home_url(), PHP_URL_HOST ) ),
-		'return' => admin_url( 'admin.php?page=webakery-chat-box-license' ),
-	)
+$domain = preg_replace( '/^www\./i', '', (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+$return = admin_url( 'admin.php?page=webakery-chat-box-license' );
+$base   = array(
+	'plugin' => WBCB_PRODUCT,
+	'domain' => $domain,
+	'return' => $return,
 );
+$pay_1m = 'https://webakery.ir/license-server/pay/?' . http_build_query( array_merge( $base, array( 'plan' => '1m' ) ) );
+$pay_3m = 'https://webakery.ir/license-server/pay/?' . http_build_query( array_merge( $base, array( 'plan' => '3m' ) ) );
 ?>
 <div class="wrap wbcb-wrap" dir="rtl">
 	<div class="wbcb-top">
 		<div>
 			<h1>چت باکس — خرید و فعال‌سازی لایسنس</h1>
-			<p class="description">پرداخت آنلاین، فعال‌سازی با کلید، دوره آزمایشی ۳ روزه و به‌روزرسانی خودکار.</p>
+			<p class="description">اشتراک ماهانه یا ۳ ماهه — پرداخت آنلاین، فعال‌سازی خودکار، دوره آزمایشی ۳ روزه و به‌روزرسانی در دوره اشتراک.</p>
 		</div>
 		<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-chat-box' ) ); ?>">صندوق پیام</a>
 	</div>
@@ -36,12 +38,14 @@ $pay_url = 'https://webakery.ir/license-server/pay/?' . http_build_query(
 		} else {
 			?>
 			<div class="wbcb-help-box" style="max-width:640px">
-				<h2>🔑 فعال‌سازی چت باکس</h2>
-				<p>برای استفاده کامل و دریافت آپدیت، لایسنس را فعال کنید.</p>
-				<p><strong>قیمت:</strong> ۵۰۵,۰۰۰ تومان — پرداخت یکباره</p>
-				<p>
-					<a class="button button-primary button-hero" href="<?php echo esc_url( $pay_url ); ?>" target="_blank" rel="noopener">
-						💳 پرداخت و فعال‌سازی آنی
+				<h2>🔑 فعال‌سازی چت باکس (اشتراکی)</h2>
+				<p>برای استفاده کامل و دریافت آپدیت، یکی از پلن‌های زیر را انتخاب کنید.</p>
+				<p style="display:flex;gap:10px;flex-wrap:wrap">
+					<a class="button button-secondary button-hero" href="<?php echo esc_url( $pay_1m ); ?>" target="_blank" rel="noopener">
+						ماهانه — ۱۹۹,۰۰۰ تومان
+					</a>
+					<a class="button button-primary button-hero" href="<?php echo esc_url( $pay_3m ); ?>" target="_blank" rel="noopener">
+						۳ ماهه — ۵۰۵,۰۰۰ تومان (پیشنهادی)
 					</a>
 				</p>
 				<hr>
