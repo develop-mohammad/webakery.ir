@@ -31,6 +31,9 @@ body {
   padding: 14px 14px 8px;
 }
 .logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
   border-radius: 10px;
   background: #000;
   border: 1px solid var(--line);

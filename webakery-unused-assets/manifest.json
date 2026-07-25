@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Webakery Unused CSS/JS",
   "short_name": "Webakery Unused",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "بررسی CSS و JS استفاده‌نشده در صفحه فعلی — محصول webakery.ir",
   "author": "webakery.ir",
   "homepage_url": "https://webakery.ir",
