@@ -16,6 +16,8 @@ class WBCB_Frontend {
 	private function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'assets' ) );
 		add_action( 'wp_footer', array( $this, 'render_widget' ), 50 );
+		add_action( 'wp_footer', array( $this, 'debug_comment' ), 51 );
+		add_action( 'admin_bar_menu', array( $this, 'frontend_admin_bar_hint' ), 120 );
 	}
 
 	public function assets() {
@@ -125,6 +127,45 @@ class WBCB_Frontend {
 			'product_url'    => $product_url,
 			'product_image'  => $product_image,
 		);
+	}
+
+	/** توضیح برای مدیر وقتی ویجت مخفی است */
+	public function frontend_admin_bar_hint( $bar ) {
+		if ( is_admin() || ! current_user_can( 'manage_options' ) || ! is_object( $bar ) ) {
+			return;
+		}
+		$reason = WBCB_Settings::widget_hide_reason();
+		if ( $reason === '' ) {
+			return;
+		}
+		$map = array(
+			'disabled'        => 'چت‌باکس خاموش است — تنظیمات را روشن کنید',
+			'license'         => 'لایسنس/آزمایشی منقضی — فعال‌سازی لازم است',
+			'admin_logged_in' => 'ویجت برای مدیر مخفی است — تیک را بردارید یا خارج شوید',
+			'show_on_shop'    => 'فقط صفحات فروشگاه — صفحه فعلی شامل نیست',
+			'show_on_front'   => 'فقط صفحه اصلی — صفحه فعلی شامل نیست',
+		);
+		$title = $map[ $reason ] ?? ( 'چت‌باکس مخفی: ' . $reason );
+		$href  = ( 'license' === $reason )
+			? admin_url( 'admin.php?page=webakery-chat-box-license' )
+			: admin_url( 'admin.php?page=webakery-chat-box-settings' );
+		$bar->add_node(
+			array(
+				'id'    => 'wbcb-hidden-hint',
+				'title' => '⚠ ' . $title,
+				'href'  => $href,
+				'meta'  => array( 'class' => 'wbcb-ab-hidden' ),
+			)
+		);
+	}
+
+	/** کامنت HTML برای دیباگ در View Source */
+	public function debug_comment() {
+		if ( WBCB_Settings::should_show_widget() ) {
+			return;
+		}
+		$reason = WBCB_Settings::widget_hide_reason();
+		echo "\n<!-- webakery-chat-box: hidden reason=" . esc_html( $reason ) . " -->\n";
 	}
 
 	public function render_widget() {

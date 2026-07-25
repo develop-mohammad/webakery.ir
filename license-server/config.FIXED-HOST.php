@@ -129,7 +129,7 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه ۱.۰.۴: بازه رزرو، ماه‌های فعال، درگاه زیبال، رفع تقویم.',
     ],
     'webakery-chat' => [
-        'version'      => '1.4.2',
+        'version'      => '1.4.3',
         'package'      => 'https://webakery.ir/license-server/updates/webakery-chat-box.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',

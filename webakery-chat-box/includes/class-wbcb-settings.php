@@ -17,7 +17,7 @@ class WBCB_Settings {
 			'primary'                => '#6d28d9',
 			'position'               => 'left',
 			'show_on'                => 'all',
-			'hide_logged_in_admins'  => 1,
+			'hide_logged_in_admins'  => 0,
 			'email_notify'           => 1,
 			'email_to'               => '',
 			'whatsapp'               => '',
@@ -90,28 +90,38 @@ class WBCB_Settings {
 		return $out;
 	}
 
-	public static function should_show_widget() {
+	/**
+	 * دلیل مخفی بودن ویجت — خالی یعنی باید نمایش داده شود.
+	 *
+	 * @return string
+	 */
+	public static function widget_hide_reason() {
 		$s = self::get();
 		if ( empty( $s['enabled'] ) ) {
-			return false;
+			return 'disabled';
 		}
 		if ( is_admin() ) {
-			return false;
+			return 'wp_admin';
 		}
 		if ( class_exists( 'WBCB_Plugin' ) && ! WBCB_Plugin::is_licensed() ) {
-			return false;
+			return 'license';
 		}
 		if ( ! empty( $s['hide_logged_in_admins'] ) && current_user_can( 'manage_options' ) ) {
-			return false;
+			return 'admin_logged_in';
 		}
 		$show = $s['show_on'] ?? 'all';
 		if ( 'shop' === $show ) {
-			return function_exists( 'is_woocommerce' ) && ( is_shop() || is_product() || is_cart() || is_checkout() || is_account_page() );
+			$ok = function_exists( 'is_woocommerce' ) && ( is_shop() || is_product() || is_cart() || is_checkout() || is_account_page() );
+			return $ok ? '' : 'show_on_shop';
 		}
 		if ( 'front' === $show ) {
-			return is_front_page() || is_home();
+			return ( is_front_page() || is_home() ) ? '' : 'show_on_front';
 		}
-		return true;
+		return '';
+	}
+
+	public static function should_show_widget() {
+		return self::widget_hide_reason() === '';
 	}
 
 	public static function is_online() {

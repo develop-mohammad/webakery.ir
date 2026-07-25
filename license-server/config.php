@@ -137,12 +137,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه ۱.۰.۱۳: تب سوالات با UI Baget — جابه‌جایی و ذخیره فیلدها.',
     ],
     'webakery-chat' => [
-        'version'      => '1.4.2',
+        'version'      => '1.4.3',
         'package'      => 'https://webakery.ir/license-server/updates/webakery-chat-box.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۴.۲: قیمت ماهانه ۱۵۰، ۳ ماهه ۳۵۰ و دائمی ۷۹۹ هزار تومان.',
+        'changelog'    => 'نسخه ۱.۴.۳: رفع نمایش ویجت + راهنمای مخفی بودن برای ادمین. ، ۳ ماهه ۳۵۰ و دائمی ۷۹۹ هزار تومان.',
     ],
 ] );
 

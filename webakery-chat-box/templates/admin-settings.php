@@ -8,6 +8,16 @@ $o = WBCB_Settings::OPTION;
 
 	<?php settings_errors( 'wbcb' ); ?>
 
+	<div class="notice notice-info" style="padding:12px 14px;margin:12px 0 18px">
+		<p style="margin:0 0 8px"><strong>اگر چت‌باکس روی سایت دیده نمی‌شود، این‌ها را چک کنید:</strong></p>
+		<ol style="margin:0;padding-right:18px;line-height:1.9">
+			<li>تیک «نمایش ویجت چت در سایت» روشن باشد.</li>
+			<li>اگر با اکانت مدیر لاگین هستید و تیک «ویجت برای مدیر…» روشن است، ویجت را نمی‌بینید — تیک را بردارید یا با حالت ناشناس سایت را باز کنید.</li>
+			<li>صفحه <a href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-chat-box-license' ) ); ?>">خرید و لایسنس</a> فعال باشد (دوره آزمایشی ۳ روزه یا لایسنس خریداری‌شده).</li>
+			<li>گزینه «نمایش در» روی «همه صفحات» باشد.</li>
+		</ol>
+	</div>
+
 	<form method="post" action="options.php" class="wbcb-settings-form">
 		<?php settings_fields( 'wbcb_group' ); ?>
 
@@ -69,6 +79,7 @@ $o = WBCB_Settings::OPTION;
 				<th scope="row">مدیران</th>
 				<td>
 					<label><input type="checkbox" name="<?php echo esc_attr( $o ); ?>[hide_logged_in_admins]" value="1" <?php checked( ! empty( $s['hide_logged_in_admins'] ) ); ?> /> ویجت برای مدیر لاگین‌شده نمایش داده نشود</label>
+					<p class="description" style="color:#b45309">اگر این تیک روشن باشد، وقتی خودتان لاگین هستید چت را روی سایت نمی‌بینید. برای تست، تیک را بردارید یا سایت را در پنجره ناشناس باز کنید.</p>
 				</td>
 			</tr>
 			<tr>
