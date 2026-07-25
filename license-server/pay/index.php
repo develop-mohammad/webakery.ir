@@ -6,6 +6,13 @@
  * پشتیبانی از کد تخفیف (CouponManager) به همراه نمایش قیمت قبل/بعد تخفیف.
  */
 
+/* اگر صفحه سفید/۵۰۰ بود، موقتاً خطا را نشان بده (بعداً این ۳ خط را حذف کنید) */
+if ( isset( $_GET['debug'] ) || isset( $_GET['diag'] ) ) {
+	ini_set( 'display_errors', '1' );
+	ini_set( 'display_startup_errors', '1' );
+	error_reporting( E_ALL );
+}
+
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/Database.php';
 require_once __DIR__ . '/../includes/LicenseManager.php';
