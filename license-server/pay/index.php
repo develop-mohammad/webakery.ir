@@ -67,7 +67,7 @@ function ls_plan( string $slug, string $plan_id ): ?array {
     $p = $plans[ $plan_id ];
     return [
         'id'     => $plan_id,
-        'months' => max( 1, (int) ( $p['months'] ?? 1 ) ),
+        'months' => max( 0, (int) ( $p['months'] ?? 1 ) ), // 0 = دائمی
         'price'  => (int) ( $p['price'] ?? 0 ),
         'label'  => (string) ( $p['label'] ?? $plan_id ),
         'hint'   => (string) ( $p['hint'] ?? '' ),
@@ -177,6 +177,14 @@ if ( isset($_GET['zibal_cb']) ) {
             $pay['domain'] ?? '',
             'اشتراک ' . ( $lic_plan ?: ( $lic_months . 'm' ) )
         );
+    } elseif ( $lic_plan !== '' && ls_has_plans( (string) $pay['plugin'] ) ) {
+        // پلن دائمی (months=0) برای محصولات دارای LS_PLANS
+        $lic = LicenseManager::create_or_upgrade_lifetime(
+            $pay['email'],
+            $pay['plugin'],
+            $pay['domain'] ?? '',
+            'لایسنس دائمی (' . $lic_plan . ')'
+        );
     } else {
         $lic = LicenseManager::create( $pay['email'], $pay['plugin'] );
         LicenseManager::activate( $lic['license_key'], $pay['domain'] );
@@ -254,18 +262,17 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
         $domain_get  = $domain_raw;
     } else {
         $clean_domain = LicenseManager::clean_domain($domain_raw);
-        $is_subscription = $plan_months > 0;
+        // محصولات دارای پلن: تمدید/ارتقا مجاز است
+        $is_plan_product = ls_has_plans( $plugin_p );
 
-        // برای محصولات مادام‌العمر: جلوگیری از خرید تکراری
-        // برای اشتراک: تمدید مجاز است (create_or_extend_subscription)
         $existing_email  = Database::license_find_by_email($email_val, $plugin_p);
         $existing_domain = Database::license_find_by_domain($clean_domain, $plugin_p);
 
-        if ( ! $is_subscription && $existing_email ) {
+        if ( ! $is_plan_product && $existing_email ) {
             $key_masked = substr($existing_email['license_key'], 0, 9) . '●●●●●●●●●';
             $form_error = 'این ایمیل قبلاً لایسنس فعال دارد (' . $key_masked . '). برای دریافت کلید با پشتیبانی تماس بگیرید.';
             $domain_get = $domain_raw;
-        } elseif ( ! $is_subscription && $existing_domain ) {
+        } elseif ( ! $is_plan_product && $existing_domain ) {
             $key_masked = substr($existing_domain['license_key'], 0, 9) . '●●●●●●●●●';
             $form_error = 'این دامنه قبلاً لایسنس فعال دارد (' . $key_masked . '). برای انتقال به دامنه دیگر با پشتیبانی تماس بگیرید.';
             $domain_get = $domain_raw;
@@ -286,7 +293,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
             if ( ! $form_error ) {
                 $cb   = $SELF_URL . '?zibal_cb=1&plugin=' . urlencode($plugin_p) . '&domain=' . urlencode($domain_raw)
                       . ( $plan_p !== '' ? '&plan=' . urlencode( $plan_p ) : '' );
-                $desc = ( $is_subscription ? 'اشتراک ' : 'لایسنس ' ) . $plugin_p
+                $desc = ( $is_plan_product ? 'پلن ' : 'لایسنس ' ) . $plugin_p
                       . ( $plan_label !== '' ? ' (' . $plan_label . ')' : '' )
                       . ' — ' . $domain_raw
                       . ( $coupon_info ? ' (کد تخفیف: ' . $coupon_info['coupon']['code'] . ')' : '' );
@@ -345,7 +352,7 @@ if ( $has_plans ) {
     $cur_plan = ls_plan( $plugin, $plan_get );
     $sub_lbl  = $cur_plan ? $cur_plan['label'] : 'اشتراکی';
     $price_html = '<div class="price" id="header_price">' . $amount_toman . ' تومان</div>'
-        . '<div class="price-sub" id="header_plan_lbl">پلن ' . htmlspecialchars( $sub_lbl ) . ' — قابل تمدید</div>';
+        . '<div class="price-sub" id="header_plan_lbl">پلن ' . htmlspecialchars( $sub_lbl ) . '</div>';
 } elseif ( $original_amount !== null && $original_amount > $BASE_PRICE ) {
     $original_toman = number_format((int)($original_amount / 10));
     $off_percent    = round( ( 1 - $BASE_PRICE / $original_amount ) * 100 );
@@ -368,7 +375,7 @@ $error_html = $form_error
 $plans_html = '';
 $plans_js   = [];
 if ( $has_plans ) {
-    $plans_html = '<div class="plans" id="plans_box"><div class="plans-title">مدت اشتراک را انتخاب کنید</div><div class="plans-grid">';
+    $plans_html = '<div class="plans" id="plans_box"><div class="plans-title">پلن مورد نظر را انتخاب کنید</div><div class="plans-grid">';
     foreach ( $plans_list as $pid => $pdata ) {
         $pinfo = ls_plan( $plugin, (string) $pid );
         if ( ! $pinfo ) continue;
@@ -408,7 +415,7 @@ $current_meta  = ( defined('LS_PLUGIN_META') && is_array(LS_PLUGIN_META) ) ? ( L
 $current_icon  = $current_meta['icon'] ?? '🔑';
 
 $features_html = $has_plans
-    ? '<span>✅ اشتراک ماهانه / ۳ ماهه</span><span>✅ تمدید آسان</span><span>✅ آپدیت در دوره اشتراک</span><span>✅ پشتیبانی</span>'
+    ? '<span>✅ ماهانه / ۳ ماهه / دائمی</span><span>✅ تمدید و ارتقا</span><span>✅ آپدیت</span><span>✅ پشتیبانی</span>'
     : '<span>✅ لایسنس مادام‌العمر</span><span>✅ آپدیت خودکار</span><span>✅ پشتیبانی ۶ ماهه</span>';
 
 $form_html = '
@@ -482,7 +489,7 @@ $form_html = '
             var p = plansMap[sel.value];
             baseToman = p.toman;
             if ( headerPrice ) headerPrice.textContent = fmt(p.toman) + " تومان";
-            if ( headerPlan ) headerPlan.textContent = "پلن " + p.label + " — قابل تمدید";
+            if ( headerPlan ) headerPlan.textContent = "پلن " + p.label;
             payBtn.textContent = "پرداخت " + fmt(p.toman) + " تومان با زیبال 💳";
         }
         finalBox.style.display = "none";
@@ -646,7 +653,7 @@ body{font-family:"Vazirmatn",Tahoma,sans-serif;background:linear-gradient(160deg
 .price-sub{font-size:12px;color:#6b7280;margin-top:4px}
 .plans{margin:0 0 18px}
 .plans-title{font-size:13px;font-weight:700;color:#374151;margin-bottom:10px}
-.plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
 .plan-card{position:relative;display:block;border:1.5px solid #e5e7eb;border-radius:12px;padding:14px 12px;cursor:pointer;background:#fafafa;transition:border-color .15s,box-shadow .15s,background .15s}
 .plan-card input{position:absolute;opacity:0;pointer-events:none}
 .plan-card:hover{border-color:#c4b5fd;background:#f5f3ff}

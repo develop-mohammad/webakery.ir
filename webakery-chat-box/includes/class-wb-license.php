@@ -311,7 +311,7 @@ class WB_License {
                     <div class="wbl-key-show"><?php echo esc_html( $key ); ?></div>
                     <?php if ( ! empty( $cfg['plans'] ) ) : ?>
                         <div class="wbl-plans" style="margin-top:14px">
-                            <div class="wbl-plans-title">تمدید اشتراک</div>
+                            <div class="wbl-plans-title">تمدید یا ارتقا به دائمی</div>
                             <?php foreach ( (array) $cfg['plans'] as $pl ) :
                                 $pl_id = sanitize_key( $pl['id'] ?? '' );
                                 $pl_url = esc_url( self::pay_url( $slug, $pl_id ) );
@@ -340,7 +340,7 @@ class WB_License {
 
                     <?php if ( ! empty( $cfg['plans'] ) ) : ?>
                         <div class="wbl-plans">
-                            <div class="wbl-plans-title">انتخاب مدت اشتراک</div>
+                            <div class="wbl-plans-title">انتخاب پلن</div>
                             <?php foreach ( (array) $cfg['plans'] as $pl ) :
                                 $pl_id = sanitize_key( $pl['id'] ?? '' );
                                 $pl_url = esc_url( self::pay_url( $slug, $pl_id ) );

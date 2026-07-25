@@ -15,14 +15,15 @@ $base   = array(
 	'domain' => $domain,
 	'return' => $return,
 );
-$pay_1m = 'https://webakery.ir/license-server/pay/?' . http_build_query( array_merge( $base, array( 'plan' => '1m' ) ) );
-$pay_3m = 'https://webakery.ir/license-server/pay/?' . http_build_query( array_merge( $base, array( 'plan' => '3m' ) ) );
+$pay_1m   = 'https://webakery.ir/license-server/pay/?' . http_build_query( array_merge( $base, array( 'plan' => '1m' ) ) );
+$pay_3m   = 'https://webakery.ir/license-server/pay/?' . http_build_query( array_merge( $base, array( 'plan' => '3m' ) ) );
+$pay_life = 'https://webakery.ir/license-server/pay/?' . http_build_query( array_merge( $base, array( 'plan' => 'life' ) ) );
 ?>
 <div class="wrap wbcb-wrap" dir="rtl">
 	<div class="wbcb-top">
 		<div>
 			<h1>چت باکس — خرید و فعال‌سازی لایسنس</h1>
-			<p class="description">اشتراک ماهانه یا ۳ ماهه — پرداخت آنلاین، فعال‌سازی خودکار، دوره آزمایشی ۳ روزه و به‌روزرسانی در دوره اشتراک.</p>
+			<p class="description">ماهانه، ۳ ماهه یا دائمی — پرداخت آنلاین، فعال‌سازی خودکار، دوره آزمایشی ۳ روزه و به‌روزرسانی.</p>
 		</div>
 		<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-chat-box' ) ); ?>">صندوق پیام</a>
 	</div>
@@ -38,14 +39,17 @@ $pay_3m = 'https://webakery.ir/license-server/pay/?' . http_build_query( array_m
 		} else {
 			?>
 			<div class="wbcb-help-box" style="max-width:640px">
-				<h2>🔑 فعال‌سازی چت باکس (اشتراکی)</h2>
+				<h2>🔑 فعال‌سازی چت باکس</h2>
 				<p>برای استفاده کامل و دریافت آپدیت، یکی از پلن‌های زیر را انتخاب کنید.</p>
 				<p style="display:flex;gap:10px;flex-wrap:wrap">
 					<a class="button button-secondary button-hero" href="<?php echo esc_url( $pay_1m ); ?>" target="_blank" rel="noopener">
-						ماهانه — ۱۹۹,۰۰۰ تومان
+						ماهانه — ۱۵۰,۰۰۰ تومان
 					</a>
 					<a class="button button-primary button-hero" href="<?php echo esc_url( $pay_3m ); ?>" target="_blank" rel="noopener">
-						۳ ماهه — ۵۰۵,۰۰۰ تومان (پیشنهادی)
+						۳ ماهه — ۳۵۰,۰۰۰ تومان (پیشنهادی)
+					</a>
+					<a class="button button-secondary button-hero" href="<?php echo esc_url( $pay_life ); ?>" target="_blank" rel="noopener">
+						دائمی — ۷۹۹,۰۰۰ تومان
 					</a>
 				</p>
 				<hr>

@@ -102,6 +102,44 @@ class LicenseManager {
         return self::create( $email, $product, $note, $expires, $domain );
     }
 
+    /**
+     * ارتقا به لایسنس دائمی (expires_at = null) یا ساخت لایسنس مادام‌العمر جدید.
+     */
+    public static function create_or_upgrade_lifetime(
+        string $email,
+        string $product,
+        string $domain = '',
+        string $note = ''
+    ): array {
+        $product = strtolower( trim( $product ) );
+        $email   = strtolower( trim( $email ) );
+        $domain  = $domain !== '' ? self::clean_domain( $domain ) : '';
+        $note    = $note !== '' ? $note : 'لایسنس دائمی';
+
+        $existing = Database::license_find_by_email( $email, $product );
+        if ( ! $existing && $domain !== '' ) {
+            $existing = Database::license_find_by_domain( $domain, $product );
+        }
+
+        if ( $existing && ( $existing['status'] ?? '' ) === 'active' ) {
+            Database::license_update(
+                $existing['license_key'],
+                array(
+                    'expires_at' => null,
+                    'status'     => 'active',
+                    'note'       => trim( ( $existing['note'] ?? '' ) . ' | ارتقا به دائمی ' . date( 'Y-m-d' ) ),
+                )
+            );
+            if ( $domain !== '' ) {
+                self::activate( $existing['license_key'], $domain, '' );
+            }
+            $fresh = Database::license_find( $existing['license_key'] );
+            return is_array( $fresh ) ? $fresh : $existing;
+        }
+
+        return self::create( $email, $product, $note, null, $domain );
+    }
+
     public static function find( string $key ): ?array {
         return Database::license_find($key);
     }
