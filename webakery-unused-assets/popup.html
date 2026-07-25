@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Webakery Unused</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="head">
+    <img class="logo" src="icons/icon48.png" alt="Webakery" width="36" height="36" />
+    <div>
+      <h1>Webakery Unused</h1>
+      <p>بررسی CSS و JS استفاده‌نشده</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <div id="page" class="page">در حال آماده‌سازی…</div>
+    <button id="scan" class="btn" type="button">🔍 اسکن صفحه فعلی</button>
+    <div class="row">
+      <button id="copyCss" class="btn ghost" type="button" disabled>کپی CSS بلااستفاده</button>
+      <button id="exportJson" class="btn ghost" type="button" disabled>خروجی JSON</button>
+    </div>
+  </section>
+
+  <section class="stats" id="stats" hidden>
+    <div class="stat">
+      <strong id="sCssUnused">0</strong>
+      <span>قانون CSS بلااستفاده</span>
+    </div>
+    <div class="stat">
+      <strong id="sCssTotal">0</strong>
+      <span>کل قوانین CSS</span>
+    </div>
+    <div class="stat">
+      <strong id="sJs">0</strong>
+      <span>اسکریپت JS</span>
+    </div>
+    <div class="stat">
+      <strong id="sJsSize">0</strong>
+      <span>حجم تقریبی JS</span>
+    </div>
+  </section>
+
+  <nav class="tabs">
+    <button type="button" class="tab active" data-tab="css">CSS</button>
+    <button type="button" class="tab" data-tab="js">JS</button>
+    <button type="button" class="tab" data-tab="info">راهنما</button>
+  </nav>
+
+  <main>
+    <section id="tab-css" class="panel active">
+      <div id="cssErrors" class="warn" hidden></div>
+      <div id="cssList" class="list empty">هنوز اسکن نشده.</div>
+    </section>
+    <section id="tab-js" class="panel">
+      <div id="jsNote" class="note" hidden></div>
+      <div id="jsList" class="list empty">هنوز اسکن نشده.</div>
+    </section>
+    <section id="tab-info" class="panel">
+      <div class="info">
+        <p><strong>CSS:</strong> سلکتورهایی که هیچ المانی در DOM فعلی match نمی‌کنند به‌عنوان بلااستفاده گزارش می‌شوند. استایل‌شیت‌های cross-origin ممکن است به‌خاطر CORS خوانده نشوند.</p>
+        <p><strong>JS:</strong> لیست اسکریپت‌های لودشده + حجم. تشخیص قطعی «کد اجرا‌نشده» به Coverage کروم نیاز دارد؛ اینجا موجودی و حجم برای بهینه‌سازی نشان داده می‌شود.</p>
+        <p>ساخته‌شده برای <a href="https://webakery.ir" target="_blank" rel="noopener">webakery.ir</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">webakery.ir · v1.0.0</footer>
+  <script src="popup.js"></script>
+</body>
+</html>

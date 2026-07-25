@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Webakery Unused CSS/JS",
+  "short_name": "Webakery Unused",
+  "version": "1.0.0",
+  "description": "بررسی CSS و JS استفاده‌نشده در صفحه فعلی — محصول webakery.ir",
+  "author": "webakery.ir",
+  "homepage_url": "https://webakery.ir",
+  "action": {
+    "default_title": "Webakery — Unused CSS/JS",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
