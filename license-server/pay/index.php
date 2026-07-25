@@ -85,7 +85,8 @@ function ls_default_plan_id( string $slug ): string {
             return (string) $id;
         }
     }
-    return (string) array_key_first( $plans );
+    reset( $plans );
+    return (string) key( $plans );
 }
 
 /** قیمت نهایی با احتساب پلن (و پرومو فقط برای محصولات بدون پلن) */

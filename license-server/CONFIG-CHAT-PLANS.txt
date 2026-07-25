@@ -1,0 +1,65 @@
+════════════════════════════════════════════════════════
+رفع خطای ۵۰۰ + تنظیم پلن چت باکس
+════════════════════════════════════════════════════════
+
+۱) اول این فایل را آپلود کنید:
+   license-server/health.php
+   بعد باز کنید:
+   https://webakery.ir/license-server/health.php
+
+۲) اگر خطا نشان داد، معمولاً config.php موقع ویرایش خراب شده.
+   فایل config.php را در File Manager باز کنید و
+   فقط بخش‌های زیر را درست کنید (کل فایل را عوض نکنید).
+
+─── الف) داخل LS_PRICES این خط باشد ───
+    'webakery-chat' => 1500000,
+
+─── ب) این بلوک را یک‌بار اضافه کنید (اگر تکراری است، قبلی را پاک کنید) ───
+
+define( 'LS_PLANS', [
+    'webakery-chat' => [
+        '1m' => [
+            'months' => 1,
+            'price'  => 1500000,
+            'label'  => 'ماهانه',
+            'hint'   => '۱ ماه دسترسی + آپدیت و پشتیبانی',
+        ],
+        '3m' => [
+            'months' => 3,
+            'price'  => 3500000,
+            'label'  => '۳ ماهه',
+            'hint'   => '۳ ماه — به‌صرفه‌تر از ۳× ماهانه',
+            'badge'  => 'پیشنهادی',
+        ],
+        'life' => [
+            'months' => 0,
+            'price'  => 7990000,
+            'label'  => 'دائمی',
+            'hint'   => 'مادام‌العمر — یک‌بار پرداخت',
+        ],
+    ],
+] );
+
+─── ج) در LS_UPDATES برای webakery-chat ───
+    'version'   => '1.4.2',
+    'package'   => 'https://webakery.ir/license-server/updates/webakery-chat-box.zip',
+    'changelog' => 'نسخه ۱.۴.۲: قیمت ماهانه ۱۵۰، ۳ ماهه ۳۵۰ و دائمی ۷۹۹ هزار تومان.',
+
+۳) این فایل‌ها را از گیت‌هاب دانلود و جایگزین کنید:
+   - pay/index.php
+   - includes/LicenseManager.php
+   - updates/webakery-chat-box.zip
+
+لینک‌ها:
+https://github.com/develop-mohammad/webakery.ir/raw/main/license-server/pay/index.php
+https://github.com/develop-mohammad/webakery.ir/raw/main/license-server/includes/LicenseManager.php
+https://github.com/develop-mohammad/webakery.ir/raw/main/webakery-chat-box.zip
+
+ZIP را اینجا بگذارید با همین نام:
+   license-server/updates/webakery-chat-box.zip
+
+۴) دوباره health.php را باز کنید. اگر نوشت ALL CHECKS PASSED
+   صفحه پرداخت را تست کنید:
+   https://webakery.ir/license-server/pay/?plugin=webakery-chat
+
+۵) در پایان health.php را حذف کنید.
