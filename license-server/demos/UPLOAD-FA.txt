@@ -1,70 +1,33 @@
 ════════════════════════════════════════════════════════
-کجا فایل دمو را روی هاست بگذارم؟
+کجا چه چیزی را آپلود کنم؟
 ════════════════════════════════════════════════════════
 
-مسیر روی هاست (File Manager / FTP):
-
+A) صفحه لیست دموها (همین الان)
+─────────────────────────────
+مسیر هاست:
   public_html/license-server/demos/
 
-یا اگر license-server داخل ساب‌پوشه است، همان پوشه‌ای که
-الان updates داخلش است:
+فایل‌ها:
+  index.php          ← حتماً (برای رفع 403)
+  LIVE-DEMO-FA.txt
+  *-demo.zip         ← ZIPها (اختیاری ولی مفید)
 
-  .../license-server/demos/
-
-════════════════════════════════════════════════════════
-چه فایل‌هایی را آپلود کنم؟
-════════════════════════════════════════════════════════
-
-از ریپو / سیستم خودت این‌ها را داخل demos بگذار:
-
-  hesabdar-demo.zip
-  nobat-man-demo.zip
-  access-levels-demo.zip
-  baget-demo.zip
-  webakery-chat-box-demo.zip
-  index.php          ← صفحه لیست دانلود (حتماً)
-
-اگر پوشه demos وجود ندارد، بساز.
-
-════════════════════════════════════════════════════════
-لینک‌هایی که به مشتری می‌دهی
-════════════════════════════════════════════════════════
-
-صفحه همه دموها:
+لینک:
   https://webakery.ir/license-server/demos/
 
-لینک مستقیم هر محصول (دانلود ZIP):
-  https://webakery.ir/license-server/demos/hesabdar-demo.zip
-  https://webakery.ir/license-server/demos/nobat-man-demo.zip
-  https://webakery.ir/license-server/demos/access-levels-demo.zip
-  https://webakery.ir/license-server/demos/baget-demo.zip
-  https://webakery.ir/license-server/demos/webakery-chat-box-demo.zip
 
-صفحه دمو با فوکوس روی یک محصول:
-  https://webakery.ir/license-server/demos/?plugin=hesabdar
-  https://webakery.ir/license-server/demos/?plugin=nobat-man
-  https://webakery.ir/license-server/demos/?plugin=access-levels
-  https://webakery.ir/license-server/demos/?plugin=wccp
-  https://webakery.ir/license-server/demos/?plugin=webakery-chat
+B) محیط تست زنده که مشتری باهاش کار کند (هدف اصلی تو)
+────────────────────────────────────────────────────
+این ZIP نیست — یک وردپرس جدا است.
 
-════════════════════════════════════════════════════════
-در صفحه فروش / اینستا / پیامک چه بنویسم؟
-════════════════════════════════════════════════════════
+1) ساب‌دامین بساز: demo.webakery.ir
+2) وردپرس + ووکامرس نصب کن
+3) ZIPهای *-demo.zip را روی همان وردپرس نصب کن
+4) صفحات تست بساز (نوبت / فروشگاه / چت)
 
-مثال:
-  «قبل از خرید، نسخه دمو را رایگان تست کنید:
-   https://webakery.ir/license-server/demos/?plugin=hesabdar»
+جزئیات کامل: LIVE-DEMO-FA.txt
 
-مشتری روی لینک می‌زند → دکمه دانلود دمو → ZIP را
-روی وردپرس خودش نصب می‌کند و کار می‌کند.
-
-════════════════════════════════════════════════════════
-نکته مهم
-════════════════════════════════════════════════════════
-
-دمو = ZIP قابل نصب روی وردپرس مشتری است.
-این همان «دیدن و کار کردن با پلاگین» است؛ نیاز به
-سایت دمو جدا ندارد مگر بعداً بخواهی sandbox آنلاین بسازی.
-
-نسخه فروش (با لایسنس) همچنان اینجاست:
-  license-server/updates/*.zip
+لینک مشتری بعد از آماده‌شدن:
+  https://demo.webakery.ir
+  یا از طریق:
+  https://webakery.ir/license-server/demos/
