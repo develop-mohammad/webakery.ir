@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * فونت سوییپ — بهینه‌سازی فونت‌ها از یک پنل.
  */
-class WBFS_Plugin {
+class WBS_Fonts {
 
 	const OPTION    = 'wbfs_settings';
 	const TRANSIENT = 'wbfs_detected_fonts';
@@ -62,11 +62,10 @@ class WBFS_Plugin {
 	}
 
 	private function __construct() {
-		add_action( 'admin_menu', array( $this, 'menu' ) );
+		add_action( 'admin_menu', array( $this, 'menu' ), 20 );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_post_wbfs_rescan', array( $this, 'handle_rescan' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_assets' ) );
-		add_filter( 'plugin_action_links_' . plugin_basename( WBFS_FILE ), array( $this, 'action_links' ) );
 
 		$s = self::settings();
 		if ( empty( $s['enabled'] ) ) {
@@ -79,15 +78,17 @@ class WBFS_Plugin {
 		add_filter( 'style_loader_src', array( $this, 'rewrite_local_font_css_src' ), 60, 2 );
 		add_action( 'wp_head', array( $this, 'print_preload_and_swap' ), 1 );
 		add_action( 'wp_head', array( $this, 'print_force_iransans_faces' ), 2 );
-		add_action( 'template_redirect', array( $this, 'start_buffer' ), -9990 );
+		// بافر HTML از WBS_Buffer (ob + rocket_buffer) می‌آید.
+		add_action( 'admin_notices', array( $this, 'missing_font_notice' ) );
 	}
 
 	public function menu() {
-		add_options_page(
+		add_submenu_page(
+			'webakery-speed',
 			'فونت سوییپ',
 			'فونت سوییپ',
 			'manage_options',
-			'webakery-font-swap',
+			'webakery-speed-fonts',
 			array( $this, 'render_page' )
 		);
 	}
@@ -131,18 +132,10 @@ class WBFS_Plugin {
 	}
 
 	public function admin_assets( $hook ) {
-		if ( 'settings_page_webakery-font-swap' !== $hook ) {
+		if ( 'webakery-speed_page_webakery-speed-fonts' !== $hook ) {
 			return;
 		}
-		wp_enqueue_style( 'wbfs-admin', WBFS_URL . 'assets/admin.css', array(), WBFS_VERSION );
-	}
-
-	public function action_links( $links ) {
-		array_unshift(
-			$links,
-			'<a href="' . esc_url( admin_url( 'options-general.php?page=webakery-font-swap' ) ) . '"><strong>تنظیمات</strong></a>'
-		);
-		return $links;
+		wp_enqueue_style( 'wbs-fonts-admin', WBS_URL . 'assets/fonts-admin.css', array(), WBS_VERSION );
 	}
 
 	public function handle_rescan() {
@@ -152,7 +145,7 @@ class WBFS_Plugin {
 		check_admin_referer( 'wbfs_rescan' );
 		delete_transient( self::TRANSIENT );
 		$this->detect_fonts( true );
-		wp_safe_redirect( admin_url( 'options-general.php?page=webakery-font-swap&scanned=1' ) );
+		wp_safe_redirect( admin_url( 'admin.php?page=webakery-speed-fonts&scanned=1' ) );
 		exit;
 	}
 
@@ -284,11 +277,25 @@ class WBFS_Plugin {
 		return content_url( 'uploads/wbfs-font-swap/font-' . $hash . '.css' );
 	}
 
-	public function start_buffer() {
-		if ( is_admin() || is_feed() || is_preview() ) {
+	/**
+	 * Admin warning when IRANSansX files are missing on disk (common on gainstore).
+	 */
+	public function missing_font_notice() {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		ob_start( array( $this, 'filter_html' ) );
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen || false === strpos( (string) $screen->id, 'webakery-speed' ) ) {
+			return;
+		}
+		$faces = $this->resolve_iransans_faces();
+		if ( ! empty( $faces ) ) {
+			return;
+		}
+		echo '<div class="notice notice-error"><p><strong>فونت IRANSansX روی سرور پیدا نشد (404).</strong> ';
+		echo 'CSS هنوز به <code>med-persian/.../IRANSansX-*.woff2</code> اشاره می‌کند ولی فایل موجود نیست. ';
+		echo 'افزونه/فایل‌های <code>med-persian</code> را نصب یا ترمیم کن، بعد کش Perfmatters Used CSS و WP Rocket را پاک کن. ';
+		echo 'تا آن موقع Swap/Preload واقعی برای متن فارسی اعمال نمی‌شود.</p></div>';
 	}
 
 	/**
@@ -301,6 +308,9 @@ class WBFS_Plugin {
 
 		$faces = $this->resolve_iransans_faces();
 		if ( empty( $faces ) ) {
+			// حتی بدون فایل محلی، swap را اعلام کن تا CLS متن کمتر شود؛ preload نمی‌شود.
+			echo "<style id=\"wbfs-force-iransans\">@font-face{font-family:'IRANSansX';font-style:normal;font-weight:400;font-display:swap}@font-face{font-family:'IRANSansX';font-style:normal;font-weight:700;font-display:swap}</style>\n";
+			echo "<!-- WBS_IRANSANS_MISSING=1 -->\n";
 			return;
 		}
 
@@ -317,53 +327,138 @@ class WBFS_Plugin {
 	}
 
 	/**
-	 * Resolve local IRANSansX woff2 URLs from common med-persian paths.
+	 * Public wrapper for health checks.
+	 *
+	 * @return array<int,array{family:string,weight:string,src:string}>
+	 */
+	public function resolve_iransans_public() {
+		return $this->resolve_iransans_faces();
+	}
+
+	/**
+	 * Resolve local IRANSansX woff2 URLs from known paths + shallow search.
 	 *
 	 * @return array<int,array{family:string,weight:string,src:string}>
 	 */
 	private function resolve_iransans_faces() {
-		$pairs = array(
-			array(
-				'family' => 'IRANSansX',
-				'weight' => '400',
-				'files'  => array(
-					WP_PLUGIN_DIR . '/med-persian/assets/fonts/iransans/fonts/woff2/IRANSansX-Regular.woff2',
-					WP_PLUGIN_DIR . '/med-persian/assets/fonts/IRANSansX-Regular.woff2',
-					WP_PLUGIN_DIR . '/med-persian/assets/fonts/woff2/IRANSansX-Regular.woff2',
-				),
-			),
-			array(
-				'family' => 'IRANSansX',
-				'weight' => '700',
-				'files'  => array(
-					WP_PLUGIN_DIR . '/med-persian/assets/fonts/iransans/fonts/woff2/IRANSansX-Bold.woff2',
-					WP_PLUGIN_DIR . '/med-persian/assets/fonts/IRANSansX-Bold.woff2',
-					WP_PLUGIN_DIR . '/med-persian/assets/fonts/woff2/IRANSansX-Bold.woff2',
-				),
-			),
+		$found = array(
+			'400' => '',
+			'700' => '',
 		);
 
-		$out = array();
-		foreach ( $pairs as $pair ) {
-			foreach ( $pair['files'] as $abs ) {
-				if ( ! is_readable( $abs ) ) {
+		$candidates = array(
+			WP_PLUGIN_DIR . '/med-persian/assets/fonts/iransans/fonts/woff2/IRANSansX-Regular.woff2',
+			WP_PLUGIN_DIR . '/med-persian/assets/fonts/IRANSansX-Regular.woff2',
+			WP_PLUGIN_DIR . '/med-persian/assets/fonts/woff2/IRANSansX-Regular.woff2',
+			WP_CONTENT_DIR . '/uploads/wbfs-font-swap/IRANSansX-Regular.woff2',
+			WP_PLUGIN_DIR . '/med-persian/assets/fonts/iransans/fonts/woff2/IRANSansX-Bold.woff2',
+			WP_PLUGIN_DIR . '/med-persian/assets/fonts/IRANSansX-Bold.woff2',
+			WP_PLUGIN_DIR . '/med-persian/assets/fonts/woff2/IRANSansX-Bold.woff2',
+			WP_CONTENT_DIR . '/uploads/wbfs-font-swap/IRANSansX-Bold.woff2',
+		);
+		foreach ( $candidates as $abs ) {
+			if ( ! is_readable( $abs ) ) {
+				continue;
+			}
+			if ( preg_match( '#Bold#i', $abs ) ) {
+				$found['700'] = $abs;
+			} else {
+				$found['400'] = $abs;
+			}
+		}
+
+		// جستجوی کم‌عمق اگر مسیر پیش‌فرض خالی بود.
+		if ( '' === $found['400'] || '' === $found['700'] ) {
+			$roots = array( WP_PLUGIN_DIR, WP_CONTENT_DIR . '/uploads', get_template_directory(), get_stylesheet_directory() );
+			foreach ( $roots as $root ) {
+				if ( ! is_dir( $root ) ) {
 					continue;
 				}
-				$url = plugins_url( ltrim( str_replace( WP_PLUGIN_DIR, '', $abs ), '/' ) );
-				$out[] = array(
-					'family' => $pair['family'],
-					'weight' => $pair['weight'],
-					'src'    => $url,
-				);
-				break;
+				$matches = glob( rtrim( $root, '/\\' ) . '/**/IRANSansX-*.woff2', GLOB_NOSORT );
+				if ( ! is_array( $matches ) ) {
+					// glob ** may be unsupported — fallback DirectoryIterator shallow.
+					$matches = $this->find_files_named( $root, '/^IRANSansX-.*\.woff2$/i', 4 );
+				}
+				foreach ( (array) $matches as $abs ) {
+					if ( ! is_readable( $abs ) ) {
+						continue;
+					}
+					if ( preg_match( '#Bold#i', basename( $abs ) ) ) {
+						if ( '' === $found['700'] ) {
+							$found['700'] = $abs;
+						}
+					} elseif ( preg_match( '#Regular#i', basename( $abs ) ) ) {
+						if ( '' === $found['400'] ) {
+							$found['400'] = $abs;
+						}
+					}
+				}
 			}
+		}
+
+		$out = array();
+		foreach ( $found as $weight => $abs ) {
+			if ( ! $abs ) {
+				continue;
+			}
+			$url = $this->path_to_url( $abs );
+			if ( ! $url ) {
+				continue;
+			}
+			$out[] = array(
+				'family' => 'IRANSansX',
+				'weight' => (string) $weight,
+				'src'    => $url,
+			);
 		}
 		return $out;
 	}
 
 	/**
+	 * @param string $root
+	 * @param string $regex
+	 * @param int    $depth
+	 * @return string[]
+	 */
+	private function find_files_named( $root, $regex, $depth ) {
+		$out = array();
+		if ( $depth < 0 || ! is_dir( $root ) ) {
+			return $out;
+		}
+		$items = @scandir( $root ); // phpcs:ignore
+		if ( ! is_array( $items ) ) {
+			return $out;
+		}
+		foreach ( $items as $item ) {
+			if ( ! $item || '.' === $item[0] ) {
+				continue;
+			}
+			$path = $root . '/' . $item;
+			if ( is_dir( $path ) ) {
+				$out = array_merge( $out, $this->find_files_named( $path, $regex, $depth - 1 ) );
+			} elseif ( preg_match( $regex, $item ) ) {
+				$out[] = $path;
+			}
+		}
+		return $out;
+	}
+
+	private function path_to_url( $abs ) {
+		$abs = wp_normalize_path( $abs );
+		$content = wp_normalize_path( WP_CONTENT_DIR );
+		if ( 0 === strpos( $abs, $content ) ) {
+			return content_url( ltrim( substr( $abs, strlen( $content ) ), '/' ) );
+		}
+		$abspath = wp_normalize_path( ABSPATH );
+		if ( 0 === strpos( $abs, $abspath ) ) {
+			return home_url( '/' . ltrim( substr( $abs, strlen( $abspath ) ), '/' ) );
+		}
+		return '';
+	}
+
+	/**
 	 * Strip harmful font preloads / Google font tags from final HTML.
-	 * Also force-rewrite hardcoded local font stylesheet links to swapped CSS.
+	 * Also force-rewrite font / Used CSS stylesheet links to swapped CSS.
 	 *
 	 * @param string $html
 	 * @return string
@@ -372,8 +467,12 @@ class WBFS_Plugin {
 		if ( ! is_string( $html ) || strlen( $html ) < 50 ) {
 			return $html;
 		}
+		$s = self::settings();
+		if ( empty( $s['enabled'] ) ) {
+			return $html;
+		}
 
-		// Force rewrite hardcoded local font stylesheet <link> tags.
+		// بازنویسی CSS فونت + Used CSS پرف‌مترز (جایی که @font-face ایران‌سنس بدون swap است).
 		$html = preg_replace_callback(
 			'#<link\b[^>]*rel=[\'"]stylesheet[\'"][^>]*>#i',
 			function ( $m ) {
@@ -388,7 +487,11 @@ class WBFS_Plugin {
 				if ( false !== stripos( $href, 'wbfs-font-swap' ) ) {
 					return $tag;
 				}
-				if ( ! preg_match( '#(?:fonts?|font-awesome|fontawesome|iransans|iran\-sans|elementor/assets/lib/font|woocommerce.*font|webfont)#i', $href ) ) {
+				$looks = (bool) preg_match(
+					'#(?:fonts?|font-awesome|fontawesome|iransans|iran\-sans|elementor/assets/lib/font|woocommerce.*font|webfont|used\.css|perfmatters/.*/css/)#i',
+					$href
+				);
+				if ( ! $looks ) {
 					return $tag;
 				}
 				$abs = $href;
@@ -406,6 +509,7 @@ class WBFS_Plugin {
 			$html
 		);
 
+		// فقط preload فونت متن (IRANSans)؛ آیکون‌فونت‌ها را حذف کن.
 		$html = preg_replace_callback(
 			'#<link\b[^>]*rel=[\'"]preload[\'"][^>]*>#i',
 			function ( $m ) {
@@ -415,18 +519,21 @@ class WBFS_Plugin {
 				if ( ! $as_font && ! $href_font ) {
 					return $tag;
 				}
-				// Keep only local woff2.
-				if ( preg_match( '#\bhref=[\'"]([^\'"]+)#i', $tag, $hm ) ) {
-					$href = $hm[1];
-					$is_woff2 = (bool) preg_match( '#\.woff2(?:\?|$)#i', $href );
-					$is_remote = (bool) preg_match( '#fonts\.gstatic\.com|fonts\.googleapis\.com#i', $href );
-					$is_ttf_woff = (bool) preg_match( '#\.(?:ttf|otf|eot|woff)(?:\?|$)#i', $href ) && ! $is_woff2;
-					if ( $is_remote || $is_ttf_woff || ! $is_woff2 ) {
-						return '';
-					}
-					return $tag;
+				if ( ! preg_match( '#\bhref=[\'"]([^\'"]+)#i', $tag, $hm ) ) {
+					return '';
 				}
-				return '';
+				$href = $hm[1];
+				$is_woff2 = (bool) preg_match( '#\.woff2(?:\?|$)#i', $href );
+				$is_remote = (bool) preg_match( '#fonts\.gstatic\.com|fonts\.googleapis\.com#i', $href );
+				$is_icon = (bool) preg_match( '#fontawesome|fa-|eicons|tinvwl|flaticon|woocommerce\.woff|WooCommerce\.woff#i', $href );
+				if ( $is_remote || ! $is_woff2 || $is_icon ) {
+					return '';
+				}
+				// فقط ایران‌سنس / فونت متن محلی.
+				if ( ! preg_match( '#iransans|iran\-sans|dana|anjoman|vazir|yekan#i', $href ) ) {
+					return '';
+				}
+				return $tag;
 			},
 			$html
 		);
@@ -435,9 +542,21 @@ class WBFS_Plugin {
 		$html = preg_replace( '#<link\b[^>]+fonts\.gstatic\.com[^>]*>#i', '', $html );
 		$html = preg_replace( '#<style[^>]*>[^<]*fonts\.googleapis\.com[^<]*</style>#is', '', $html );
 
-		// Marker so View Source proves forced mode is active.
-		if ( false === stripos( $html, 'WBFS_FORCE_MODE=1' ) ) {
-			$html = preg_replace( '#</head>#i', "<!-- WBFS_FORCE_MODE=1 -->\n</head>", $html, 1 );
+		// Inject swap into any remaining IRANSans @font-face in inline styles.
+		$html = preg_replace_callback(
+			'/@font-face\s*\{[^}]*font-family\s*:\s*[\'"]?IRANSansX[\'"]?[^}]*\}/i',
+			static function ( $m ) {
+				$block = $m[0];
+				if ( preg_match( '/font-display\s*:/i', $block ) ) {
+					return preg_replace( '/font-display\s*:\s*[^;]+;/i', 'font-display:swap;', $block );
+				}
+				return preg_replace( '/\}$/', 'font-display:swap;}', $block );
+			},
+			$html
+		);
+
+		if ( false === stripos( $html, 'WBS_FORCE_MODE=1' ) ) {
+			$html = preg_replace( '#</head>#i', "<!-- WBS_FORCE_MODE=1 -->\n</head>", $html, 1 );
 		}
 
 		return $html;
@@ -826,7 +945,11 @@ class WBFS_Plugin {
 		$fonts = $this->detect_fonts( false );
 		$files = $this->select_preload_files( $fonts );
 
+		// فقط IRANSans (نه Font Awesome).
 		foreach ( $files as $file ) {
+			if ( ! preg_match( '#iransans|iran\-sans#i', $file ) ) {
+				continue;
+			}
 			printf(
 				'<link rel="preload" href="%s" as="font" type="font/woff2" crossorigin>' . "\n",
 				esc_url( $file )
@@ -837,18 +960,25 @@ class WBFS_Plugin {
 			return;
 		}
 
-		// فقط faceهای woff2 محلی برای swap.
+		// فقط faceهای woff2 متن فارسی برای swap inline.
 		$faces_out = array();
 		foreach ( (array) ( $fonts['faces'] ?? array() ) as $face ) {
-			$src = (string) ( $face['src'] ?? '' );
+			$src    = (string) ( $face['src'] ?? '' );
+			$family = (string) ( $face['family'] ?? '' );
 			if ( ! preg_match( '/\.woff2($|\?)/i', $src ) ) {
 				continue;
 			}
 			if ( preg_match( '#fonts\.gstatic\.com|fonts\.googleapis\.com#i', $src ) ) {
 				continue;
 			}
+			if ( ! preg_match( '#iransans|iran\-sans|dana|vazir|yekan#i', $src . ' ' . $family ) ) {
+				continue;
+			}
+			if ( preg_match( '#fontawesome|fa-|eicons|tinvwl|flaticon#i', $src . ' ' . $family ) ) {
+				continue;
+			}
 			$faces_out[] = $face;
-			if ( count( $faces_out ) >= 16 ) {
+			if ( count( $faces_out ) >= 8 ) {
 				break;
 			}
 		}
@@ -910,8 +1040,14 @@ class WBFS_Plugin {
 					<h1>فونت سوییپ</h1>
 					<p>حالت اجباری: با روشن بودن افزونه، همه بهینه‌سازی‌های فونت بدون تیک جداگانه اعمال می‌شوند.</p>
 				</div>
-					<span class="wbfs-badge">اجباری · v<?php echo esc_html( WBFS_VERSION ); ?> · IRANSansX</span>
+					<span class="wbfs-badge">اجباری · v<?php echo esc_html( WBS_VERSION ); ?> · IRANSansX</span>
 			</div>
+			<p style="margin:0 0 16px">
+				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-speed' ) ); ?>">اولویت‌ها</a>
+				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-speed-cwv' ) ); ?>">گوگل / CWV</a>
+				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-speed-autofix' ) ); ?>">اصلاح خودکار</a>
+				<a class="button button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-speed-fonts' ) ); ?>">فونت سوییپ</a>
+			</p>
 
 			<?php if ( $ok ) : ?>
 				<div class="wbfs-notice">ذخیره / اسکن انجام شد. کش سایت را پاک کنید و صفحه را در Incognito چک کنید.</div>

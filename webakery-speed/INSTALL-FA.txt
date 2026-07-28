@@ -1,0 +1,29 @@
+پنل سرعت یکپارچه v1.2 — WebAkery Speed
+
+==================================================
+اگر گفتی «هیچ‌چیز اعمال نشد»
+==================================================
+۱) نسخه 1.2 را نصب کن و پلاگین‌های قدیمی Font Swap / Speed Board را حذف کن
+۲) کش WP Rocket + Used CSS پرف‌مترز را پاک کن
+۳) پنل سرعت → «بررسی زنده صفحه اصلی»
+۴) اگر خطا دیدی: IRANSansX روی سرور 404 است
+   → افزونه med-persian را نصب/ترمیم کن
+   → فایل‌ها باید اینجا ۲۰۰ بدهند:
+     /wp-content/plugins/med-persian/assets/fonts/iransans/fonts/woff2/IRANSansX-Regular.woff2
+۵) دوباره کش را پاک کن و View Source را چک کن:
+   - WBS_APPLIED=1
+   - WBS_FORCE_MODE=1
+   - WBS_AUTOFIX=1
+   - wbfs-force-iransans
+   - نباید preload برای fa- / WooCommerce.woff2 ببینی
+
+توجه: مارکرها یعنی افزونه روی HTML اجرا شده.
+اگر فایل فونت 404 باشد، PageSpeed فونت بهتر نمی‌شود — باید فایل واقعی برگردد.
+
+==================================================
+منوها
+==================================================
+اولویت‌ها | گوگل/CWV | اصلاح خودکار | فونت سوییپ
+
+دانلود:
+https://github.com/develop-mohammad/webakery.ir/releases/download/perfmatters-setups/webakery-speed.zip
