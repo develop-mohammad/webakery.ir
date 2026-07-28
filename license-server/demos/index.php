@@ -4,67 +4,70 @@
  *
  * آدرس: https://webakery.ir/license-server/demos/
  *
- * برای محیط زنده، ساب‌دامین demo.webakery.ir را طبق LIVE-DEMO-FA.txt بسازید.
- * اگر هنوز آماده نیست، دکمه «ورود به محیط تست» مخفی می‌ماند مگر LIVE_DEMO_URL ست شود.
+ * محیط تست زنده روی دامنه اصلی:
+ *   https://webakery.ir/demo/
  */
 header( 'Content-Type: text/html; charset=utf-8' );
 
-/** آدرس وردپرس تست زنده — بعد از ساخت ساب‌دامین همین را عوض کنید */
-$LIVE_DEMO_URL = 'https://demo.webakery.ir';
+/** آدرس وردپرس تست روی دامنه اصلی */
+$LIVE_DEMO_URL = 'https://webakery.ir/demo';
 
-/** اگر هنوز وردپرس دمو بالا نیست، false بگذار تا دکمه غیرفعال شود */
-$LIVE_DEMO_READY = true;
+/**
+ * بعد از نصب وردپرس داخل public_html/demo این را true کنید.
+ * تا قبل از آن دکمه‌های ورود به محیط تست غیرفعال می‌مانند.
+ */
+$LIVE_DEMO_READY = false;
 
 $demos = [
 	'hesabdar' => [
-		'file'     => 'hesabdar-demo.zip',
-		'name'     => 'Hesabdar — حسابدار',
-		'desc'     => 'پرتال حسابدار، سفارش و گزارش ووکامرس',
-		'icon'     => '📊',
-		'price'    => '۷۹۹,۰۰۰ تومان',
-		'buy'      => 'https://webakery.ir/license-server/pay/?plugin=hesabdar',
-		'live'     => 'https://demo.webakery.ir/wp-admin/',
-		'live_hint'=> 'ورود پیشخوان → منوی Hesabdar / پرتال حسابدار',
+		'file'      => 'hesabdar-demo.zip',
+		'name'      => 'Hesabdar — حسابدار',
+		'desc'      => 'پرتال حسابدار، سفارش و گزارش ووکامرس',
+		'icon'      => '📊',
+		'price'     => '۷۹۹,۰۰۰ تومان',
+		'buy'       => 'https://webakery.ir/license-server/pay/?plugin=hesabdar',
+		'live'      => 'https://webakery.ir/demo/wp-admin/',
+		'live_hint' => 'ورود پیشخوان تست → منوی Hesabdar / پرتال حسابدار',
 	],
 	'nobat-man' => [
-		'file'     => 'nobat-man-demo.zip',
-		'name'     => 'نوبت من',
-		'desc'     => 'رزرو نوبت با تقویم شمسی و نسخه پرو',
-		'icon'     => '📅',
-		'price'    => '۵۹۹,۰۰۰ تومان',
-		'buy'      => 'https://webakery.ir/license-server/pay/?plugin=nobat-man',
-		'live'     => 'https://demo.webakery.ir/?page_id=nobat', // بعداً با شورت‌کد واقعی عوض شود
-		'live_hint'=> 'صفحه رزرو نوبت روی سایت دمو',
+		'file'      => 'nobat-man-demo.zip',
+		'name'      => 'نوبت من',
+		'desc'      => 'رزرو نوبت با تقویم شمسی و نسخه پرو',
+		'icon'      => '📅',
+		'price'     => '۵۹۹,۰۰۰ تومان',
+		'buy'       => 'https://webakery.ir/license-server/pay/?plugin=nobat-man',
+		'live'      => 'https://webakery.ir/demo/',
+		'live_hint' => 'صفحه رزرو نوبت روی /demo/',
 	],
 	'access-levels' => [
-		'file'     => 'access-levels-demo.zip',
-		'name'     => 'Barbari — مدیریت دسترسی',
-		'desc'     => 'کنترل منو و افزونه‌های پیشخوان',
-		'icon'     => '🔐',
-		'price'    => '۹۹,۹۹۹ تومان',
-		'buy'      => 'https://webakery.ir/license-server/pay/?plugin=access-levels',
-		'live'     => 'https://demo.webakery.ir/wp-admin/admin.php?page=access-levels',
-		'live_hint'=> 'پیشخوان دمو → Barbari',
+		'file'      => 'access-levels-demo.zip',
+		'name'      => 'Barbari — مدیریت دسترسی',
+		'desc'      => 'کنترل منو و افزونه‌های پیشخوان',
+		'icon'      => '🔐',
+		'price'     => '۹۹,۹۹۹ تومان',
+		'buy'       => 'https://webakery.ir/license-server/pay/?plugin=access-levels',
+		'live'      => 'https://webakery.ir/demo/wp-admin/admin.php?page=access-levels',
+		'live_hint' => 'پیشخوان تست → Barbari',
 	],
 	'wccp' => [
-		'file'     => 'baget-demo.zip',
-		'name'     => 'Baget — فیلدهای پرداخت',
-		'desc'     => 'ویرایش فیلدهای checkout ووکامرس',
-		'icon'     => '🛒',
-		'price'    => '۱۹۹,۰۰۰ تومان',
-		'buy'      => 'https://webakery.ir/license-server/pay/?plugin=wccp',
-		'live'     => 'https://demo.webakery.ir/checkout/',
-		'live_hint'=> 'صفحه پرداخت فروشگاه دمو',
+		'file'      => 'baget-demo.zip',
+		'name'      => 'Baget — فیلدهای پرداخت',
+		'desc'      => 'ویرایش فیلدهای checkout ووکامرس',
+		'icon'      => '🛒',
+		'price'     => '۱۹۹,۰۰۰ تومان',
+		'buy'       => 'https://webakery.ir/license-server/pay/?plugin=wccp',
+		'live'      => 'https://webakery.ir/demo/checkout/',
+		'live_hint' => 'صفحه پرداخت فروشگاه تست',
 	],
 	'webakery-chat' => [
-		'file'     => 'webakery-chat-box-demo.zip',
-		'name'     => 'چت باکس',
-		'desc'     => 'ویجت چت، صندوق پیام، اعلان تلگرام/واتساپ',
-		'icon'     => '💬',
-		'price'    => 'از ۱۵۰,۰۰۰ تومان',
-		'buy'      => 'https://webakery.ir/license-server/pay/?plugin=webakery-chat',
-		'live'     => 'https://demo.webakery.ir/',
-		'live_hint'=> 'ویجت چت پایین سایت دمو',
+		'file'      => 'webakery-chat-box-demo.zip',
+		'name'      => 'چت باکس',
+		'desc'      => 'ویجت چت، صندوق پیام، اعلان تلگرام/واتساپ',
+		'icon'      => '💬',
+		'price'     => 'از ۱۵۰,۰۰۰ تومان',
+		'buy'       => 'https://webakery.ir/license-server/pay/?plugin=webakery-chat',
+		'live'      => 'https://webakery.ir/demo/',
+		'live_hint' => 'ویجت چت پایین صفحات /demo/',
 	],
 ];
 
@@ -128,6 +131,7 @@ body{margin:0;font-family:Tahoma,Vazirmatn,sans-serif;background:#f1f5f9;color:#
 .btn-buy:hover{border-color:#0d9488;color:#0d9488}
 .btn.disabled,.btn[disabled]{opacity:.45;pointer-events:none}
 .note{margin-top:18px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.8;color:#92400e}
+.steps{margin-top:14px;background:#ecfeff;border:1px solid #a5f3fc;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.85;color:#155e75}
 .foot{margin-top:22px;text-align:center;font-size:12px;color:#64748b}
 .foot a{color:#0f766e}
 .size{font-size:11px;color:#94a3b8;font-weight:500}
@@ -136,39 +140,49 @@ body{margin:0;font-family:Tahoma,Vazirmatn,sans-serif;background:#f1f5f9;color:#
 <body>
 <div class="wrap">
 	<div class="hero">
-		<h1>🧪 محیط تست زنده افزونه‌های وب‌آکری</h1>
+		<h1>🧪 محیط تست زنده — روی دامنه اصلی</h1>
 		<p>
-			اینجا می‌توانید قبل از خرید، افزونه را <strong>روی سایت تست</strong> ببینید و با آن کار کنید.
-			نیازی به نصب روی سایت خودتان نیست.
+			آدرس تست: <strong>webakery.ir/demo/</strong><br>
+			مشتری بدون نصب روی سایت خودش، همین‌جا با افزونه کار می‌کند.
 		</p>
 	</div>
 
 	<div class="live-box">
-		<h2>ورود به سایت تست</h2>
+		<h2>ورود به محیط تست</h2>
 		<p>
-			یک وردپرس جدا روی <strong>demo.webakery.ir</strong> برای آزمایش همه افزونه‌ها.
-			داده تست است؛ آزادانه کلیک و تنظیم کنید.
+			وردپرس جدا داخل پوشه <code>/demo/</code> روی همان دامنه <strong>webakery.ir</strong>.
+			سایت اصلی‌ات دست نمی‌خورد.
 		</p>
 		<div class="creds">
+			URL: <code>https://webakery.ir/demo/</code><br>
 			Admin: <code>demo</code> &nbsp;|&nbsp; Password: <code>Demo@12345</code>
-			<br><span style="font-size:11px;color:#64748b">(بعد از ساخت سایت دمو، همین رمز را در وردپرس ست کنید — یا عوض کنید و اینجا هم به‌روز کنید)</span>
 		</div>
 		<div class="actions" style="margin-top:0">
 			<?php if ( $LIVE_DEMO_READY ) : ?>
-				<a class="btn btn-live" href="<?php echo htmlspecialchars( $LIVE_DEMO_URL ); ?>" target="_blank" rel="noopener">🚀 باز کردن سایت تست</a>
-				<a class="btn btn-buy" href="<?php echo htmlspecialchars( rtrim( $LIVE_DEMO_URL, '/' ) . '/wp-admin/' ); ?>" target="_blank" rel="noopener">ورود به پیشخوان</a>
+				<a class="btn btn-live" href="<?php echo htmlspecialchars( $LIVE_DEMO_URL ); ?>/" target="_blank" rel="noopener">🚀 باز کردن محیط تست</a>
+				<a class="btn btn-buy" href="<?php echo htmlspecialchars( $LIVE_DEMO_URL ); ?>/wp-admin/" target="_blank" rel="noopener">ورود به پیشخوان تست</a>
 			<?php else : ?>
-				<span class="btn btn-live disabled">سایت تست هنوز آماده نیست</span>
+				<span class="btn btn-live disabled">محیط تست هنوز نصب نشده</span>
 			<?php endif; ?>
 		</div>
 	</div>
 
-	<div class="grid">
+	<div class="steps">
+		<strong>برای صاحب سایت — ساخت محیط تست روی دامنه اصلی:</strong><br>
+		۱) در File Manager داخل <code>public_html</code> پوشه <code>demo</code> بساز<br>
+		۲) داخل همان پوشه وردپرس نصب کن (Softaculous → In Directory: <code>demo</code>)<br>
+		۳) ووکامرس را نصب کن<br>
+		۴) ZIPهای دمو را از <code>license-server/demos/</code> روی همین وردپرس نصب کن<br>
+		۵) در همین <code>index.php</code> مقدار <code>$LIVE_DEMO_READY = true;</code> بگذار<br>
+		جزئیات: فایل <code>LIVE-DEMO-FA.txt</code>
+	</div>
+
+	<div class="grid" style="margin-top:18px">
 		<?php foreach ( $demos as $slug => $d ) :
 			$ok   = demo_exists( $d['file'] );
 			$href = $ok ? './' . rawurlencode( $d['file'] ) : '#';
 			$cls  = ( $focus && $focus === $slug ) ? 'card focus' : 'card';
-			$live = $d['live'] ?? $LIVE_DEMO_URL;
+			$live = $d['live'] ?? ( $LIVE_DEMO_URL . '/' );
 			?>
 			<div class="<?php echo $cls; ?>" id="<?php echo htmlspecialchars( $slug ); ?>">
 				<div class="row">
@@ -179,7 +193,7 @@ body{margin:0;font-family:Tahoma,Vazirmatn,sans-serif;background:#f1f5f9;color:#
 						<div class="hint"><?php echo htmlspecialchars( $d['live_hint'] ?? '' ); ?></div>
 						<div class="actions">
 							<?php if ( $LIVE_DEMO_READY ) : ?>
-								<a class="btn btn-live" href="<?php echo htmlspecialchars( $live ); ?>" target="_blank" rel="noopener">کار با دمو در سایت تست</a>
+								<a class="btn btn-live" href="<?php echo htmlspecialchars( $live ); ?>" target="_blank" rel="noopener">کار در محیط تست</a>
 							<?php endif; ?>
 							<?php if ( $ok ) : ?>
 								<a class="btn btn-demo" href="<?php echo htmlspecialchars( $href ); ?>" download>
@@ -196,10 +210,9 @@ body{margin:0;font-family:Tahoma,Vazirmatn,sans-serif;background:#f1f5f9;color:#
 	</div>
 
 	<div class="note">
-		<strong>تفاوت دو نوع دمو:</strong><br>
-		• <strong>سایت تست (پیشنهادی):</strong> مشتری وارد demo.webakery.ir می‌شود و همان‌جا کار می‌کند.<br>
-		• <strong>ZIP دمو:</strong> برای کسانی که می‌خواهند روی وردپرس خودشان نصب و تست کنند.<br>
-		راهنمای ساخت سایت تست: فایل <code>LIVE-DEMO-FA.txt</code> داخل همین پوشه.
+		<strong>نکته:</strong>
+		پوشه <code>/demo/</code> فقط برای تست است و از سایت اصلی جداست.
+		سفارش واقعی نگیر؛ درگاه را تست/خاموش بگذار.
 	</div>
 
 	<div class="foot">
