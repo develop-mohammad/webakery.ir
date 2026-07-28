@@ -1,0 +1,64 @@
+فایل تنظیمات Perfmatters برای gainstore.ir
+بر اساس گزارش PageSpeed Mobile:
+https://pagespeed.web.dev/analysis/https-gainstore-ir/5ifl25i5hb?form_factor=mobile
+
+نتیجه Lab موبایل (قبل از اعمال):
+- Performance: 67
+- LCP: 6.2s
+- FCP: 2.9s
+- TBT: 0ms
+- CLS: 0.085
+- بزرگ‌ترین مشکلات: CSS بلاک‌کننده (~3s) + تصاویر PNG خیلی سنگین (~3.3MB)
+
+==================================================
+نصب ZIP وردپرس (نسخه 1.1 - اعمال اجباری)
+==================================================
+فایل: gainstore-perfmatters-setup.zip (نسخه 1.2)
+
+1) نسخه قبلی افزونه کمکی را حذف کن
+2) ZIP جدید را روی gainstore.ir نصب/فعال کن (نه کیان‌استوک)
+3) ابزارها → گین استور Perfmatters → اعمال اجباری
+4) لینک دیباگ را در Incognito باز کن:
+   https://gainstore.ir/?gspsdebug=1&nowprocket=1
+5) View Source → خط شامل GSPS و GSPS_RESULT را کپی کن بفرست
+6) همچنین pmdelayedscript را جستجو کن
+
+اگر GSPS در سورس نبود، افزونه 1.2 نصب نشده است.
+
+==================================================
+این تنظیمات چه کار می‌کند
+==================================================
+- Delay All Scripts + Timeout
+- Remove Unused CSS (File + Async) برای کاهش Render-blocking
+- Minify JS/CSS
+- Lazy Load + Image Dimensions + Exclude Leading Images=2
+- Preload فقط تصویر بنر اصلی (LCP)
+- Local Google Fonts + Display Swap
+- حذف jQuery Migrate / Emoji / Dashicons و سبک‌سازی عمومی
+- Script Manager روشن برای غیرفعال‌سازی دقیق‌تر پلاگین‌ها
+
+==================================================
+کارهایی که Perfmatters به‌تنهایی حل نمی‌کند
+==================================================
+1) تبدیل PNGهای بزرگ به WebP/AVIF (مهم‌ترین مورد برای LCP)
+2) فشرده‌سازی بنر/بلاگ‌ایمیج‌های ۱MB+
+3) Cache header سرور/هاست
+
+==================================================
+تست بعد از نصب
+==================================================
+- صفحه اصلی / محصول / سبد / تسویه
+- فرم تماس (CF7)
+- چت‌باکس
+- ویش‌لیست
+- ماشین‌حساب هزینه (bt_cost_calculator)
+- درگاه/نشان زیبال و زرین‌پال
+
+اگر بخشی شکست، در Delay JS → Excluded from Delay اضافه کن:
+suxnix
+elementor/assets/js/frontend
+chatbox
+wpcf7
+tinvwl
+bt_cost_calculator
+cart-fragments
