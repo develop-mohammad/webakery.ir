@@ -1,0 +1,70 @@
+════════════════════════════════════════════════════════
+کجا فایل دمو را روی هاست بگذارم؟
+════════════════════════════════════════════════════════
+
+مسیر روی هاست (File Manager / FTP):
+
+  public_html/license-server/demos/
+
+یا اگر license-server داخل ساب‌پوشه است، همان پوشه‌ای که
+الان updates داخلش است:
+
+  .../license-server/demos/
+
+════════════════════════════════════════════════════════
+چه فایل‌هایی را آپلود کنم؟
+════════════════════════════════════════════════════════
+
+از ریپو / سیستم خودت این‌ها را داخل demos بگذار:
+
+  hesabdar-demo.zip
+  nobat-man-demo.zip
+  access-levels-demo.zip
+  baget-demo.zip
+  webakery-chat-box-demo.zip
+  index.php          ← صفحه لیست دانلود (حتماً)
+
+اگر پوشه demos وجود ندارد، بساز.
+
+════════════════════════════════════════════════════════
+لینک‌هایی که به مشتری می‌دهی
+════════════════════════════════════════════════════════
+
+صفحه همه دموها:
+  https://webakery.ir/license-server/demos/
+
+لینک مستقیم هر محصول (دانلود ZIP):
+  https://webakery.ir/license-server/demos/hesabdar-demo.zip
+  https://webakery.ir/license-server/demos/nobat-man-demo.zip
+  https://webakery.ir/license-server/demos/access-levels-demo.zip
+  https://webakery.ir/license-server/demos/baget-demo.zip
+  https://webakery.ir/license-server/demos/webakery-chat-box-demo.zip
+
+صفحه دمو با فوکوس روی یک محصول:
+  https://webakery.ir/license-server/demos/?plugin=hesabdar
+  https://webakery.ir/license-server/demos/?plugin=nobat-man
+  https://webakery.ir/license-server/demos/?plugin=access-levels
+  https://webakery.ir/license-server/demos/?plugin=wccp
+  https://webakery.ir/license-server/demos/?plugin=webakery-chat
+
+════════════════════════════════════════════════════════
+در صفحه فروش / اینستا / پیامک چه بنویسم؟
+════════════════════════════════════════════════════════
+
+مثال:
+  «قبل از خرید، نسخه دمو را رایگان تست کنید:
+   https://webakery.ir/license-server/demos/?plugin=hesabdar»
+
+مشتری روی لینک می‌زند → دکمه دانلود دمو → ZIP را
+روی وردپرس خودش نصب می‌کند و کار می‌کند.
+
+════════════════════════════════════════════════════════
+نکته مهم
+════════════════════════════════════════════════════════
+
+دمو = ZIP قابل نصب روی وردپرس مشتری است.
+این همان «دیدن و کار کردن با پلاگین» است؛ نیاز به
+سایت دمو جدا ندارد مگر بعداً بخواهی sandbox آنلاین بسازی.
+
+نسخه فروش (با لایسنس) همچنان اینجاست:
+  license-server/updates/*.zip

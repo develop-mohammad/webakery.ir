@@ -30,17 +30,31 @@ bash tools/build-demo-zips.sh
 
 ## آپلود روی هاست
 
-پیشنهاد مسیر:
+مسیر ثابت:
 
 ```text
-https://webakery.ir/demos/hesabdar-demo.zip
-https://webakery.ir/demos/nobat-man-demo.zip
-...
+public_html/license-server/demos/
 ```
 
-یا داخل `license-server/updates/` با نام `*-demo.zip`.
+فایل‌ها:
 
-در صفحه فروش هر محصول لینک «دانلود نسخه دمو / آزمایش رایگان» بگذارید.
+- `index.php` (صفحه لیست)
+- `hesabdar-demo.zip`
+- `nobat-man-demo.zip`
+- `access-levels-demo.zip`
+- `baget-demo.zip`
+- `webakery-chat-box-demo.zip`
+
+لینک مشتری:
+
+```text
+https://webakery.ir/license-server/demos/
+https://webakery.ir/license-server/demos/?plugin=hesabdar
+```
+
+راهنمای آپلود: `license-server/demos/UPLOAD-FA.txt`
+
+در صفحه پرداخت هم لینک «دانلود نسخه دمو رایگان» اضافه شده است.
 
 ## تفاوت با دوره آزمایشی نسخه اصلی
 

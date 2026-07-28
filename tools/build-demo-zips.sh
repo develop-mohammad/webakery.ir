@@ -90,3 +90,14 @@ build_one webakery-chat-box webakery-chat-box-demo.zip WBCB_DEMO webakery-chat-b
 echo ""
 echo "تمام. فایل‌ها:"
 ls -lh "${OUT}"/*-demo.zip
+
+# کپی داخل مسیر عمومی هاست (license-server/demos)
+DEMOS_DIR="${ROOT}/license-server/demos"
+mkdir -p "${DEMOS_DIR}"
+cp -f "${OUT}/hesabdar-demo.zip" "${DEMOS_DIR}/hesabdar-demo.zip"
+cp -f "${OUT}/nobat-man-demo.zip" "${DEMOS_DIR}/nobat-man-demo.zip"
+cp -f "${OUT}/access-levels-demo.zip" "${DEMOS_DIR}/access-levels-demo.zip"
+cp -f "${OUT}/baget-demo.zip" "${DEMOS_DIR}/baget-demo.zip"
+cp -f "${OUT}/webakery-chat-box-demo.zip" "${DEMOS_DIR}/webakery-chat-box-demo.zip"
+echo "کپی شد به: ${DEMOS_DIR}"
+ls -lh "${DEMOS_DIR}"/*-demo.zip
