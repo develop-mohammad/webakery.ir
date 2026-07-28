@@ -71,7 +71,7 @@ class WBCB_Plugin {
 					'server'        => 'https://webakery.ir/license-server',
 					'register_menu' => true,
 					'page'          => 'admin.php?page=webakery-chat-box-license',
-					'features'      => array(
+                    'features'      => array(
 						'ویجت چت RTL روی سایت',
 						'صندوق پیام در پیشخوان',
 						'اعلان تلگرام، واتساپ و ایمیل',
@@ -79,6 +79,8 @@ class WBCB_Plugin {
 						'به‌روزرسانی در دوره اشتراک / دائمی',
 						'تمدید ماهانه، ۳ ماهه یا ارتقا به دائمی',
 					),
+					'demo_constant' => 'WBCB_DEMO',
+					'buy_url'       => 'https://webakery.ir',
 				)
 			);
 
@@ -90,8 +92,11 @@ class WBCB_Plugin {
 		}
 	}
 
-	/** لایسنس معتبر یا دوره آزمایشی */
+	/** لایسنس معتبر، دمو یا دوره آزمایشی */
 	public static function is_licensed() {
+		if ( defined( 'WBCB_DEMO' ) && WBCB_DEMO ) {
+			return true;
+		}
 		if ( ! class_exists( 'WB_License', false ) ) {
 			return true; // اگر فایل لایسنس نباشد، مانع استفاده نشویم
 		}
@@ -99,10 +104,11 @@ class WBCB_Plugin {
 	}
 
 	public function action_links( $links ) {
+		$license_label = ( defined( 'WBCB_DEMO' ) && WBCB_DEMO ) ? 'خرید نسخه کامل' : 'خرید / لایسنس';
 		$custom = array(
 			'<a href="' . esc_url( admin_url( 'admin.php?page=webakery-chat-box' ) ) . '">صندوق چت</a>',
 			'<a href="' . esc_url( admin_url( 'admin.php?page=webakery-chat-box-settings' ) ) . '">تنظیمات</a>',
-			'<a href="' . esc_url( admin_url( 'admin.php?page=webakery-chat-box-license' ) ) . '" style="color:#6d28d9;font-weight:700">خرید / لایسنس</a>',
+			'<a href="' . esc_url( admin_url( 'admin.php?page=webakery-chat-box-license' ) ) . '" style="color:#6d28d9;font-weight:700">' . esc_html( $license_label ) . '</a>',
 		);
 		return array_merge( $custom, $links );
 	}

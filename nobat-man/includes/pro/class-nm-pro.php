@@ -4,6 +4,9 @@ defined( 'ABSPATH' ) || exit;
 class NM_Pro {
 
 	public static function is_active() {
+		if ( defined( 'NM_DEMO' ) && NM_DEMO ) {
+			return true;
+		}
 		if ( ! class_exists( 'WB_License' ) ) {
 			return false;
 		}

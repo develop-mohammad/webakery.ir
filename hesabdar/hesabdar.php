@@ -26,6 +26,11 @@ define( 'WAP_VERSION', '1.9.11' );
 define( 'WAP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WAP_URL', plugin_dir_url( __FILE__ ) );
 
+/** نسخه دمو مارکت‌پلیس — با tools/build-demo-zips.sh روی true ست می‌شود */
+if ( ! defined( 'HESABDAR_DEMO' ) ) {
+	define( 'HESABDAR_DEMO', false );
+}
+
 if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 	add_action( 'admin_notices', function() {
 		if ( ! current_user_can( 'activate_plugins' ) ) {
@@ -226,6 +231,8 @@ if ( class_exists( 'WB_License' ) && method_exists( 'WB_License', 'init' ) ) {
 	    'trial_days'    => 3,
 	    'server'        => 'https://webakery.ir/license-server',
 	    'register_menu' => true,
+	    'demo_constant' => 'HESABDAR_DEMO',
+	    'buy_url'       => 'https://webakery.ir',
 	    'features'      => [
 	        'پرتال مستقل حسابدار بدون دسترسی به پیشخوان',
 	        'ایجاد و ویرایش سفارش بدون ورود به ووکامرس',
@@ -237,6 +244,9 @@ if ( class_exists( 'WB_License' ) && method_exists( 'WB_License', 'init' ) ) {
 
 if ( ! function_exists( 'wap_is_active' ) ) {
 	function wap_is_active() {
+		if ( defined( 'HESABDAR_DEMO' ) && HESABDAR_DEMO ) {
+			return true;
+		}
 		if ( ! class_exists( 'WB_License' ) ) {
 			return true;
 		}

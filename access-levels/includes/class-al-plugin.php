@@ -40,6 +40,8 @@ class AL_Plugin {
 			'version'    => AL_VERSION,
 			'trial_days' => 7,
 			'page'       => 'admin.php?page=access-levels&tab=license',
+			'demo_constant' => 'AL_DEMO',
+			'buy_url'    => 'https://webakery.ir',
 			'features'   => array(
 				'محدودیت منوهای پیشخوان برای هر نقش',
 				'مخفی کردن افزونه‌ها از کاربران خاص',
@@ -50,6 +52,9 @@ class AL_Plugin {
 	}
 
 	public static function licensed() {
+		if ( defined( 'AL_DEMO' ) && AL_DEMO ) {
+			return true;
+		}
 		return class_exists( 'WB_License' ) && WB_License::is_active( AL_PRODUCT );
 	}
 }
