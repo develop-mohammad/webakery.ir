@@ -1,0 +1,18 @@
+آپلود برای دانلود عمومی (رایگان)
+================================
+
+مسیر روی هاست:
+  public_html/license-server/free/
+
+فایل‌ها:
+  index.php
+  webakery-gateway-pricing.zip
+
+لینک صفحه دانلود:
+  https://webakery.ir/license-server/free/
+
+لینک مستقیم ZIP:
+  https://webakery.ir/license-server/free/webakery-gateway-pricing.zip
+
+(نسخه پشتیبان آپدیت هم اینجا بماند:)
+  license-server/updates/webakery-gateway-pricing.zip

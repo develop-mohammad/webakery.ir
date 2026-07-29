@@ -1,11 +1,17 @@
-افزونه رایگان «قیمت‌گذاری درگاه»
+دانلود رایگان «قیمت‌گذاری درگاه»
 ================================
 
-۱) ZIP را اینجا آپلود کنید:
-   license-server/updates/webakery-gateway-pricing.zip
+روی هاست این پوشه را بساز/آپلود کن:
 
-۲) لینک دانلود رایگان:
-   https://webakery.ir/license-server/updates/webakery-gateway-pricing.zip
+  public_html/license-server/free/
+    index.php
+    webakery-gateway-pricing.zip
 
-لایسنس / پرداخت ندارد.
-نسخه: 1.0.0
+لینک صفحه:
+  https://webakery.ir/license-server/free/
+
+لینک مستقیم:
+  https://webakery.ir/license-server/free/webakery-gateway-pricing.zip
+
+نسخه پشتیبان آپدیت:
+  license-server/updates/webakery-gateway-pricing.zip

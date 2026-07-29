@@ -63,4 +63,5 @@
 - کارمزد قسطی: درصد یا مبلغ ثابت (اسنپ‌پی، ترب‌پی و … خودکار)
 - تخفیف نقدی: درصد یا مبلغ ثابت
 - مسیر تنظیمات: ووکامرس → قیمت‌گذاری درگاه
-- دانلود: `https://webakery.ir/license-server/updates/webakery-gateway-pricing.zip`
+- دانلود: `https://webakery.ir/license-server/free/webakery-gateway-pricing.zip`
+- صفحه دانلود: `https://webakery.ir/license-server/free/`
