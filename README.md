@@ -58,7 +58,10 @@
 - سازنده: **webakery.ir**
 - مسیر: `webakery-gateway-pricing/`
 - ZIP: `webakery-gateway-pricing.zip`
-- پیش‌فرض نقدی: `wc_zibal` ، `WC_ZPal`
-- کارمزد قسطی: درصد یا مبلغ ثابت
+- شناسه لایسنس: `gateway-pricing`
+- قیمت: **۱۴۹,۰۰۰ تومان**
+- پیش‌فرض نقدی: `wc_zibal` ، `WC_ZPal` / `zarinpal`
+- کارمزد قسطی: درصد یا مبلغ ثابت (اسنپ‌پی، ترب‌پی و … خودکار)
 - تخفیف نقدی: درصد یا مبلغ ثابت
 - مسیر تنظیمات: ووکامرس → قیمت‌گذاری درگاه
+- خرید: `https://webakery.ir/license-server/pay/?plugin=gateway-pricing`

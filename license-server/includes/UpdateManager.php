@@ -90,10 +90,13 @@ class UpdateManager {
 
     public static function zip_path( string $product ): ?string {
         $map = array(
-            'wccp'          => 'baget.zip',
-            'hesabdar'      => 'hesabdar.zip',
-            'access-levels' => 'access-levels.zip',
-            'sokhte-jet'    => 'sokhte-jet.zip',
+            'wccp'             => 'baget.zip',
+            'hesabdar'         => 'hesabdar.zip',
+            'access-levels'    => 'access-levels.zip',
+            'sokhte-jet'       => 'sokhte-jet.zip',
+            'gateway-pricing'  => 'webakery-gateway-pricing.zip',
+            'nobat-man'        => 'nobat-man.zip',
+            'webakery-chat'    => 'webakery-chat-box.zip',
         );
         if ( ! isset( $map[ $product ] ) ) {
             return null;

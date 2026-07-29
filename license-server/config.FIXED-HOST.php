@@ -21,6 +21,7 @@ define( 'LS_PRICES', [
     'hesabdar'      => 7990000,
     'nobat-man'     => 5990000,
     'webakery-chat' => 1500000,
+    'gateway-pricing'  => 1490000,   // قیمت‌گذاری درگاه — ۱۴۹,۰۰۰ تومان
 ] );
 
 // ─── پلن‌های چت باکس (ماهانه / ۳ ماهه / دائمی) ───
@@ -58,6 +59,7 @@ define( 'LS_PLUGIN_LABELS', [
     'hesabdar'      => 'Hesabdar — پرتال حسابدار',
     'nobat-man'     => 'نوبت من — رزرو نوبت مشاوره',
     'webakery-chat' => 'چت باکس — پشتیبانی آنلاین سایت',
+    'gateway-pricing'  => 'قیمت‌گذاری درگاه — کارمزد قسطی / تخفیف نقدی',
 ] );
 
 define( 'LS_PLUGIN_META', [

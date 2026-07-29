@@ -23,7 +23,14 @@ define( 'WBGP_VERSION', '1.0.0' );
 define( 'WBGP_FILE', __FILE__ );
 define( 'WBGP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBGP_URL', plugin_dir_url( __FILE__ ) );
+define( 'WBGP_PRODUCT', 'gateway-pricing' );
 
+/** نسخه دمو مارکت‌پلیس — با tools/build-demo-zips.sh روی true ست می‌شود */
+if ( ! defined( 'WBGP_DEMO' ) ) {
+	define( 'WBGP_DEMO', false );
+}
+
+require_once WBGP_PATH . 'includes/class-wb-license.php';
 require_once WBGP_PATH . 'includes/class-wbgp-settings.php';
 require_once WBGP_PATH . 'includes/class-wbgp-fees.php';
 require_once WBGP_PATH . 'includes/class-wbgp-plugin.php';

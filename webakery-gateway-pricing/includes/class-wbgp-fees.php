@@ -13,6 +13,39 @@ class WBGP_Fees {
 		add_action( 'woocommerce_cart_calculate_fees', array( __CLASS__, 'apply' ), 20 );
 		add_action( 'wp_footer', array( __CLASS__, 'checkout_script' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_blocks_script' ), 30 );
+		add_action( 'woocommerce_review_order_before_payment', array( __CLASS__, 'checkout_hint' ) );
+	}
+
+	/**
+	 * راهنمای کوتاه کنار درگاه‌ها در تسویه کلاسیک.
+	 */
+	public static function checkout_hint() {
+		if ( ! WBGP_Settings::get( 'installment_enabled', 1 ) && ! WBGP_Settings::get( 'cash_discount_enabled', 0 ) ) {
+			return;
+		}
+		$parts = array();
+		if ( WBGP_Settings::get( 'installment_enabled', 1 ) ) {
+			$type = WBGP_Settings::get( 'installment_type', 'percent' );
+			$amt  = WBGP_Settings::get( 'installment_amount', 15 );
+			$parts[] = ( 'fixed' === $type )
+				? sprintf( 'درگاه‌های اقساطی: کارمزد ثابت %s', wc_price( $amt ) )
+				: sprintf( 'درگاه‌های اقساطی: کارمزد %s٪', wc_format_decimal( $amt, 2 ) );
+		}
+		if ( WBGP_Settings::get( 'cash_discount_enabled', 0 ) ) {
+			$type = WBGP_Settings::get( 'cash_discount_type', 'percent' );
+			$amt  = WBGP_Settings::get( 'cash_discount_amount', 0 );
+			if ( $amt > 0 ) {
+				$parts[] = ( 'fixed' === $type )
+					? sprintf( 'پرداخت نقدی: تخفیف ثابت %s', wc_price( $amt ) )
+					: sprintf( 'پرداخت نقدی: تخفیف %s٪', wc_format_decimal( $amt, 2 ) );
+			}
+		}
+		if ( ! $parts ) {
+			return;
+		}
+		echo '<div class="wbgp-checkout-hint" style="margin:0 0 14px;padding:10px 12px;border-radius:10px;background:#f0fdfa;border:1px solid #99f6e4;font-size:13px;line-height:1.7;color:#115e59">';
+		echo '<strong>توجه قیمت‌گذاری درگاه:</strong> ' . esc_html( implode( ' | ', array_map( 'wp_strip_all_tags', $parts ) ) );
+		echo '</div>';
 	}
 
 	/**
