@@ -3,108 +3,199 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * اعمال کارمزد قسطی / تخفیف نقدی روی سبد.
+ *
+ * منطق: هر درگاهی که در لیست نقدی نباشد = قسطی
+ * (اسنپ‌پی، ترب‌پی، دیجی‌پی، تارا و ... بدون نیاز به نام‌بردن)
  */
 class WBGP_Fees {
 
 	public static function init() {
 		add_action( 'woocommerce_cart_calculate_fees', array( __CLASS__, 'apply' ), 20 );
 		add_action( 'wp_footer', array( __CLASS__, 'checkout_script' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_blocks_script' ), 30 );
 	}
 
 	/**
-	 * شناسه درگاه انتخاب‌شده.
+	 * شناسه درگاه انتخاب‌شده — از سشن، POST تسویه، یا درخواست AJAX.
 	 */
-	protected static function chosen_method() {
-		if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+	public static function chosen_method() {
+		if ( ! function_exists( 'WC' ) ) {
 			return '';
 		}
-		$method = (string) WC()->session->get( 'chosen_payment_method' );
-		if ( $method !== '' ) {
-			return $method;
+
+		// هنگام update_checkout معمولاً payment_method در POST است
+		if ( ! empty( $_POST['payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$method = sanitize_text_field( wp_unslash( $_POST['payment_method'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			if ( $method !== '' ) {
+				if ( WC()->session ) {
+					WC()->session->set( 'chosen_payment_method', $method );
+				}
+				return $method;
+			}
 		}
-		// فال‌بک: اولین درگاه در دسترس
-		$available = WC()->payment_gateways() ? WC()->payment_gateways()->get_available_payment_gateways() : array();
-		if ( $available ) {
-			$keys = array_keys( $available );
-			return (string) reset( $keys );
+
+		if ( WC()->session ) {
+			$method = (string) WC()->session->get( 'chosen_payment_method' );
+			if ( $method !== '' ) {
+				return $method;
+			}
 		}
+
+		// بدون انتخاب کاربر، کارمزد/تخفیف اعمال نشود (جلوگیری از خطای اسنپ‌پی/ترب‌پی قبل از انتخاب)
 		return '';
 	}
 
-	protected static function is_cash( $method ) {
+	/**
+	 * آیا درگاه نقدی است؟ (با aliasهای رایج زیبال/زرین‌پال)
+	 */
+	public static function is_cash( $method ) {
 		if ( $method === '' ) {
 			return false;
 		}
 		$cash = WBGP_Settings::cash_gateway_ids();
-		// تطبیق بدون حساسیت به حروف (WC_ZPal / wc_zpal)
+		$method_l = strtolower( $method );
+
 		foreach ( $cash as $id ) {
-			if ( strcasecmp( $id, $method ) === 0 ) {
+			$id_l = strtolower( $id );
+			if ( $id_l === $method_l ) {
 				return true;
 			}
 		}
+
+		// aliasهای رایج حتی اگر کاربر فقط یکی را نوشته باشد
+		$aliases = array(
+			'wc_zibal'   => array( 'wc_zibal', 'zibal', 'wc-zibal' ),
+			'wc_zpal'    => array( 'wc_zpal', 'wc_zarinpal', 'zarinpal', 'wc-zarinpal', 'zarinpalgateway' ),
+			'bacs'       => array( 'bacs' ), // کارت به کارت ووکامرس — نقدی اختیاری
+			'cod'        => array( 'cod' ),
+		);
+
+		foreach ( $cash as $id ) {
+			$key = strtolower( $id );
+			// نرمال‌سازی کلید alias
+			if ( false !== stripos( $key, 'zibal' ) ) {
+				$key = 'wc_zibal';
+			} elseif ( false !== stripos( $key, 'zpal' ) || false !== stripos( $key, 'zarin' ) ) {
+				$key = 'wc_zpal';
+			}
+			if ( empty( $aliases[ $key ] ) ) {
+				continue;
+			}
+			if ( in_array( $method_l, $aliases[ $key ], true ) ) {
+				return true;
+			}
+		}
+
 		return false;
 	}
 
-	protected static function calc_amount( $subtotal, $type, $value ) {
-		$value = (float) $value;
-		if ( $value <= 0 || $subtotal < 0 ) {
-			return 0;
+	/**
+	 * محاسبه مبلغ کارمزد/تخفیف — قابل تست واحد.
+	 *
+	 * @return float
+	 */
+	public static function calc_amount( $subtotal, $type, $value ) {
+		$subtotal = (float) $subtotal;
+		$value    = (float) $value;
+		if ( $value <= 0 || $subtotal <= 0 ) {
+			return 0.0;
 		}
 		if ( 'fixed' === $type ) {
-			return $value;
+			$amount = $value;
+		} else {
+			$amount = $subtotal * ( $value / 100 );
 		}
-		// percent
-		return $subtotal * ( $value / 100 );
+		// ووکامرس/IRT: گرد کردن به اعشار تنظیم‌شده فروشگاه
+		if ( function_exists( 'wc_get_price_decimals' ) ) {
+			return (float) wc_format_decimal( $amount, wc_get_price_decimals() );
+		}
+		return round( $amount, 2 );
+	}
+
+	/**
+	 * تصمیم کارمزد/تخفیف برای یک درگاه — خروجی برای تست.
+	 *
+	 * @return array{kind:string,amount:float,label:string}|null
+	 */
+	public static function decide( $method, $subtotal, $settings = null ) {
+		if ( $method === '' || $subtotal <= 0 ) {
+			return null;
+		}
+
+		$get = static function ( $key, $default = null ) use ( $settings ) {
+			if ( is_array( $settings ) && array_key_exists( $key, $settings ) ) {
+				return $settings[ $key ];
+			}
+			return WBGP_Settings::get( $key, $default );
+		};
+
+		$is_cash = self::is_cash( $method );
+
+		if ( ! $is_cash && $get( 'installment_enabled', 1 ) ) {
+			$fee = self::calc_amount( $subtotal, $get( 'installment_type', 'percent' ), $get( 'installment_amount', 15 ) );
+			if ( $fee > 0 ) {
+				return array(
+					'kind'   => 'fee',
+					'amount' => $fee,
+					'label'  => (string) $get( 'installment_label', 'کارمزد خرید اقساطی' ),
+				);
+			}
+			return null;
+		}
+
+		if ( $is_cash && $get( 'cash_discount_enabled', 0 ) ) {
+			$discount = self::calc_amount( $subtotal, $get( 'cash_discount_type', 'percent' ), $get( 'cash_discount_amount', 0 ) );
+			if ( $discount > 0 ) {
+				return array(
+					'kind'   => 'discount',
+					'amount' => $discount,
+					'label'  => (string) $get( 'cash_discount_label', 'تخفیف پرداخت نقدی' ),
+				);
+			}
+		}
+
+		return null;
 	}
 
 	public static function apply( $cart ) {
 		if ( is_admin() && ! defined( 'DOING_AJAX' ) ) {
 			return;
 		}
-		if ( ! $cart || ! function_exists( 'WC' ) || ! WC()->session ) {
+		if ( ! $cart || ! function_exists( 'WC' ) ) {
+			return;
+		}
+		// سشن ممکن است در بعضی درخواست‌های REST خالی باشد؛ مانع کل محاسبه نشود اگر POST داریم
+		if ( ! WC()->session && empty( $_POST['payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			return;
 		}
 
-		$method   = self::chosen_method();
+		$method = self::chosen_method();
 		if ( $method === '' ) {
 			return;
 		}
 
 		$subtotal = (float) $cart->get_subtotal();
-		$taxable  = (bool) WBGP_Settings::get( 'taxable', 1 );
-		$is_cash  = self::is_cash( $method );
-
-		// کارمزد قسطی — هر چیز غیرنقدی
-		if ( ! $is_cash && WBGP_Settings::get( 'installment_enabled', 1 ) ) {
-			$fee = self::calc_amount(
-				$subtotal,
-				WBGP_Settings::get( 'installment_type', 'percent' ),
-				WBGP_Settings::get( 'installment_amount', 15 )
-			);
-			if ( $fee > 0 ) {
-				$label = (string) WBGP_Settings::get( 'installment_label', 'کارمزد خرید اقساطی' );
-				$cart->add_fee( $label, $fee, $taxable );
-			}
+		$decision = self::decide( $method, $subtotal );
+		if ( ! $decision ) {
 			return;
 		}
 
-		// تخفیف نقدی — فقط زیبال / زرین‌پال (و سایر نقدی‌های تنظیم‌شده)
-		if ( $is_cash && WBGP_Settings::get( 'cash_discount_enabled', 0 ) ) {
-			$discount = self::calc_amount(
-				$subtotal,
-				WBGP_Settings::get( 'cash_discount_type', 'percent' ),
-				WBGP_Settings::get( 'cash_discount_amount', 0 )
-			);
-			if ( $discount > 0 ) {
-				$label = (string) WBGP_Settings::get( 'cash_discount_label', 'تخفیف پرداخت نقدی' );
-				// مبلغ منفی = تخفیف در ووکامرس
-				$cart->add_fee( $label, -1 * $discount, $taxable );
-			}
+		$taxable = (bool) WBGP_Settings::get( 'taxable', 1 );
+		if ( 'fee' === $decision['kind'] ) {
+			$cart->add_fee( $decision['label'], $decision['amount'], $taxable );
+			return;
+		}
+		if ( 'discount' === $decision['kind'] ) {
+			$cart->add_fee( $decision['label'], -1 * $decision['amount'], $taxable );
 		}
 	}
 
 	public static function checkout_script() {
 		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() || is_order_received_page() ) {
+			return;
+		}
+		// فقط چک‌اوت کلاسیک
+		if ( has_block( 'woocommerce/checkout' ) ) {
 			return;
 		}
 		?>
@@ -116,5 +207,40 @@ class WBGP_Fees {
 		});
 		</script>
 		<?php
+	}
+
+	/**
+	 * سازگاری با Checkout Blocks — با تغییر روش پرداخت، سبد را رفرش می‌کند.
+	 */
+	public static function enqueue_blocks_script() {
+		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() || is_wc_endpoint_url( 'order-received' ) ) {
+			return;
+		}
+		if ( ! has_block( 'woocommerce/checkout' ) ) {
+			return;
+		}
+		$handle = 'wbgp-blocks-checkout';
+		wp_register_script( $handle, false, array( 'wp-data', 'wc-blocks-checkout' ), WBGP_VERSION, true );
+		wp_enqueue_script( $handle );
+		wp_add_inline_script(
+			$handle,
+			"(function(){
+				if (!window.wp || !wp.data || !wp.data.subscribe) return;
+				var last = '';
+				wp.data.subscribe(function(){
+					try {
+						var store = wp.data.select('wc/store/payment');
+						if (!store || !store.getActivePaymentMethod) return;
+						var m = store.getActivePaymentMethod();
+						if (!m || m === last) return;
+						last = m;
+						var cart = wp.data.dispatch('wc/store/cart');
+						if (cart && cart.invalidateResolutionForStore) {
+							cart.invalidateResolutionForStore();
+						}
+					} catch (e) {}
+				});
+			})();"
+		);
 	}
 }

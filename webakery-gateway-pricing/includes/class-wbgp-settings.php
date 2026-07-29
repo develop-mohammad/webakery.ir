@@ -11,11 +11,12 @@ class WBGP_Settings {
 
 	public static function defaults() {
 		return array(
-			'cash_gateways'       => "wc_zibal\nWC_ZPal",
-			'installment_enabled' => 1,
-			'installment_type'    => 'percent', // percent | fixed
-			'installment_amount'  => 15,
-			'installment_label'   => 'کارمزد خرید اقساطی',
+			// شناسه‌های رایج زیبال/زرین‌پال — هر خط یکی
+			'cash_gateways'         => "wc_zibal\nzibal\nWC_ZPal\nWC_ZarinPal\nzarinpal",
+			'installment_enabled'   => 1,
+			'installment_type'      => 'percent', // percent | fixed
+			'installment_amount'    => 15,
+			'installment_label'     => 'کارمزد خرید اقساطی',
 			'cash_discount_enabled' => 0,
 			'cash_discount_type'    => 'percent', // percent | fixed
 			'cash_discount_amount'  => 0,
@@ -135,8 +136,11 @@ class WBGP_Settings {
 					<tr>
 						<th scope="row"><label for="wbgp_cash_gateways">درگاه‌های نقدی (معاف از کارمزد)</label></th>
 						<td>
-							<textarea name="<?php echo esc_attr( self::OPTION ); ?>[cash_gateways]" id="wbgp_cash_gateways" rows="4" class="large-text code" dir="ltr"><?php echo esc_textarea( $o['cash_gateways'] ); ?></textarea>
-							<p class="description">هر خط یک شناسه — پیش‌فرض: <code>wc_zibal</code> و <code>WC_ZPal</code>. هر چیز دیگر قسطی محسوب می‌شود.</p>
+							<textarea name="<?php echo esc_attr( self::OPTION ); ?>[cash_gateways]" id="wbgp_cash_gateways" rows="5" class="large-text code" dir="ltr"><?php echo esc_textarea( $o['cash_gateways'] ); ?></textarea>
+							<p class="description">
+								هر خط یک شناسه درگاه نقدی. هر چیزی <strong>خارج از این لیست</strong> (مثل اسنپ‌پی، ترب‌پی، دیجی‌پی، تارا، …) قسطی حساب می‌شود و کارمزد می‌گیرد.
+								شناسه دقیق را از لیست زیر کپی کنید.
+							</p>
 						</td>
 					</tr>
 
