@@ -104,31 +104,15 @@ class WBGP_Settings {
 			return;
 		}
 		$o        = self::get();
-		$tab      = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'settings'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$gateways = array();
 		if ( function_exists( 'WC' ) && WC()->payment_gateways() ) {
 			foreach ( WC()->payment_gateways()->payment_gateways() as $id => $gw ) {
 				$gateways[ $id ] = $gw->get_title() . ' (' . $id . ') — ' . ( 'yes' === $gw->enabled ? 'فعال' : 'غیرفعال' );
 			}
 		}
-		$base = admin_url( 'admin.php?page=' . self::PAGE );
 		?>
 		<div class="wrap" dir="rtl">
-			<h1>قیمت‌گذاری بر اساس درگاه پرداخت</h1>
-			<h2 class="nav-tab-wrapper" style="margin-bottom:16px">
-				<a class="nav-tab <?php echo 'license' !== $tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( $base ); ?>">تنظیمات</a>
-				<a class="nav-tab <?php echo 'license' === $tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( $base . '&tab=license' ); ?>">لایسنس / خرید</a>
-			</h2>
-
-			<?php if ( 'license' === $tab ) : ?>
-				<?php
-				if ( class_exists( 'WB_License', false ) && method_exists( 'WB_License', 'render_box' ) ) {
-					echo WB_License::render_box( WBGP_PRODUCT ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-				} else {
-					echo '<p><a class="button button-primary" href="https://webakery.ir/license-server/pay/?plugin=gateway-pricing" target="_blank" rel="noopener">خرید لایسنس</a></p>';
-				}
-				?>
-			<?php else : ?>
+			<h1>قیمت‌گذاری بر اساس درگاه پرداخت <span style="font-size:13px;font-weight:600;color:#0d9488;background:#f0fdfa;border:1px solid #99f6e4;border-radius:999px;padding:3px 10px;margin-right:8px">رایگان</span></h1>
 
 			<p style="max-width:720px;line-height:1.8;color:#475569">
 				هر درگاهی که در لیست <strong>نقدی</strong> نباشد، <strong>قسطی</strong> حساب می‌شود و می‌تواند کارمزد بگیرد.
@@ -248,7 +232,6 @@ class WBGP_Settings {
 
 				<?php submit_button( 'ذخیره تنظیمات' ); ?>
 			</form>
-			<?php endif; ?>
 		</div>
 		<?php
 	}

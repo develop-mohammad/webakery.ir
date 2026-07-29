@@ -1,16 +1,11 @@
-ثبت محصول «قیمت‌گذاری درگاه» روی هاست
-=====================================
+افزونه رایگان «قیمت‌گذاری درگاه»
+================================
 
-۱) این فایل را روی هاست جایگزین/آپدیت کنید:
-   license-server/config.php
-   (کلید gateway-pricing در LS_PRICES / LABELS / META / UPDATES)
-
-۲) ZIP را اینجا آپلود کنید:
+۱) ZIP را اینجا آپلود کنید:
    license-server/updates/webakery-gateway-pricing.zip
 
-۳) لینک خرید:
-   https://webakery.ir/license-server/pay/?plugin=gateway-pricing
+۲) لینک دانلود رایگان:
+   https://webakery.ir/license-server/updates/webakery-gateway-pricing.zip
 
-شناسه محصول: gateway-pricing
-قیمت: ۱۴۹,۰۰۰ تومان
+لایسنس / پرداخت ندارد.
 نسخه: 1.0.0
