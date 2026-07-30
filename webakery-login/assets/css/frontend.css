@@ -1,0 +1,115 @@
+/* ورود آسان — فرانت */
+.wbl-box{
+  --wbl-primary:#0f766e;
+  --wbl-ink:#0f172a;
+  --wbl-muted:#64748b;
+  --wbl-line:#e2e8f0;
+  --wbl-bg:#f8fafc;
+  max-width:420px;
+  margin:1.5rem auto;
+  padding:1.75rem 1.5rem 1.5rem;
+  border-radius:18px;
+  background:
+    radial-gradient(120% 80% at 100% 0%, color-mix(in srgb, var(--wbl-primary) 18%, white), transparent 55%),
+    linear-gradient(180deg,#fff 0%, var(--wbl-bg) 100%);
+  border:1px solid var(--wbl-line);
+  box-shadow:0 10px 30px rgba(15,23,42,.06);
+  font-family:Tahoma, Vazirmatn, system-ui, sans-serif;
+  color:var(--wbl-ink);
+  direction:rtl;
+  text-align:right;
+}
+.wbl-head{margin-bottom:1.1rem}
+.wbl-title{margin:0 0 .35rem;font-size:1.35rem;font-weight:700;letter-spacing:-.02em}
+.wbl-sub{margin:0;color:var(--wbl-muted);font-size:.92rem;line-height:1.6}
+.wbl-alert{
+  padding:.7rem .85rem;
+  border-radius:10px;
+  font-size:.88rem;
+  margin-bottom:.85rem;
+  line-height:1.5;
+}
+.wbl-alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+.wbl-alert-ok{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
+.wbl-form{display:flex;flex-direction:column;gap:.65rem}
+.wbl-label{font-size:.85rem;color:var(--wbl-muted)}
+.wbl-input{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid var(--wbl-line);
+  background:#fff;
+  border-radius:12px;
+  padding:.85rem 1rem;
+  font-size:1rem;
+  transition:border-color .15s, box-shadow .15s;
+}
+.wbl-input:focus{
+  outline:none;
+  border-color:var(--wbl-primary);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--wbl-primary) 22%, transparent);
+}
+.wbl-input-code{letter-spacing:.35em;text-align:center;font-size:1.35rem;font-weight:700}
+.wbl-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.55rem;
+  width:100%;
+  box-sizing:border-box;
+  border:0;
+  border-radius:12px;
+  padding:.9rem 1rem;
+  font-size:.95rem;
+  font-weight:700;
+  cursor:pointer;
+  text-decoration:none;
+  transition:transform .12s ease, opacity .12s ease, background .12s ease;
+}
+.wbl-btn:active{transform:scale(.98)}
+.wbl-btn:disabled{opacity:.55;cursor:not-allowed}
+.wbl-btn-primary{background:var(--wbl-primary);color:#fff}
+.wbl-btn-primary:hover{filter:brightness(.95);color:#fff}
+.wbl-btn-google{
+  background:#fff;
+  color:#1f2937;
+  border:1px solid var(--wbl-line);
+}
+.wbl-btn-google:hover{background:#f8fafc;color:#111}
+.wbl-btn-ghost{
+  background:transparent;
+  color:var(--wbl-ink);
+  border:1px solid var(--wbl-line);
+}
+.wbl-divider{
+  display:flex;
+  align-items:center;
+  gap:.75rem;
+  margin:1rem 0;
+  color:var(--wbl-muted);
+  font-size:.8rem;
+}
+.wbl-divider::before,.wbl-divider::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:var(--wbl-line);
+}
+.wbl-hint{margin:0;color:var(--wbl-muted);font-size:.88rem;line-height:1.5}
+.wbl-link{
+  background:none;
+  border:0;
+  color:var(--wbl-primary);
+  cursor:pointer;
+  font-size:.88rem;
+  padding:.25rem 0;
+  text-align:center;
+}
+.wbl-link:disabled{opacity:.5;cursor:not-allowed}
+.wbl-link-muted{color:var(--wbl-muted)}
+.wbl-actions{display:flex;gap:.5rem}
+.wbl-logged{text-align:center}
+.wbl-error{color:#b91c1c;padding:1rem;text-align:center}
+@media (max-width:480px){
+  .wbl-box{margin:1rem .5rem;padding:1.35rem 1.1rem}
+  .wbl-actions{flex-direction:column}
+}
