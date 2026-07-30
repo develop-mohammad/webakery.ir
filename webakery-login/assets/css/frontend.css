@@ -1,115 +1,245 @@
-/* ورود آسان — فرانت */
+/* ورود آسان — مینیمال، سازگار با Elementor */
 .wbl-box{
-  --wbl-primary:#0f766e;
-  --wbl-ink:#0f172a;
-  --wbl-muted:#64748b;
-  --wbl-line:#e2e8f0;
-  --wbl-bg:#f8fafc;
-  max-width:420px;
-  margin:1.5rem auto;
-  padding:1.75rem 1.5rem 1.5rem;
-  border-radius:18px;
-  background:
-    radial-gradient(120% 80% at 100% 0%, color-mix(in srgb, var(--wbl-primary) 18%, white), transparent 55%),
-    linear-gradient(180deg,#fff 0%, var(--wbl-bg) 100%);
-  border:1px solid var(--wbl-line);
-  box-shadow:0 10px 30px rgba(15,23,42,.06);
-  font-family:Tahoma, Vazirmatn, system-ui, sans-serif;
-  color:var(--wbl-ink);
+  --wbl-accent: var(--e-global-color-primary, var(--wbl-primary, #171717));
+  --wbl-text: var(--e-global-color-text, currentColor);
+  --wbl-muted: color-mix(in srgb, var(--wbl-text) 48%, transparent);
+  --wbl-line: color-mix(in srgb, var(--wbl-text) 14%, transparent);
+  --wbl-soft: color-mix(in srgb, var(--wbl-text) 5%, transparent);
+  width:100%;
+  max-width:100%;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  border-radius:0;
+  color:var(--wbl-text);
+  font-family:inherit;
+  font-size:inherit;
+  line-height:1.6;
   direction:rtl;
   text-align:right;
+  box-sizing:border-box;
 }
-.wbl-head{margin-bottom:1.1rem}
-.wbl-title{margin:0 0 .35rem;font-size:1.35rem;font-weight:700;letter-spacing:-.02em}
-.wbl-sub{margin:0;color:var(--wbl-muted);font-size:.92rem;line-height:1.6}
+.wbl-box *,
+.wbl-box *::before,
+.wbl-box *::after{box-sizing:border-box}
+
+.wbl-head{margin:0 0 1.5rem}
+.wbl-title{
+  margin:0 0 .4rem;
+  padding:0;
+  border:0;
+  background:none;
+  color:inherit;
+  font-family:inherit;
+  font-size:clamp(1.35rem, 2.2vw, 1.75rem);
+  font-weight:500;
+  letter-spacing:-.03em;
+  line-height:1.25;
+}
+.wbl-sub{
+  margin:0;
+  color:var(--wbl-muted);
+  font-size:.92em;
+  font-weight:400;
+  line-height:1.65;
+}
+
 .wbl-alert{
-  padding:.7rem .85rem;
-  border-radius:10px;
-  font-size:.88rem;
-  margin-bottom:.85rem;
+  margin:0 0 1rem;
+  padding:.55rem 0;
+  border:0;
+  border-bottom:1px solid currentColor;
+  border-radius:0;
+  background:transparent;
+  font-size:.88em;
   line-height:1.5;
 }
-.wbl-alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
-.wbl-alert-ok{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
-.wbl-form{display:flex;flex-direction:column;gap:.65rem}
-.wbl-label{font-size:.85rem;color:var(--wbl-muted)}
+.wbl-alert-error{color:#b42318;border-bottom-color:color-mix(in srgb, #b42318 35%, transparent)}
+.wbl-alert-ok{color:#067647;border-bottom-color:color-mix(in srgb, #067647 35%, transparent)}
+
+.wbl-form{display:flex;flex-direction:column;gap:1rem;margin:0}
+.wbl-field{display:flex;flex-direction:column;gap:.45rem}
+.wbl-label{
+  margin:0;
+  color:var(--wbl-muted);
+  font-size:.78em;
+  font-weight:500;
+  letter-spacing:.02em;
+}
 .wbl-input{
   width:100%;
-  box-sizing:border-box;
-  border:1px solid var(--wbl-line);
-  background:#fff;
-  border-radius:12px;
-  padding:.85rem 1rem;
-  font-size:1rem;
-  transition:border-color .15s, box-shadow .15s;
+  margin:0;
+  padding:.7rem 0;
+  border:0;
+  border-bottom:1px solid var(--wbl-line);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none !important;
+  color:inherit;
+  font:inherit;
+  font-size:1.05em;
+  line-height:1.4;
+  transition:border-color .2s ease, background-color .2s ease;
+  -webkit-appearance:none;
+  appearance:none;
 }
+.wbl-input::placeholder{color:var(--wbl-muted);opacity:.75}
+.wbl-input:hover{border-bottom-color:color-mix(in srgb, var(--wbl-text) 35%, transparent)}
 .wbl-input:focus{
   outline:none;
-  border-color:var(--wbl-primary);
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--wbl-primary) 22%, transparent);
+  border-bottom-color:var(--wbl-accent);
+  background:transparent;
+  box-shadow:none !important;
 }
-.wbl-input-code{letter-spacing:.35em;text-align:center;font-size:1.35rem;font-weight:700}
+.wbl-input-code{
+  letter-spacing:.42em;
+  text-align:center;
+  font-size:1.5em;
+  font-weight:500;
+  padding:.9rem 0;
+}
+
 .wbl-btn{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  gap:.55rem;
+  gap:.5rem;
   width:100%;
-  box-sizing:border-box;
-  border:0;
-  border-radius:12px;
-  padding:.9rem 1rem;
-  font-size:.95rem;
-  font-weight:700;
-  cursor:pointer;
+  margin:0;
+  padding:.95rem 1.1rem;
+  border:1px solid transparent;
+  border-radius:0;
+  background:var(--wbl-accent);
+  color:#fff;
+  font:inherit;
+  font-size:.95em;
+  font-weight:500;
+  letter-spacing:.01em;
+  line-height:1.2;
   text-decoration:none;
-  transition:transform .12s ease, opacity .12s ease, background .12s ease;
+  cursor:pointer;
+  transition:opacity .15s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+  -webkit-appearance:none;
+  appearance:none;
 }
-.wbl-btn:active{transform:scale(.98)}
-.wbl-btn:disabled{opacity:.55;cursor:not-allowed}
-.wbl-btn-primary{background:var(--wbl-primary);color:#fff}
-.wbl-btn-primary:hover{filter:brightness(.95);color:#fff}
+.wbl-btn:hover,
+.wbl-btn:focus{
+  opacity:.92;
+  color:#fff;
+  text-decoration:none;
+}
+.wbl-btn:focus-visible{
+  outline:2px solid var(--wbl-accent);
+  outline-offset:3px;
+}
+.wbl-btn:active{opacity:.86}
+.wbl-btn:disabled{opacity:.45;cursor:not-allowed}
+.wbl-btn-primary{background:var(--wbl-accent);color:#fff;border-color:var(--wbl-accent)}
+
 .wbl-btn-google{
-  background:#fff;
-  color:#1f2937;
-  border:1px solid var(--wbl-line);
+  background:transparent;
+  color:inherit;
+  border-color:var(--wbl-line);
 }
-.wbl-btn-google:hover{background:#f8fafc;color:#111}
+.wbl-btn-google:hover,
+.wbl-btn-google:focus{
+  background:var(--wbl-soft);
+  color:inherit;
+  opacity:1;
+  border-color:color-mix(in srgb, var(--wbl-text) 28%, transparent);
+}
 .wbl-btn-ghost{
   background:transparent;
-  color:var(--wbl-ink);
-  border:1px solid var(--wbl-line);
+  color:inherit;
+  border-color:var(--wbl-line);
 }
+.wbl-btn-ghost:hover,
+.wbl-btn-ghost:focus{
+  background:var(--wbl-soft);
+  color:inherit;
+  opacity:1;
+}
+
 .wbl-divider{
   display:flex;
   align-items:center;
-  gap:.75rem;
-  margin:1rem 0;
+  gap:.85rem;
+  margin:1.15rem 0;
   color:var(--wbl-muted);
-  font-size:.8rem;
+  font-size:.75em;
+  letter-spacing:.08em;
 }
-.wbl-divider::before,.wbl-divider::after{
+.wbl-divider::before,
+.wbl-divider::after{
   content:"";
   flex:1;
   height:1px;
   background:var(--wbl-line);
 }
-.wbl-hint{margin:0;color:var(--wbl-muted);font-size:.88rem;line-height:1.5}
-.wbl-link{
-  background:none;
-  border:0;
-  color:var(--wbl-primary);
-  cursor:pointer;
-  font-size:.88rem;
-  padding:.25rem 0;
-  text-align:center;
+
+.wbl-hint{
+  margin:0;
+  color:var(--wbl-muted);
+  font-size:.88em;
+  line-height:1.55;
 }
-.wbl-link:disabled{opacity:.5;cursor:not-allowed}
-.wbl-link-muted{color:var(--wbl-muted)}
-.wbl-actions{display:flex;gap:.5rem}
-.wbl-logged{text-align:center}
-.wbl-error{color:#b91c1c;padding:1rem;text-align:center}
+.wbl-links{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:.5rem .75rem;
+  margin-top:.15rem;
+}
+.wbl-link{
+  display:inline;
+  margin:0;
+  padding:0;
+  border:0;
+  background:none;
+  box-shadow:none;
+  color:inherit;
+  font:inherit;
+  font-size:.86em;
+  text-decoration:underline;
+  text-underline-offset:.18em;
+  cursor:pointer;
+}
+.wbl-link:hover{opacity:.75}
+.wbl-link:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+  text-decoration:none;
+}
+.wbl-link-muted{color:var(--wbl-muted);text-decoration:none}
+.wbl-link-muted:hover{text-decoration:underline;opacity:1}
+
+.wbl-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.6rem;
+  margin:.85rem 0 0;
+}
+.wbl-actions .wbl-btn{width:auto;min-width:8.5rem;flex:1}
+.wbl-logged{text-align:right}
+.wbl-logged p{margin:0 0 .35rem}
+.wbl-error{
+  margin:0;
+  padding:0;
+  color:#b42318;
+  font-size:.92em;
+}
+
+/* داخل ستون/ویجت المنتور */
+.elementor-widget-wbl-login .wbl-box,
+.elementor-shortcode .wbl-box{
+  max-width:100%;
+}
+
 @media (max-width:480px){
-  .wbl-box{margin:1rem .5rem;padding:1.35rem 1.1rem}
   .wbl-actions{flex-direction:column}
+  .wbl-actions .wbl-btn{width:100%}
+  .wbl-links{flex-direction:column;align-items:flex-start}
 }

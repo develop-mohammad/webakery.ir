@@ -25,6 +25,16 @@ class WBL_Plugin {
 		WBL_Google::hooks();
 		WBL_Frontend::hooks();
 		WBL_Admin::hooks();
+		if ( did_action( 'elementor/loaded' ) ) {
+			$this->load_elementor();
+		} else {
+			add_action( 'elementor/loaded', array( $this, 'load_elementor' ) );
+		}
+	}
+
+	public function load_elementor() {
+		require_once WBL_PATH . 'includes/class-wbl-elementor.php';
+		WBL_Elementor::hooks();
 	}
 
 	private function license() {

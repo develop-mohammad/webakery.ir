@@ -193,10 +193,10 @@ $tab       = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) 
 	<div class="wbl-admin-help">
 		<h2>راهنمای سریع</h2>
 		<ol>
-			<li>یک صفحه بسازید و شورت‌کد <code>[webakery_login]</code> را بگذارید.</li>
+			<li><strong>المنتور:</strong> ویجت «ورود آسان» را از دسته وب‌آکری بکشید (ظاهر مینیمال؛ عنوان را با Heading المنتور بگذارید).</li>
+			<li>یا شورت‌کد <code>[webakery_login]</code> / بدون عنوان: <code>[webakery_login show_title="0"]</code></li>
 			<li>در تب پیامک، پنل ملی‌پیامک (یا کاوه‌نگار / IPPanel / قاصدک) را وصل کنید.</li>
 			<li>برای جیمیل، OAuth Client در Google Cloud بسازید و Redirect URI را ثبت کنید.</li>
-			<li>پیامک تست بفرستید و یک‌بار ورود را امتحان کنید.</li>
 		</ol>
 	</div>
 </div>

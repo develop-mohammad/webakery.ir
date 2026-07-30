@@ -29,10 +29,10 @@ class WBL_Settings {
 			'sms_message'        => 'کد ورود شما: {code}',
 			'google_client_id'   => '',
 			'google_client_secret' => '',
-			'form_title'         => 'ورود / ثبت‌نام',
-			'form_subtitle'      => 'با شماره موبایل یا حساب جیمیل وارد شوید',
-			'phone_placeholder'  => 'مثلاً ۰۹۱۲۳۴۵۶۷۸۹',
-			'primary_color'      => '#0f766e',
+			'form_title'         => 'ورود',
+			'form_subtitle'      => 'شماره موبایل یا حساب گوگل',
+			'phone_placeholder'  => '۰۹۱۲۳۴۵۶۷۸۹',
+			'primary_color'      => '#171717',
 		);
 	}
 

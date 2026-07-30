@@ -62,8 +62,8 @@
     var resendBtn = qs(root, '[data-wbl-resend]');
     var backBtn = qs(root, '[data-wbl-back]');
     var hint = qs(root, '[data-wbl-hint]');
-    var phoneInput = qs(root, '#wbl-phone');
-    var codeInput = qs(root, '#wbl-code');
+    var phoneInput = qs(root, 'input[name="phone"]');
+    var codeInput = qs(root, 'input[name="code"]');
     var i18n = (window.WBL && WBL.i18n) || {};
     var currentPhone = '';
 
