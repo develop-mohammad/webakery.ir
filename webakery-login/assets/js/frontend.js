@@ -7,12 +7,18 @@
 
   function show(el, on) {
     if (!el) return;
-    el.hidden = !on;
     if (on) {
+      el.hidden = false;
+      el.removeAttribute('hidden');
+      el.style.removeProperty('display');
       el.classList.remove('is-enter');
       // reflow for restart animation
       void el.offsetWidth;
       el.classList.add('is-enter');
+    } else {
+      el.hidden = true;
+      el.setAttribute('hidden', '');
+      el.classList.remove('is-enter');
     }
   }
 
