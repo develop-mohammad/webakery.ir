@@ -101,7 +101,7 @@ class WBL_Login_Widget extends Widget_Base {
 		$this->add_control(
 			'accent',
 			array(
-				'label'     => 'رنگ دکمه',
+				'label'     => 'رنگ اکسنت / دکمه',
 				'type'      => Controls_Manager::COLOR,
 				'selectors' => array(
 					'{{WRAPPER}} .wbl-box' => '--wbl-primary: {{VALUE}}; --wbl-accent: {{VALUE}};',
@@ -116,6 +116,51 @@ class WBL_Login_Widget extends Widget_Base {
 				'type'      => Controls_Manager::COLOR,
 				'selectors' => array(
 					'{{WRAPPER}} .wbl-box' => '--wbl-text: {{VALUE}}; color: {{VALUE}};',
+				),
+			)
+		);
+
+		$this->add_control(
+			'glass_bg',
+			array(
+				'label'     => 'رنگ شیشه',
+				'type'      => Controls_Manager::COLOR,
+				'selectors' => array(
+					'{{WRAPPER}} .wbl-box' => 'background: linear-gradient(155deg, color-mix(in srgb, {{VALUE}} 78%, transparent) 0%, color-mix(in srgb, {{VALUE}} 38%, transparent) 100%);',
+				),
+			)
+		);
+
+		$this->add_control(
+			'blur',
+			array(
+				'label'      => 'شدت بلور شیشه',
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => array( 'px' ),
+				'range'      => array(
+					'px' => array( 'min' => 6, 'max' => 40 ),
+				),
+				'default'    => array(
+					'unit' => 'px',
+					'size' => 18,
+				),
+				'selectors'  => array(
+					'{{WRAPPER}} .wbl-box' => '-webkit-backdrop-filter: blur({{SIZE}}{{UNIT}}) saturate(1.35); backdrop-filter: blur({{SIZE}}{{UNIT}}) saturate(1.35);',
+				),
+			)
+		);
+
+		$this->add_control(
+			'radius',
+			array(
+				'label'      => 'گردی گوشه',
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => array( 'px' ),
+				'range'      => array(
+					'px' => array( 'min' => 8, 'max' => 40 ),
+				),
+				'selectors'  => array(
+					'{{WRAPPER}} .wbl-box' => '--wbl-radius: {{SIZE}}{{UNIT}}; border-radius: {{SIZE}}{{UNIT}};',
 				),
 			)
 		);

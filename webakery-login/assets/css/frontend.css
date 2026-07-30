@@ -1,18 +1,28 @@
-/* ورود آسان — مینیمال، سازگار با Elementor */
+/* ورود آسان — شیشه‌ای (Glass) + UX نرم */
 .wbl-box{
-  --wbl-accent: var(--e-global-color-primary, var(--wbl-primary, #171717));
-  --wbl-text: var(--e-global-color-text, currentColor);
-  --wbl-muted: color-mix(in srgb, var(--wbl-text) 48%, transparent);
-  --wbl-line: color-mix(in srgb, var(--wbl-text) 14%, transparent);
-  --wbl-soft: color-mix(in srgb, var(--wbl-text) 5%, transparent);
+  --wbl-accent: var(--e-global-color-primary, var(--wbl-primary, #0ea5a0));
+  --wbl-text: var(--e-global-color-text, #0f172a);
+  --wbl-muted: color-mix(in srgb, var(--wbl-text) 52%, transparent);
+  --wbl-glass: color-mix(in srgb, #ffffff 62%, transparent);
+  --wbl-glass-border: color-mix(in srgb, #ffffff 72%, transparent);
+  --wbl-glass-edge: color-mix(in srgb, var(--wbl-text) 8%, transparent);
+  --wbl-shine: color-mix(in srgb, #ffffff 55%, transparent);
+  --wbl-shadow: 0 18px 50px rgba(15, 23, 42, .12), 0 4px 14px rgba(15, 23, 42, .06);
+  --wbl-radius: 22px;
+  position:relative;
   width:100%;
   max-width:100%;
   margin:0;
-  padding:0;
-  border:0;
-  background:transparent;
-  box-shadow:none;
-  border-radius:0;
+  padding:1.75rem 1.45rem 1.5rem;
+  isolation:isolate;
+  overflow:hidden;
+  border:1px solid var(--wbl-glass-border);
+  border-radius:var(--wbl-radius);
+  background:
+    linear-gradient(155deg, color-mix(in srgb, #fff 78%, transparent) 0%, color-mix(in srgb, #fff 38%, transparent) 100%);
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  backdrop-filter: blur(18px) saturate(1.35);
+  box-shadow: var(--wbl-shadow), inset 0 1px 0 var(--wbl-shine);
   color:var(--wbl-text);
   font-family:inherit;
   font-size:inherit;
@@ -20,12 +30,62 @@
   direction:rtl;
   text-align:right;
   box-sizing:border-box;
+  animation:wbl-rise .55s cubic-bezier(.22,1,.36,1) both;
 }
+.wbl-box::before{
+  content:"";
+  position:absolute;
+  inset:-40% -20% auto auto;
+  width:220px;
+  height:220px;
+  border-radius:50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--wbl-accent) 35%, transparent) 0%, transparent 68%);
+  pointer-events:none;
+  z-index:0;
+  filter:blur(2px);
+  animation:wbl-float 8s ease-in-out infinite;
+}
+.wbl-box::after{
+  content:"";
+  position:absolute;
+  inset:auto auto -35% -15%;
+  width:180px;
+  height:180px;
+  border-radius:50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--wbl-accent) 22%, transparent) 0%, transparent 70%);
+  pointer-events:none;
+  z-index:0;
+  animation:wbl-float 10s ease-in-out infinite reverse;
+}
+.wbl-box > *{position:relative;z-index:1}
 .wbl-box *,
 .wbl-box *::before,
 .wbl-box *::after{box-sizing:border-box}
 
-.wbl-head{margin:0 0 1.5rem}
+@keyframes wbl-rise{
+  from{opacity:0; transform:translateY(14px) scale(.985)}
+  to{opacity:1; transform:none}
+}
+@keyframes wbl-float{
+  0%,100%{transform:translate3d(0,0,0)}
+  50%{transform:translate3d(-10px,12px,0)}
+}
+@keyframes wbl-step-in{
+  from{opacity:0; transform:translateY(8px)}
+  to{opacity:1; transform:none}
+}
+@keyframes wbl-shake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-4px)}
+  40%{transform:translateX(4px)}
+  60%{transform:translateX(-3px)}
+  80%{transform:translateX(3px)}
+}
+@keyframes wbl-spin{
+  to{transform:rotate(360deg)}
+}
+
+.wbl-head{margin:0 0 1.35rem}
 .wbl-title{
   margin:0 0 .4rem;
   padding:0;
@@ -33,8 +93,8 @@
   background:none;
   color:inherit;
   font-family:inherit;
-  font-size:clamp(1.35rem, 2.2vw, 1.75rem);
-  font-weight:500;
+  font-size:clamp(1.4rem, 2.4vw, 1.85rem);
+  font-weight:650;
   letter-spacing:-.03em;
   line-height:1.25;
 }
@@ -48,118 +108,151 @@
 
 .wbl-alert{
   margin:0 0 1rem;
-  padding:.55rem 0;
-  border:0;
-  border-bottom:1px solid currentColor;
-  border-radius:0;
-  background:transparent;
+  padding:.7rem .9rem;
+  border:1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius:14px;
+  background: color-mix(in srgb, #fff 55%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   font-size:.88em;
   line-height:1.5;
+  animation:wbl-step-in .28s ease both;
 }
-.wbl-alert-error{color:#b42318;border-bottom-color:color-mix(in srgb, #b42318 35%, transparent)}
-.wbl-alert-ok{color:#067647;border-bottom-color:color-mix(in srgb, #067647 35%, transparent)}
+.wbl-alert-error{color:#b42318}
+.wbl-alert-ok{color:#067647}
+.wbl-alert.is-shake{animation:wbl-shake .38s ease}
 
-.wbl-form{display:flex;flex-direction:column;gap:1rem;margin:0}
+.wbl-form{
+  display:flex;
+  flex-direction:column;
+  gap:1rem;
+  margin:0;
+}
+.wbl-form.is-enter{animation:wbl-step-in .35s cubic-bezier(.22,1,.36,1) both}
 .wbl-field{display:flex;flex-direction:column;gap:.45rem}
 .wbl-label{
   margin:0;
   color:var(--wbl-muted);
   font-size:.78em;
-  font-weight:500;
+  font-weight:600;
   letter-spacing:.02em;
 }
 .wbl-input{
   width:100%;
   margin:0;
-  padding:.7rem 0;
-  border:0;
-  border-bottom:1px solid var(--wbl-line);
-  border-radius:0;
-  background:transparent;
-  box-shadow:none !important;
+  padding:.95rem 1rem;
+  border:1px solid var(--wbl-glass-edge);
+  border-radius:14px;
+  background: color-mix(in srgb, #fff 58%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 70%, transparent) !important;
   color:inherit;
   font:inherit;
-  font-size:1.05em;
+  font-size:1.02em;
   line-height:1.4;
-  transition:border-color .2s ease, background-color .2s ease;
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease, transform .2s ease;
   -webkit-appearance:none;
   appearance:none;
 }
-.wbl-input::placeholder{color:var(--wbl-muted);opacity:.75}
-.wbl-input:hover{border-bottom-color:color-mix(in srgb, var(--wbl-text) 35%, transparent)}
+.wbl-input::placeholder{color:var(--wbl-muted);opacity:.7}
+.wbl-input:hover{
+  border-color: color-mix(in srgb, var(--wbl-accent) 28%, var(--wbl-glass-edge));
+  background: color-mix(in srgb, #fff 70%, transparent);
+}
 .wbl-input:focus{
   outline:none;
-  border-bottom-color:var(--wbl-accent);
-  background:transparent;
-  box-shadow:none !important;
+  border-color: color-mix(in srgb, var(--wbl-accent) 65%, transparent);
+  background: color-mix(in srgb, #fff 78%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 80%, transparent),
+    0 0 0 4px color-mix(in srgb, var(--wbl-accent) 18%, transparent) !important;
 }
 .wbl-input-code{
   letter-spacing:.42em;
   text-align:center;
-  font-size:1.5em;
-  font-weight:500;
-  padding:.9rem 0;
+  font-size:1.55em;
+  font-weight:650;
+  padding:1.05rem 1rem;
 }
 
 .wbl-btn{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  gap:.5rem;
+  gap:.55rem;
   width:100%;
   margin:0;
-  padding:.95rem 1.1rem;
+  padding:1rem 1.15rem;
   border:1px solid transparent;
-  border-radius:0;
-  background:var(--wbl-accent);
+  border-radius:14px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--wbl-accent) 92%, #fff) 0%, var(--wbl-accent) 100%);
   color:#fff;
   font:inherit;
   font-size:.95em;
-  font-weight:500;
+  font-weight:650;
   letter-spacing:.01em;
   line-height:1.2;
   text-decoration:none;
   cursor:pointer;
-  transition:opacity .15s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--wbl-accent) 28%, transparent), inset 0 1px 0 color-mix(in srgb, #fff 35%, transparent);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, opacity .15s ease;
   -webkit-appearance:none;
   appearance:none;
 }
 .wbl-btn:hover,
 .wbl-btn:focus{
-  opacity:.92;
   color:#fff;
   text-decoration:none;
+  filter:brightness(1.03);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--wbl-accent) 34%, transparent), inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent);
 }
 .wbl-btn:focus-visible{
-  outline:2px solid var(--wbl-accent);
+  outline:2px solid color-mix(in srgb, var(--wbl-accent) 55%, transparent);
   outline-offset:3px;
 }
-.wbl-btn:active{opacity:.86}
-.wbl-btn:disabled{opacity:.45;cursor:not-allowed}
-.wbl-btn-primary{background:var(--wbl-accent);color:#fff;border-color:var(--wbl-accent)}
+.wbl-btn:active{transform:translateY(0);filter:brightness(.98)}
+.wbl-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;filter:none;box-shadow:none}
+.wbl-btn.is-loading{pointer-events:none}
+.wbl-btn.is-loading::after{
+  content:"";
+  width:.9em;
+  height:.9em;
+  border:2px solid color-mix(in srgb, #fff 35%, transparent);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:wbl-spin .7s linear infinite;
+}
+.wbl-btn-primary{color:#fff}
 
 .wbl-btn-google{
-  background:transparent;
+  background: color-mix(in srgb, #fff 55%, transparent);
   color:inherit;
-  border-color:var(--wbl-line);
+  border-color: var(--wbl-glass-edge);
+  box-shadow: inset 0 1px 0 var(--wbl-shine), 0 8px 20px rgba(15,23,42,.05);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 .wbl-btn-google:hover,
 .wbl-btn-google:focus{
-  background:var(--wbl-soft);
   color:inherit;
-  opacity:1;
-  border-color:color-mix(in srgb, var(--wbl-text) 28%, transparent);
+  filter:none;
+  background: color-mix(in srgb, #fff 78%, transparent);
+  border-color: color-mix(in srgb, var(--wbl-text) 16%, transparent);
+  box-shadow: inset 0 1px 0 #fff, 0 12px 24px rgba(15,23,42,.08);
 }
 .wbl-btn-ghost{
-  background:transparent;
+  background: color-mix(in srgb, #fff 40%, transparent);
   color:inherit;
-  border-color:var(--wbl-line);
+  border-color: var(--wbl-glass-edge);
+  box-shadow: inset 0 1px 0 var(--wbl-shine);
 }
 .wbl-btn-ghost:hover,
 .wbl-btn-ghost:focus{
-  background:var(--wbl-soft);
   color:inherit;
-  opacity:1;
+  filter:none;
+  background: color-mix(in srgb, #fff 70%, transparent);
 }
 
 .wbl-divider{
@@ -171,12 +264,18 @@
   font-size:.75em;
   letter-spacing:.08em;
 }
+.wbl-divider span{
+  padding:.2rem .65rem;
+  border-radius:999px;
+  background: color-mix(in srgb, #fff 45%, transparent);
+  border:1px solid var(--wbl-glass-edge);
+}
 .wbl-divider::before,
 .wbl-divider::after{
   content:"";
   flex:1;
   height:1px;
-  background:var(--wbl-line);
+  background: linear-gradient(90deg, transparent, var(--wbl-glass-edge), transparent);
 }
 
 .wbl-hint{
@@ -191,55 +290,66 @@
   align-items:center;
   justify-content:space-between;
   gap:.5rem .75rem;
-  margin-top:.15rem;
+  margin-top:.1rem;
 }
 .wbl-link{
-  display:inline;
+  display:inline-flex;
+  align-items:center;
   margin:0;
-  padding:0;
+  padding:.35rem .55rem;
   border:0;
-  background:none;
+  border-radius:10px;
+  background:transparent;
   box-shadow:none;
   color:inherit;
   font:inherit;
   font-size:.86em;
-  text-decoration:underline;
-  text-underline-offset:.18em;
-  cursor:pointer;
-}
-.wbl-link:hover{opacity:.75}
-.wbl-link:disabled{
-  opacity:.4;
-  cursor:not-allowed;
+  font-weight:550;
   text-decoration:none;
+  cursor:pointer;
+  transition: background .15s ease, opacity .15s ease;
 }
-.wbl-link-muted{color:var(--wbl-muted);text-decoration:none}
-.wbl-link-muted:hover{text-decoration:underline;opacity:1}
+.wbl-link:hover{background: color-mix(in srgb, #fff 55%, transparent)}
+.wbl-link:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+  background:transparent;
+}
+.wbl-link-muted{color:var(--wbl-muted)}
 
 .wbl-actions{
   display:flex;
   flex-wrap:wrap;
-  gap:.6rem;
-  margin:.85rem 0 0;
+  gap:.65rem;
+  margin:.95rem 0 0;
 }
 .wbl-actions .wbl-btn{width:auto;min-width:8.5rem;flex:1}
 .wbl-logged{text-align:right}
 .wbl-logged p{margin:0 0 .35rem}
 .wbl-error{
   margin:0;
-  padding:0;
+  padding:.2rem 0;
   color:#b42318;
   font-size:.92em;
 }
 
-/* داخل ستون/ویجت المنتور */
 .elementor-widget-wbl-login .wbl-box,
 .elementor-shortcode .wbl-box{
   max-width:100%;
 }
 
 @media (max-width:480px){
+  .wbl-box{padding:1.4rem 1.15rem 1.25rem; border-radius:18px}
   .wbl-actions{flex-direction:column}
   .wbl-actions .wbl-btn{width:100%}
   .wbl-links{flex-direction:column;align-items:flex-start}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .wbl-box,
+  .wbl-box::before,
+  .wbl-box::after,
+  .wbl-form.is-enter,
+  .wbl-alert,
+  .wbl-btn{animation:none !important; transition:none !important}
 }

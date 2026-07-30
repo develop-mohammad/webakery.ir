@@ -8,6 +8,12 @@
   function show(el, on) {
     if (!el) return;
     el.hidden = !on;
+    if (on) {
+      el.classList.remove('is-enter');
+      // reflow for restart animation
+      void el.offsetWidth;
+      el.classList.add('is-enter');
+    }
   }
 
   function setAlert(root, type, msg) {
@@ -19,7 +25,24 @@
     var target = type === 'ok' ? ok : err;
     if (!target) return;
     target.textContent = msg;
-    show(target, true);
+    target.hidden = false;
+    target.classList.remove('is-shake');
+    void target.offsetWidth;
+    if (type !== 'ok') target.classList.add('is-shake');
+  }
+
+  function setLoading(btn, on, label) {
+    if (!btn) return;
+    if (on) {
+      btn.dataset.oldText = btn.textContent;
+      btn.classList.add('is-loading');
+      btn.disabled = true;
+      btn.textContent = label || '…';
+    } else {
+      btn.classList.remove('is-loading');
+      btn.disabled = false;
+      if (btn.dataset.oldText) btn.textContent = btn.dataset.oldText;
+    }
   }
 
   function post(action, data) {
@@ -92,9 +115,7 @@
       setAlert(root, '', '');
       var phone = phoneInput ? phoneInput.value.trim() : '';
       if (!phone) return;
-      sendBtn.disabled = true;
-      var old = sendBtn.textContent;
-      sendBtn.textContent = i18n.sending || '…';
+      setLoading(sendBtn, true, i18n.sending || '…');
       post('wbl_send_otp', { phone: phone })
         .then(function (res) {
           if (res && res.success) {
@@ -108,8 +129,7 @@
           setAlert(root, 'err', i18n.error);
         })
         .finally(function () {
-          sendBtn.disabled = false;
-          sendBtn.textContent = old;
+          setLoading(sendBtn, false);
         });
     });
 
@@ -119,14 +139,12 @@
         setAlert(root, '', '');
         var code = codeInput ? codeInput.value.trim() : '';
         if (!code) return;
-        verifyBtn.disabled = true;
-        var old = verifyBtn.textContent;
-        verifyBtn.textContent = i18n.verifying || '…';
+        setLoading(verifyBtn, true, i18n.verifying || '…');
         post('wbl_verify_otp', { phone: currentPhone || (phoneInput && phoneInput.value), code: code })
           .then(function (res) {
             if (res && res.success) {
               setAlert(root, 'ok', (res.data && res.data.message) || 'OK');
-              var redir = (root.getAttribute('data-redirect') || (res.data && res.data.redirect) || '/');
+              var redir = root.getAttribute('data-redirect') || (res.data && res.data.redirect) || '/';
               window.location.href = redir;
             } else {
               setAlert(root, 'err', (res && res.data && res.data.message) || i18n.error);
@@ -136,8 +154,7 @@
             setAlert(root, 'err', i18n.error);
           })
           .finally(function () {
-            verifyBtn.disabled = false;
-            verifyBtn.textContent = old;
+            setLoading(verifyBtn, false);
           });
       });
 

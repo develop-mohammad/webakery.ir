@@ -4,7 +4,7 @@ Tags: login, otp, sms, google, melipayamak, woocommerce
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 
 ورود و ثبت‌نام با شماره موبایل (OTP) و جیمیل — ملی‌پیامک، کاوه‌نگار، IPPanel، قاصدک.
@@ -27,6 +27,10 @@ License: GPLv2 or later
 3. شورت‌کد را در یک صفحه قرار دهید
 
 == Changelog ==
+
+= 1.0.2 =
+* UI شیشه‌ای (Glassmorphism) با انیمیشن و لودینگ
+* کنترل بلور/رنگ شیشه در ویجت المنتور
 
 = 1.0.1 =
 * ظاهر مینیمال و سازگار با فونت/رنگ Global المنتور
