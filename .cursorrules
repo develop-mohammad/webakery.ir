@@ -1,0 +1,86 @@
+# webakery.ir — Cursor Rules
+
+Monorepo of **webakery.ir** PHP products. Primary UI language is **Persian (Farsi) / RTL**. There is **no** Composer, npm, build step, or automated test suite.
+
+## Products
+
+| Path | Product | Notes |
+|------|---------|--------|
+| `nobat-man/` | نوبت من | Jalali booking; WooCommerce; Pro via license |
+| `hesabdar/` | حسابدار | WC orders / invoices / accountant portal |
+| `baget/` | بگت | WC checkout field editor; license slug **`wccp`** |
+| `access-levels/` | بربری | Admin access control |
+| `webakery-chat-box/` | چت باکس | Chat widget; license slug **`webakery-chat`** |
+| `webakery-font-swap/` | Font Swap | `font-display: swap` utility |
+| `webakery-quiet-notices/` | سکوت نوتیف | Quiet admin notices |
+| `webakery-unused-assets/` | Chrome extension (MV3) | Not a WP plugin |
+| `license-server/` | License / pay / updates API | Standalone PHP; JSON storage |
+| `license-server-updates/` | Ops notes for registering products | |
+
+Root `*.zip` files are shipped artifacts. See `README.md` for the catalog (versions there may lag — trust plugin headers + `LS_UPDATES`).
+
+## Coding conventions
+
+- PHP 7.4+ style targeting WordPress ≥ 5.8; WooCommerce where required.
+- Bootstrap: `defined( 'ABSPATH' ) || exit;`, version/path/URL constants, singleton `::instance()` when that pattern already exists.
+- Prefer matching the **existing** naming in that plugin:
+  - WP-style `class-{prefix}-*.php` + `NM_*` / `AL_*` / `WBCB_*` / `WAP_*`
+  - Baget: namespace `WCCP\` + PSR-ish file names
+- AJAX: nonce + capability checks (`check_ajax_referer` / `wp_verify_nonce`, `manage_options` or `manage_woocommerce`).
+- Escape output (`esc_html`, `esc_attr`, `esc_url`, etc.).
+- Keep admin/front UI **Persian** and **RTL** (`dir="rtl"`, `lang="fa"`). Do not anglicize existing copy.
+- Assets: vanilla JS / jQuery (when WP provides it) and plain CSS; no new bundler unless already present.
+- Shared license client: `includes/class-wb-license.php` (copied per plugin). Keep copies in sync or change carefully.
+
+## License product IDs
+
+Endpoint: `https://webakery.ir/license-server`
+
+| Folder | License slug |
+|--------|----------------|
+| `baget` | `wccp` |
+| `webakery-chat-box` | `webakery-chat` |
+| others | usually same as folder name |
+
+Server registry lives in `license-server/config.php` (`LS_PRICES`, `LS_PLANS`, `LS_PLUGIN_LABELS`, `LS_UPDATES`). Prices are **ریال** (÷10 for تومان display). Do not invent real secrets; production overrides may live on the host.
+
+## Releases / packaging
+
+When shipping a plugin change:
+
+1. Bump plugin header `Version:` and `*_VERSION` (and DB version constants if schema changes).
+2. Update `readme.txt` Stable tag / changelog when present.
+3. Sync `LS_UPDATES[{slug}]` version, package URL, and changelog in `license-server/config.php`.
+4. Rebuild the ZIP at repo root and under `license-server/updates/` when that flow is in use.
+5. Package URLs often use **folder** names (e.g. `baget.zip`) even when the license slug differs (`wccp`).
+
+ZIP layout is inconsistent across products (some nest under a folder, some are flat). Preserve the layout that product already uses so WordPress installs as `wp-content/plugins/{slug}/{main}.php`.
+
+## Scope discipline
+
+- Change only the product/files related to the request.
+- Prefer small, reviewable diffs; avoid drive-by refactors and unrelated markdown.
+- Do not commit real license data, payment secrets, or OAuth credentials.
+- `license-server` uses JSON flat-file storage under `data/` — avoid committing live `licenses.json` changes from local tests.
+
+## Cloud / local WordPress (when the snapshot is present)
+
+If `/home/ubuntu/wordpress` exists, plugins may be symlinked there. Typical services (start each session; nothing auto-starts):
+
+```bash
+sudo mysqld_safe --datadir=/var/lib/mysql >/tmp/mysqld.log 2>&1 &
+php -S 0.0.0.0:8080 -t /home/ubuntu/wordpress /home/ubuntu/wp-router.php >/tmp/wp-server.log 2>&1 &
+php -S 0.0.0.0:8090 -t /workspace/license-server >/tmp/license-server.log 2>&1 &
+```
+
+- WordPress: http://localhost:8080 — admin `admin` / `admin123`
+- License server: http://localhost:8090
+- Keep using `/home/ubuntu/wp-router.php` so symlinked plugin assets load (do not simplify to naive `realpath()`).
+- Quick syntax check: `php -l <file>`
+
+## Gotchas
+
+- Nobat Man / Hesabdar / Baget need WooCommerce active.
+- Hesabdar has HPOS awareness and legacy WCI conflict handling — don’t break those guards.
+- Cross-product hooks exist (e.g. Hesabdar ↔ Baget fields, Nobat Man ↔ Hesabdar / payment gateways). Check callers before renaming APIs.
+- External license activation, Zibal, and Google OAuth need network; local JSON license-server pages still work offline.
