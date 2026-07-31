@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>کاستومایزر قالب — ورود آسان</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../assets/css/frontend.css" />
+<link rel="stylesheet" href="../assets/css/templates.css" />
+<link rel="stylesheet" href="../assets/css/motion.css" />
+<style>
+  :root{--wbl-primary:#0d9488;--wbl-accent:#0d9488;--wbl-glass-blur:18px;--wbl-radius:28px;--wbl-panel-a:#0b3d3a;--wbl-panel-b:#0f766e}
+  body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif;background:#f1f5f4;color:#10231f}
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 16px;background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:5}
+  .bar label{font-size:12px;display:flex;align-items:center;gap:6px}
+  .bar select,.bar input[type=color],.bar input[type=number]{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid #cbd5e1}
+  .stage{padding:16px}
+  iframe{width:100%;min-height:860px;border:0;border-radius:16px;background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.08)}
+</style>
+</head>
+<body>
+  <div class="bar">
+    <strong>کاستومایزر</strong>
+    <label>قالب
+      <select id="layout">
+        <option value="split">اسپلیت</option>
+        <option value="centered">وسط‌چین</option>
+        <option value="form">فقط فرم</option>
+      </select>
+    </label>
+    <label>انیمیشن
+      <select id="anim">
+        <option value="hybrid">ترکیبی</option>
+        <option value="ios">iOS</option>
+        <option value="telegram">تلگرام</option>
+        <option value="none">خاموش</option>
+      </select>
+    </label>
+    <label>اکسنت <input type="color" id="accent" value="#0d9488" /></label>
+    <label>بلور <input type="number" id="blur" min="6" max="40" value="18" style="width:64px" /></label>
+    <label>گردی <input type="number" id="radius" min="8" max="40" value="28" style="width:64px" /></label>
+    <a href="./login-page.html">صفحه کامل →</a>
+  </div>
+  <div class="stage" id="stage"></div>
+  <script>
+    const stage = document.getElementById('stage');
+    function render() {
+      const layout = document.getElementById('layout').value;
+      const anim = document.getElementById('anim').value;
+      const accent = document.getElementById('accent').value;
+      const blur = document.getElementById('blur').value;
+      const radius = document.getElementById('radius').value;
+      document.documentElement.style.setProperty('--wbl-primary', accent);
+      document.documentElement.style.setProperty('--wbl-accent', accent);
+      document.documentElement.style.setProperty('--wbl-glass-blur', blur + 'px');
+      document.documentElement.style.setProperty('--wbl-radius', radius + 'px');
+      // load preview via query on login-page isn't enough — inject live shell snippet
+      fetch('./preview-fragment.html?v=1').then(r => r.text()).then(html => {
+        stage.innerHTML = html;
+        const shell = stage.querySelector('[data-wbl-shell]');
+        if (!shell) return;
+        shell.className = 'wbl-shell wbl-layout-' + layout + ' wbl-anim-' + anim;
+        shell.dataset.layout = layout;
+        shell.dataset.anim = anim;
+        // show/hide split structure pieces if switching layouts by reloading fragment variants
+      }).catch(() => {
+        stage.innerHTML = '<p style="padding:24px">برای پیش‌نمایش زنده، فایل preview-fragment را باز کنید یا از login-page.html استفاده کنید.</p>';
+      });
+    }
+    ['layout','anim','accent','blur','radius'].forEach(id => {
+      document.getElementById(id).addEventListener('change', () => {
+        // simpler: navigate params to a built-in preview
+        const q = new URLSearchParams({
+          layout: document.getElementById('layout').value,
+          anim: document.getElementById('anim').value,
+          accent: document.getElementById('accent').value,
+          blur: document.getElementById('blur').value,
+          radius: document.getElementById('radius').value,
+        });
+        stage.innerHTML = '<iframe src="live-preview.html?' + q.toString() + '" title="preview"></iframe>';
+      });
+    });
+    document.getElementById('layout').dispatchEvent(new Event('change'));
+  </script>
+</body>
+</html>

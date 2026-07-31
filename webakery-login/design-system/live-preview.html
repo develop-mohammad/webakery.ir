@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Live Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../assets/css/frontend.css" />
+<link rel="stylesheet" href="../assets/css/templates.css" />
+<link rel="stylesheet" href="../assets/css/motion.css" />
+<style>
+  html,body{margin:0;min-height:100%;font-family:Vazirmatn,Tahoma,sans-serif;background:#eef6f4}
+  body{padding:12px}
+</style>
+</head>
+<body>
+<script>
+  const q = new URLSearchParams(location.search);
+  const layout = q.get('layout') || 'split';
+  const anim = q.get('anim') || 'hybrid';
+  const accent = q.get('accent') || '#0d9488';
+  const blur = q.get('blur') || '18';
+  const radius = q.get('radius') || '28';
+  document.documentElement.style.setProperty('--wbl-primary', accent);
+  document.documentElement.style.setProperty('--wbl-accent', accent);
+  document.documentElement.style.setProperty('--wbl-glass-blur', blur + 'px');
+  document.documentElement.style.setProperty('--wbl-radius', radius + 'px');
+  window.WBL = {
+    ajax:'#', nonce:'demo', animation: anim,
+    i18n:{sending:'در حال ارسال…',verifying:'در حال بررسی…',resend:'ارسال مجدد',wait:'ارسال مجدد تا %s ثانیه',enterCode:'کد تأیید را وارد کنید',error:'خطا'}
+  };
+  window.fetch = function(url, opts){
+    const body = opts && opts.body; let action='';
+    if(body && body.get) action = body.get('action')||'';
+    return Promise.resolve({ json(){
+      if(action==='wbl_send_otp') return Promise.resolve({success:true,data:{phone:'09123456789',wait:5,message:'کد تأیید ارسال شد.'}});
+      if(action==='wbl_verify_otp') return Promise.resolve({success:true,data:{message:'ورود موفق',redirect:'#'}});
+      return Promise.resolve({success:false,data:{message:'دمو'}});
+    }});
+  };
+</script>
+<div class="wbl-shell wbl-layout-split wbl-anim-hybrid" data-wbl-shell id="shell">
+  <div class="wbl-layout-split" id="splitWrap">
+    <section class="wbl-visual">
+      <span class="wbl-brand-mark"><span class="dot"></span> ورود آسان</span>
+      <div class="wbl-visual-stage">
+        <div class="wbl-phone-scene" aria-hidden="true">
+          <span class="wbl-phone-ring wbl-phone-ring-a"></span>
+          <span class="wbl-phone-ring wbl-phone-ring-b"></span>
+          <span class="wbl-phone-glow"></span>
+          <div class="wbl-phone">
+            <div class="wbl-phone-screen">
+              <div class="wbl-phone-notch"></div>
+              <div class="wbl-sms">
+                <div class="wbl-sms-from"><strong>ورود آسان</strong><span>الان</span></div>
+                <p class="wbl-sms-body">کد ورود شما:</p>
+                <span class="wbl-sms-code">۴۸۲۹۱</span>
+              </div>
+              <div class="wbl-phone-bars"><i></i><i></i><i></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="wbl-visual-copy">
+          <h2>ورود در چند ثانیه</h2>
+          <p>با شماره موبایل یا جیمیل وارد شوید — بدون رمز پیچیده.</p>
+        </div>
+      </div>
+      <p class="wbl-visual-foot">webakery.ir · امن با OTP و Google</p>
+    </section>
+    <section class="wbl-split-form" id="formHost">
+      <div class="wbl-box" data-wbl-root>
+        <div class="wbl-head">
+          <h2 class="wbl-title">ورود به حساب</h2>
+          <p class="wbl-sub">شماره موبایل یا حساب گوگل</p>
+        </div>
+        <div class="wbl-alert wbl-alert-error" data-wbl-error hidden></div>
+        <div class="wbl-alert wbl-alert-ok" data-wbl-ok hidden></div>
+        <a class="wbl-btn wbl-btn-google" href="#">ادامه با گوگل</a>
+        <div class="wbl-divider"><span>یا</span></div>
+        <form class="wbl-form" data-wbl-step="phone" autocomplete="off">
+          <div class="wbl-field">
+            <label class="wbl-label" for="p">شماره موبایل</label>
+            <input id="p" class="wbl-input" name="phone" dir="ltr" placeholder="۰۹۱۲۳۴۵۶۷۸۹" />
+          </div>
+          <button class="wbl-btn wbl-btn-primary" data-wbl-send type="submit">دریافت کد</button>
+        </form>
+        <form class="wbl-form" data-wbl-step="code" hidden>
+          <p class="wbl-hint" data-wbl-hint></p>
+          <div class="wbl-field">
+            <label class="wbl-label" for="c">کد تأیید</label>
+            <input id="c" class="wbl-input wbl-input-code" name="code" dir="ltr" maxlength="8" placeholder="·····" />
+          </div>
+          <button class="wbl-btn wbl-btn-primary" data-wbl-verify type="submit">ورود</button>
+          <div class="wbl-links">
+            <button type="button" class="wbl-link" data-wbl-resend disabled>ارسال مجدد</button>
+            <button type="button" class="wbl-link wbl-link-muted" data-wbl-back>تغییر شماره</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>
+<script src="../assets/js/frontend.js"></script>
+<script>
+  const layout = new URLSearchParams(location.search).get('layout') || 'split';
+  const anim = new URLSearchParams(location.search).get('anim') || 'hybrid';
+  const shell = document.getElementById('shell');
+  const splitWrap = document.getElementById('splitWrap');
+  const formHost = document.getElementById('formHost');
+  const box = formHost.querySelector('.wbl-box');
+  shell.className = 'wbl-shell wbl-layout-' + layout + ' wbl-anim-' + anim;
+  if (layout === 'form' || layout === 'centered') {
+    const wrap = document.createElement('div');
+    wrap.className = layout === 'centered' ? 'wbl-layout-centered' : 'wbl-layout-form';
+    wrap.appendChild(box);
+    shell.innerHTML = '';
+    shell.appendChild(wrap);
+  }
+</script>
+</body>
+</html>

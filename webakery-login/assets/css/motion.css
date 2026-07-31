@@ -1,0 +1,158 @@
+/* انیمیشن‌های iOS / تلگرام / ترکیبی */
+
+/* —— Shared springs —— */
+:root{
+  --wbl-ease-ios: cubic-bezier(.22,1,.36,1);
+  --wbl-ease-ios-spring: cubic-bezier(.34,1.45,.64,1);
+  --wbl-ease-tg: cubic-bezier(.2,.9,.25,1);
+}
+
+/* reduce motion */
+@media (prefers-reduced-motion: reduce){
+  .wbl-anim-ios *,
+  .wbl-anim-telegram *,
+  .wbl-anim-hybrid *{
+    animation:none !important;
+    transition:none !important;
+  }
+}
+
+/* ========== iOS ========== */
+.wbl-anim-ios .wbl-box{
+  animation: wbl-ios-sheet .55s var(--wbl-ease-ios) both;
+}
+.wbl-anim-ios .wbl-form.is-enter{
+  animation: wbl-ios-push .42s var(--wbl-ease-ios-spring) both;
+}
+.wbl-anim-ios .wbl-btn{
+  transition: transform .18s var(--wbl-ease-ios), filter .18s ease, box-shadow .22s ease;
+}
+.wbl-anim-ios .wbl-btn:active{
+  transform: scale(.97);
+  filter: brightness(.97);
+}
+.wbl-anim-ios .wbl-input:focus{
+  transition: box-shadow .28s var(--wbl-ease-ios), border-color .28s ease, background .28s ease;
+}
+.wbl-anim-ios .wbl-alert{
+  animation: wbl-ios-fade-up .35s var(--wbl-ease-ios) both;
+}
+.wbl-anim-ios .wbl-phone{
+  animation: wbl-ios-float-in .7s var(--wbl-ease-ios-spring) both;
+}
+.wbl-anim-ios .wbl-sms{
+  animation: wbl-ios-pop .5s .2s both var(--wbl-ease-ios-spring);
+}
+.wbl-anim-ios .wbl-phone-ring-a{animation: wbl-ios-ring 6.5s ease-in-out infinite}
+.wbl-anim-ios .wbl-phone-ring-b{animation: wbl-ios-ring 8.5s ease-in-out infinite reverse}
+
+@keyframes wbl-ios-sheet{
+  from{opacity:0; transform:translateY(28px) scale(.96); filter:blur(6px)}
+  to{opacity:1; transform:none; filter:none}
+}
+@keyframes wbl-ios-push{
+  from{opacity:0; transform:translateX(-16px) scale(.98)}
+  to{opacity:1; transform:none}
+}
+@keyframes wbl-ios-fade-up{
+  from{opacity:0; transform:translateY(8px)}
+  to{opacity:1; transform:none}
+}
+@keyframes wbl-ios-float-in{
+  from{opacity:0; transform:translateY(30px) scale(.92)}
+  to{opacity:1; transform:none}
+}
+@keyframes wbl-ios-pop{
+  from{opacity:0; transform:scale(.86) translateY(8px)}
+  to{opacity:1; transform:none}
+}
+@keyframes wbl-ios-ring{
+  0%,100%{transform:scale(1); opacity:.5}
+  50%{transform:scale(1.045); opacity:1}
+}
+
+/* ========== Telegram ========== */
+.wbl-anim-telegram .wbl-box{
+  animation: wbl-tg-rise .38s var(--wbl-ease-tg) both;
+}
+.wbl-anim-telegram .wbl-form.is-enter{
+  animation: wbl-tg-slide .32s var(--wbl-ease-tg) both;
+}
+.wbl-anim-telegram .wbl-btn-primary{
+  transition: transform .12s var(--wbl-ease-tg), box-shadow .16s ease;
+  position:relative;
+  overflow:hidden;
+}
+.wbl-anim-telegram .wbl-btn-primary:active{transform:scale(.985)}
+.wbl-anim-telegram .wbl-btn-primary.wbl-ripple::after{
+  content:"";
+  position:absolute;
+  inset:auto auto 50% 50%;
+  width:8px;height:8px;margin:-4px;
+  border-radius:50%;
+  background:rgba(255,255,255,.35);
+  transform:scale(0);
+  animation: wbl-tg-ripple .45s var(--wbl-ease-tg) forwards;
+  pointer-events:none;
+}
+.wbl-anim-telegram .wbl-alert{
+  animation: wbl-tg-bubble .28s var(--wbl-ease-tg) both;
+}
+.wbl-anim-telegram .wbl-sms{
+  animation: wbl-tg-bubble .4s .15s both var(--wbl-ease-tg);
+  transform-origin: top right;
+}
+.wbl-anim-telegram .wbl-phone{
+  animation: wbl-tg-rise .45s var(--wbl-ease-tg) both;
+}
+.wbl-anim-telegram .wbl-sms-code{
+  animation: wbl-tg-code .35s .35s both var(--wbl-ease-tg);
+}
+
+@keyframes wbl-tg-rise{
+  from{opacity:0; transform:translateY(14px)}
+  to{opacity:1; transform:none}
+}
+@keyframes wbl-tg-slide{
+  from{opacity:0; transform:translateY(18px)}
+  to{opacity:1; transform:none}
+}
+@keyframes wbl-tg-bubble{
+  from{opacity:0; transform:translateY(12px) scale(.92)}
+  to{opacity:1; transform:none}
+}
+@keyframes wbl-tg-code{
+  from{opacity:0; letter-spacing:.55em; transform:scale(.9)}
+  to{opacity:1; letter-spacing:.28em; transform:none}
+}
+@keyframes wbl-tg-ripple{
+  to{transform:scale(42); opacity:0}
+}
+
+/* ========== Hybrid (پیشنهادی) ========== */
+.wbl-anim-hybrid .wbl-box{
+  animation: wbl-ios-sheet .55s var(--wbl-ease-ios) both;
+}
+.wbl-anim-hybrid .wbl-form.is-enter{
+  animation: wbl-tg-slide .34s var(--wbl-ease-tg) both;
+}
+.wbl-anim-hybrid .wbl-btn:active{transform:scale(.97)}
+.wbl-anim-hybrid .wbl-btn{transition:transform .16s var(--wbl-ease-ios), filter .16s ease, box-shadow .2s ease}
+.wbl-anim-hybrid .wbl-alert{animation: wbl-tg-bubble .3s var(--wbl-ease-tg) both}
+.wbl-anim-hybrid .wbl-phone{animation: wbl-ios-float-in .7s var(--wbl-ease-ios-spring) both}
+.wbl-anim-hybrid .wbl-sms{animation: wbl-tg-bubble .42s .18s both var(--wbl-ease-tg)}
+.wbl-anim-hybrid .wbl-sms-code{animation: wbl-tg-code .35s .38s both var(--wbl-ease-tg)}
+.wbl-anim-hybrid .wbl-phone-ring-a{animation: wbl-ios-ring 6.5s ease-in-out infinite}
+.wbl-anim-hybrid .wbl-phone-ring-b{animation: wbl-ios-ring 8.5s ease-in-out infinite reverse}
+
+/* success pulse */
+.wbl-anim-ios .wbl-alert-ok,
+.wbl-anim-telegram .wbl-alert-ok,
+.wbl-anim-hybrid .wbl-alert-ok{
+  animation: wbl-ok-pulse .45s var(--wbl-ease-ios) both;
+}
+@keyframes wbl-ok-pulse{
+  0%{opacity:0; transform:scale(.96)}
+  60%{transform:scale(1.02)}
+  100%{opacity:1; transform:none}
+}

@@ -52,7 +52,7 @@ class WBL_Admin {
 		check_admin_referer( 'wbl_settings' );
 		$input = isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : array(); // phpcs:ignore
 		// چک‌باکس‌های خالی.
-		foreach ( array( 'enable_phone', 'enable_google', 'auto_register', 'replace_wp_login' ) as $k ) {
+		foreach ( array( 'enable_phone', 'enable_google', 'auto_register', 'replace_wp_login', 'show_phone_visual' ) as $k ) {
 			if ( ! isset( $input[ $k ] ) ) {
 				$input[ $k ] = 0;
 			}

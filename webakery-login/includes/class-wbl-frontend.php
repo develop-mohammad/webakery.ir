@@ -18,6 +18,8 @@ class WBL_Frontend {
 
 	public static function register_assets() {
 		wp_register_style( 'wbl-frontend', WBL_URL . 'assets/css/frontend.css', array(), WBL_VERSION );
+		wp_register_style( 'wbl-templates', WBL_URL . 'assets/css/templates.css', array( 'wbl-frontend' ), WBL_VERSION );
+		wp_register_style( 'wbl-motion', WBL_URL . 'assets/css/motion.css', array( 'wbl-templates' ), WBL_VERSION );
 		wp_register_script( 'wbl-frontend', WBL_URL . 'assets/js/frontend.js', array(), WBL_VERSION, true );
 	}
 
@@ -34,7 +36,11 @@ class WBL_Frontend {
 
 		$s = WBL_Settings::all();
 		wp_enqueue_style( 'wbl-frontend' );
-		wp_add_inline_style( 'wbl-frontend', '.wbl-box{--wbl-primary:' . esc_attr( $s['primary_color'] ) . ';}' );
+		wp_enqueue_style( 'wbl-templates' );
+		if ( 'none' !== ( $s['animation_style'] ?? 'hybrid' ) ) {
+			wp_enqueue_style( 'wbl-motion' );
+		}
+		wp_add_inline_style( 'wbl-templates', self::inline_css( $s ) );
 		wp_enqueue_script( 'wbl-frontend' );
 
 		if ( ! self::$localized ) {
@@ -43,11 +49,12 @@ class WBL_Frontend {
 				'wbl-frontend',
 				'WBL',
 				array(
-					'ajax'     => admin_url( 'admin-ajax.php' ),
-					'nonce'    => wp_create_nonce( 'wbl_front' ),
-					'google'   => WBL_Google::enabled() ? WBL_Google::auth_url() : '',
-					'loggedIn' => is_user_logged_in(),
-					'i18n'     => array(
+					'ajax'      => admin_url( 'admin-ajax.php' ),
+					'nonce'     => wp_create_nonce( 'wbl_front' ),
+					'google'    => WBL_Google::enabled() ? WBL_Google::auth_url() : '',
+					'loggedIn'  => is_user_logged_in(),
+					'animation' => $s['animation_style'],
+					'i18n'      => array(
 						'sending'   => 'در حال ارسال…',
 						'verifying' => 'در حال بررسی…',
 						'resend'    => 'ارسال مجدد',
@@ -58,6 +65,21 @@ class WBL_Frontend {
 				)
 			);
 		}
+	}
+
+	public static function inline_css( array $s ) {
+		$css  = '.wbl-shell,.wbl-box{';
+		$css .= '--wbl-primary:' . esc_attr( $s['primary_color'] ) . ';';
+		$css .= '--wbl-accent:' . esc_attr( $s['primary_color'] ) . ';';
+		$css .= '--wbl-glass-blur:' . (int) $s['glass_blur'] . 'px;';
+		$css .= '--wbl-radius:' . (int) $s['glass_radius'] . 'px;';
+		$css .= '--wbl-panel-a:' . esc_attr( $s['panel_color_a'] ) . ';';
+		$css .= '--wbl-panel-b:' . esc_attr( $s['panel_color_b'] ) . ';';
+		$css .= '}';
+		if ( ! empty( $s['custom_css'] ) ) {
+			$css .= "\n" . $s['custom_css'];
+		}
+		return $css;
 	}
 
 	private static function page_has_shortcode() {
@@ -93,6 +115,7 @@ class WBL_Frontend {
 		}
 
 		self::enqueue();
+		$defaults = WBL_Settings::all();
 
 		$atts = shortcode_atts(
 			array(
@@ -100,6 +123,9 @@ class WBL_Frontend {
 				'show_title' => '1',
 				'title'      => '',
 				'subtitle'   => '',
+				'layout'     => $defaults['template_layout'],
+				'animation'  => $defaults['animation_style'],
+				'phone'      => $defaults['show_phone_visual'] ? '1' : '0',
 			),
 			$atts,
 			'webakery_login'
@@ -109,18 +135,20 @@ class WBL_Frontend {
 			$user = wp_get_current_user();
 			ob_start();
 			?>
-			<div class="wbl-box wbl-logged">
-				<p>سلام، <?php echo esc_html( $user->display_name ); ?></p>
-				<p class="wbl-actions">
-					<a class="wbl-btn wbl-btn-primary" href="<?php echo esc_url( WBL_Auth::redirect_url() ); ?>">حساب کاربری</a>
-					<a class="wbl-btn wbl-btn-ghost" href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>">خروج</a>
-				</p>
+			<div class="wbl-shell wbl-anim-<?php echo esc_attr( sanitize_html_class( $atts['animation'] ) ); ?>">
+				<div class="wbl-box wbl-logged">
+					<p>سلام، <?php echo esc_html( $user->display_name ); ?></p>
+					<p class="wbl-actions">
+						<a class="wbl-btn wbl-btn-primary" href="<?php echo esc_url( WBL_Auth::redirect_url() ); ?>">حساب کاربری</a>
+						<a class="wbl-btn wbl-btn-ghost" href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>">خروج</a>
+					</p>
+				</div>
 			</div>
 			<?php
 			return ob_get_clean();
 		}
 
-		$s = WBL_Settings::all();
+		$s = $defaults;
 		if ( '' !== $atts['title'] ) {
 			$s['form_title'] = sanitize_text_field( $atts['title'] );
 		}
@@ -128,15 +156,25 @@ class WBL_Frontend {
 			$s['form_subtitle'] = sanitize_text_field( $atts['subtitle'] );
 		}
 
-		$show_phone  = (int) $s['enable_phone'];
-		$show_google = WBL_Google::enabled();
-		$error       = isset( $_GET['wbl_error'] ) ? sanitize_text_field( wp_unslash( $_GET['wbl_error'] ) ) : ''; // phpcs:ignore
-		$redirect    = $atts['redirect'] ? esc_url_raw( $atts['redirect'] ) : '';
-		$show_title  = ! in_array( (string) $atts['show_title'], array( '0', 'no', 'false', 'off' ), true );
-		$uid         = 'wbl' . substr( md5( uniqid( (string) wp_rand(), true ) ), 0, 8 );
+		$layout = sanitize_key( $atts['layout'] );
+		if ( ! isset( WBL_Settings::layouts()[ $layout ] ) ) {
+			$layout = 'split';
+		}
+		$animation = sanitize_key( $atts['animation'] );
+		if ( ! isset( WBL_Settings::animations()[ $animation ] ) ) {
+			$animation = 'hybrid';
+		}
+
+		$show_phone         = (int) $s['enable_phone'];
+		$show_google        = WBL_Google::enabled();
+		$error              = isset( $_GET['wbl_error'] ) ? sanitize_text_field( wp_unslash( $_GET['wbl_error'] ) ) : ''; // phpcs:ignore
+		$redirect           = $atts['redirect'] ? esc_url_raw( $atts['redirect'] ) : '';
+		$show_title         = ! in_array( (string) $atts['show_title'], array( '0', 'no', 'false', 'off' ), true );
+		$show_phone_visual  = ! in_array( (string) $atts['phone'], array( '0', 'no', 'false', 'off' ), true );
+		$uid                = 'wbl' . substr( md5( uniqid( (string) wp_rand(), true ) ), 0, 8 );
 
 		ob_start();
-		include WBL_PATH . 'templates/login-form.php';
+		include WBL_PATH . 'templates/login-shell.php';
 		return ob_get_clean();
 	}
 
@@ -147,7 +185,7 @@ class WBL_Frontend {
 		if ( ! (int) WBL_Settings::get( 'enable_phone', 1 ) && ! WBL_Google::enabled() ) {
 			return $message;
 		}
-		return self::shortcode() . $message;
+		return self::shortcode( array( 'layout' => 'form' ) ) . $message;
 	}
 
 	public static function maybe_replace_wp_login() {

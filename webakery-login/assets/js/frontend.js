@@ -116,11 +116,20 @@
       if (phoneInput) phoneInput.focus();
     }
 
+    function ripple(btn) {
+      if (!btn || !window.WBL || (WBL.animation !== 'telegram' && WBL.animation !== 'hybrid')) return;
+      btn.classList.remove('wbl-ripple');
+      void btn.offsetWidth;
+      btn.classList.add('wbl-ripple');
+      setTimeout(function () { btn.classList.remove('wbl-ripple'); }, 480);
+    }
+
     phoneForm.addEventListener('submit', function (e) {
       e.preventDefault();
       setAlert(root, '', '');
       var phone = phoneInput ? phoneInput.value.trim() : '';
       if (!phone) return;
+      ripple(sendBtn);
       setLoading(sendBtn, true, i18n.sending || '…');
       post('wbl_send_otp', { phone: phone })
         .then(function (res) {
@@ -145,6 +154,7 @@
         setAlert(root, '', '');
         var code = codeInput ? codeInput.value.trim() : '';
         if (!code) return;
+        ripple(verifyBtn);
         setLoading(verifyBtn, true, i18n.verifying || '…');
         post('wbl_verify_otp', { phone: currentPhone || (phoneInput && phoneInput.value), code: code })
           .then(function (res) {

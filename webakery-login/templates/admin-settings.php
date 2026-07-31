@@ -17,6 +17,7 @@ $tab       = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) 
 
 	<nav class="nav-tab-wrapper">
 		<a class="nav-tab <?php echo 'general' === $tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-login&tab=general' ) ); ?>">عمومی</a>
+		<a class="nav-tab <?php echo 'appearance' === $tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-login&tab=appearance' ) ); ?>">ظاهر / قالب</a>
 		<a class="nav-tab <?php echo 'sms' === $tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-login&tab=sms' ) ); ?>">پیامک</a>
 		<a class="nav-tab <?php echo 'google' === $tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-login&tab=google' ) ); ?>">جیمیل / گوگل</a>
 		<a class="nav-tab <?php echo 'license' === $tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-licenses' ) ); ?>">لایسنس</a>
@@ -45,6 +46,81 @@ $tab       = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) 
 					<td>
 						<code dir="ltr"><?php echo esc_html( WBL_Google::redirect_uri() ); ?></code>
 						<p class="description">این آدرس را در Google Cloud Console → Credentials → Authorized redirect URIs ثبت کنید.</p>
+					</td>
+				</tr>
+			</table>
+
+		<?php elseif ( 'appearance' === $tab ) : ?>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th><label for="tpl">قالب صفحه</label></th>
+					<td>
+						<select id="tpl" name="settings[template_layout]" class="regular-text">
+							<?php foreach ( WBL_Settings::layouts() as $key => $label ) : ?>
+								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $s['template_layout'], $key ); ?>><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<p class="description">اسپلیت = پنل برند + موكاپ گوشی OTP + فرم. در المنتور هم قابل‌override است.</p>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="anim">استایل انیمیشن</label></th>
+					<td>
+						<select id="anim" name="settings[animation_style]" class="regular-text">
+							<?php foreach ( WBL_Settings::animations() as $key => $label ) : ?>
+								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $s['animation_style'], $key ); ?>><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<p class="description">iOS: اسپرینگ و sheet نرم · تلگرام: حباب پیام و اسلاید سریع · ترکیبی: هر دو.</p>
+					</td>
+				</tr>
+				<tr>
+					<th>موكاپ گوشی</th>
+					<td><label><input type="checkbox" name="settings[show_phone_visual]" value="1" <?php checked( ! empty( $s['show_phone_visual'] ) ); ?> /> نمایش گوشی OTP در قالب اسپلیت</label></td>
+				</tr>
+				<tr>
+					<th><label for="bh">تیتر پنل برند</label></th>
+					<td><input id="bh" type="text" class="large-text" name="settings[brand_headline]" value="<?php echo esc_attr( $s['brand_headline'] ); ?>" /></td>
+				</tr>
+				<tr>
+					<th><label for="bt">متن پنل برند</label></th>
+					<td><input id="bt" type="text" class="large-text" name="settings[brand_text]" value="<?php echo esc_attr( $s['brand_text'] ); ?>" /></td>
+				</tr>
+				<tr>
+					<th><label for="fcolor">رنگ اکسنت</label></th>
+					<td><input id="fcolor" type="color" name="settings[primary_color]" value="<?php echo esc_attr( $s['primary_color'] ); ?>" /></td>
+				</tr>
+				<tr>
+					<th>رنگ پنل برند</th>
+					<td>
+						<input type="color" name="settings[panel_color_a]" value="<?php echo esc_attr( $s['panel_color_a'] ); ?>" /> شروع
+						<input type="color" name="settings[panel_color_b]" value="<?php echo esc_attr( $s['panel_color_b'] ); ?>" /> میانی
+					</td>
+				</tr>
+				<tr>
+					<th>شیشه</th>
+					<td>
+						بلور <input type="number" min="6" max="40" name="settings[glass_blur]" value="<?php echo esc_attr( $s['glass_blur'] ); ?>" /> px —
+						گردی <input type="number" min="8" max="40" name="settings[glass_radius]" value="<?php echo esc_attr( $s['glass_radius'] ); ?>" /> px
+					</td>
+				</tr>
+				<tr>
+					<th><label for="ftitle">عنوان فرم</label></th>
+					<td><input id="ftitle" type="text" class="regular-text" name="settings[form_title]" value="<?php echo esc_attr( $s['form_title'] ); ?>" /></td>
+				</tr>
+				<tr>
+					<th><label for="fsub">زیرعنوان فرم</label></th>
+					<td><input id="fsub" type="text" class="large-text" name="settings[form_subtitle]" value="<?php echo esc_attr( $s['form_subtitle'] ); ?>" /></td>
+				</tr>
+				<tr>
+					<th><label for="fph">placeholder موبایل</label></th>
+					<td><input id="fph" type="text" class="regular-text" name="settings[phone_placeholder]" value="<?php echo esc_attr( $s['phone_placeholder'] ); ?>" /></td>
+				</tr>
+				<tr>
+					<th><label for="ccss">CSS سفارشی</label></th>
+					<td>
+						<textarea id="ccss" name="settings[custom_css]" class="large-text code" rows="6" dir="ltr" placeholder=".wbl-box{ }"><?php echo esc_textarea( $s['custom_css'] ); ?></textarea>
+						<p class="description">برای ریزتنظیم ظاهر. شورت‌کد نمونه: <code>[webakery_login layout="split" animation="telegram"]</code></p>
 					</td>
 				</tr>
 			</table>
@@ -167,20 +243,8 @@ $tab       = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) 
 					<td><label><input type="checkbox" name="settings[replace_wp_login]" value="1" <?php checked( ! empty( $s['replace_wp_login'] ) ); ?> /> هدایت /wp-login.php به صفحه ورود بالا</label></td>
 				</tr>
 				<tr>
-					<th><label for="ftitle">عنوان فرم</label></th>
-					<td><input id="ftitle" type="text" class="regular-text" name="settings[form_title]" value="<?php echo esc_attr( $s['form_title'] ); ?>" /></td>
-				</tr>
-				<tr>
-					<th><label for="fsub">زیرعنوان</label></th>
-					<td><input id="fsub" type="text" class="large-text" name="settings[form_subtitle]" value="<?php echo esc_attr( $s['form_subtitle'] ); ?>" /></td>
-				</tr>
-				<tr>
-					<th><label for="fph">placeholder موبایل</label></th>
-					<td><input id="fph" type="text" class="regular-text" name="settings[phone_placeholder]" value="<?php echo esc_attr( $s['phone_placeholder'] ); ?>" /></td>
-				</tr>
-				<tr>
-					<th><label for="fcolor">رنگ اصلی</label></th>
-					<td><input id="fcolor" type="color" name="settings[primary_color]" value="<?php echo esc_attr( $s['primary_color'] ); ?>" /></td>
+					<th>ظاهر</th>
+					<td><a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-login&tab=appearance' ) ); ?>">تنظیم قالب، انیمیشن و رنگ‌ها →</a></td>
 				</tr>
 			</table>
 		<?php endif; ?>

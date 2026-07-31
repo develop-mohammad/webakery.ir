@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ورود آسان | لاگین پیامکی و جیمیل
  * Description: ورود و ثبت‌نام با شماره موبایل (OTP) و جیمیل — اتصال به ملی‌پیامک، کاوه‌نگار، IPPanel و سایر پنل‌های پیامکی.
- * Version:     1.0.3
+ * Version:     1.1.0
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'WBL_LOADED' ) ) {
 	return;
 }
 define( 'WBL_LOADED', true );
-define( 'WBL_VERSION', '1.0.3' );
+define( 'WBL_VERSION', '1.1.0' );
 define( 'WBL_FILE', __FILE__ );
 define( 'WBL_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBL_URL', plugin_dir_url( __FILE__ ) );

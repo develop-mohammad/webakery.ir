@@ -30,7 +30,7 @@ class WBL_Login_Widget extends Widget_Base {
 	}
 
 	public function get_style_depends() {
-		return array( 'wbl-frontend' );
+		return array( 'wbl-frontend', 'wbl-templates', 'wbl-motion' );
 	}
 
 	public function get_script_depends() {
@@ -88,12 +88,54 @@ class WBL_Login_Widget extends Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'layout',
+			array(
+				'label'   => 'قالب',
+				'type'    => Controls_Manager::SELECT,
+				'default' => '',
+				'options' => array(
+					''         => 'پیش‌فرض افزونه',
+					'form'     => 'فقط فرم',
+					'split'    => 'اسپلیت + گوشی OTP',
+					'centered' => 'فرم وسط‌چین',
+				),
+			)
+		);
+
+		$this->add_control(
+			'animation',
+			array(
+				'label'   => 'انیمیشن',
+				'type'    => Controls_Manager::SELECT,
+				'default' => '',
+				'options' => array(
+					''         => 'پیش‌فرض افزونه',
+					'hybrid'   => 'ترکیبی iOS + تلگرام',
+					'ios'      => 'iOS',
+					'telegram' => 'تلگرام',
+					'none'     => 'خاموش',
+				),
+			)
+		);
+
+		$this->add_control(
+			'show_phone',
+			array(
+				'label'        => 'موكاپ گوشی',
+				'type'         => Controls_Manager::SWITCHER,
+				'return_value' => 'yes',
+				'default'      => 'yes',
+				'condition'    => array( 'layout' => array( 'split', '' ) ),
+			)
+		);
+
 		$this->end_controls_section();
 
 		$this->start_controls_section(
 			'section_style',
 			array(
-				'label' => 'استایل مینیمال',
+				'label' => 'استایل شیشه‌ای',
 				'tab'   => Controls_Manager::TAB_STYLE,
 			)
 		);
@@ -222,12 +264,19 @@ class WBL_Login_Widget extends Widget_Base {
 		$atts = array(
 			'redirect'   => $redirect,
 			'show_title' => $show_title ? '1' : '0',
+			'phone'      => ( 'yes' === ( $settings['show_phone'] ?? 'yes' ) ) ? '1' : '0',
 		);
 		if ( $show_title && ! empty( $settings['title'] ) ) {
 			$atts['title'] = $settings['title'];
 		}
 		if ( $show_title && ! empty( $settings['subtitle'] ) ) {
 			$atts['subtitle'] = $settings['subtitle'];
+		}
+		if ( ! empty( $settings['layout'] ) ) {
+			$atts['layout'] = $settings['layout'];
+		}
+		if ( ! empty( $settings['animation'] ) ) {
+			$atts['animation'] = $settings['animation'];
 		}
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
