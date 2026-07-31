@@ -63,3 +63,19 @@
 - قیمت: **۵۰۵,۰۰۰ تومان**
 - اعلان: ایمیل HTML + تلگرام (عکس) + واتساپ
 - زمینه محصول: نام + لینک + تصویر
+
+## قیمت‌گذاری درگاه (Gateway Pricing)
+
+کارمزد درگاه قسطی و تخفیف درگاه نقدی (زیبال / زرین‌پال).
+
+- نسخه: **1.0.0**
+- سازنده: **webakery.ir**
+- مسیر: `webakery-gateway-pricing/`
+- ZIP: `webakery-gateway-pricing.zip`
+- قیمت: **رایگان**
+- پیش‌فرض نقدی: `wc_zibal` ، `WC_ZPal` / `zarinpal`
+- کارمزد قسطی: درصد یا مبلغ ثابت (اسنپ‌پی، ترب‌پی و … خودکار)
+- تخفیف نقدی: درصد یا مبلغ ثابت
+- مسیر تنظیمات: ووکامرس → قیمت‌گذاری درگاه
+- دانلود: `https://webakery.ir/license-server/free/webakery-gateway-pricing.zip`
+- صفحه دانلود: `https://webakery.ir/license-server/free/`

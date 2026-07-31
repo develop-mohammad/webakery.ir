@@ -21,6 +21,7 @@ define( 'LS_PRICES', [
     'hesabdar'      => 7990000,   // حسابدار — ۷۹۹,۰۰۰ تومان
     'nobat-man'     => 5990000,   // نوبت من پرو — ۵۹۹,۰۰۰ تومان
     'webakery-chat' => 1500000,   // چت باکس — قیمت پیش‌فرض = ماهانه ۱۵۰,۰۰۰ تومان
+    // gateway-pricing رایگان است — در LS_PRICES فروشی نیست
 ] );
 
 // ─── پلن‌ها (اشتراکی / دائمی) — months=0 یعنی لایسنس مادام‌العمر ───
@@ -143,6 +144,14 @@ define( 'LS_UPDATES', [
         'tested'       => '6.7',
         'requires_php' => '7.4',
         'changelog'    => 'نسخه ۱.۴.۳: رفع نمایش ویجت + راهنمای مخفی بودن برای ادمین. ، ۳ ماهه ۳۵۰ و دائمی ۷۹۹ هزار تومان.',
+    ],
+    'gateway-pricing' => [
+        'version'      => '1.0.0',
+        'package'      => 'https://webakery.ir/license-server/updates/webakery-gateway-pricing.zip',
+        'requires'     => '5.8',
+        'tested'       => '6.7',
+        'requires_php' => '7.4',
+        'changelog'    => 'نسخه ۱.۰.۰ رایگان: کارمزد قسطی/تخفیف نقدی + سازگاری اسنپ‌پی/ترب‌پی.',
     ],
 ] );
 
