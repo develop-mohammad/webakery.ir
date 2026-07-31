@@ -10,9 +10,9 @@ class WBL_Elementor {
 		add_action( 'elementor/widgets/register', array( __CLASS__, 'register_widget' ) );
 		add_action( 'elementor/widgets/widgets_registered', array( __CLASS__, 'register_widget_legacy' ) );
 		add_action( 'elementor/elements/categories_registered', array( __CLASS__, 'category' ) );
+		// فقط در ادیتور/پیش‌نمایش المنتور — نه کل فرانت سایت.
 		add_action( 'elementor/editor/after_enqueue_styles', array( 'WBL_Frontend', 'enqueue' ) );
 		add_action( 'elementor/preview/enqueue_styles', array( 'WBL_Frontend', 'enqueue' ) );
-		add_action( 'elementor/frontend/after_enqueue_scripts', array( __CLASS__, 'maybe_enqueue_front' ) );
 	}
 
 	public static function category( $elements_manager ) {
@@ -36,21 +36,10 @@ class WBL_Elementor {
 			require_once WBL_PATH . 'includes/elementor/class-wbl-login-widget.php';
 		}
 		if ( method_exists( $widgets_manager, 'register' ) ) {
-			return; // قبلاً با hook جدید ثبت شده.
+			return;
 		}
 		if ( method_exists( $widgets_manager, 'register_widget_type' ) ) {
 			$widgets_manager->register_widget_type( new WBL_Login_Widget() );
-		}
-	}
-
-	public static function maybe_enqueue_front() {
-		if ( ! class_exists( '\Elementor\Plugin' ) ) {
-			return;
-		}
-		// در صفحات ساخته‌شده با المنتور همیشه آماده باشد (ویجت/شورت‌کد داخل کانواس).
-		if ( \Elementor\Plugin::$instance->preview->is_preview_mode()
-			|| \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
-			WBL_Frontend::enqueue();
 		}
 	}
 }

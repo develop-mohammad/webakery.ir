@@ -235,7 +235,7 @@ $tab       = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) 
 								<option value="<?php echo (int) $p->ID; ?>" <?php selected( (int) $s['login_page_id'], (int) $p->ID ); ?>><?php echo esc_html( $p->post_title ); ?></option>
 							<?php endforeach; ?>
 						</select>
-						<p class="description">صفحه‌ای که شورت‌کد <code>[webakery_login]</code> در آن قرار دارد.</p>
+						<p class="description">صفحه‌ای که شورت‌کد/ویجت ورود آسان در آن است. CSS/JS فقط روی همین صفحه (و صفحاتی که شورت‌کد دارند) لود می‌شود.</p>
 					</td>
 				</tr>
 				<tr>

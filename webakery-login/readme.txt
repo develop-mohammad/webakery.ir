@@ -4,7 +4,7 @@ Tags: login, otp, sms, google, melipayamak, woocommerce
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 
 ورود و ثبت‌نام با شماره موبایل (OTP) و جیمیل — ملی‌پیامک، کاوه‌نگار، IPPanel، قاصدک.
@@ -27,6 +27,9 @@ License: GPLv2 or later
 3. شورت‌کد را در یک صفحه قرار دهید
 
 == Changelog ==
+
+= 1.1.1 =
+* CSS/JS فقط در صفحه لاگین (شورت‌کد / ویجت / صفحه تعیین‌شده) بارگذاری می‌شود
 
 = 1.1.0 =
 * قالب قابل‌سفارشی‌سازی: form / split / centered

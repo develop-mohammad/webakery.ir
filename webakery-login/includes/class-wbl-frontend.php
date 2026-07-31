@@ -6,12 +6,16 @@ class WBL_Frontend {
 	/** @var bool */
 	private static $localized = false;
 
+	/** @var bool|null */
+	private static $should_load = null;
+
 	public static function hooks() {
 		add_shortcode( 'webakery_login', array( __CLASS__, 'shortcode' ) );
 		add_shortcode( 'wbl_login', array( __CLASS__, 'shortcode' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ), 5 );
-		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'maybe_enqueue' ) );
-		add_action( 'login_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'maybe_enqueue' ), 20 );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'ensure_not_global' ), 999 );
+		add_action( 'login_enqueue_scripts', array( __CLASS__, 'maybe_enqueue_wp_login' ) );
 		add_filter( 'login_message', array( __CLASS__, 'wp_login_inject' ) );
 		add_action( 'login_init', array( __CLASS__, 'maybe_replace_wp_login' ) );
 	}
@@ -23,10 +27,60 @@ class WBL_Frontend {
 		wp_register_script( 'wbl-frontend', WBL_URL . 'assets/js/frontend.js', array(), WBL_VERSION, true );
 	}
 
+	/**
+	 * فقط صفحه لاگین / شورت‌کد / ویجت ورود.
+	 */
+	public static function should_load_assets() {
+		if ( null !== self::$should_load ) {
+			return self::$should_load;
+		}
+
+		// ویرایشگر/پیش‌نمایش المنتور — فقط همان‌جا.
+		if ( self::is_elementor_edit_or_preview() ) {
+			self::$should_load = true;
+			return true;
+		}
+
+		$login_page_id = (int) WBL_Settings::get( 'login_page_id', 0 );
+		if ( $login_page_id && is_singular() && (int) get_queried_object_id() === $login_page_id ) {
+			self::$should_load = true;
+			return true;
+		}
+
+		if ( self::page_has_shortcode() || self::page_has_elementor_login_widget() ) {
+			self::$should_load = true;
+			return true;
+		}
+
+		self::$should_load = false;
+		return false;
+	}
+
 	public static function maybe_enqueue() {
-		if ( self::page_has_shortcode() || self::is_elementor_page() ) {
+		if ( self::should_load_assets() ) {
 			self::enqueue();
 		}
+	}
+
+	/** اگر جایی اشتباه enqueue شده باشد، از بقیه سایت حذف شود. */
+	public static function ensure_not_global() {
+		if ( self::should_load_assets() ) {
+			return;
+		}
+		wp_dequeue_style( 'wbl-frontend' );
+		wp_dequeue_style( 'wbl-templates' );
+		wp_dequeue_style( 'wbl-motion' );
+		wp_dequeue_script( 'wbl-frontend' );
+	}
+
+	public static function maybe_enqueue_wp_login() {
+		if ( ! WBL_Plugin::is_usable() ) {
+			return;
+		}
+		if ( ! (int) WBL_Settings::get( 'enable_phone', 1 ) && ! WBL_Google::enabled() ) {
+			return;
+		}
+		self::enqueue();
 	}
 
 	public static function enqueue() {
@@ -90,11 +144,17 @@ class WBL_Frontend {
 		if ( ! ( $post instanceof WP_Post ) ) {
 			return false;
 		}
-		return has_shortcode( $post->post_content, 'webakery_login' )
-			|| has_shortcode( $post->post_content, 'wbl_login' );
+		$content = (string) $post->post_content;
+		if ( has_shortcode( $content, 'webakery_login' ) || has_shortcode( $content, 'wbl_login' ) ) {
+			return true;
+		}
+		// بلوک شورت‌کد گوتنبرگ.
+		return false !== strpos( $content, '[webakery_login' )
+			|| false !== strpos( $content, '[wbl_login' );
 	}
 
-	private static function is_elementor_page() {
+	/** فقط اگر ویجت/شورت‌کد ورود آسان داخل دیتای المنتور باشد. */
+	private static function page_has_elementor_login_widget() {
 		if ( ! class_exists( '\Elementor\Plugin' ) || ! is_singular() ) {
 			return false;
 		}
@@ -102,8 +162,27 @@ class WBL_Frontend {
 		if ( ! $post_id ) {
 			return false;
 		}
-		return \Elementor\Plugin::$instance->documents->get( $post_id )
-			&& \Elementor\Plugin::$instance->db->is_built_with_elementor( $post_id );
+		$data = get_post_meta( $post_id, '_elementor_data', true );
+		if ( ! is_string( $data ) || '' === $data ) {
+			return false;
+		}
+		return false !== strpos( $data, '"widgetType":"wbl-login"' )
+			|| false !== strpos( $data, '[webakery_login' )
+			|| false !== strpos( $data, '[wbl_login' );
+	}
+
+	private static function is_elementor_edit_or_preview() {
+		if ( ! class_exists( '\Elementor\Plugin' ) ) {
+			return false;
+		}
+		$plugin = \Elementor\Plugin::$instance;
+		if ( isset( $plugin->editor ) && method_exists( $plugin->editor, 'is_edit_mode' ) && $plugin->editor->is_edit_mode() ) {
+			return true;
+		}
+		if ( isset( $plugin->preview ) && method_exists( $plugin->preview, 'is_preview_mode' ) && $plugin->preview->is_preview_mode() ) {
+			return true;
+		}
+		return false;
 	}
 
 	public static function shortcode( $atts = array() ) {
@@ -114,6 +193,8 @@ class WBL_Frontend {
 			return '';
 		}
 
+		// فقط وقتی واقعاً رندر می‌شود بارگذاری شود.
+		self::$should_load = true;
 		self::enqueue();
 		$defaults = WBL_Settings::all();
 
@@ -165,13 +246,13 @@ class WBL_Frontend {
 			$animation = 'hybrid';
 		}
 
-		$show_phone         = (int) $s['enable_phone'];
-		$show_google        = WBL_Google::enabled();
-		$error              = isset( $_GET['wbl_error'] ) ? sanitize_text_field( wp_unslash( $_GET['wbl_error'] ) ) : ''; // phpcs:ignore
-		$redirect           = $atts['redirect'] ? esc_url_raw( $atts['redirect'] ) : '';
-		$show_title         = ! in_array( (string) $atts['show_title'], array( '0', 'no', 'false', 'off' ), true );
-		$show_phone_visual  = ! in_array( (string) $atts['phone'], array( '0', 'no', 'false', 'off' ), true );
-		$uid                = 'wbl' . substr( md5( uniqid( (string) wp_rand(), true ) ), 0, 8 );
+		$show_phone        = (int) $s['enable_phone'];
+		$show_google       = WBL_Google::enabled();
+		$error             = isset( $_GET['wbl_error'] ) ? sanitize_text_field( wp_unslash( $_GET['wbl_error'] ) ) : ''; // phpcs:ignore
+		$redirect          = $atts['redirect'] ? esc_url_raw( $atts['redirect'] ) : '';
+		$show_title        = ! in_array( (string) $atts['show_title'], array( '0', 'no', 'false', 'off' ), true );
+		$show_phone_visual = ! in_array( (string) $atts['phone'], array( '0', 'no', 'false', 'off' ), true );
+		$uid               = 'wbl' . substr( md5( uniqid( (string) wp_rand(), true ) ), 0, 8 );
 
 		ob_start();
 		include WBL_PATH . 'templates/login-shell.php';
