@@ -1,0 +1,8 @@
+.wbl-admin{max-width:920px}
+.wbl-admin-lead{color:#475569;font-size:14px}
+.wbl-admin-form{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:8px 20px 16px;margin-top:12px}
+.wbl-admin-help{margin-top:24px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px}
+.wbl-admin-help ol{margin:8px 0 0 1.2rem}
+#wbl-test-result{margin-right:10px;font-size:13px}
+#wbl-test-result.ok{color:#047857}
+#wbl-test-result.err{color:#b91c1c}

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ورود آسان — Canvas Preview</title>
+<link rel="stylesheet" href="assets/css/frontend.css?v=103" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;650;700&display=swap');
+  :root{ --wbl-primary:#0ea5a0; }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:"Vazirmatn", Tahoma, sans-serif;
+    color:#0f172a;
+    background:
+      radial-gradient(900px 500px at 10% 10%, #5eead4 0%, transparent 55%),
+      radial-gradient(800px 480px at 90% 20%, #93c5fd 0%, transparent 50%),
+      radial-gradient(700px 500px at 50% 100%, #f9a8d4 0%, transparent 55%),
+      linear-gradient(160deg, #eef2ff 0%, #f8fafc 45%, #ecfeff 100%);
+    display:grid;
+    place-items:center;
+    padding:32px 16px;
+  }
+  .stage{
+    width:min(420px, 100%);
+  }
+  .note{
+    margin:16px auto 0;
+    max-width:420px;
+    text-align:center;
+    color:#475569;
+    font-size:13px;
+  }
+  .toolbar{
+    display:flex; gap:8px; justify-content:center; flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .toolbar button{
+    border:1px solid rgba(15,23,42,.12);
+    background:rgba(255,255,255,.55);
+    backdrop-filter:blur(10px);
+    border-radius:999px;
+    padding:8px 14px;
+    cursor:pointer;
+    font:inherit;
+  }
+</style>
+</head>
+<body>
+  <div>
+    <div class="toolbar">
+      <button type="button" id="btn-phone">مرحله موبایل</button>
+      <button type="button" id="btn-code">مرحله کد</button>
+      <button type="button" id="btn-err">نمایش خطا</button>
+    </div>
+    <div class="stage">
+      <div class="wbl-box" data-wbl-root>
+        <div class="wbl-head">
+          <h2 class="wbl-title">ورود</h2>
+          <p class="wbl-sub">شماره موبایل یا حساب گوگل</p>
+        </div>
+
+        <div class="wbl-alert wbl-alert-error" data-wbl-error hidden></div>
+        <div class="wbl-alert wbl-alert-ok" data-wbl-ok hidden></div>
+
+        <a class="wbl-btn wbl-btn-google" href="#">
+          <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.9 26.8 37 24 37c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.3 3.7-4.6 6.4-8.6 7.1l.1.1 6.2 5.2C36.1 39.9 44 34 44 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
+          ادامه با گوگل
+        </a>
+        <div class="wbl-divider"><span>یا</span></div>
+
+        <form class="wbl-form" data-wbl-step="phone" autocomplete="off">
+          <div class="wbl-field">
+            <label class="wbl-label" for="wbl-phone-demo">شماره موبایل</label>
+            <input id="wbl-phone-demo" class="wbl-input" type="tel" name="phone" dir="ltr" placeholder="۰۹۱۲۳۴۵۶۷۸۹" />
+          </div>
+          <button type="submit" class="wbl-btn wbl-btn-primary" data-wbl-send>دریافت کد</button>
+        </form>
+
+        <form class="wbl-form" data-wbl-step="code" hidden autocomplete="one-time-code">
+          <p class="wbl-hint" data-wbl-hint>کد تأیید به ۰۹۱۲***۸۹ ارسال شد.</p>
+          <div class="wbl-field">
+            <label class="wbl-label" for="wbl-code-demo">کد تأیید</label>
+            <input id="wbl-code-demo" class="wbl-input wbl-input-code" type="text" name="code" dir="ltr" maxlength="8" placeholder="·····" />
+          </div>
+          <button type="submit" class="wbl-btn wbl-btn-primary" data-wbl-verify>ورود</button>
+          <div class="wbl-links">
+            <button type="button" class="wbl-link" data-wbl-resend>ارسال مجدد</button>
+            <button type="button" class="wbl-link wbl-link-muted" data-wbl-back>تغییر شماره</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <p class="note">پیش‌نمایش Canvas — UI شیشه‌ای ورود آسان (بدون وردپرس)</p>
+  </div>
+
+  <script>
+    // Demo mode: mock AJAX so UI transitions work without WordPress
+    window.WBL = {
+      ajax: '#',
+      nonce: 'demo',
+      i18n: {
+        sending: 'در حال ارسال…',
+        verifying: 'در حال بررسی…',
+        resend: 'ارسال مجدد',
+        wait: 'ارسال مجدد تا %s ثانیه',
+        enterCode: 'کد تأیید را وارد کنید',
+        error: 'خطایی رخ داد. دوباره تلاش کنید.'
+      }
+    };
+    const _fetch = window.fetch;
+    window.fetch = function(url, opts) {
+      const body = opts && opts.body;
+      let action = '';
+      if (body && typeof body.get === 'function') action = body.get('action') || '';
+      return Promise.resolve({
+        json: function() {
+          if (action === 'wbl_send_otp') {
+            return Promise.resolve({ success: true, data: { phone: '09123456789', wait: 5, message: 'کد تأیید به ۰۹۱۲***۷۸۹ ارسال شد.' } });
+          }
+          if (action === 'wbl_verify_otp') {
+            const code = body.get('code');
+            if (code === '12345') {
+              return Promise.resolve({ success: true, data: { message: 'ورود موفق بود.', redirect: '#' } });
+            }
+            return Promise.resolve({ success: false, data: { message: 'کد نادرست است.' } });
+          }
+          return Promise.resolve({ success: false, data: { message: 'دمو' } });
+        }
+      });
+    };
+  </script>
+  <script src="assets/js/frontend.js?v=103"></script>
+  <script>
+    const root = document.querySelector('[data-wbl-root]');
+    const phone = root.querySelector('[data-wbl-step="phone"]');
+    const code = root.querySelector('[data-wbl-step="code"]');
+    const err = root.querySelector('[data-wbl-error]');
+    function setHidden(el, hide) {
+      if (!el) return;
+      if (hide) { el.hidden = true; el.setAttribute('hidden', ''); }
+      else { el.hidden = false; el.removeAttribute('hidden'); }
+    }
+    document.getElementById('btn-phone').onclick = () => { setHidden(phone, false); setHidden(code, true); setHidden(err, true); };
+    document.getElementById('btn-code').onclick = () => { setHidden(phone, true); setHidden(code, false); code.classList.add('is-enter'); setHidden(err, true); };
+    document.getElementById('btn-err').onclick = () => {
+      setHidden(err, false); err.textContent='شماره موبایل معتبر نیست.';
+      err.classList.remove('is-shake'); void err.offsetWidth; err.classList.add('is-shake');
+    };
+  </script>
+</body>
+</html>

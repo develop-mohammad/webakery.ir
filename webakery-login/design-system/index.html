@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Design System — ورود آسان</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./components.css" />
+<style>
+  body { margin: 0; }
+  .sg-wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 20px 80px;
+  }
+  .sg-hero {
+    margin-bottom: 40px;
+  }
+  .sg-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: var(--wbl-muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .08em;
+  }
+  .sg-lead {
+    max-width: 36rem;
+    margin: 12px 0 0;
+    color: var(--wbl-muted);
+    font-size: 1.05rem;
+  }
+  .sg-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 28px 0 40px;
+  }
+  .sg-nav a {
+    text-decoration: none;
+    color: var(--wbl-ink);
+    background: rgba(255,255,255,.55);
+    border: 1px solid var(--wbl-glass-edge);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+  }
+  .sg-section {
+    margin: 48px 0;
+    padding: 28px;
+    border-radius: 24px;
+    background: rgba(255,255,255,.42);
+    border: 1px solid rgba(255,255,255,.65);
+    backdrop-filter: blur(14px);
+  }
+  .sg-section h2 {
+    margin: 0 0 8px;
+    font-size: 1.35rem;
+  }
+  .sg-section p.desc {
+    margin: 0 0 20px;
+    color: var(--wbl-muted);
+    font-size: 14px;
+  }
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  .swatch {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--wbl-glass-edge);
+    background: rgba(255,255,255,.5);
+  }
+  .swatch .chip { height: 72px; }
+  .swatch .meta { padding: 10px 12px; font-size: 12px; }
+  .swatch .meta strong { display: block; margin-bottom: 2px; }
+  .type-row { margin: 14px 0; }
+  .type-row code {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--wbl-muted);
+    direction: ltr;
+  }
+  .space-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+    font-size: 13px;
+  }
+  .space-bar {
+    height: 12px;
+    border-radius: 6px;
+    background: var(--wbl-accent);
+    opacity: .75;
+  }
+  .comp-grid {
+    display: grid;
+    gap: 20px;
+  }
+  .demo-form { max-width: 380px; }
+  .sg-footer {
+    margin-top: 40px;
+    color: var(--wbl-muted);
+    font-size: 13px;
+  }
+  .sg-footer a { color: var(--wbl-accent); font-weight: 600; }
+</style>
+</head>
+<body class="wbl-ds wbl-atmosphere">
+  <div class="sg-wrap">
+    <header class="sg-hero">
+      <div class="sg-kicker"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--wbl-accent);display:inline-block"></span> WBL DESIGN SYSTEM</div>
+      <h1 class="wbl-display">ورود آسان</h1>
+      <p class="sg-lead">سیستم طراحی صفحه ورود — شیشه‌ای، RTL، سازگار با المنتور. توکن‌ها، تایپ، رنگ، کامپوننت و حالت‌های OTP.</p>
+      <nav class="sg-nav">
+        <a href="#color">رنگ</a>
+        <a href="#type">تایپ</a>
+        <a href="#space">فاصله</a>
+        <a href="#components">کامپوننت</a>
+        <a href="./login-page.html">صفحه ورود →</a>
+      </nav>
+    </header>
+
+    <section class="sg-section" id="color">
+      <h2>رنگ</h2>
+      <p class="desc">Accent تیل عمیق برای اعتماد؛ اتمسفر چندلایه به‌جای پس‌زمینه تخت.</p>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:#10231f"></div><div class="meta"><strong>Ink</strong>#10231f</div></div>
+        <div class="swatch"><div class="chip" style="background:#5c736c"></div><div class="meta"><strong>Muted</strong>#5c736c</div></div>
+        <div class="swatch"><div class="chip" style="background:#0d9488"></div><div class="meta"><strong>Accent</strong>#0d9488</div></div>
+        <div class="swatch"><div class="chip" style="background:#0f766e"></div><div class="meta"><strong>Accent Hover</strong>#0f766e</div></div>
+        <div class="swatch"><div class="chip" style="background:#067647"></div><div class="meta"><strong>OK</strong>#067647</div></div>
+        <div class="swatch"><div class="chip" style="background:#b42318"></div><div class="meta"><strong>Danger</strong>#b42318</div></div>
+        <div class="swatch"><div class="chip" style="background:#9ee7df"></div><div class="meta"><strong>Sky A</strong>#9ee7df</div></div>
+        <div class="swatch"><div class="chip" style="background:#b7d4ff"></div><div class="meta"><strong>Sky B</strong>#b7d4ff</div></div>
+      </div>
+    </section>
+
+    <section class="sg-section" id="type">
+      <h2>تایپوگرافی</h2>
+      <p class="desc">فونت Vazirmatn — خوانا برای فرم، قوی برای برند.</p>
+      <div class="type-row"><p class="wbl-display">ورود آسان</p><code>display · bold · clamp 2–3.25rem</code></div>
+      <div class="type-row"><p class="wbl-title">ورود به حساب</p><code>title · semibold · clamp 1.4–1.85rem</code></div>
+      <div class="type-row"><p class="wbl-sub">شماره موبایل یا حساب گوگل خود را وارد کنید.</p><code>subtitle · 14px · muted</code></div>
+      <div class="type-row"><p class="wbl-label">شماره موبایل</p><code>label · 12px · medium</code></div>
+    </section>
+
+    <section class="sg-section" id="space">
+      <h2>فاصله (۴px)</h2>
+      <p class="desc">شبکه فاصله برای ریتم عمودی فرم.</p>
+      <div class="space-row"><div class="space-bar" style="width:8px"></div> space-2 · 8px</div>
+      <div class="space-row"><div class="space-bar" style="width:16px"></div> space-4 · 16px</div>
+      <div class="space-row"><div class="space-bar" style="width:24px"></div> space-6 · 24px</div>
+      <div class="space-row"><div class="space-bar" style="width:32px"></div> space-7 · 32px</div>
+      <div class="space-row"><div class="space-bar" style="width:40px"></div> space-8 · 40px</div>
+    </section>
+
+    <section class="sg-section" id="components">
+      <h2>کامپوننت‌ها</h2>
+      <p class="desc">نمونه زنده پنل شیشه‌ای ورود.</p>
+      <div class="comp-grid">
+        <div class="wbl-glass demo-form">
+          <a class="wbl-brand-mark" href="#"><span class="dot"></span> ورود آسان</a>
+          <div style="height:16px"></div>
+          <h3 class="wbl-title">ورود</h3>
+          <p class="wbl-sub">شماره موبایل یا حساب گوگل</p>
+          <div style="height:16px"></div>
+          <div class="wbl-alert wbl-alert-error" role="alert">شماره موبایل معتبر نیست.</div>
+          <button type="button" class="wbl-btn wbl-btn-google">ادامه با گوگل</button>
+          <div class="wbl-divider"><span>یا</span></div>
+          <form class="wbl-form" onsubmit="return false">
+            <div class="wbl-field">
+              <label class="wbl-label" for="sg-phone">شماره موبایل</label>
+              <input id="sg-phone" class="wbl-input" dir="ltr" placeholder="۰۹۱۲۳۴۵۶۷۸۹" />
+            </div>
+            <button type="button" class="wbl-btn wbl-btn-primary">دریافت کد</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <p class="sg-footer">
+      مستند کامل: <a href="./DESIGN-SYSTEM.md">DESIGN-SYSTEM.md</a> ·
+      صفحه ورود: <a href="./login-page.html">login-page.html</a> ·
+      webakery.ir
+    </p>
+  </div>
+</body>
+</html>
