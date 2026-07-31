@@ -13,60 +13,231 @@
   .login-page {
     min-height: 100vh;
     display: grid;
-    grid-template-columns: 1.05fr 0.95fr;
+    grid-template-columns: 1.1fr 0.9fr;
     position: relative;
     overflow: hidden;
   }
 
-  /* —— Visual plane (full-bleed atmosphere / brand) —— */
+  /* —— Visual plane —— */
   .login-visual {
     position: relative;
     min-height: 100vh;
-    padding: clamp(28px, 4vw, 48px);
+    padding: clamp(24px, 3.5vw, 44px);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     color: #fff;
+    overflow: hidden;
     background:
-      linear-gradient(160deg, rgba(13, 52, 48, 0.55) 0%, rgba(13, 52, 48, 0.25) 45%, rgba(13, 52, 48, 0.65) 100%),
-      radial-gradient(800px 500px at 20% 20%, rgba(158, 231, 223, 0.45), transparent 60%),
-      radial-gradient(700px 480px at 80% 70%, rgba(183, 212, 255, 0.35), transparent 55%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E"),
-      linear-gradient(145deg, #0f766e 0%, #134e4a 42%, #1e293b 100%);
+      radial-gradient(900px 600px at 15% 10%, rgba(94, 234, 212, 0.35), transparent 55%),
+      radial-gradient(700px 500px at 90% 80%, rgba(125, 211, 252, 0.22), transparent 50%),
+      radial-gradient(500px 400px at 50% 50%, rgba(15, 118, 110, 0.35), transparent 60%),
+      linear-gradient(155deg, #0b3d3a 0%, #0f766e 38%, #134e4a 68%, #0f172a 100%);
+  }
+
+  /* soft mesh / light streaks */
+  .login-visual::before {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    background:
+      repeating-linear-gradient(
+        -18deg,
+        transparent 0 18px,
+        rgba(255,255,255,0.015) 18px 19px
+      );
+    pointer-events: none;
+    z-index: 0;
   }
   .login-visual::after {
     content: "";
     position: absolute;
-    inset: auto -10% -20% 30%;
-    height: 55%;
-    background: radial-gradient(ellipse at center, rgba(13,148,136,.45), transparent 65%);
+    width: 420px;
+    height: 420px;
+    right: -80px;
+    bottom: -100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(94,234,212,.28), transparent 68%);
+    filter: blur(8px);
     pointer-events: none;
     animation: wbl-float 12s ease-in-out infinite;
+    z-index: 0;
   }
   .login-visual > * { position: relative; z-index: 1; }
+
   .login-visual .wbl-brand-mark { color: #fff; }
   .login-visual .wbl-brand-mark .dot {
     background: #5eead4;
     box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.25);
   }
-  .visual-copy { max-width: 18ch; }
+
+  .visual-stage {
+    flex: 1;
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    gap: clamp(20px, 3vw, 36px);
+    padding: 20px 0 12px;
+    min-height: 0;
+  }
+
+  .visual-copy {
+    text-align: center;
+    max-width: 22ch;
+  }
   .visual-copy h1 {
-    margin: 0 0 14px;
-    font-size: clamp(2.4rem, 5vw, 4rem);
+    margin: 0 0 12px;
+    font-size: clamp(2.1rem, 4.2vw, 3.4rem);
     font-weight: 700;
     letter-spacing: -0.035em;
-    line-height: 1.1;
+    line-height: 1.12;
   }
   .visual-copy p {
-    margin: 0;
-    max-width: 28ch;
-    font-size: 1.05rem;
+    margin: 0 auto;
+    max-width: 30ch;
+    font-size: 1.02rem;
     line-height: 1.7;
     color: rgba(255,255,255,.82);
   }
+
+  /* —— Phone scene (dominant visual) —— */
+  .phone-scene {
+    position: relative;
+    width: min(280px, 58vw);
+    aspect-ratio: 9 / 16;
+    display: grid;
+    place-items: center;
+  }
+  .phone-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.12);
+    pointer-events: none;
+  }
+  .phone-ring-a {
+    width: 128%;
+    height: 72%;
+    animation: ring-pulse 7s ease-in-out infinite;
+  }
+  .phone-ring-b {
+    width: 155%;
+    height: 88%;
+    border-color: rgba(94,234,212,.16);
+    animation: ring-pulse 9s ease-in-out infinite reverse;
+  }
+  .phone-glow {
+    position: absolute;
+    width: 90%;
+    height: 55%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(94,234,212,.45), transparent 70%);
+    filter: blur(24px);
+    z-index: 0;
+  }
+
+  .phone {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    border-radius: 36px;
+    padding: 10px;
+    background: linear-gradient(160deg, rgba(255,255,255,.22), rgba(255,255,255,.06));
+    border: 1px solid rgba(255,255,255,.28);
+    box-shadow:
+      0 30px 60px rgba(0,0,0,.35),
+      inset 0 1px 0 rgba(255,255,255,.35);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    animation: phone-rise .8s var(--wbl-ease, cubic-bezier(.22,1,.36,1)) both;
+  }
+  .phone-screen {
+    height: 100%;
+    border-radius: 28px;
+    background:
+      linear-gradient(180deg, rgba(15, 35, 33, 0.92) 0%, rgba(13, 61, 58, 0.95) 100%);
+    border: 1px solid rgba(255,255,255,.08);
+    display: flex;
+    flex-direction: column;
+    padding: 22px 16px 18px;
+    overflow: hidden;
+  }
+  .phone-notch {
+    width: 38%;
+    height: 8px;
+    margin: 0 auto 18px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+  }
+  .sms-card {
+    margin-top: 8px;
+    padding: 14px 14px 12px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    animation: sms-in .7s .25s both var(--wbl-ease, cubic-bezier(.22,1,.36,1));
+  }
+  .sms-from {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 11px;
+    color: rgba(255,255,255,.55);
+  }
+  .sms-from strong {
+    color: #99f6e4;
+    font-weight: 650;
+    font-size: 12px;
+  }
+  .sms-body {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.65;
+    color: rgba(255,255,255,.9);
+  }
+  .sms-code {
+    display: block;
+    margin-top: 10px;
+    letter-spacing: 0.28em;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: #5eead4;
+    text-align: center;
+    direction: ltr;
+  }
+  .phone-meta {
+    margin-top: auto;
+    display: grid;
+    gap: 8px;
+  }
+  .phone-bar {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+  }
+  .phone-bar:nth-child(1) { width: 72%; }
+  .phone-bar:nth-child(2) { width: 48%; }
+  .phone-bar:nth-child(3) { width: 60%; opacity: .7; }
+
   .visual-foot {
     font-size: 13px;
-    color: rgba(255,255,255,.65);
+    color: rgba(255,255,255,.62);
+    margin-top: 8px;
+  }
+
+  @keyframes phone-rise {
+    from { opacity: 0; transform: translateY(22px) scale(.96); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes sms-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes ring-pulse {
+    0%, 100% { transform: scale(1); opacity: .55; }
+    50% { transform: scale(1.04); opacity: 1; }
   }
 
   /* —— Form column —— */
@@ -79,14 +250,9 @@
       radial-gradient(600px 380px at 10% 100%, rgba(243,198,222,.4), transparent 55%),
       var(--wbl-sky-base);
   }
-  .login-stack {
-    width: min(420px, 100%);
-  }
+  .login-stack { width: min(420px, 100%); }
   .login-stack .wbl-glass { max-width: none; }
-  .panel-top {
-    display: none;
-    margin-bottom: 18px;
-  }
+  .panel-top { display: none; margin-bottom: 18px; }
   .form-head { margin-bottom: 20px; }
   .form-head .wbl-brand-mark { margin-bottom: 18px; }
 
@@ -94,13 +260,22 @@
     .login-page { grid-template-columns: 1fr; }
     .login-visual {
       min-height: auto;
-      padding: 22px 20px 28px;
-      gap: 28px;
+      padding: 20px 18px 28px;
     }
-    .visual-copy h1 { font-size: clamp(1.9rem, 8vw, 2.6rem); }
-    .visual-copy p { font-size: 0.95rem; }
+    .visual-stage { padding: 12px 0 4px; }
+    .phone-scene {
+      width: min(200px, 46vw);
+    }
+    .visual-copy h1 { font-size: clamp(1.7rem, 7vw, 2.3rem); }
+    .visual-copy p { font-size: 0.92rem; }
     .panel-top { display: block; }
     .form-head .wbl-brand-mark { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .phone, .sms-card, .phone-ring-a, .phone-ring-b, .login-visual::after {
+      animation: none !important;
+    }
   }
 </style>
 </head>
@@ -111,10 +286,38 @@
         <span class="dot"></span>
         ورود آسان
       </a>
-      <div class="visual-copy">
-        <h1>ورود در چند ثانیه</h1>
-        <p>با شماره موبایل یا جیمیل وارد شوید — بدون رمز پیچیده.</p>
+
+      <div class="visual-stage">
+        <div class="phone-scene" aria-hidden="true">
+          <span class="phone-ring phone-ring-a"></span>
+          <span class="phone-ring phone-ring-b"></span>
+          <span class="phone-glow"></span>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-notch"></div>
+              <div class="sms-card">
+                <div class="sms-from">
+                  <strong>ورود آسان</strong>
+                  <span>الان</span>
+                </div>
+                <p class="sms-body">کد ورود شما:</p>
+                <span class="sms-code">۴۸۲۹۱</span>
+              </div>
+              <div class="phone-meta">
+                <div class="phone-bar"></div>
+                <div class="phone-bar"></div>
+                <div class="phone-bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-copy">
+          <h1>ورود در چند ثانیه</h1>
+          <p>با شماره موبایل یا جیمیل وارد شوید — بدون رمز پیچیده.</p>
+        </div>
       </div>
+
       <p class="visual-foot">webakery.ir · امن با OTP و Google</p>
     </section>
 
@@ -175,7 +378,6 @@
         enterCode: 'کد تأیید را وارد کنید', error: 'خطایی رخ داد.'
       }
     };
-    const _fetch = window.fetch.bind(window);
     window.fetch = function (url, opts) {
       const body = opts && opts.body;
       let action = '';
