@@ -32,7 +32,7 @@ class WBL_Settings {
 			'form_title'         => 'ورود',
 			'form_subtitle'      => 'شماره موبایل یا حساب گوگل',
 			'phone_placeholder'  => '۰۹۱۲۳۴۵۶۷۸۹',
-			'primary_color'      => '#0ea5a0',
+			'primary_color'      => '#0d9488',
 		);
 	}
 

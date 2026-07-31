@@ -1,0 +1,119 @@
+/* =========================================================
+   ورود آسان — Design Tokens (WBL DS)
+   منبع حقیقت برای رنگ، تایپ، فاصله، شعاع، سایه، شیشه
+   ========================================================= */
+
+:root,
+.wbl-ds {
+  /* —— Brand —— */
+  --wbl-brand-name: "ورود آسان";
+  --wbl-brand-maker: "webakery.ir";
+
+  /* —— Color: Core —— */
+  --wbl-ink: #10231f;
+  --wbl-ink-soft: #2a3f3a;
+  --wbl-muted: #5c736c;
+  --wbl-line: rgba(16, 35, 31, 0.12);
+  --wbl-line-strong: rgba(16, 35, 31, 0.22);
+
+  /* Accent — Teal deep (اعتماد + فناوری) */
+  --wbl-accent: #0d9488;
+  --wbl-accent-hover: #0f766e;
+  --wbl-accent-soft: rgba(13, 148, 136, 0.14);
+  --wbl-accent-glow: rgba(13, 148, 136, 0.28);
+
+  /* Feedback */
+  --wbl-ok: #067647;
+  --wbl-ok-soft: rgba(6, 118, 71, 0.12);
+  --wbl-danger: #b42318;
+  --wbl-danger-soft: rgba(180, 35, 24, 0.12);
+  --wbl-warn: #b54708;
+
+  /* Surface / Glass */
+  --wbl-glass-bg: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.78) 0%,
+    rgba(255, 255, 255, 0.42) 100%
+  );
+  --wbl-glass-bg-strong: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(255, 255, 255, 0.55) 100%
+  );
+  --wbl-glass-border: rgba(255, 255, 255, 0.72);
+  --wbl-glass-edge: rgba(16, 35, 31, 0.08);
+  --wbl-glass-shine: rgba(255, 255, 255, 0.55);
+  --wbl-glass-blur: 18px;
+  --wbl-glass-sat: 1.35;
+
+  /* Atmosphere (page background) */
+  --wbl-sky-a: #9ee7df;
+  --wbl-sky-b: #b7d4ff;
+  --wbl-sky-c: #f3c6de;
+  --wbl-sky-base: #eef6f4;
+
+  /* —— Typography —— */
+  --wbl-font: "Vazirmatn", "Estedad", Tahoma, sans-serif;
+  --wbl-fs-xs: 0.75rem;   /* 12 */
+  --wbl-fs-sm: 0.875rem;  /* 14 */
+  --wbl-fs-md: 1rem;      /* 16 */
+  --wbl-fs-lg: 1.125rem;  /* 18 */
+  --wbl-fs-xl: clamp(1.4rem, 2.4vw, 1.85rem);
+  --wbl-fs-display: clamp(2rem, 4.5vw, 3.25rem);
+  --wbl-lh-tight: 1.25;
+  --wbl-lh-body: 1.65;
+  --wbl-fw-regular: 400;
+  --wbl-fw-medium: 500;
+  --wbl-fw-semibold: 650;
+  --wbl-fw-bold: 700;
+  --wbl-tracking-tight: -0.03em;
+  --wbl-tracking-wide: 0.06em;
+
+  /* —— Space (4px grid) —— */
+  --wbl-space-1: 0.25rem;
+  --wbl-space-2: 0.5rem;
+  --wbl-space-3: 0.75rem;
+  --wbl-space-4: 1rem;
+  --wbl-space-5: 1.25rem;
+  --wbl-space-6: 1.5rem;
+  --wbl-space-7: 2rem;
+  --wbl-space-8: 2.5rem;
+  --wbl-space-9: 3.5rem;
+  --wbl-space-10: 5rem;
+
+  /* —— Radius —— */
+  --wbl-radius-sm: 10px;
+  --wbl-radius-md: 14px;
+  --wbl-radius-lg: 22px;
+  --wbl-radius-xl: 28px;
+  --wbl-radius-pill: 999px;
+
+  /* —— Shadow —— */
+  --wbl-shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.06);
+  --wbl-shadow-md: 0 18px 50px rgba(15, 23, 42, 0.12), 0 4px 14px rgba(15, 23, 42, 0.06);
+  --wbl-shadow-btn: 0 10px 24px var(--wbl-accent-glow);
+  --wbl-shadow-focus: 0 0 0 4px var(--wbl-accent-soft);
+
+  /* —— Motion —— */
+  --wbl-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --wbl-dur-fast: 0.15s;
+  --wbl-dur: 0.28s;
+  --wbl-dur-slow: 0.55s;
+
+  /* —— Layout —— */
+  --wbl-form-max: 420px;
+  --wbl-page-max: 1120px;
+  --wbl-z-orb: 0;
+  --wbl-z-content: 1;
+
+  /* Alias برای سازگاری افزونه / المنتور */
+  --wbl-primary: var(--wbl-accent);
+  --wbl-text: var(--wbl-ink);
+}
+
+/* Elementor global bridge */
+.elementor-kit-active .wbl-box,
+.elementor-page .wbl-box {
+  --wbl-accent: var(--e-global-color-primary, var(--wbl-primary));
+  --wbl-ink: var(--e-global-color-text, var(--wbl-text));
+}

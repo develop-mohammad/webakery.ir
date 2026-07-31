@@ -43,3 +43,11 @@
 - دوره آزمایشی ۷ روزه دارد؛ لایسنس از منوی «لایسنس افزونه‌ها»
 - شماره موبایل در پروفایل کاربر قابل ویرایش است
 - سازنده: webakery.ir
+
+Design System
+-------------
+پوشه design-system/:
+- DESIGN-SYSTEM.md — اصول و توکن‌ها
+- index.html — Style Guide زنده
+- login-page.html — صفحه ورود کامل
+پیش‌نمایش: python3 -m http.server 8765 (از ریشه افزونه) سپس /design-system/

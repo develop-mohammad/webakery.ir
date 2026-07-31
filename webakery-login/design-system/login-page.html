@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ورود آسان — صفحه ورود</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./components.css" />
+<style>
+  body { margin: 0; }
+  .login-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* —— Visual plane (full-bleed atmosphere / brand) —— */
+  .login-visual {
+    position: relative;
+    min-height: 100vh;
+    padding: clamp(28px, 4vw, 48px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: #fff;
+    background:
+      linear-gradient(160deg, rgba(13, 52, 48, 0.55) 0%, rgba(13, 52, 48, 0.25) 45%, rgba(13, 52, 48, 0.65) 100%),
+      radial-gradient(800px 500px at 20% 20%, rgba(158, 231, 223, 0.45), transparent 60%),
+      radial-gradient(700px 480px at 80% 70%, rgba(183, 212, 255, 0.35), transparent 55%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E"),
+      linear-gradient(145deg, #0f766e 0%, #134e4a 42%, #1e293b 100%);
+  }
+  .login-visual::after {
+    content: "";
+    position: absolute;
+    inset: auto -10% -20% 30%;
+    height: 55%;
+    background: radial-gradient(ellipse at center, rgba(13,148,136,.45), transparent 65%);
+    pointer-events: none;
+    animation: wbl-float 12s ease-in-out infinite;
+  }
+  .login-visual > * { position: relative; z-index: 1; }
+  .login-visual .wbl-brand-mark { color: #fff; }
+  .login-visual .wbl-brand-mark .dot {
+    background: #5eead4;
+    box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.25);
+  }
+  .visual-copy { max-width: 18ch; }
+  .visual-copy h1 {
+    margin: 0 0 14px;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+  }
+  .visual-copy p {
+    margin: 0;
+    max-width: 28ch;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: rgba(255,255,255,.82);
+  }
+  .visual-foot {
+    font-size: 13px;
+    color: rgba(255,255,255,.65);
+  }
+
+  /* —— Form column —— */
+  .login-panel {
+    display: grid;
+    place-items: center;
+    padding: clamp(24px, 4vw, 48px) 20px;
+    background:
+      radial-gradient(700px 420px at 80% 0%, rgba(158,231,223,.55), transparent 60%),
+      radial-gradient(600px 380px at 10% 100%, rgba(243,198,222,.4), transparent 55%),
+      var(--wbl-sky-base);
+  }
+  .login-stack {
+    width: min(420px, 100%);
+  }
+  .login-stack .wbl-glass { max-width: none; }
+  .panel-top {
+    display: none;
+    margin-bottom: 18px;
+  }
+  .form-head { margin-bottom: 20px; }
+  .form-head .wbl-brand-mark { margin-bottom: 18px; }
+
+  @media (max-width: 900px) {
+    .login-page { grid-template-columns: 1fr; }
+    .login-visual {
+      min-height: auto;
+      padding: 22px 20px 28px;
+      gap: 28px;
+    }
+    .visual-copy h1 { font-size: clamp(1.9rem, 8vw, 2.6rem); }
+    .visual-copy p { font-size: 0.95rem; }
+    .panel-top { display: block; }
+    .form-head .wbl-brand-mark { display: none; }
+  }
+</style>
+</head>
+<body class="wbl-ds">
+  <main class="login-page">
+    <section class="login-visual" aria-label="برند ورود آسان">
+      <a class="wbl-brand-mark" href="#">
+        <span class="dot"></span>
+        ورود آسان
+      </a>
+      <div class="visual-copy">
+        <h1>ورود در چند ثانیه</h1>
+        <p>با شماره موبایل یا جیمیل وارد شوید — بدون رمز پیچیده.</p>
+      </div>
+      <p class="visual-foot">webakery.ir · امن با OTP و Google</p>
+    </section>
+
+    <section class="login-panel">
+      <div class="login-stack">
+        <div class="panel-top">
+          <a class="wbl-brand-mark" href="#"><span class="dot"></span> ورود آسان</a>
+        </div>
+
+        <div class="wbl-glass" data-wbl-root>
+          <div class="form-head">
+            <a class="wbl-brand-mark" href="#"><span class="dot"></span> ورود آسان</a>
+            <h2 class="wbl-title">ورود به حساب</h2>
+            <p class="wbl-sub">شماره موبایل یا حساب گوگل</p>
+          </div>
+
+          <div class="wbl-alert wbl-alert-error" data-wbl-error hidden></div>
+          <div class="wbl-alert wbl-alert-ok" data-wbl-ok hidden></div>
+
+          <a class="wbl-btn wbl-btn-google" href="#">
+            <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.9 26.8 37 24 37c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.3 3.7-4.6 6.4-8.6 7.1l.1.1 6.2 5.2C36.1 39.9 44 34 44 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
+            ادامه با گوگل
+          </a>
+
+          <div class="wbl-divider"><span>یا</span></div>
+
+          <form class="wbl-form" data-wbl-step="phone" autocomplete="off">
+            <div class="wbl-field">
+              <label class="wbl-label" for="login-phone">شماره موبایل</label>
+              <input id="login-phone" class="wbl-input" type="tel" name="phone" inputmode="numeric" dir="ltr" placeholder="۰۹۱۲۳۴۵۶۷۸۹" required />
+            </div>
+            <button type="submit" class="wbl-btn wbl-btn-primary" data-wbl-send>دریافت کد</button>
+          </form>
+
+          <form class="wbl-form" data-wbl-step="code" hidden autocomplete="one-time-code">
+            <p class="wbl-hint" data-wbl-hint></p>
+            <div class="wbl-field">
+              <label class="wbl-label" for="login-code">کد تأیید</label>
+              <input id="login-code" class="wbl-input wbl-input-otp" type="text" name="code" inputmode="numeric" dir="ltr" maxlength="8" placeholder="·····" required />
+            </div>
+            <button type="submit" class="wbl-btn wbl-btn-primary" data-wbl-verify>ورود</button>
+            <div class="wbl-links">
+              <button type="button" class="wbl-link" data-wbl-resend disabled>ارسال مجدد</button>
+              <button type="button" class="wbl-link wbl-link-muted" data-wbl-back>تغییر شماره</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    window.WBL = {
+      ajax: '#', nonce: 'demo',
+      i18n: {
+        sending: 'در حال ارسال…', verifying: 'در حال بررسی…',
+        resend: 'ارسال مجدد', wait: 'ارسال مجدد تا %s ثانیه',
+        enterCode: 'کد تأیید را وارد کنید', error: 'خطایی رخ داد.'
+      }
+    };
+    const _fetch = window.fetch.bind(window);
+    window.fetch = function (url, opts) {
+      const body = opts && opts.body;
+      let action = '';
+      if (body && typeof body.get === 'function') action = body.get('action') || '';
+      return Promise.resolve({
+        json() {
+          if (action === 'wbl_send_otp') {
+            return Promise.resolve({ success: true, data: { phone: '09123456789', wait: 5, message: 'کد تأیید به ۰۹۱۲***۷۸۹ ارسال شد.' } });
+          }
+          if (action === 'wbl_verify_otp') {
+            return Promise.resolve({ success: true, data: { message: 'ورود موفق بود.', redirect: '#' } });
+          }
+          return Promise.resolve({ success: false, data: { message: 'دمو' } });
+        }
+      });
+    };
+  </script>
+  <script src="../assets/js/frontend.js"></script>
+</body>
+</html>
