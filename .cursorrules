@@ -38,3 +38,10 @@
 - اکسپلویت/مالور ننویس.
 - فایل‌های محرمانه (`config` با secret واقعی) را commit نکن.
 - بازنویسی گستردهٔ افزونه‌های دیگر بدون درخواست صریح.
+
+## Cursor Skills
+مهارت‌های پروژه در `.cursor/skills/` (و آینه `.agents/skills/`):
+- `webakery-login-design` — دیزاین‌سیستم و QA صفحه ورود
+- `visual-qa-testing`, `responsive-testing`, `form-testing`, `verifying-in-browser`
+- `using-ui-stack`, `accessibility-auditing`, `recording-browser-flow-as-test`, `finding-dev-server-url`
+برای پیش‌نمایش ورود از `python3 -m http.server` استفاده کن، نه `npm run dev`.
