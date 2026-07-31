@@ -1,0 +1,11 @@
+{
+  "name": "webakery-login-visual-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:visual": "node run.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.54.1"
+  }
+}
