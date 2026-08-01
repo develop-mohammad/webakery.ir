@@ -51,14 +51,36 @@ class WBL_Admin {
 		}
 		check_admin_referer( 'wbl_settings' );
 		$input = isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : array(); // phpcs:ignore
-		// چک‌باکس‌های خالی.
-		foreach ( array( 'enable_phone', 'enable_google', 'auto_register', 'replace_wp_login', 'show_phone_visual' ) as $k ) {
+		$tab   = isset( $_POST['wbl_settings_tab'] ) ? sanitize_key( wp_unslash( $_POST['wbl_settings_tab'] ) ) : 'general'; // phpcs:ignore
+
+		/*
+		 * فقط چک‌باکس‌های همان تب را صفر کن.
+		 * قبلاً با ذخیره «ظاهر»، enable_phone/enable_google هم صفر می‌شد
+		 * و فرم «هیچ روش ورودی فعال نیست» نشان می‌داد.
+		 */
+		$tab_bools = array(
+			'general'    => array( 'auto_register', 'replace_wp_login' ),
+			'appearance' => array( 'show_phone_visual' ),
+			'sms'        => array( 'enable_phone' ),
+			'google'     => array( 'enable_google' ),
+		);
+		foreach ( $tab_bools[ $tab ] ?? array() as $k ) {
 			if ( ! isset( $input[ $k ] ) ) {
 				$input[ $k ] = 0;
 			}
 		}
+
 		WBL_Settings::save( $input );
-		wp_safe_redirect( add_query_arg( array( 'page' => 'webakery-login', 'saved' => '1' ), admin_url( 'admin.php' ) ) );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'  => 'webakery-login',
+					'tab'   => $tab,
+					'saved' => '1',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 

@@ -95,12 +95,12 @@
 
 .wbl-split-form{
   display:grid;place-items:center;
-  padding:clamp(20px,3vw,40px) 18px;
+  padding:clamp(28px,4vw,48px) clamp(20px,3vw,36px);
   background:
     radial-gradient(600px 360px at 80% 0%, color-mix(in srgb, var(--wbl-accent,#0d9488) 28%, transparent), transparent 60%),
-    #eef6f4;
+    linear-gradient(180deg, #f3faf8 0%, #eef6f4 100%);
 }
-.wbl-split-form .wbl-box{width:min(400px,100%); --wbl-radius: var(--wbl-radius);}
+.wbl-split-form .wbl-box{width:min(400px,100%); max-width:100%;}
 
 .wbl-box{
   border-radius:var(--wbl-radius) !important;

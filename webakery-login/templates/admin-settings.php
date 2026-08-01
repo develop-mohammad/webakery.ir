@@ -23,9 +23,26 @@ $tab       = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) 
 		<a class="nav-tab <?php echo 'license' === $tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-licenses' ) ); ?>">لایسنس</a>
 	</nav>
 
+	<?php
+	$phone_on  = ! empty( $s['enable_phone'] );
+	$google_on = ! empty( $s['enable_google'] ) && ! empty( $s['google_client_id'] ) && ! empty( $s['google_client_secret'] );
+	if ( ! $phone_on && ! $google_on ) :
+		?>
+		<div class="notice notice-warning"><p>
+			<strong>هیچ روش ورودی فعال نیست.</strong>
+			<?php if ( empty( $s['enable_phone'] ) ) : ?>
+				از تب <a href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-login&tab=sms' ) ); ?>">پیامک</a> گزینه «ارسال کد OTP به موبایل» را روشن کنید.
+			<?php endif; ?>
+			<?php if ( empty( $s['enable_google'] ) || empty( $s['google_client_id'] ) ) : ?>
+				برای جیمیل، تب <a href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-login&tab=google' ) ); ?>">جیمیل / گوگل</a> را پیکربندی کنید.
+			<?php endif; ?>
+		</p></div>
+	<?php endif; ?>
+
 	<form method="post" class="wbl-admin-form">
 		<?php wp_nonce_field( 'wbl_settings' ); ?>
 		<input type="hidden" name="wbl_save_settings" value="1" />
+		<input type="hidden" name="wbl_settings_tab" value="<?php echo esc_attr( $tab ); ?>" />
 
 		<?php if ( 'google' === $tab ) : ?>
 			<table class="form-table" role="presentation">
