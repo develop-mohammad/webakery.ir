@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#2952e3" />
+<meta name="description" content="مدل‌سازی صفحه اصلی صرافی ارز دیجیتال — پیاده‌سازی مستقل فرانت‌اند برای اهداف نمایشی" />
+<title>خرید و فروش ارز دیجیتال | صرافی ارز دیجیتال (مدل‌سازی)</title>
+<link rel="icon" href="assets/img/logo-mark.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body data-theme="dark">
+
+<div class="kp-promo" data-kp-promo>
+  <button class="kp-promo-close" data-kp-promo-close aria-label="بستن">×</button>
+  <div class="kp-promo-icon">🎁</div>
+  <div class="kp-promo-text">
+    <strong>هدیه ویژه ثبت‌نام</strong>
+    <span>با ثبت‌نام و تکمیل احرازهویت، <a href="#signup">۱۰۰ میلیون واحد ارز</a> هدیه دریافت کنید.</span>
+  </div>
+  <button class="kp-btn kp-btn-primary kp-btn-sm" data-kp-promo-close>دریافت هدیه</button>
+</div>
+
+<header class="kp-header" data-kp-header>
+  <div class="kp-container kp-header-inner">
+    <a class="kp-logo" href="#top">
+      <span class="kp-logo-mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2 2 7l10 5 10-5-10-5Z" fill="#fff"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="kp-logo-text">کیف‌نما</span>
+    </a>
+
+    <nav class="kp-nav" data-kp-nav>
+      <div class="kp-nav-item">
+        <button class="kp-nav-link" type="button">معامله <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+      </div>
+      <div class="kp-nav-item">
+        <button class="kp-nav-link" type="button">خرید ارز دیجیتال <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+      </div>
+      <a class="kp-nav-link" href="#market">قیمت ارز دیجیتال</a>
+      <div class="kp-nav-item">
+        <button class="kp-nav-link" type="button">سرویس‌ها <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+      </div>
+      <a class="kp-nav-link" href="#blog">وبلاگ</a>
+      <div class="kp-nav-item">
+        <button class="kp-nav-link" type="button">سایر <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+      </div>
+    </nav>
+
+    <div class="kp-header-actions">
+      <button class="kp-icon-btn" type="button" data-kp-theme aria-label="تغییر پوسته">
+        <svg data-kp-theme-icon width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V2m0 20v-2M4 12H2m20 0h-2M5.6 5.6 4.2 4.2m15.6 15.6-1.4-1.4M5.6 18.4l-1.4 1.4M18.4 5.6l1.4-1.4M12 7a5 5 0 100 10 5 5 0 000-10z"/></svg>
+      </button>
+      <button class="kp-icon-btn" type="button" aria-label="دانلود اپلیکیشن" title="نصب اپلیکیشن">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M5 20h14v-2H5v2zM12 2L5 9h4v6h6V9h4l-7-7z"/></svg>
+      </button>
+      <a class="kp-btn kp-btn-primary kp-btn-pill" href="#signup">ورود / ثبت‌نام</a>
+      <button class="kp-icon-btn kp-nav-toggle" type="button" data-kp-nav-toggle aria-label="منو">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="kp-hero">
+    <div class="kp-container kp-hero-grid">
+
+      <aside class="kp-float kp-float-tl">
+        <span class="kp-float-icon kp-float-icon-teal">📈</span>
+        <div>
+          <strong>استیکینگ ارز دیجیتال</strong>
+          <p>با سپرده‌گذاری دارایی دیجیتال خود پاداش دریافت کنید</p>
+        </div>
+      </aside>
+
+      <aside class="kp-float kp-float-tr">
+        <span class="kp-float-icon kp-float-icon-blue">🏆</span>
+        <div>
+          <strong>+۳٬۰۰۰</strong>
+          <p>رتبه نخست دنیا در تعداد ارز دیجیتال</p>
+        </div>
+      </aside>
+
+      <div class="kp-hero-main">
+        <span class="kp-badge">
+          <span class="kp-badge-mark" aria-hidden="true"></span>
+          صرافی ارز دیجیتال کیف‌نما
+        </span>
+        <h1>خرید و فروش ارز دیجیتال در صرافی کیف‌نما</h1>
+        <p class="kp-hero-copy">
+          کیف‌نما، اولین سامانه امن ارزهای دیجیتال برای نمایش این طرح، نخستین بستر تخصصی و مطمئن برای
+          نگهداری و خرید و فروش ارزهای دیجیتال است. با بهره‌گیری از سبک‌ها و استانداردهای نوین، خدمات
+          نگهداری و خرید ارزهای دیجیتال را برای اشخاص حقیقی و حقوقی فراهم می‌کند.
+        </p>
+
+        <form class="kp-signup" id="signup" data-kp-signup>
+          <button type="submit" class="kp-btn kp-btn-primary">ثبت نام</button>
+          <input type="tel" inputmode="numeric" placeholder="شماره موبایل خود را وارد کنید" dir="ltr" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="kp-signup-icon"><path d="M6.6 10.8a15.9 15.9 0 006.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 3c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.2 1.1L6.6 10.8z"/></svg>
+        </form>
+        <p class="kp-signup-hint">
+          <span aria-hidden="true">🎁</span>
+          با ثبت‌نام و تکمیل احرازهویت در کیف‌نما، <strong>۱۰۰ میلیون واحد ارز</strong> هدیه دریافت کنید.
+        </p>
+
+        <div class="kp-download-row">
+          <a class="kp-download-chip kp-download-web" href="#">
+            <span aria-hidden="true">🌐</span> وب اپلیکیشن
+          </a>
+          <a class="kp-download-chip kp-download-ios" href="#">
+            <span aria-hidden="true"></span> اپ آی‌اواس
+          </a>
+          <a class="kp-download-chip kp-download-android" href="#">
+            <span aria-hidden="true">▶</span> اپ اندروید
+          </a>
+        </div>
+
+        <p class="kp-trust-line">کیف‌نما عضو رسمی انجمن و اکوسیستم بلاک‌چین کشور</p>
+      </div>
+
+      <aside class="kp-float kp-float-bl">
+        <div class="kp-float-head">
+          <span class="kp-float-icon kp-float-icon-indigo">⚡</span>
+          <div>
+            <strong>معامله حرفه‌ای</strong>
+            <p>خرید و فروش رمزارز به‌صورت حرفه‌ای</p>
+          </div>
+        </div>
+        <svg class="kp-mini-chart" viewBox="0 0 220 70" preserveAspectRatio="none">
+          <polyline points="0,55 25,45 50,50 75,30 100,38 125,18 150,25 175,10 200,20 220,5" fill="none" stroke="#16c784" stroke-width="2.5"/>
+        </svg>
+      </aside>
+
+      <aside class="kp-float kp-float-br">
+        <span class="kp-float-icon kp-float-icon-amber">💳</span>
+        <div>
+          <strong>کمترین کارمزد خرید و فروش</strong>
+          <p>با کمترین کارمزد ارز بخرید و بفروشید</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ MARKET / TABLE ============ -->
+  <section class="kp-section" id="market">
+    <div class="kp-container">
+      <div class="kp-section-head kp-section-head-center">
+        <h2>✨ بیشترین تنوع ارز دیجیتال در دنیا</h2>
+        <p>کیف‌نما دارای بیشترین تعداد ارز قابل معامله در این مدل نمایشی است</p>
+      </div>
+
+      <div class="kp-tabs" data-kp-tabs>
+        <button class="kp-tab is-active" type="button" data-tab="popular">محبوب‌ترین</button>
+        <button class="kp-tab" type="button" data-tab="new">جدیدترین</button>
+        <button class="kp-tab" type="button" data-tab="gainers">پرسودترین</button>
+        <button class="kp-tab" type="button" data-tab="stocks">سهام</button>
+      </div>
+
+      <div class="kp-table-wrap">
+        <table class="kp-table" data-kp-table>
+          <thead>
+            <tr>
+              <th>نماد</th>
+              <th>قیمت (دلاری)</th>
+              <th>قیمت (تومانی)</th>
+              <th>تغییرات (۲۴ ساعته)</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody data-kp-table-body>
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="kp-center-cta">
+        <a class="kp-btn kp-btn-outline" href="#market">مشاهده همه ارزها</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TWO BANNERS ============ -->
+  <section class="kp-section kp-section-tight">
+    <div class="kp-container kp-banner-grid">
+      <a class="kp-banner kp-banner-blue" href="#">
+        <span class="kp-banner-icon">✅</span>
+        <div>
+          <strong>خرید و فروش ارز با کمترین نرخ کارمزد</strong>
+          <p>با کمترین کارمزد ارز بخرید و بفروشید</p>
+        </div>
+      </a>
+      <a class="kp-banner kp-banner-green" href="#">
+        <span class="kp-banner-icon">💡</span>
+        <div>
+          <strong>استیکینگ ارز دیجیتال، پرسود و بدون ریسک</strong>
+          <p>هوشمندانه سرمایه‌گذاری کنید</p>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ BENTO FEATURES ============ -->
+  <section class="kp-section">
+    <div class="kp-container">
+      <div class="kp-section-head kp-section-head-center">
+        <h2>کیف‌نما؛ متمایزترین مدل صرافی رمزارز</h2>
+        <p>خدمات متنوع، دریچه‌ای به سوی امکاناتی متفاوت و جذاب</p>
+      </div>
+
+      <div class="kp-bento">
+        <div class="kp-bento-card kp-bento-wide kp-bento-illustrated">
+          <span class="kp-emoji">😎</span>
+          <strong>حرفه‌ای معامله کنید</strong>
+          <p>معامله در بستری امن، سریع و ساده</p>
+        </div>
+
+        <div class="kp-bento-card">
+          <span class="kp-icon-chip kp-icon-chip-green">💰</span>
+          <strong>کسب درآمد</strong>
+          <p>با انجام چالش‌های روزانه ارز رایگان بگیرید</p>
+        </div>
+
+        <div class="kp-bento-card kp-bento-center">
+          <span class="kp-icon-chip kp-icon-chip-blue">🪂</span>
+          <strong>ایردراپ روزانه</strong>
+          <p>بیشترین میزان ایردراپ در این مدل</p>
+        </div>
+
+        <div class="kp-bento-card kp-bento-split">
+          <div><span class="kp-icon-chip kp-icon-chip-orange">🕐</span><strong>پشتیبانی ۲۴ ساعته</strong></div>
+          <div><span class="kp-icon-chip kp-icon-chip-purple">🎖️</span><strong>جوایز ویژه</strong></div>
+        </div>
+
+        <div class="kp-bento-card kp-bento-stat">
+          <strong>+۳٬۰۰۰</strong>
+          <p>رتبه نخست در تعداد ارز دیجیتال</p>
+        </div>
+
+        <div class="kp-bento-card kp-bento-wide kp-bento-dark">
+          <span class="kp-bento-dark-logo">کیف‌نما</span>
+        </div>
+
+        <div class="kp-bento-card kp-bento-tall kp-bento-phone">
+          <strong>تنظیمات مدیریتی و امنیتی</strong>
+          <p>دسترسی به تنظیمات متنوع امنیتی و مدیریت حساب کاربری</p>
+          <ul class="kp-security-list">
+            <li>🔒 قفل اضطراری</li>
+            <li>🖐️ ورود با اثرانگشت</li>
+            <li>🌗 دارک و لایت</li>
+            <li>🛡️ تایید دو مرحله‌ای</li>
+            <li>🔤 سایز فونت</li>
+            <li>🔐 قفل برداشت</li>
+            <li>📱 مدیریت دستگاه‌ها</li>
+          </ul>
+        </div>
+
+        <div class="kp-bento-card">
+          <span class="kp-icon-chip kp-icon-chip-indigo">Ð</span>
+          <strong>دکس پلاس</strong>
+          <p>قبل از لیست شدن بخرید و بفروشید</p>
+        </div>
+
+        <div class="kp-bento-card">
+          <span class="kp-icon-chip kp-icon-chip-teal">₮</span>
+          <strong>استیکینگ تتر</strong>
+          <p>جوایز ویژه استیکینگ</p>
+        </div>
+
+        <div class="kp-bento-card kp-bento-stat">
+          <strong>+۱٬۰۰۰٬۰۰۰</strong>
+          <p>بیش از یک میلیون کاربر فعال</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DEDICATED WALLET ============ -->
+  <section class="kp-section kp-wallet-section">
+    <div class="kp-container kp-wallet-grid">
+      <div>
+        <h2>ساخت کیف‌ پول اختصاصی برای هر کاربر</h2>
+        <p>
+          این ویژگی یکی از بهترین خدماتی است که می‌توان در اختیار کاربران قرار داد. با استفاده از این
+          قابلیت ویژه، پس از ساخت حساب کاربری می‌توانید زیرمجموعه‌هایی با نام دلخواه خود ایجاد و در هر
+          کیف‌پول، موجودی‌های مختلفی را نگه‌داری کنید. هر حساب دارای آدرس اختصاصی است که برای همیشه در
+          دسترس قرار دارد.
+        </p>
+      </div>
+      <div class="kp-support-card">
+        <p>۲۴ ساعت شبانه‌روز و ۷ روز هفته پاسخگوی پرسش‌های شما هستیم؛ با ما تماس بگیرید</p>
+        <a class="kp-btn kp-btn-primary" href="#">تماس با پشتیبانی</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ 1 ============ -->
+  <section class="kp-section">
+    <div class="kp-container">
+      <div class="kp-section-head">
+        <h2>آشنایی با ما</h2>
+      </div>
+      <div class="kp-faq" data-kp-accordion>
+        <div class="kp-faq-item is-open">
+          <button class="kp-faq-q" type="button">
+            <span class="kp-avatar kp-avatar-user">م</span>
+            چطور می‌تونم مطمئن بشم که این صرافی امن، قابل‌اعتماد و مناسب برای سرمایه‌گذاری هست؟
+            <svg class="kp-faq-caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="kp-faq-a">
+            <span class="kp-avatar kp-avatar-agent">پ</span>
+            <p>سلام، این صرافی نمونه با رعایت استانداردهای امنیتی طراحی شده و صرفاً برای مدل‌سازی رابط کاربری است.</p>
+          </div>
+        </div>
+        <div class="kp-faq-item">
+          <button class="kp-faq-q" type="button">
+            <span class="kp-avatar kp-avatar-user">ز</span>
+            کارمزد معاملات چقدر است؟
+            <svg class="kp-faq-caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="kp-faq-a">
+            <span class="kp-avatar kp-avatar-agent">م</span>
+            <p>کارمزد بسته به نوع معامله و سطح کاربری متفاوت است و در بخش تعرفه‌ها قابل مشاهده است.</p>
+          </div>
+        </div>
+        <div class="kp-faq-item">
+          <button class="kp-faq-q" type="button">
+            <span class="kp-avatar kp-avatar-user">م</span>
+            برداشت‌های ریالی در چه زمانی به حساب واریز می‌شود؟
+            <svg class="kp-faq-caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="kp-faq-a">
+            <span class="kp-avatar kp-avatar-agent">ح</span>
+            <p>در حالت معمول برداشت‌های ریالی حداکثر تا چند ساعت کاری واریز می‌شوند.</p>
+          </div>
+        </div>
+        <div class="kp-faq-item">
+          <button class="kp-faq-q" type="button">
+            <span class="kp-avatar kp-avatar-user">ف</span>
+            پس از واریز ریالی، پنل کاربری چه زمانی شارژ می‌شود؟
+            <svg class="kp-faq-caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="kp-faq-a">
+            <span class="kp-avatar kp-avatar-agent">م</span>
+            <p>معمولاً بلافاصله پس از تایید تراکنش بانکی، موجودی حساب شما به‌روزرسانی می‌شود.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURES GRID ============ -->
+  <section class="kp-section">
+    <div class="kp-container">
+      <div class="kp-section-head kp-section-head-center">
+        <h2>برترین ویژگی‌های این مدل صرافی</h2>
+        <p>اولین سرویس کیف‌پول اختصاصی رمزارز در این نمونه طراحی</p>
+      </div>
+      <div class="kp-feature-grid">
+        <div class="kp-feature-card"><span class="kp-icon-chip kp-icon-chip-blue">🥇</span><strong>رتبه نخست</strong><p>بیشترین تعداد ارز قابل معامله</p></div>
+        <div class="kp-feature-card"><span class="kp-icon-chip kp-icon-chip-purple">🎁</span><strong>هدیه‌های ویژه</strong><p>دریافت ارز دلخواه با چالش‌های روزانه</p></div>
+        <div class="kp-feature-card"><span class="kp-icon-chip kp-icon-chip-teal">🛡️</span><strong>بدون کارمزد نگهداری</strong><p>امکان نگهداری رمزارز بدون کارمزد</p></div>
+        <div class="kp-feature-card"><span class="kp-icon-chip kp-icon-chip-orange">🕐</span><strong>پشتیبانی ۲۴ ساعته</strong><p>پاسخگویی شبانه‌روزی هفت روز هفته</p></div>
+        <div class="kp-feature-card"><span class="kp-icon-chip kp-icon-chip-green">⚡</span><strong>خرید فروش آنی</strong><p>خرید فروش آنی در بازارهای جهانی</p></div>
+        <div class="kp-feature-card"><span class="kp-icon-chip kp-icon-chip-indigo">💸</span><strong>واریز و برداشت فوری</strong><p>تایید سریع واریز و برداشت ارزی</p></div>
+        <div class="kp-feature-card"><span class="kp-icon-chip kp-icon-chip-red">🔐</span><strong>بالاترین امنیت برداشت</strong><p>امکان قفل برداشت دارایی‌های ارزی</p></div>
+        <div class="kp-feature-card"><span class="kp-icon-chip kp-icon-chip-amber">🪂</span><strong>ایردراپ‌های روزانه</strong><p>دریافت ارز با انجام چالش‌های روزانه</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BLOG ============ -->
+  <section class="kp-section" id="blog">
+    <div class="kp-container">
+      <div class="kp-section-head">
+        <h2>آخرین اخبار بازار ارز دیجیتال</h2>
+      </div>
+      <div class="kp-blog-row">
+        <article class="kp-blog-card">
+          <div class="kp-blog-thumb kp-blog-thumb-1"></div>
+          <h3>نبرد سولانا در محدوده حساس؛ شکست ۷۳.۵۰ دلار یا بازگشت به ۷۰ دلار؟</h3>
+          <div class="kp-blog-meta"><span>۱۲ مرداد ۱۴۰۵</span><span>اخبار</span><span>👁 ۲٬۳۴۷</span></div>
+        </article>
+        <article class="kp-blog-card">
+          <div class="kp-blog-thumb kp-blog-thumb-2"></div>
+          <h3>پیش‌بینی قیمت اتریوم؛ آیا ETH می‌تواند مقاومت ۲٬۰۰۰ دلار را بشکند؟</h3>
+          <div class="kp-blog-meta"><span>۱۲ مرداد ۱۴۰۵</span><span>اخبار</span><span>👁 ۲٬۵۷۸</span></div>
+        </article>
+        <article class="kp-blog-card">
+          <div class="kp-blog-thumb kp-blog-thumb-3"></div>
+          <h3>قیمت بیت‌کوین در انتظار ۵ آزمون مهم اقتصاد کلان آمریکا</h3>
+          <div class="kp-blog-meta"><span>۱۲ مرداد ۱۴۰۵</span><span>اخبار</span><span>👁 ۳٬۰۶۳</span></div>
+        </article>
+        <article class="kp-blog-card">
+          <div class="kp-blog-thumb kp-blog-thumb-4"></div>
+          <h3>رشد سهام آمریکا و سقوط نفت؛ سرمایه‌گذاران آماده یک هفته حساس شدند</h3>
+          <div class="kp-blog-meta"><span>۱۲ مرداد ۱۴۰۵</span><span>اخبار</span><span>👁 ۲٬۲۹۰</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TESTIMONIALS ============ -->
+  <section class="kp-section">
+    <div class="kp-container">
+      <div class="kp-section-head kp-section-head-center">
+        <h2>کاربران درباره این مدل صرافی چه می‌گویند</h2>
+        <p>مفتخریم با ارائه خدمات باکیفیت، اعتماد کاربران را جلب کرده‌ایم</p>
+      </div>
+
+      <div class="kp-testimonial-wrap">
+        <div class="kp-testimonial-track" data-kp-testimonials>
+          <div class="kp-testimonial-card">
+            <div class="kp-stars">★★★★★</div>
+            <p>«سلام، خداقوت. چارهای بین‌المللی برای ثبت رمز نمایشی و بی‌نظیر است.»</p>
+            <div class="kp-testimonial-user"><span class="kp-avatar kp-avatar-user">م</span> محرم رحمانی<small>کاربر نمونه</small></div>
+          </div>
+          <div class="kp-testimonial-card">
+            <div class="kp-stars">★★★★☆</div>
+            <p>«خدا بهتون سلامتی بده. رابط کاربری روان و سریع برای ثبت سفارش است.»</p>
+            <div class="kp-testimonial-user"><span class="kp-avatar kp-avatar-user">م</span> مصطفی اصغری<small>کاربر نمونه</small></div>
+          </div>
+          <div class="kp-testimonial-card">
+            <div class="kp-stars">★★★★★</div>
+            <p>«سلام عالی و بی‌نظیر هستید، پشتیبانی سریع پاسخ می‌دهد.»</p>
+            <div class="kp-testimonial-user"><span class="kp-avatar kp-avatar-user">س</span> سیدمهدی دارانی<small>کاربر نمونه</small></div>
+          </div>
+          <div class="kp-testimonial-card">
+            <div class="kp-stars">★★★★☆</div>
+            <p>«خسته نباشید، خدمت همکاری عالی صرافی با اسکو گرم.»</p>
+            <div class="kp-testimonial-user"><span class="kp-avatar kp-avatar-user">ع</span> علی اکبری<small>کاربر نمونه</small></div>
+          </div>
+        </div>
+        <div class="kp-testimonial-nav">
+          <button type="button" data-kp-test-prev aria-label="قبلی">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+          </button>
+          <button type="button" data-kp-test-next aria-label="بعدی">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ APP DOWNLOAD ============ -->
+  <section class="kp-section kp-app-section">
+    <div class="kp-container kp-app-grid">
+      <div class="kp-phone-mock" aria-hidden="true">
+        <div class="kp-phone-screen">
+          <div class="kp-phone-row"><span>موجودی کل</span><strong>$۸۹٬۰۰۰</strong></div>
+          <div class="kp-phone-chart"></div>
+          <div class="kp-phone-btn kp-phone-btn-buy">خرید</div>
+          <div class="kp-phone-btn kp-phone-btn-sell">فروش</div>
+        </div>
+        <span class="kp-phone-float kp-phone-float-1">₿</span>
+        <span class="kp-phone-float kp-phone-float-2">Ξ</span>
+      </div>
+      <div>
+        <h2>اپلیکیشن این مدل صرافی</h2>
+        <p>اپلیکیشن را از مارکت‌های معتبر دانلود کنید و به‌سادگی ارزهای دیجیتال را خرید، فروش و مدیریت کنید.</p>
+        <div class="kp-tabs kp-tabs-plain">
+          <button class="kp-tab is-active" type="button">اندروید</button>
+          <button class="kp-tab" type="button">آیفون (iOS)</button>
+          <button class="kp-tab" type="button">وب اپلیکیشن (PWA)</button>
+          <button class="kp-tab" type="button">Api</button>
+        </div>
+        <div class="kp-store-row">
+          <a class="kp-store-btn" href="#">لینک مستقیم</a>
+          <a class="kp-store-btn" href="#">گوگل‌پلی</a>
+          <a class="kp-store-btn" href="#">بازار</a>
+          <a class="kp-store-btn" href="#">مایکت</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AIRDROP ============ -->
+  <section class="kp-section">
+    <div class="kp-container kp-airdrop-grid">
+      <div>
+        <h2>ارز دیجیتال رایگان، هر روز</h2>
+        <p>با عضویت و دنبال‌کردن کانال‌های رسمی ایردراپ، بدون نیاز به سرمایه اولیه به کدهای روزانه دسترسی خواهید داشت.</p>
+        <a class="kp-btn kp-btn-outline" href="#">آموزش دریافت ایردراپ</a>
+      </div>
+      <div class="kp-steps-card">
+        <div class="kp-steps-head">
+          <span class="kp-icon-chip kp-icon-chip-blue">🎁</span>
+          دریافت ایردراپ
+        </div>
+        <ol class="kp-steps">
+          <li><span>۱</span>عضو کانال‌های رسمی ایردراپ شوید</li>
+          <li><span>۲</span>عبارت اعلام‌شده را در مرورگر جستجو کنید</li>
+          <li><span>۳</span>کد را در پنل کاربری ثبت کنید</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SECOND FAQ ============ -->
+  <section class="kp-section">
+    <div class="kp-container">
+      <div class="kp-section-head kp-section-head-center">
+        <h2>پاسخ به پرسش‌های شما</h2>
+      </div>
+      <div class="kp-faq kp-faq-numbered" data-kp-accordion>
+        <div class="kp-faq-item">
+          <button class="kp-faq-q" type="button"><span class="kp-num">۱</span>این صرافی نمونه چیست و چرا معتبر است؟<svg class="kp-faq-caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+          <div class="kp-faq-a"><p>این صفحه صرفاً یک مدل‌سازی رابط کاربری بر پایه الگوهای رایج صرافی‌های ارز دیجیتال است.</p></div>
+        </div>
+        <div class="kp-faq-item">
+          <button class="kp-faq-q" type="button"><span class="kp-num">۲</span>چه مزایا و قابلیت‌هایی دارد؟<svg class="kp-faq-caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+          <div class="kp-faq-a"><p>جدول قیمت زنده‌نما، استیکینگ، ایردراپ، امنیت چندلایه و پشتیبانی نمونه در این طرح دیده می‌شود.</p></div>
+        </div>
+        <div class="kp-faq-item">
+          <button class="kp-faq-q" type="button"><span class="kp-num">۳</span>چه کسانی می‌توانند از آن استفاده کنند؟<svg class="kp-faq-caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+          <div class="kp-faq-a"><p>هر شخص حقیقی یا حقوقی علاقه‌مند به الگوی UI صرافی‌های رمزارز.</p></div>
+        </div>
+        <div class="kp-faq-item">
+          <button class="kp-faq-q" type="button"><span class="kp-num">۴</span>کارمزدها در این مدل چقدر است؟<svg class="kp-faq-caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+          <div class="kp-faq-a"><p>در این مدل نمایشی، عددها صرفاً جهت نمونه‌سازی تجربه کاربری هستند.</p></div>
+        </div>
+        <div class="kp-faq-item">
+          <button class="kp-faq-q" type="button"><span class="kp-num">۵</span>چه ارزهایی پشتیبانی می‌شوند؟<svg class="kp-faq-caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+          <div class="kp-faq-a"><p>جدول بالا نمونه‌ای از ده ارز پرمعامله را نشان می‌دهد؛ در نسخه واقعی قابل گسترش است.</p></div>
+        </div>
+        <div class="kp-faq-item">
+          <button class="kp-faq-q" type="button"><span class="kp-num">۶</span>آیا می‌توان با تومان معامله کرد؟<svg class="kp-faq-caret" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+          <div class="kp-faq-a"><p>در این طرح نمونه، قیمت تومانی صرفاً برای نمایش فرمت محلی درج شده است.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="kp-footer">
+  <div class="kp-container">
+    <div class="kp-footer-contact">
+      <div><span aria-hidden="true">✉️</span> پست الکترونیکی<strong>info@example.me</strong></div>
+      <div><span aria-hidden="true">📞</span> پشتیبانی مشتریان<strong>۰۲۱-۹۱۰۹۸۴۰۴</strong></div>
+      <div><span aria-hidden="true">📍</span> آدرس دفتر مرکزی<strong>تهران، بلوار نمونه، مجتمع آزمایشی</strong></div>
+    </div>
+
+    <div class="kp-footer-grid">
+      <div class="kp-footer-col">
+        <h4>پیوندهای مهم</h4>
+        <a href="#">قیمت طلا امروز</a>
+        <a href="#">قیمت بیت‌کوین</a>
+        <a href="#">آموزش خرید ارز دیجیتال</a>
+        <a href="#">قیمت تتر</a>
+      </div>
+      <div class="kp-footer-col">
+        <h4>سرویس‌های ما</h4>
+        <a href="#">کسب درآمد</a>
+        <a href="#">استیکینگ ارز دیجیتال</a>
+        <a href="#">سهام بازارهای جهانی</a>
+        <a href="#">دکس پلاس</a>
+      </div>
+      <div class="kp-footer-col">
+        <h4>اطلاعات</h4>
+        <a href="#">قوانین و مقررات</a>
+        <a href="#">حریم خصوصی</a>
+        <a href="#">تماس با ما</a>
+        <a href="#">درباره ما</a>
+      </div>
+      <div class="kp-footer-col kp-footer-brand">
+        <a class="kp-logo" href="#top">
+          <span class="kp-logo-mark" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2 2 7l10 5 10-5-10-5Z" fill="#fff"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="kp-logo-text">کیف‌نما</span>
+        </a>
+        <p>نخستین سامانه نگهداری ارزهای دیجیتال در این مدل نمایشی؛ با بهره‌گیری از سبک‌ها و استانداردهای نوین.</p>
+      </div>
+    </div>
+
+    <div class="kp-footer-bottom">
+      <span>© تمامی حقوق این مدل‌سازی محفوظ است.</span>
+      <span>ساخته‌شده برای اهداف نمایشی — نه یک سرویس مالی واقعی</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>
