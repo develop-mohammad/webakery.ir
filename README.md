@@ -51,6 +51,21 @@
 - مسیر: `webakery-quiet-notices/`
 - ZIP: `webakery-quiet-notices.zip`
 
+## روزم (Roozam)
+
+وب‌اپلیکیشن برنامه‌ریزی روزانه با زمان‌بندی هوشمند، عادت‌های تکرارشونده و تقویم شمسی.
+
+- نسخه: **1.0.0**
+- سازنده: **webakery.ir**
+- مسیر: `roozam/`
+- ZIP: `roozam.zip`
+- قیمت: ۱۹۹,۰۰۰ تومان
+- شناسه لایسنس: `roozam`
+- شورت‌کد: `[roozam]`
+- پیش‌نمایش UI: `roozam/canvas-preview.html`
+
+برای ثبت محصول روی سرور لایسنس، فایل `license-server-updates/ADD-ROOZAM.md` را ببینید.
+
 ## چت باکس (Webakery Chat)
 
 ویجت پشتیبانی آنلاین با صندوق پیام در پیشخوان.
