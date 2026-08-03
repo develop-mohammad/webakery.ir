@@ -1,4 +1,21 @@
-/* روزم — برنامه‌ریز روزانه */
+/* روزم — وب‌اپلیکیشن برنامه‌ریز روزانه */
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+.rzm-page {
+  min-height: 100vh;
+  font-family: "Vazirmatn", Tahoma, sans-serif;
+  color: #1c2418;
+  background:
+    radial-gradient(900px 500px at 85% 0%, rgba(217, 119, 6, 0.18), transparent 55%),
+    radial-gradient(700px 420px at 10% 30%, rgba(47, 107, 79, 0.16), transparent 50%),
+    #e9e2d4;
+  padding: 28px 12px 48px;
+}
+
 .rzm {
   --rzm-ink: #1c2418;
   --rzm-mute: #5c6756;
@@ -563,12 +580,37 @@
   gap: 8px;
 }
 
-.rzm-locked {
-  padding: 16px;
-  border-radius: 12px;
-  background: #fff7ed;
-  color: #9a3412;
-  font-family: var(--rzm-font);
+.rzm-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  justify-content: center;
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rzm-line);
+}
+
+.rzm-linkbtn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--rzm-mute);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  padding: 4px 2px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rzm-linkbtn:hover {
+  color: var(--rzm-leaf-deep);
+}
+
+.rzm-brand-name {
+  margin: 0;
 }
 
 @keyframes rzm-rise {

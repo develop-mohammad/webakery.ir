@@ -1,20 +1,23 @@
 (function () {
   'use strict';
 
-  if (typeof window.RZM === 'undefined') return;
-
-  var cfg = window.RZM;
   var J = window.RZMJalali;
+  var P = window.RZMPlanner;
   var root = document.querySelector('[data-rzm-root]');
-  if (!root || !J) return;
+  if (!root || !J || !P) return;
+
+  var STORAGE_DAYS = 'roozam.days.v1';
+  var STORAGE_ROUTINES = 'roozam.routines.v1';
+  var STORAGE_PREFS = 'roozam.prefs.v1';
 
   var state = {
-    date: cfg.today || J.todayISO(),
-    day: clone(cfg.day || { date: cfg.today, tasks: [], note: '' }),
-    routines: clone(cfg.routines || []),
-    prefs: clone(cfg.prefs || { wake_time: '07:00', sleep_time: '23:00', break_minutes: 10 }),
-    saving: false,
+    date: J.todayISO(),
+    day: { date: J.todayISO(), tasks: [], note: '' },
+    routines: P.defaultRoutines(),
+    prefs: P.defaultPrefs(),
   };
+
+  var deferredInstall = null;
 
   var els = {
     weekday: root.querySelector('[data-rzm-weekday]'),
@@ -34,18 +37,17 @@
     taskForm: root.querySelector('[data-rzm-task-form]'),
     routineForm: root.querySelector('[data-rzm-routine-form]'),
     prefsForm: root.querySelector('[data-rzm-prefs-form]'),
+    installBtn: root.querySelector('[data-rzm-install]'),
+    exportBtn: root.querySelector('[data-rzm-export]'),
+    importInput: root.querySelector('[data-rzm-import]'),
   };
 
   boot();
 
   function boot() {
+    loadAll();
     bind();
-    if (!cfg.loggedIn) {
-      loadLocal();
-      flash(cfg.i18n.loginHint, 'info');
-    } else {
-      fetchState();
-    }
+    registerSW();
     render();
   }
 
@@ -82,9 +84,9 @@
       e.preventDefault();
       var fd = new FormData(els.taskForm);
       var task = {
-        id: uid(),
+        id: P.uid(),
         title: String(fd.get('title') || '').trim(),
-        duration: clampInt(fd.get('duration'), 5, 480, 30),
+        duration: P.clampInt(fd.get('duration'), 5, 480, 30),
         priority: String(fd.get('priority') || 'medium'),
         start: String(fd.get('start') || ''),
         category: String(fd.get('category') || '').trim(),
@@ -93,11 +95,11 @@
       };
       if (!task.title) return;
       state.day.tasks.push(task);
-      sortTasks();
+      state.day.tasks = P.sortTasks(state.day.tasks);
       els.taskForm.reset();
       els.taskForm.duration.value = 30;
       els.dialogTask.close();
-      persistDay();
+      saveDay();
       render();
       flash('کار اضافه شد', 'ok');
     });
@@ -108,9 +110,9 @@
       var title = String(fd.get('title') || '').trim();
       if (!title) return;
       state.routines.push({
-        id: uid(),
+        id: P.uid(),
         title: title,
-        duration: clampInt(fd.get('duration'), 5, 240, 20),
+        duration: P.clampInt(fd.get('duration'), 5, 240, 20),
         priority: 'medium',
         start: '',
         enabled: true,
@@ -118,7 +120,7 @@
       });
       els.routineForm.reset();
       els.routineForm.duration.value = 20;
-      persistRoutines();
+      saveRoutines();
       renderRoutines();
     });
 
@@ -127,10 +129,10 @@
       state.prefs = {
         wake_time: els.prefsForm.wake_time.value || '07:00',
         sleep_time: els.prefsForm.sleep_time.value || '23:00',
-        break_minutes: clampInt(els.prefsForm.break_minutes.value, 0, 60, 10),
+        break_minutes: P.clampInt(els.prefsForm.break_minutes.value, 0, 60, 10),
       };
       els.dialogPrefs.close();
-      persistPrefs();
+      savePrefs();
       flash('ساعات روز ذخیره شد', 'ok');
     });
 
@@ -138,80 +140,47 @@
     els.note.addEventListener('input', function () {
       state.day.note = els.note.value;
       clearTimeout(noteTimer);
-      noteTimer = setTimeout(persistDay, 500);
+      noteTimer = setTimeout(saveDay, 400);
     });
-  }
 
-  function changeDay(delta) {
-    state.date = J.shiftISO(state.date, delta);
-    if (cfg.loggedIn) {
-      fetchState();
-    } else {
-      loadLocal();
-      render();
+    els.exportBtn.addEventListener('click', exportBackup);
+    els.importInput.addEventListener('change', importBackup);
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredInstall = e;
+      if (els.installBtn) els.installBtn.hidden = false;
+    });
+
+    if (els.installBtn) {
+      els.installBtn.addEventListener('click', function () {
+        if (!deferredInstall) return;
+        deferredInstall.prompt();
+        deferredInstall.userChoice.finally(function () {
+          deferredInstall = null;
+          els.installBtn.hidden = true;
+        });
+      });
     }
   }
 
-  function fetchState() {
-    post('rzm_get_state', { date: state.date }).then(function (res) {
-      if (!res || !res.success) return;
-      state.day = res.data.day;
-      state.routines = res.data.routines;
-      state.prefs = res.data.prefs;
-      render();
-    });
+  function changeDay(delta) {
+    saveDay();
+    state.date = J.shiftISO(state.date, delta);
+    loadDay();
+    render();
   }
 
   function planDay() {
     var btn = root.querySelector('[data-rzm-plan]');
     btn.classList.add('is-busy');
-    if (cfg.loggedIn) {
-      post('rzm_auto_plan', { date: state.date, day: JSON.stringify(state.day) })
-        .then(function (res) {
-          btn.classList.remove('is-busy');
-          if (!res || !res.success) {
-            flash((res && res.data && res.data.message) || cfg.i18n.error, 'err');
-            return;
-          }
-          state.day = res.data.day;
-          render(true);
-          flash(cfg.i18n.planDone, 'ok');
-        })
-        .catch(function () {
-          btn.classList.remove('is-busy');
-          flash(cfg.i18n.error, 'err');
-        });
-      return;
-    }
-    state.day = autoPlanLocal(state.day, state.routines, state.prefs);
-    saveLocal();
-    btn.classList.remove('is-busy');
-    render(true);
-    flash(cfg.i18n.planDone, 'ok');
-  }
-
-  function persistDay() {
-    if (!cfg.loggedIn) {
-      saveLocal();
-      return;
-    }
-    post('rzm_save_day', { date: state.date, day: JSON.stringify(state.day) });
-  }
-
-  function persistRoutines() {
-    if (!cfg.loggedIn) {
-      saveLocal();
-      return;
-    }
-    post('rzm_save_routines', { routines: JSON.stringify(state.routines) });
-  }
-
-  function persistPrefs() {
-    if (!cfg.loggedIn) {
-      saveLocal();
-      return;
-    }
-    post('rzm_save_prefs', { prefs: JSON.stringify(state.prefs) });
+    state.day = P.autoPlan(state.day, state.routines, state.prefs);
+    saveDay();
+    setTimeout(function () {
+      btn.classList.remove('is-busy');
+      render(true);
+      flash('برنامه امروز چیده شد', 'ok');
+    }, 180);
   }
 
   function render(animate) {
@@ -222,19 +191,17 @@
     var tasks = state.day.tasks || [];
     els.list.innerHTML = '';
     els.empty.hidden = tasks.length > 0;
-    els.taskCount.textContent = tasks.length
-      ? J.toPersianDigits(tasks.length) + ' کار'
-      : '';
+    els.taskCount.textContent = tasks.length ? J.toPersianDigits(tasks.length) + ' کار' : '';
 
     tasks.forEach(function (task, index) {
       var li = document.createElement('li');
       li.className = 'rzm-item' + (task.done ? ' is-done' : '') + (animate ? ' is-enter' : '');
       if (animate) li.style.animationDelay = index * 45 + 'ms';
-      li.dataset.id = task.id;
 
+      var end = P.endTime(task.start, task.duration);
       var timeLabel = task.start
-        ? J.toPersianDigits(task.start) + ' · ' + J.toPersianDigits(task.duration) + 'د'
-        : cfg.i18n.unscheduled + ' · ' + J.toPersianDigits(task.duration) + 'د';
+        ? J.toPersianDigits(task.start) + (end ? '–' + J.toPersianDigits(end) : '')
+        : 'بدون زمان · ' + J.toPersianDigits(task.duration) + 'د';
 
       li.innerHTML =
         '<button type="button" class="rzm-check" data-act="toggle" aria-label="انجام شد"></button>' +
@@ -264,13 +231,13 @@
         if (!act) return;
         if (act === 'toggle') {
           task.done = !task.done;
-          persistDay();
+          saveDay();
           render();
         } else if (act === 'delete') {
           state.day.tasks = state.day.tasks.filter(function (t) {
             return t.id !== task.id;
           });
-          persistDay();
+          saveDay();
           render();
         }
       });
@@ -313,182 +280,119 @@
         '<button type="button" class="rzm-iconbtn" aria-label="حذف">×</button>';
       li.querySelector('input').addEventListener('change', function (e) {
         r.enabled = !!e.target.checked;
-        persistRoutines();
+        saveRoutines();
         renderRoutines();
       });
       li.querySelector('button').addEventListener('click', function () {
         state.routines = state.routines.filter(function (x) {
           return x.id !== r.id;
         });
-        persistRoutines();
+        saveRoutines();
         renderRoutines();
       });
       els.routines.appendChild(li);
     });
   }
 
-  function autoPlanLocal(day, routines, prefs) {
-    var wake = toMin(prefs.wake_time || '07:00');
-    var sleep = toMin(prefs.sleep_time || '23:00');
-    var brk = clampInt(prefs.break_minutes, 0, 60, 10);
-    if (sleep <= wake) sleep = wake + 12 * 60;
-
-    var fixed = [];
-    var flex = [];
-    var seen = {};
-    var tasks = clone(day.tasks || []);
-
-    tasks.forEach(function (t) {
-      seen[t.title + '|' + t.duration] = true;
-      if (t.start) fixed.push(t);
-      else flex.push(t);
-    });
-
-    (routines || []).forEach(function (r) {
-      if (!r.enabled) return;
-      var key = r.title + '|' + r.duration;
-      if (seen[key]) return;
-      var item = {
-        id: uid(),
-        title: r.title,
-        duration: r.duration,
-        priority: r.priority || 'medium',
-        start: r.start || '',
-        category: r.category || 'عادت',
-        done: false,
-        from_routine: true,
-      };
-      if (item.start) fixed.push(item);
-      else flex.push(item);
-    });
-
-    fixed.sort(function (a, b) {
-      return toMin(a.start) - toMin(b.start);
-    });
-    var rank = { high: 0, medium: 1, low: 2 };
-    flex.sort(function (a, b) {
-      var ra = rank[a.priority] != null ? rank[a.priority] : 1;
-      var rb = rank[b.priority] != null ? rank[b.priority] : 1;
-      if (ra !== rb) return ra - rb;
-      return a.duration - b.duration;
-    });
-
-    var busy = fixed.map(function (t) {
-      var s = toMin(t.start);
-      return [s, s + Math.max(5, +t.duration || 30)];
-    });
-    busy.sort(function (a, b) {
-      return a[0] - b[0];
-    });
-
-    var cursor = wake;
-    flex.forEach(function (task) {
-      var dur = Math.max(5, +task.duration || 30);
-      var scan = Math.max(cursor, wake);
-      var placed = false;
-      while (scan + dur <= sleep) {
-        var end = scan + dur;
-        if (!overlaps(scan, end, busy)) {
-          task.start = fromMin(scan);
-          busy.push([scan, end]);
-          busy.sort(function (a, b) {
-            return a[0] - b[0];
-          });
-          cursor = end + brk;
-          placed = true;
-          break;
-        }
-        var next = scan + 5;
-        busy.forEach(function (b) {
-          if (scan < b[1] && end > b[0]) next = Math.max(next, b[1] + brk);
-        });
-        scan = next;
-      }
-      if (!placed) task.start = '';
-    });
-
-    var all = fixed.concat(flex);
-    all.sort(function (a, b) {
-      if (!a.start && !b.start) return 0;
-      if (!a.start) return 1;
-      if (!b.start) return -1;
-      return toMin(a.start) - toMin(b.start);
-    });
-    return { date: day.date || state.date, tasks: all, note: day.note || '' };
-  }
-
-  function overlaps(s, e, busy) {
-    for (var i = 0; i < busy.length; i++) {
-      if (s < busy[i][1] && e > busy[i][0]) return true;
-    }
-    return false;
-  }
-
-  function toMin(t) {
-    var p = String(t || '00:00').split(':');
-    return (+p[0] || 0) * 60 + (+p[1] || 0);
-  }
-
-  function fromMin(m) {
-    m = Math.max(0, Math.min(24 * 60 - 1, m | 0));
-    var h = String(Math.floor(m / 60)).padStart(2, '0');
-    var min = String(m % 60).padStart(2, '0');
-    return h + ':' + min;
-  }
-
-  function sortTasks() {
-    state.day.tasks.sort(function (a, b) {
-      if (!a.start && !b.start) return 0;
-      if (!a.start) return 1;
-      if (!b.start) return -1;
-      return toMin(a.start) - toMin(b.start);
-    });
-  }
-
-  function localKey() {
-    return 'rzm_v1_' + state.date;
-  }
-
-  function saveLocal() {
+  function loadAll() {
     try {
-      localStorage.setItem(
-        localKey(),
-        JSON.stringify({ day: state.day, routines: state.routines, prefs: state.prefs })
-      );
-      localStorage.setItem('rzm_v1_routines', JSON.stringify(state.routines));
-      localStorage.setItem('rzm_v1_prefs', JSON.stringify(state.prefs));
+      var prefs = JSON.parse(localStorage.getItem(STORAGE_PREFS) || 'null');
+      if (prefs) state.prefs = Object.assign(P.defaultPrefs(), prefs);
+      var routines = JSON.parse(localStorage.getItem(STORAGE_ROUTINES) || 'null');
+      if (routines && routines.length) state.routines = routines;
     } catch (e) {}
+    loadDay();
   }
 
-  function loadLocal() {
+  function loadDay() {
     try {
-      var raw = localStorage.getItem(localKey());
-      var rR = localStorage.getItem('rzm_v1_routines');
-      var rP = localStorage.getItem('rzm_v1_prefs');
-      if (rR) state.routines = JSON.parse(rR);
-      if (rP) state.prefs = JSON.parse(rP);
-      if (raw) {
-        var data = JSON.parse(raw);
-        state.day = data.day || { date: state.date, tasks: [], note: '' };
+      var days = JSON.parse(localStorage.getItem(STORAGE_DAYS) || '{}');
+      if (days[state.date]) {
+        state.day = days[state.date];
+        state.day.date = state.date;
       } else {
         state.day = { date: state.date, tasks: [], note: '' };
       }
-      state.day.date = state.date;
     } catch (e) {
       state.day = { date: state.date, tasks: [], note: '' };
     }
   }
 
-  function post(action, fields) {
-    var body = new FormData();
-    body.append('action', action);
-    body.append('nonce', cfg.nonce || '');
-    Object.keys(fields || {}).forEach(function (k) {
-      body.append(k, fields[k]);
-    });
-    return fetch(cfg.ajaxUrl, { method: 'POST', body: body, credentials: 'same-origin' }).then(function (r) {
-      return r.json();
-    });
+  function saveDay() {
+    try {
+      var days = JSON.parse(localStorage.getItem(STORAGE_DAYS) || '{}');
+      days[state.date] = state.day;
+      var keys = Object.keys(days).sort();
+      while (keys.length > 120) {
+        delete days[keys.shift()];
+        keys = Object.keys(days).sort();
+      }
+      localStorage.setItem(STORAGE_DAYS, JSON.stringify(days));
+    } catch (e) {}
+  }
+
+  function saveRoutines() {
+    try {
+      localStorage.setItem(STORAGE_ROUTINES, JSON.stringify(state.routines));
+    } catch (e) {}
+  }
+
+  function savePrefs() {
+    try {
+      localStorage.setItem(STORAGE_PREFS, JSON.stringify(state.prefs));
+    } catch (e) {}
+  }
+
+  function exportBackup() {
+    saveDay();
+    var payload = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      prefs: state.prefs,
+      routines: state.routines,
+      days: JSON.parse(localStorage.getItem(STORAGE_DAYS) || '{}'),
+    };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'roozam-backup-' + state.date + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    flash('فایل پشتیبان دانلود شد', 'ok');
+  }
+
+  function importBackup(e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(String(reader.result || '{}'));
+        if (data.prefs) {
+          state.prefs = Object.assign(P.defaultPrefs(), data.prefs);
+          savePrefs();
+        }
+        if (Array.isArray(data.routines)) {
+          state.routines = data.routines;
+          saveRoutines();
+        }
+        if (data.days && typeof data.days === 'object') {
+          localStorage.setItem(STORAGE_DAYS, JSON.stringify(data.days));
+        }
+        loadDay();
+        render();
+        flash('بازیابی انجام شد', 'ok');
+      } catch (err) {
+        flash('فایل پشتیبان نامعتبر است', 'err');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function registerSW() {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.register('./sw.js').catch(function () {});
   }
 
   function openDialog(dlg) {
@@ -503,27 +407,13 @@
     clearTimeout(flash._t);
     flash._t = setTimeout(function () {
       els.alert.hidden = true;
-    }, 3200);
+    }, 3000);
   }
 
   function priorityLabel(p) {
-    if (p === 'high') return cfg.i18n.priorityHigh;
-    if (p === 'low') return cfg.i18n.priorityLow;
-    return cfg.i18n.priorityMed;
-  }
-
-  function uid() {
-    return 't' + Math.random().toString(36).slice(2, 10);
-  }
-
-  function clampInt(v, min, max, fallback) {
-    var n = parseInt(v, 10);
-    if (isNaN(n)) return fallback;
-    return Math.max(min, Math.min(max, n));
-  }
-
-  function clone(x) {
-    return JSON.parse(JSON.stringify(x));
+    if (p === 'high') return 'مهم';
+    if (p === 'low') return 'کم‌اهمیت';
+    return 'عادی';
   }
 
   function escapeHtml(s) {
