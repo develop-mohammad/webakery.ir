@@ -58,15 +58,16 @@
     root.querySelector('[data-rzm-next]').addEventListener('click', function () {
       changeDay(1);
     });
-    root.querySelector('[data-rzm-plan]').addEventListener('click', planDay);
-    root.querySelector('[data-rzm-open-task]').addEventListener('click', function () {
+
+    onAll('[data-rzm-plan]', planDay);
+    onAll('[data-rzm-open-task]', function () {
       openDialog(els.dialogTask);
     });
-    root.querySelector('[data-rzm-open-routines]').addEventListener('click', function () {
+    onAll('[data-rzm-open-routines]', function () {
       renderRoutines();
       openDialog(els.dialogRoutines);
     });
-    root.querySelector('[data-rzm-open-prefs]').addEventListener('click', function () {
+    onAll('[data-rzm-open-prefs]', function () {
       els.prefsForm.wake_time.value = state.prefs.wake_time;
       els.prefsForm.sleep_time.value = state.prefs.sleep_time;
       els.prefsForm.break_minutes.value = state.prefs.break_minutes;
@@ -79,6 +80,13 @@
         if (dlg) dlg.close();
       });
     });
+
+    var homeTab = root.querySelector('[data-rzm-tab="home"]');
+    if (homeTab) {
+      homeTab.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
 
     els.taskForm.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -172,15 +180,10 @@
   }
 
   function planDay() {
-    var btn = root.querySelector('[data-rzm-plan]');
-    btn.classList.add('is-busy');
     state.day = P.autoPlan(state.day, state.routines, state.prefs);
     saveDay();
-    setTimeout(function () {
-      btn.classList.remove('is-busy');
-      render(true);
-      flash('برنامه امروز چیده شد', 'ok');
-    }, 180);
+    render(true);
+    flash('برنامه امروز چیده شد', 'ok');
   }
 
   function render(animate) {
@@ -202,9 +205,15 @@
       var timeLabel = task.start
         ? J.toPersianDigits(task.start) + (end ? '–' + J.toPersianDigits(end) : '')
         : 'بدون زمان · ' + J.toPersianDigits(task.duration) + 'د';
+      var initial = (task.title || 'ک').charAt(0);
 
       li.innerHTML =
-        '<button type="button" class="rzm-check" data-act="toggle" aria-label="انجام شد"></button>' +
+        '<div class="rzm-item-main">' +
+        '<button type="button" class="rzm-avatar rzm-avatar-sm' +
+        (task.done ? ' is-done-avatar' : '') +
+        '" data-act="toggle" aria-label="انجام شد">' +
+        (task.done ? '✓' : escapeHtml(initial)) +
+        '</button>' +
         '<div class="rzm-item-body">' +
         '<div class="rzm-item-top">' +
         '<strong>' +
@@ -220,15 +229,24 @@
         '<span>' +
         timeLabel +
         '</span>' +
-        (task.category ? '<span>' + escapeHtml(task.category) + '</span>' : '') +
-        (task.from_routine ? '<span>عادت</span>' : '') +
+        (task.category ? '<span>· ' + escapeHtml(task.category) + '</span>' : '') +
+        (task.from_routine ? '<span>· عادت</span>' : '') +
         '</div>' +
         '</div>' +
-        '<button type="button" class="rzm-iconbtn" data-act="delete" aria-label="حذف">×</button>';
+        '</div>' +
+        '<div class="rzm-item-actions">' +
+        '<button type="button" class="rzm-action' +
+        (task.done ? ' is-liked' : '') +
+        '" data-act="toggle">' +
+        (task.done ? 'انجام شد' : 'انجام') +
+        '</button>' +
+        '<button type="button" class="rzm-action rzm-action-danger" data-act="delete">حذف</button>' +
+        '</div>';
 
       li.addEventListener('click', function (e) {
-        var act = e.target.getAttribute('data-act');
-        if (!act) return;
+        var btn = e.target.closest('[data-act]');
+        if (!btn) return;
+        var act = btn.getAttribute('data-act');
         if (act === 'toggle') {
           task.done = !task.done;
           saveDay();
@@ -393,6 +411,12 @@
   function registerSW() {
     if (!('serviceWorker' in navigator)) return;
     navigator.serviceWorker.register('./sw.js').catch(function () {});
+  }
+
+  function onAll(selector, handler) {
+    root.querySelectorAll(selector).forEach(function (el) {
+      el.addEventListener('click', handler);
+    });
   }
 
   function openDialog(dlg) {
