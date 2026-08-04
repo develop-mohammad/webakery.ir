@@ -1,0 +1,20 @@
+.wrpm-wrap{max-width:960px}
+.wrpm-muted{color:#64748b}
+.wrpm-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin:16px 0}
+.wrpm-notice{padding:12px 14px;border-radius:10px;margin-bottom:14px}
+.wrpm-notice.warn{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa}
+.wrpm-grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0}
+.wrpm-grid-form label{display:flex;flex-direction:column;gap:6px}
+.wrpm-grid-form input,.wrpm-grid-form select{max-width:100%}
+.wrpm-table{width:100%;border-collapse:collapse}
+.wrpm-table th,.wrpm-table td{padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;vertical-align:middle;font-size:13px}
+.wrpm-table th{font-size:12px;color:#64748b}
+.wrpm-role-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.wrpm-role-list li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px}
+.wrpm-badge{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;border-radius:999px;padding:2px 8px;font-size:11px}
+.wrpm-checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin:10px 0 16px}
+.wrpm-check{display:flex;align-items:center;gap:8px}
+.wrpm-field{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.wrpm-hr{border:0;border-top:1px solid #e2e8f0;margin:20px 0}
+.wrpm-steps{padding-right:20px;line-height:1.9}
+.wrpm-hidden-price{color:#64748b;font-style:italic}
