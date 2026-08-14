@@ -1,0 +1,24 @@
+[14-Aug-2026 17:31:11 UTC] PHP Warning:  Undefined array key "HTTP_HOST" in /workspace/wp-test/wp-includes/functions.php on line 6383
+[14-Aug-2026 17:40:18 UTC] PHP Fatal error:  Uncaught ArgumentCountError: is_numeric() expects exactly 1 argument, 3 given in /workspace/wp-test/wp-includes/rest-api/class-wp-rest-request.php:930
+Stack trace:
+#0 /workspace/wp-test/wp-includes/rest-api/class-wp-rest-request.php(930): is_numeric()
+#1 /workspace/wp-test/wp-includes/rest-api/class-wp-rest-server.php(1115): WP_REST_Request->has_valid_params()
+#2 /workspace/wp-test/wp-includes/rest-api.php(607): WP_REST_Server->dispatch()
+#3 phar:///usr/local/bin/wp/vendor/wp-cli/eval-command/src/EvalFile_Command.php(85) : eval()'d code(94): rest_do_request()
+#4 phar:///usr/local/bin/wp/vendor/wp-cli/eval-command/src/EvalFile_Command.php(85): eval()
+#5 phar:///usr/local/bin/wp/vendor/wp-cli/eval-command/src/EvalFile_Command.php(59): EvalFile_Command::execute_eval()
+#6 [internal function]: EvalFile_Command->__invoke()
+#7 phar:///usr/local/bin/wp/vendor/wp-cli/wp-cli/php/WP_CLI/Dispatcher/CommandFactory.php(100): call_user_func()
+#8 [internal function]: WP_CLI\Dispatcher\CommandFactory::WP_CLI\Dispatcher\{closure}()
+#9 phar:///usr/local/bin/wp/vendor/wp-cli/wp-cli/php/WP_CLI/Dispatcher/Subcommand.php(497): call_user_func()
+#10 phar:///usr/local/bin/wp/vendor/wp-cli/wp-cli/php/WP_CLI/Runner.php(470): WP_CLI\Dispatcher\Subcommand->invoke()
+#11 phar:///usr/local/bin/wp/vendor/wp-cli/wp-cli/php/WP_CLI/Runner.php(493): WP_CLI\Runner->run_command()
+#12 phar:///usr/local/bin/wp/vendor/wp-cli/wp-cli/php/WP_CLI/Runner.php(136): WP_CLI\Runner->run_command_and_exit()
+#13 phar:///usr/local/bin/wp/vendor/wp-cli/wp-cli/php/WP_CLI/Runner.php(1228): WP_CLI\Runner->do_early_invoke()
+#14 phar:///usr/local/bin/wp/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/LaunchRunner.php(28): WP_CLI\Runner->start()
+#15 phar:///usr/local/bin/wp/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\LaunchRunner->process()
+#16 phar:///usr/local/bin/wp/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#17 phar:///usr/local/bin/wp/php/boot-phar.php(20): include('...')
+#18 /usr/local/bin/wp(4): include('...')
+#19 {main}
+  thrown in /workspace/wp-test/wp-includes/rest-api/class-wp-rest-request.php on line 930
