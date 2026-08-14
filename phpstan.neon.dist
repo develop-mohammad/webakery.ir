@@ -9,6 +9,7 @@ parameters:
 			- '*/vendor/*'
 			- '*/node_modules/*'
 			- '*/wp-test/*'
+			- '*/tests/*'
 		# The license client is vendored verbatim across plugins: scan it for symbols, do not report on it.
 		analyse:
 			- '*/class-wb-license.php'

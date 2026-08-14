@@ -8,6 +8,8 @@
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
 	<exclude-pattern>*/wp-test/*</exclude-pattern>
 	<exclude-pattern>*/visual-tests/*</exclude-pattern>
+	<!-- Dev-only harness scripts executed through WP-CLI; they never ship inside a plugin ZIP. -->
+	<exclude-pattern>*/tests/*</exclude-pattern>
 	<exclude-pattern>license-server/*</exclude-pattern>
 	<exclude-pattern>*/class-wb-license.php</exclude-pattern>
 
@@ -31,6 +33,9 @@
 	<rule ref="PHPCompatibilityWP"/>
 	<config name="testVersion" value="7.4-"/>
 	<config name="minimum_wp_version" value="5.8"/>
+	<!-- Warnings still print, but only errors fail a lint run: custom log tables legitimately
+	trigger the direct-database-call warnings. -->
+	<config name="ignore_warnings_on_exit" value="1"/>
 
 	<!-- The expected text domain is per plugin, so bin/lint.sh sets it at runtime instead of hardcoding a list here. -->
 </ruleset>

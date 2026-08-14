@@ -41,6 +41,8 @@ bin/build-zip.sh <slug>           # ساخت ZIP ریشه با پوشه سطح�
 - تست runtime واقعی را به حدس ترجیح بده: `bin/wp-test.sh` سایت واقعی می‌دهد، پس منطق دسترسی/شورت‌کد/REST را همان‌جا اجرا کن.
 - برای تست نقش‌محور: `bin/wp-test.sh wp user create ...` و `wp eval` با `wp_set_current_user()`.
 - `bin/lint.sh` باید قبل از commit پاس شود؛ PHPStan روی level 5 با استاب‌های وردپرس اجرا می‌شود.
+- افزونه‌های قدیمی (`nobat-man`, `hesabdar`, `baget`, `access-levels`, `webakery-login`, ...) ایرادهای از پیش موجود دارند؛ آن‌ها را در تسک بی‌ربط اصلاح نکن، فقط کدی که خودت لمس کردی باید پاس شود.
+- warningهای «direct database call» برای جدول اختصاصی طبیعی است و باعث fail شدن lint نمی‌شود؛ فقط errorها fail می‌کنند.
 
 ## Don't
 
