@@ -51,7 +51,9 @@ cmd_up() {
 	mkdir -p "$WP_DIR"
 	if [[ ! -f "$WP_DIR/wp-load.php" ]]; then
 		log 'downloading WordPress'
-		wp core download --path="$WP_DIR" --force --skip-content >/dev/null || die 'wp core download failed'
+		# Bundled themes are included on purpose: without an active theme the front end renders
+		# an empty response, which makes browser testing of shortcodes and blocks impossible.
+		wp core download --path="$WP_DIR" --force >/dev/null || die 'wp core download failed'
 	fi
 	if [[ ! -f "$WP_DIR/wp-config.php" ]]; then
 		wp config create --path="$WP_DIR" --dbname="$DB_NAME" --dbuser="$DB_USER" --dbpass="$DB_PASS" \
@@ -69,6 +71,10 @@ PHP
 			--skip-email >/dev/null || die 'wp core install failed'
 		wp_cli rewrite structure '/%postname%/' >/dev/null
 		wp_cli option update timezone_string 'Asia/Tehran' >/dev/null
+	fi
+	if [[ -z "$( wp_cli theme list --status=active --field=name 2>/dev/null )" ]]; then
+		theme="$( wp_cli theme list --field=name 2>/dev/null | head -n 1 )"
+		[[ -n "$theme" ]] && wp_cli theme activate "$theme" >/dev/null
 	fi
 	ok "WordPress $(wp_cli core version) ready at $WP_DIR (admin/admin)"
 }
