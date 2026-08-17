@@ -1,0 +1,220 @@
+/* صفحه‌های تخفیف هوشمند — webakery.ir | استایل پیشخوان (RTL) */
+
+.wdp-wrap {
+	direction: rtl;
+}
+
+.wdp-h1 {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 4px;
+}
+
+.wdp-ver {
+	font-size: 12px;
+	font-weight: 600;
+	color: #64748b;
+	background: #f1f5f9;
+	border-radius: 99px;
+	padding: 2px 10px;
+}
+
+.wdp-sub {
+	color: #64748b;
+	margin: 0 0 14px;
+	font-size: 13px;
+	max-width: 900px;
+	line-height: 1.9;
+}
+
+.wdp-tabs {
+	margin-bottom: 16px;
+}
+
+.wdp-bar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin: 14px 0;
+}
+
+.wdp-bar-hint {
+	color: #64748b;
+	font-size: 12.5px;
+}
+
+.wdp-muted {
+	color: #94a3b8;
+}
+
+.wdp-pill {
+	display: inline-block;
+	font-size: 11px;
+	font-weight: 700;
+	border-radius: 99px;
+	padding: 2px 9px;
+}
+
+.wdp-pill-percent {
+	background: #e0f2fe;
+	color: #0369a1;
+}
+
+.wdp-pill-fixed {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+/* ─── جدول ─────────────────────────────────────────────── */
+
+.wdp-table th,
+.wdp-table td {
+	vertical-align: middle;
+	padding: 10px 12px;
+}
+
+.wdp-link-copy {
+	direction: ltr;
+	font-family: monospace;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 6px;
+	padding: 4px 8px;
+	min-width: 220px;
+}
+
+/* ─── حالت خالی ────────────────────────────────────────── */
+
+.wdp-empty {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 40px 24px;
+	text-align: center;
+	margin-top: 18px;
+}
+
+.wdp-empty-ic {
+	font-size: 46px;
+	line-height: 1;
+	margin-bottom: 10px;
+}
+
+.wdp-empty h2 {
+	margin: 0 0 8px;
+}
+
+.wdp-empty p {
+	color: #64748b;
+	max-width: 620px;
+	margin: 0 auto 18px;
+	line-height: 2;
+}
+
+/* ─── کارت‌ها ───────────────────────────────────────────── */
+
+.wdp-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+	gap: 16px;
+	align-items: start;
+}
+
+.wdp-grid-2 {
+	grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+}
+
+.wdp-card-box {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 18px;
+}
+
+.wdp-card-box h3 {
+	margin: 0 0 14px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #f1f5f9;
+	font-size: 14.5px;
+}
+
+.wdp-label {
+	display: block;
+	font-size: 12.5px;
+	font-weight: 700;
+	color: #334155;
+	margin-bottom: 5px;
+}
+
+.wdp-card-box input[type="text"],
+.wdp-card-box input[type="number"] {
+	width: 100%;
+	max-width: 100%;
+}
+
+.wdp-check {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	margin: 8px 0;
+	font-size: 13px;
+	color: #334155;
+}
+
+.wdp-hint,
+.wdp-hint-block {
+	color: #94a3b8;
+	font-size: 11.5px;
+	font-style: normal;
+}
+
+.wdp-hint-block {
+	line-height: 2;
+	margin: 6px 0 12px;
+}
+
+.wdp-hint-block code {
+	background: #f1f5f9;
+	font-size: 11.5px;
+}
+
+.wdp-guide {
+	line-height: 2.2;
+	color: #334155;
+	font-size: 13px;
+	padding-right: 18px;
+}
+
+.wdp-guide code {
+	background: #f1f5f9;
+	font-size: 12px;
+}
+
+.wdp-admin-hint {
+	color: #b45309;
+	background: #fffbeb;
+	border-radius: 8px;
+	padding: 8px 12px;
+	font-size: 13px;
+}
+
+/* ─── فیلدهای فرم افزودن/ویرایش ترم ─────────────────────── */
+
+.wdp-term-field input[type="text"],
+.wdp-term-field input[type="number"] {
+	max-width: 260px;
+}
+
+/* ─── جعبه در صفحه ویرایش محصول ──────────────────────────── */
+
+.wdp-metabox {
+	direction: rtl;
+	font-size: 12.5px;
+	line-height: 1.9;
+}
+
+.wdp-metabox p {
+	margin: 0 0 8px;
+}

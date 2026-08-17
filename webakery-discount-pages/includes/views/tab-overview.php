@@ -1,0 +1,118 @@
+<?php
+defined( 'ABSPATH' ) || exit;
+
+$terms    = get_terms(
+	array(
+		'taxonomy'   => WDP_Taxonomy::TAXONOMY,
+		'hide_empty' => false,
+	)
+);
+$terms    = is_wp_error( $terms ) ? array() : $terms;
+$add_url  = admin_url( 'edit-tags.php?taxonomy=' . WDP_Taxonomy::TAXONOMY . '&post_type=product' );
+$log      = get_option( 'wdp_log', array() );
+$next_run = wp_next_scheduled( WDP_Cron::HOOK );
+?>
+
+<div class="wdp-bar">
+	<a href="<?php echo esc_url( $add_url ); ?>" class="button button-primary">+ افزودن صفحه تخفیف جدید</a>
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline">
+		<?php wp_nonce_field( 'wdp_recalculate' ); ?>
+		<input type="hidden" name="action" value="wdp_recalculate">
+		<button type="submit" class="button">بازبینی همین حالا</button>
+	</form>
+	<span class="wdp-bar-hint">
+		اجرای خودکار بعدی:
+		<?php echo $next_run ? esc_html( date_i18n( 'Y-m-d H:i', $next_run ) ) : 'زمان‌بندی نشده'; ?>
+	</span>
+</div>
+
+<?php if ( ! $terms ) : ?>
+	<div class="wdp-empty">
+		<div class="wdp-empty-ic">🏷️</div>
+		<h2>هنوز صفحه تخفیفی نساخته‌اید</h2>
+		<p>
+			یک صفحه تخفیف مثل «۲۰ تا ۳۰ درصد تخفیف» بسازید؛ هر محصولی که الان همین‌قدر تخفیف داشته باشد،
+			خودکار در این صفحه نشان داده می‌شود — با یک URL اختصاصی که می‌توانید در منو یا تبلیغات استفاده کنید.
+			اگر بعداً تخفیف محصول عوض شود، خودکار به صفحه درست منتقل می‌شود.
+		</p>
+		<a href="<?php echo esc_url( $add_url ); ?>" class="button button-primary button-hero">افزودن صفحه تخفیف جدید</a>
+	</div>
+<?php else : ?>
+	<table class="widefat striped wdp-table">
+		<thead>
+			<tr>
+				<th>نام صفحه</th>
+				<th>نوع</th>
+				<th>بازه تخفیف</th>
+				<th>تعداد محصول</th>
+				<th>لینک صفحه</th>
+				<th>ویرایش</th>
+			</tr>
+		</thead>
+		<tbody>
+			<?php
+			foreach ( $terms as $term ) :
+				$link = get_term_link( $term );
+				$edit = get_edit_term_link( $term->term_id, WDP_Taxonomy::TAXONOMY, 'product' );
+				$type = WDP_Taxonomy::type( $term->term_id );
+				?>
+				<tr>
+					<td><strong><?php echo esc_html( $term->name ); ?></strong></td>
+					<td>
+						<span class="wdp-pill <?php echo 'fixed' === $type ? 'wdp-pill-fixed' : 'wdp-pill-percent'; ?>">
+							<?php echo 'fixed' === $type ? 'مبلغ ثابت' : 'درصدی'; ?>
+						</span>
+					</td>
+					<td><?php echo esc_html( WDP_Taxonomy::range_label( $term->term_id ) ); ?></td>
+					<td><?php echo (int) $term->count; ?></td>
+					<td>
+						<?php if ( ! is_wp_error( $link ) ) : ?>
+							<input type="text" class="wdp-link-copy" readonly dir="ltr" value="<?php echo esc_attr( $link ); ?>" onclick="this.select()">
+							<a href="<?php echo esc_url( $link ); ?>" target="_blank" rel="noopener" class="button button-small">مشاهده</a>
+						<?php endif; ?>
+					</td>
+					<td><a href="<?php echo esc_url( $edit ); ?>" class="button button-small">ویرایش</a></td>
+				</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+<?php endif; ?>
+
+<div class="wdp-grid" style="margin-top:20px">
+	<div class="wdp-card-box">
+		<h3>راهنمای سریع</h3>
+		<ol class="wdp-guide">
+			<li>روی «افزودن صفحه تخفیف جدید» بزنید.</li>
+			<li>نوع تخفیف را انتخاب کنید: <strong>درصدی</strong> یا <strong>مبلغ ثابت</strong>.</li>
+			<li>بازه را بگذارید؛ مثلاً از <strong>۲۰</strong> تا <strong>۳۰</strong> برای «۲۰ تا ۳۰ درصد تخفیف».</li>
+			<li>یک نامک (اسلاگ) دلخواه برای URL انتخاب کنید و ذخیره کنید.</li>
+			<li>
+				تمام — محصولاتی که الان همان‌قدر تخفیف داشته باشند خودکار در صفحه نشان داده می‌شوند؛
+				اگر بعداً تخفیف محصول عوض شود (مثلاً از ۲۰٪ به ۵۰٪)، خودکار از این صفحه خارج و به صفحه درست منتقل می‌شود.
+			</li>
+		</ol>
+		<p class="wdp-hint-block">
+			شورت‌کد فهرست صفحه‌های تخفیف: <code dir="ltr">[webakery_discount_pages]</code>
+			— یا ویجت المنتور «صفحه‌های تخفیف» را در صفحه بگذارید.
+		</p>
+	</div>
+
+	<div class="wdp-card-box">
+		<h3>آخرین اجراهای خودکار</h3>
+		<?php if ( ! is_array( $log ) || ! $log ) : ?>
+			<p class="wdp-muted">هنوز اجرای خودکاری ثبت نشده است.</p>
+		<?php else : ?>
+			<table class="widefat striped">
+				<thead><tr><th>زمان</th><th>تعداد محصول بررسی‌شده</th></tr></thead>
+				<tbody>
+				<?php foreach ( array_slice( $log, 0, 10 ) as $row ) : ?>
+					<tr>
+						<td><?php echo esc_html( date_i18n( 'Y-m-d H:i', $row['time'] ) ); ?></td>
+						<td><?php echo (int) $row['count']; ?></td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php endif; ?>
+	</div>
+</div>

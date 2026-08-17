@@ -1,0 +1,72 @@
+/* صفحه‌های تخفیف هوشمند — webakery.ir | استایل فرانت (RTL) */
+
+.wdp-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	font-weight: 700;
+	color: #b91c1c;
+	background: #fee2e2;
+	border-radius: 99px;
+	padding: 3px 10px;
+	margin: 4px 0;
+	text-decoration: none;
+	direction: rtl;
+}
+
+.wdp-badge:hover {
+	background: #fecaca;
+	color: #991b1b;
+}
+
+.wdp-pages {
+	display: grid;
+	grid-template-columns: repeat(var(--wdp-cols, 3), 1fr);
+	gap: 14px;
+	direction: rtl;
+}
+
+@media (max-width: 782px) {
+	.wdp-pages {
+		grid-template-columns: 1fr;
+	}
+}
+
+.wdp-page-card {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 16px 18px;
+	text-decoration: none;
+	transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.wdp-page-card:hover {
+	box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+	transform: translateY(-2px);
+}
+
+.wdp-page-title {
+	font-size: 15px;
+	font-weight: 800;
+	color: #0f172a;
+}
+
+.wdp-page-range {
+	font-size: 13px;
+	font-weight: 700;
+	color: #b91c1c;
+}
+
+.wdp-page-count {
+	font-size: 12px;
+	color: #64748b;
+}
+
+.wdp-admin-hint[hidden] {
+	display: none !important;
+}
