@@ -1,0 +1,338 @@
+/* کد تخفیف دسته‌بندی — webakery.ir | استایل پیشخوان (RTL) */
+
+.wbcc-wrap {
+	direction: rtl;
+}
+
+.wbcc-h1 {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 4px;
+}
+
+.wbcc-ver {
+	font-size: 12px;
+	font-weight: 600;
+	color: #64748b;
+	background: #f1f5f9;
+	border-radius: 99px;
+	padding: 2px 10px;
+}
+
+.wbcc-sub {
+	color: #64748b;
+	margin: 0 0 14px;
+	font-size: 13px;
+}
+
+.wbcc-tabs {
+	margin-bottom: 16px;
+}
+
+.wbcc-bar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin: 14px 0;
+}
+
+.wbcc-bar-hint {
+	color: #64748b;
+	font-size: 12.5px;
+}
+
+.wbcc-muted {
+	color: #94a3b8;
+}
+
+.wbcc-id {
+	color: #94a3b8;
+	font-size: 12px;
+	margin-right: 4px;
+}
+
+.wbcc-pill {
+	display: inline-block;
+	font-size: 11px;
+	font-weight: 700;
+	border-radius: 99px;
+	padding: 2px 9px;
+	margin-left: 4px;
+}
+
+.wbcc-pill-on {
+	background: #dcfce7;
+	color: #15803d;
+}
+
+.wbcc-pill-off {
+	background: #fee2e2;
+	color: #b91c1c;
+}
+
+.wbcc-pill-info {
+	background: #e0f2fe;
+	color: #0369a1;
+}
+
+/* ─── جدول ─────────────────────────────────────────────── */
+
+.wbcc-table {
+	border-radius: 10px;
+	overflow: hidden;
+}
+
+.wbcc-table th,
+.wbcc-table td {
+	vertical-align: middle;
+	padding: 10px 12px;
+}
+
+.wbcc-amount {
+	font-weight: 700;
+	color: #0f766e;
+	white-space: nowrap;
+}
+
+.wbcc-expired {
+	color: #b91c1c;
+	font-weight: 600;
+}
+
+.wbcc-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.wbcc-actions .button.wbcc-danger {
+	color: #b91c1c;
+	border-color: #fecaca;
+}
+
+.wbcc-inline-form {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.wbcc-mini {
+	width: 68px;
+}
+
+.wbcc-code-cell {
+	direction: ltr;
+	display: inline-block;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	padding: 4px 10px;
+	font-weight: 700;
+	letter-spacing: .5px;
+}
+
+.wbcc-shortcode {
+	direction: ltr;
+	font-size: 11.5px;
+	background: #f1f5f9;
+	border-radius: 6px;
+	padding: 3px 7px;
+}
+
+/* ─── حالت خالی ────────────────────────────────────────── */
+
+.wbcc-empty {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 40px 24px;
+	text-align: center;
+	margin-top: 18px;
+}
+
+.wbcc-empty-ic {
+	font-size: 46px;
+	line-height: 1;
+	margin-bottom: 10px;
+}
+
+.wbcc-empty h2 {
+	margin: 0 0 8px;
+}
+
+.wbcc-empty p {
+	color: #64748b;
+	max-width: 620px;
+	margin: 0 auto 18px;
+	line-height: 2;
+}
+
+/* ─── فرم کمپین ────────────────────────────────────────── */
+
+.wbcc-form-title {
+	margin: 16px 0 10px;
+}
+
+.wbcc-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+	gap: 16px;
+	align-items: start;
+}
+
+.wbcc-grid-2 {
+	grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+}
+
+.wbcc-card-box {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 18px;
+}
+
+.wbcc-card-box h3 {
+	margin: 0 0 14px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #f1f5f9;
+	font-size: 14.5px;
+}
+
+.wbcc-label {
+	display: block;
+	font-size: 12.5px;
+	font-weight: 700;
+	color: #334155;
+	margin-bottom: 5px;
+}
+
+.wbcc-card-box input[type="text"],
+.wbcc-card-box input[type="number"],
+.wbcc-card-box input[type="search"],
+.wbcc-card-box select {
+	width: 100%;
+	max-width: 100%;
+}
+
+.wbcc-range {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.wbcc-range > p {
+	flex: 1;
+	min-width: 96px;
+	margin: 0 0 12px;
+}
+
+.wbcc-check {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	margin: 8px 0;
+	font-size: 13px;
+	color: #334155;
+}
+
+.wbcc-hint,
+.wbcc-hint-block {
+	color: #94a3b8;
+	font-size: 11.5px;
+	font-style: normal;
+}
+
+.wbcc-hint-block {
+	line-height: 2;
+	margin: 6px 0 12px;
+}
+
+.wbcc-hint-block code {
+	background: #f1f5f9;
+	font-size: 11.5px;
+}
+
+.wbcc-cat-tools {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 6px;
+}
+
+.wbcc-cat-tools .wbcc-cat-search {
+	flex: 1;
+}
+
+.wbcc-cat-list {
+	max-height: 260px;
+	overflow: auto;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	padding: 8px;
+	background: #fcfcfd;
+}
+
+.wbcc-cat-list-sm {
+	max-height: 180px;
+}
+
+.wbcc-cat {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	padding: 3px 0;
+	font-size: 13px;
+}
+
+.wbcc-cat em {
+	color: #94a3b8;
+	font-size: 11px;
+	font-style: normal;
+}
+
+.wbcc-cat[hidden] {
+	display: none !important;
+}
+
+.wbcc-details {
+	margin-top: 12px;
+}
+
+.wbcc-details summary {
+	cursor: pointer;
+	font-size: 12.5px;
+	font-weight: 700;
+	color: #0f766e;
+	margin-bottom: 8px;
+}
+
+.wbcc-submit {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	margin-top: 18px;
+	flex-wrap: wrap;
+}
+
+.wbcc-guide {
+	line-height: 2.2;
+	color: #334155;
+	font-size: 13px;
+	padding-right: 18px;
+}
+
+.wbcc-guide code {
+	background: #f1f5f9;
+	font-size: 12px;
+}
+
+.wbcc-admin-hint {
+	color: #b45309;
+	background: #fffbeb;
+	border-radius: 8px;
+	padding: 8px 12px;
+	font-size: 13px;
+}
