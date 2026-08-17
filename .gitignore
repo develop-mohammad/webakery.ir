@@ -1,0 +1,7 @@
+/vendor/
+/wp-test/
+node_modules/
+.phpunit.result.cache
+.phpcs-cache
+*.log
+.DS_Store
