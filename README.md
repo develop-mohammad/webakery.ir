@@ -71,11 +71,23 @@
 
 ویجت پشتیبانی آنلاین با صندوق پیام در پیشخوان.
 
-- نسخه: **1.4.0**
+- نسخه: **1.4.3**
 - سازنده: **webakery.ir**
 - مسیر: `webakery-chat-box/`
 - ZIP: `webakery-chat-box.zip`
 - شناسه لایسنس: `webakery-chat`
-- قیمت: **۵۰۵,۰۰۰ تومان**
+- قیمت: **از ۱۵۰,۰۰۰ تومان** (ماهانه / ۳ ماهه / دائمی)
 - اعلان: ایمیل HTML + تلگرام (عکس) + واتساپ
 - زمینه محصول: نام + لینک + تصویر
+
+## نسخه دمو (قبل از خرید)
+
+برای هر افزونهٔ پولی ZIP دمو ساخته می‌شود تا مشتری قبل از خرید کامل تست کند:
+
+```bash
+bash tools/build-demo-zips.sh
+```
+
+خروجی: `hesabdar-demo.zip`, `nobat-man-demo.zip`, `access-levels-demo.zip`, `baget-demo.zip`, `webakery-chat-box-demo.zip`
+
+جزئیات: `license-server-updates/DEMO-BUILDS.md`

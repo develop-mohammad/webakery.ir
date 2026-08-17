@@ -25,6 +25,11 @@ define( 'WBCB_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBCB_URL', plugin_dir_url( __FILE__ ) );
 define( 'WBCB_PRODUCT', 'webakery-chat' );
 
+/** نسخه دمو مارکت‌پلیس — با tools/build-demo-zips.sh روی true ست می‌شود */
+if ( ! defined( 'WBCB_DEMO' ) ) {
+	define( 'WBCB_DEMO', false );
+}
+
 require_once WBCB_PATH . 'includes/class-wbcb-install.php';
 require_once WBCB_PATH . 'includes/class-wbcb-settings.php';
 require_once WBCB_PATH . 'includes/class-wbcb-conversations.php';
