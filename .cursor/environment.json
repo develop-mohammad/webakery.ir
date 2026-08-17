@@ -1,0 +1,5 @@
+{
+	"install": "bash .cursor/install.sh",
+	"start": "sudo -n mkdir -p /run/mysqld && sudo -n chown mysql:mysql /run/mysqld && sudo -n /etc/init.d/mariadb start",
+	"terminals": []
+}

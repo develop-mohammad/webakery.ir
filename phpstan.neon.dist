@@ -1,0 +1,16 @@
+parameters:
+	level: 5
+	phpVersion:
+		min: 70400
+		max: 80300
+	# Analysis targets are passed on the command line, usually via bin/lint.sh.
+	excludePaths:
+		analyseAndScan:
+			- '*/vendor/*'
+			- '*/node_modules/*'
+			- '*/wp-test/*'
+			- '*/tests/*'
+		# The license client is vendored verbatim across plugins: scan it for symbols, do not report on it.
+		analyse:
+			- '*/class-wb-license.php'
+	treatPhpDocTypesAsCertain: false
