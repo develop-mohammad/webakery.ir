@@ -44,6 +44,7 @@ $next_run = wp_next_scheduled( WDP_Cron::HOOK );
 				<th>نام صفحه</th>
 				<th>نوع</th>
 				<th>بازه تخفیف</th>
+				<th>دسته‌بندی محصول</th>
 				<th>تعداد محصول</th>
 				<th>لینک صفحه</th>
 				<th>ویرایش</th>
@@ -52,9 +53,10 @@ $next_run = wp_next_scheduled( WDP_Cron::HOOK );
 		<tbody>
 			<?php
 			foreach ( $terms as $term ) :
-				$link = get_term_link( $term );
-				$edit = get_edit_term_link( $term->term_id, WDP_Taxonomy::TAXONOMY, 'product' );
-				$type = WDP_Taxonomy::type( $term->term_id );
+				$link      = get_term_link( $term );
+				$edit      = get_edit_term_link( $term->term_id, WDP_Taxonomy::TAXONOMY, 'product' );
+				$type      = WDP_Taxonomy::type( $term->term_id );
+				$cat_names = WDP_Taxonomy::category_names( $term->term_id );
 				?>
 				<tr>
 					<td><strong><?php echo esc_html( $term->name ); ?></strong></td>
@@ -64,6 +66,7 @@ $next_run = wp_next_scheduled( WDP_Cron::HOOK );
 						</span>
 					</td>
 					<td><?php echo esc_html( WDP_Taxonomy::range_label( $term->term_id ) ); ?></td>
+					<td><?php echo $cat_names ? esc_html( implode( '، ', $cat_names ) ) : '<span class="wdp-muted">همه دسته‌بندی‌ها</span>'; ?></td>
 					<td><?php echo (int) $term->count; ?></td>
 					<td>
 						<?php if ( ! is_wp_error( $link ) ) : ?>
@@ -87,8 +90,14 @@ $next_run = wp_next_scheduled( WDP_Cron::HOOK );
 			<li>بازه را بگذارید؛ مثلاً از <strong>۲۰</strong> تا <strong>۳۰</strong> برای «۲۰ تا ۳۰ درصد تخفیف».</li>
 			<li>یک نامک (اسلاگ) دلخواه برای URL انتخاب کنید و ذخیره کنید.</li>
 			<li>
-				تمام — محصولاتی که الان همان‌قدر تخفیف داشته باشند خودکار در صفحه نشان داده می‌شوند؛
-				اگر بعداً تخفیف محصول عوض شود (مثلاً از ۲۰٪ به ۵۰٪)، خودکار از این صفحه خارج و به صفحه درست منتقل می‌شود.
+				اختیاری: اگر می‌خواهید این صفحه فقط مخصوص یک یا چند دسته‌بندی محصول باشد
+				(مثلاً «۲۰ تا ۳۰٪ لوازم خانگی» جدا از «۲۰ تا ۳۰٪ پوشاک»)، از بخش «محدود به دسته‌بندی محصول»
+				همان دسته‌ها را تیک بزنید؛ در غیر این صورت صفحه برای همه دسته‌بندی‌ها باز است.
+			</li>
+			<li>
+				تمام — محصولاتی که الان همان‌قدر تخفیف داشته باشند (و در صورت محدودیت، در همان دسته‌بندی باشند)
+				خودکار در صفحه نشان داده می‌شوند؛ اگر بعداً تخفیف محصول عوض شود (مثلاً از ۲۰٪ به ۵۰٪) یا
+				دسته‌بندی محصول عوض شود، خودکار از این صفحه خارج و به صفحه درست منتقل می‌شود.
 			</li>
 		</ol>
 		<p class="wdp-hint-block">

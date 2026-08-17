@@ -57,21 +57,34 @@ class WDP_Util {
 
 	/**
 	 * از میان چند «قانون صفحه تخفیف»، بهترین منطبق با تخفیف فعلی محصول را برمی‌گرداند.
-	 * اولویت با: عدد priority بیشتر ← باریک‌ترین بازه ← کوچک‌ترین شناسه ترم.
+	 * اگر قانونی به یک یا چند دسته‌بندی محصول محدود شده باشد («categories»)، فقط وقتی
+	 * محصول در یکی از آن دسته‌ها باشد واجد شرایط آن قانون است؛ قانون بدون دسته‌بندی
+	 * برای همه محصولات باز است.
 	 *
-	 * @param array $rules    هر عضو: array('term_id'=>int,'type'=>'percent'|'fixed','min'=>float,'max'=>float,'priority'=>int)
-	 * @param array $discount خروجی compute_discount(): array('percent'=>float,'fixed'=>float)
+	 * ترتیب برنده‌شدن: عدد priority بیشتر ← قانونِ محدود به دسته‌بندی (نسبت به قانون عمومی)
+	 * ← باریک‌ترین بازه ← کوچک‌ترین شناسه ترم.
+	 *
+	 * @param array $rules              هر عضو: array('term_id'=>int,'type'=>'percent'|'fixed','min'=>float,'max'=>float,'priority'=>int,'categories'=>int[])
+	 * @param array $discount           خروجی compute_discount(): array('percent'=>float,'fixed'=>float)
+	 * @param int[] $product_categories شناسه دسته‌بندی‌های محصول (product_cat) — برای اعمال محدودیت دسته‌بندی قانون‌ها
 	 *
 	 * @return int|null شناسه ترم منتخب یا null
 	 */
-	public static function find_best_match( array $rules, array $discount ) {
-		$matches = array();
+	public static function find_best_match( array $rules, array $discount, array $product_categories = array() ) {
+		$matches            = array();
+		$product_categories = array_map( 'intval', $product_categories );
 
 		foreach ( $rules as $rule ) {
 			$type = ( isset( $rule['type'] ) && 'fixed' === $rule['type'] ) ? 'fixed' : 'percent';
 			if ( ! isset( $discount[ $type ] ) ) {
 				continue;
 			}
+
+			$categories = array_map( 'intval', (array) ( $rule['categories'] ?? array() ) );
+			if ( $categories && ! array_intersect( $categories, $product_categories ) ) {
+				continue; // این قانون به دسته‌بندی‌هایی محدود شده که محصول در آن‌ها نیست.
+			}
+
 			$value = (float) $discount[ $type ];
 			$min   = (float) ( $rule['min'] ?? 0 );
 			$max   = (float) ( $rule['max'] ?? 0 );
@@ -80,9 +93,10 @@ class WDP_Util {
 			}
 			if ( $value >= $min - 0.001 && $value <= $max + 0.001 ) {
 				$matches[] = array(
-					'term_id'  => (int) $rule['term_id'],
-					'width'    => $max - $min,
-					'priority' => (int) ( $rule['priority'] ?? 10 ),
+					'term_id'    => (int) $rule['term_id'],
+					'width'      => $max - $min,
+					'priority'   => (int) ( $rule['priority'] ?? 10 ),
+					'has_cat'    => $categories ? 1 : 0,
 				);
 			}
 		}
@@ -96,6 +110,9 @@ class WDP_Util {
 			function ( $a, $b ) {
 				if ( $a['priority'] !== $b['priority'] ) {
 					return $b['priority'] <=> $a['priority'];
+				}
+				if ( $a['has_cat'] !== $b['has_cat'] ) {
+					return $b['has_cat'] <=> $a['has_cat'];
 				}
 				if ( $a['width'] !== $b['width'] ) {
 					return $a['width'] <=> $b['width'];

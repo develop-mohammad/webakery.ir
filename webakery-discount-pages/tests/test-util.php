@@ -79,7 +79,40 @@ $check( 'با اولویت برابر، باریک‌ترین بازه برند�
 $m6 = WDP_Util::find_best_match( array(), array( 'percent' => 20, 'fixed' => 20000 ) );
 $check( 'بدون هیچ قانونی، نتیجه null است', null === $m6 );
 
-echo "\n=== ۴) برچسب بازه ===\n";
+echo "\n=== ۴) محدود کردن صفحه تخفیف به دسته‌بندی محصول ===\n";
+
+$rules_cat = array(
+	// صفحه ۱: فقط دسته‌بندی «لوازم خانگی» (id=5)
+	array( 'term_id' => 501, 'type' => 'percent', 'min' => 20, 'max' => 30, 'priority' => 10, 'categories' => array( 5 ) ),
+	// صفحه ۲: فقط دسته‌بندی «پوشاک» (id=8)
+	array( 'term_id' => 502, 'type' => 'percent', 'min' => 20, 'max' => 30, 'priority' => 10, 'categories' => array( 8 ) ),
+	// صفحه ۳: عمومی، بدون محدودیت دسته‌بندی
+	array( 'term_id' => 503, 'type' => 'percent', 'min' => 20, 'max' => 30, 'priority' => 10, 'categories' => array() ),
+);
+
+$c1 = WDP_Util::find_best_match( $rules_cat, array( 'percent' => 25, 'fixed' => 0 ), array( 5 ) );
+$check( 'محصولِ دسته «لوازم خانگی» به صفحه اختصاصی همان دسته می‌رود (نه صفحه عمومی)', 501 === $c1, 'matched=' . var_export( $c1, true ) );
+
+$c2 = WDP_Util::find_best_match( $rules_cat, array( 'percent' => 25, 'fixed' => 0 ), array( 8 ) );
+$check( 'محصولِ دسته «پوشاک» به صفحه اختصاصی همان دسته می‌رود', 502 === $c2, 'matched=' . var_export( $c2, true ) );
+
+$c3 = WDP_Util::find_best_match( $rules_cat, array( 'percent' => 25, 'fixed' => 0 ), array( 99 ) );
+$check( 'محصولِ دسته‌ای بدون صفحه اختصاصی، به صفحه عمومی (بدون محدودیت) می‌رود', 503 === $c3, 'matched=' . var_export( $c3, true ) );
+
+$c4 = WDP_Util::find_best_match( $rules_cat, array( 'percent' => 25, 'fixed' => 0 ), array() );
+$check( 'محصول بدون هیچ دسته‌بندی‌ای، فقط به صفحه عمومی می‌رود', 503 === $c4, 'matched=' . var_export( $c4, true ) );
+
+echo "\n=== ۵) تغییر دسته‌بندی محصول باید نتیجه تطبیق را عوض کند ===\n";
+
+$c5_before = WDP_Util::find_best_match( $rules_cat, array( 'percent' => 25, 'fixed' => 0 ), array( 5 ) );
+$c5_after  = WDP_Util::find_best_match( $rules_cat, array( 'percent' => 25, 'fixed' => 0 ), array( 8 ) );
+$check(
+	'با تغییر دسته‌بندی محصول از «لوازم خانگی» به «پوشاک» (بدون تغییر درصد تخفیف)، صفحه تخفیف هم عوض می‌شود',
+	501 === $c5_before && 502 === $c5_after,
+	"before={$c5_before} after={$c5_after}"
+);
+
+echo "\n=== ۶) برچسب بازه ===\n";
 $check( 'برچسب بازه درصدی', '۲۰ تا ۳۰ درصد' === WDP_Util::fa_digits( WDP_Util::range_label( 'percent', 20, 30 ) ) );
 $check( 'برچسب بازه مبلغ ثابت', '۵۰۰۰۰ تا ۱۰۰۰۰۰ تومان' === WDP_Util::fa_digits( WDP_Util::range_label( 'fixed', 50000, 100000 ) ) );
 $check( 'برچسب بازه با مقدار ثابت (بدون «تا»)', '۲۰ درصد' === WDP_Util::fa_digits( WDP_Util::range_label( 'percent', 20, 20 ) ) );

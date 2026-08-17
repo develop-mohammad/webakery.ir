@@ -90,6 +90,12 @@ class WDP_Taxonomy {
 			<input type="number" name="wdp_priority" id="wdp_priority" value="10" min="0" max="999">
 			<p>اگر بازه این صفحه با صفحه دیگری هم‌پوشانی داشت، محصول به صفحه‌ای با اولویت بیشتر می‌رود.</p>
 		</div>
+		<div class="form-field wdp-term-field">
+			<label>محدود به دسته‌بندی محصول (اختیاری)</label>
+			<?php self::render_category_checklist( array() ); ?>
+			<p>اگر هیچ‌کدام را تیک نزنید، این صفحه برای محصولات همه دسته‌بندی‌ها باز است.
+			اگر تیک بزنید، فقط محصولاتی از همان دسته‌بندی(ها) — با همین بازه تخفیف — در این صفحه قرار می‌گیرند.</p>
+		</div>
 		<?php
 	}
 
@@ -122,6 +128,17 @@ class WDP_Taxonomy {
 				<p class="description">اگر بازه این صفحه با صفحه دیگری هم‌پوشانی داشت، محصول به صفحه‌ای با اولویت بیشتر می‌رود.</p>
 			</td>
 		</tr>
+		<tr class="form-field wdp-term-field">
+			<th scope="row"><label>محدود به دسته‌بندی محصول (اختیاری)</label></th>
+			<td>
+				<?php self::render_category_checklist( self::categories( $term->term_id ) ); ?>
+				<p class="description">
+					اگر هیچ‌کدام را تیک نزنید، این صفحه برای محصولات همه دسته‌بندی‌ها باز است.
+					اگر تیک بزنید، فقط محصولاتی از همان دسته‌بندی(ها) — با همین بازه تخفیف — در این صفحه قرار می‌گیرند
+					(مثلاً می‌توانید «۲۰ تا ۳۰٪ لوازم خانگی» را جدا از «۲۰ تا ۳۰٪ پوشاک» بسازید).
+				</p>
+			</td>
+		</tr>
 		<?php if ( ! is_wp_error( $link ) ) : ?>
 		<tr class="form-field wdp-term-field">
 			<th scope="row"><label>لینک صفحه</label></th>
@@ -129,6 +146,72 @@ class WDP_Taxonomy {
 		</tr>
 		<?php endif; ?>
 		<?php
+	}
+
+	/**
+	 * چک‌باکس‌های دسته‌بندی محصول (سلسله‌مراتبی) برای محدود کردن یک صفحه تخفیف.
+	 *
+	 * @param int[] $selected شناسه دسته‌بندی‌های تیک‌خورده
+	 */
+	protected static function render_category_checklist( array $selected ) {
+		$tree = self::category_tree();
+		if ( ! $tree ) {
+			echo '<p class="wdp-muted">دسته‌بندی محصولی یافت نشد.</p>';
+			return;
+		}
+		echo '<div class="wdp-cat-list">';
+		foreach ( $tree as $row ) {
+			printf(
+				'<label class="wdp-cat" style="padding-right:%dpx"><input type="checkbox" name="wdp_categories[]" value="%d" %s> %s <em>(%d)</em></label><br>',
+				(int) $row['depth'] * 16,
+				(int) $row['id'],
+				checked( in_array( $row['id'], $selected, true ), true, false ),
+				esc_html( $row['name'] ),
+				(int) $row['count']
+			);
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * فهرست دسته‌بندی‌های محصولات به‌صورت سلسله‌مراتبی (برای چک‌باکس‌ها).
+	 *
+	 * @return array<int,array{id:int,name:string,depth:int,count:int}>
+	 */
+	public static function category_tree() {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => false,
+			)
+		);
+		if ( is_wp_error( $terms ) || ! $terms ) {
+			return array();
+		}
+
+		$by_parent = array();
+		foreach ( $terms as $term ) {
+			$by_parent[ (int) $term->parent ][] = $term;
+		}
+
+		$flat = array();
+		$walk = function ( $parent, $depth ) use ( &$walk, &$flat, $by_parent ) {
+			if ( empty( $by_parent[ $parent ] ) ) {
+				return;
+			}
+			foreach ( $by_parent[ $parent ] as $term ) {
+				$flat[] = array(
+					'id'    => (int) $term->term_id,
+					'name'  => $term->name,
+					'depth' => $depth,
+					'count' => (int) $term->count,
+				);
+				$walk( (int) $term->term_id, $depth + 1 );
+			}
+		};
+		$walk( 0, 0 );
+
+		return $flat;
 	}
 
 	public static function save_meta( $term_id ) {
@@ -154,12 +237,24 @@ class WDP_Taxonomy {
 		$priority = isset( $_POST['wdp_priority'] ) ? (int) WDP_Util::to_number( wp_unslash( $_POST['wdp_priority'] ) ) : 10;
 		$priority = max( 0, min( 999, $priority ) );
 
+		$categories = array();
+		if ( ! empty( $_POST['wdp_categories'] ) && is_array( $_POST['wdp_categories'] ) ) {
+			foreach ( wp_unslash( $_POST['wdp_categories'] ) as $cat_id ) {
+				$cat_id = (int) $cat_id;
+				if ( $cat_id > 0 ) {
+					$categories[] = $cat_id;
+				}
+			}
+			$categories = array_values( array_unique( $categories ) );
+		}
+
 		update_term_meta( $term_id, '_wdp_type', $type );
 		update_term_meta( $term_id, '_wdp_min', $min );
 		update_term_meta( $term_id, '_wdp_max', $max );
 		update_term_meta( $term_id, '_wdp_priority', $priority );
+		update_term_meta( $term_id, '_wdp_categories', $categories );
 
-		// بازه تغییر کرده؛ محصولات فعلاً تخفیف‌دار را دوباره بررسی کن.
+		// بازه یا محدودیت دسته‌بندی تغییر کرده؛ محصولات فعلاً تخفیف‌دار را دوباره بررسی کن.
 		if ( class_exists( 'WDP_Assigner' ) ) {
 			WDP_Assigner::recalculate_all();
 		}
@@ -186,6 +281,24 @@ class WDP_Taxonomy {
 		return '' === $p ? 10 : (int) $p;
 	}
 
+	/** شناسه دسته‌بندی‌های محصولی که این صفحه به آن‌ها محدود شده؛ آرایه خالی یعنی بدون محدودیت */
+	public static function categories( $term_id ) {
+		$categories = get_term_meta( $term_id, '_wdp_categories', true );
+		return is_array( $categories ) ? array_map( 'intval', $categories ) : array();
+	}
+
+	/** نام دسته‌بندی‌های محدودیت این صفحه، برای نمایش */
+	public static function category_names( $term_id ) {
+		$names = array();
+		foreach ( self::categories( $term_id ) as $cat_id ) {
+			$term = get_term( $cat_id, 'product_cat' );
+			if ( $term && ! is_wp_error( $term ) ) {
+				$names[] = $term->name;
+			}
+		}
+		return $names;
+	}
+
 	public static function currency() {
 		return function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : 'تومان';
 	}
@@ -197,7 +310,7 @@ class WDP_Taxonomy {
 	/**
 	 * همه صفحه‌های تخفیف به‌همراه متادیتا؛ ورودی موتور تشخیص WDP_Assigner.
 	 *
-	 * @return array<int,array{term_id:int,type:string,min:float,max:float,priority:int}>
+	 * @return array<int,array{term_id:int,type:string,min:float,max:float,priority:int,categories:int[]}>
 	 */
 	public static function all_rules() {
 		$terms = get_terms(
@@ -213,11 +326,12 @@ class WDP_Taxonomy {
 		$rules = array();
 		foreach ( $terms as $term ) {
 			$rules[] = array(
-				'term_id'  => (int) $term->term_id,
-				'type'     => self::type( $term->term_id ),
-				'min'      => self::min( $term->term_id ),
-				'max'      => self::max( $term->term_id ),
-				'priority' => self::priority( $term->term_id ),
+				'term_id'    => (int) $term->term_id,
+				'type'       => self::type( $term->term_id ),
+				'min'        => self::min( $term->term_id ),
+				'max'        => self::max( $term->term_id ),
+				'priority'   => self::priority( $term->term_id ),
+				'categories' => self::categories( $term->term_id ),
 			);
 		}
 		return $rules;
@@ -230,13 +344,15 @@ class WDP_Taxonomy {
 		foreach ( $columns as $key => $label ) {
 			$new[ $key ] = $label;
 			if ( 'description' === $key ) {
-				$new['wdp_range'] = 'بازه تخفیف';
-				$new['wdp_link']  = 'لینک صفحه';
+				$new['wdp_range']      = 'بازه تخفیف';
+				$new['wdp_categories'] = 'دسته‌بندی محصول';
+				$new['wdp_link']       = 'لینک صفحه';
 			}
 		}
 		if ( ! isset( $new['wdp_range'] ) ) {
-			$new['wdp_range'] = 'بازه تخفیف';
-			$new['wdp_link']  = 'لینک صفحه';
+			$new['wdp_range']      = 'بازه تخفیف';
+			$new['wdp_categories'] = 'دسته‌بندی محصول';
+			$new['wdp_link']       = 'لینک صفحه';
 		}
 		return $new;
 	}
@@ -246,6 +362,10 @@ class WDP_Taxonomy {
 			$type  = self::type( $term_id );
 			$badge = 'percent' === $type ? 'درصدی' : 'مبلغ ثابت';
 			return '<strong>' . esc_html( self::range_label( $term_id ) ) . '</strong><br><span class="wdp-muted">' . esc_html( $badge ) . '</span>';
+		}
+		if ( 'wdp_categories' === $column ) {
+			$names = self::category_names( $term_id );
+			return $names ? esc_html( implode( '، ', $names ) ) : '<span class="wdp-muted">همه دسته‌بندی‌ها</span>';
 		}
 		if ( 'wdp_link' === $column ) {
 			$link = get_term_link( (int) $term_id, self::TAXONOMY );

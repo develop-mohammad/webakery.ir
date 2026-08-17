@@ -112,17 +112,65 @@ echo "\n=== ۶) بازبینی خودکار (recalculate_all) ===\n";
 $count = WDP_Assigner::recalculate_all();
 $check( 'بازبینی همه محصولات بدون خطا اجرا شد', $count >= 1, "count={$count}" );
 
+echo "\n=== ۷) صفحه تخفیف محدود به یک دسته‌بندی محصول ===\n";
+
+$cat_home = wp_insert_term( 'تست لوازم خانگی', 'product_cat' );
+$cat_home = is_wp_error( $cat_home ) ? 0 : (int) $cat_home['term_id'];
+$cat_cloth = wp_insert_term( 'تست پوشاک', 'product_cat' );
+$cat_cloth = is_wp_error( $cat_cloth ) ? 0 : (int) $cat_cloth['term_id'];
+
+$term_home_only = wp_insert_term( 'تست ۲۰ تا ۳۰٪ فقط لوازم خانگی', WDP_Taxonomy::TAXONOMY );
+$term_home_only = is_wp_error( $term_home_only ) ? 0 : (int) $term_home_only['term_id'];
+update_term_meta( $term_home_only, '_wdp_type', 'percent' );
+update_term_meta( $term_home_only, '_wdp_min', 20 );
+update_term_meta( $term_home_only, '_wdp_max', 30 );
+update_term_meta( $term_home_only, '_wdp_priority', 10 );
+update_term_meta( $term_home_only, '_wdp_categories', array( $cat_home ) );
+
+$term_general = wp_insert_term( 'تست ۲۰ تا ۳۰٪ عمومی', WDP_Taxonomy::TAXONOMY );
+$term_general = is_wp_error( $term_general ) ? 0 : (int) $term_general['term_id'];
+update_term_meta( $term_general, '_wdp_type', 'percent' );
+update_term_meta( $term_general, '_wdp_min', 20 );
+update_term_meta( $term_general, '_wdp_max', 30 );
+update_term_meta( $term_general, '_wdp_priority', 10 );
+update_term_meta( $term_general, '_wdp_categories', array() );
+
+$product3 = $make_product( 100000, 75000 ); // 25% تخفیف
+wp_set_object_terms( $product3->get_id(), array( $cat_home ), 'product_cat' );
+WDP_Assigner::assign( $product3->get_id() );
+
+$terms5 = $assigned_terms( $product3->get_id() );
+$check(
+	'محصول دسته «لوازم خانگی» با ۲۵٪ تخفیف به صفحه اختصاصی همان دسته می‌رود (نه صفحه عمومی)',
+	array( $term_home_only ) === $terms5,
+	'terms=' . implode( ',', $terms5 )
+);
+
+echo "\n=== ۸) تغییر دسته‌بندی محصول به‌تنهایی هم صفحه تخفیف را عوض می‌کند ===\n";
+
+// هیچ تغییری در تخفیف نمی‌دهیم؛ فقط دسته‌بندی محصول را عوض می‌کنیم.
+wp_set_object_terms( $product3->get_id(), array( $cat_cloth ), 'product_cat' );
+
+$terms6 = $assigned_terms( $product3->get_id() );
+$check(
+	'با تغییر دسته‌بندی محصول به «پوشاک» (بدون صفحه اختصاصی)، محصول خودکار به صفحه عمومی منتقل می‌شود',
+	array( $term_general ) === $terms6,
+	'terms=' . implode( ',', $terms6 )
+);
+
 echo "\n=== پاک‌سازی داده‌های تست ===\n";
 wp_delete_post( $product->get_id(), true );
 wp_delete_post( $product2->get_id(), true );
-if ( $term_low ) {
-	wp_delete_term( $term_low, WDP_Taxonomy::TAXONOMY );
+wp_delete_post( $product3->get_id(), true );
+foreach ( array( $term_low, $term_high, $term_fixed, $term_home_only, $term_general ) as $t ) {
+	if ( $t ) {
+		wp_delete_term( $t, WDP_Taxonomy::TAXONOMY );
+	}
 }
-if ( $term_high ) {
-	wp_delete_term( $term_high, WDP_Taxonomy::TAXONOMY );
-}
-if ( $term_fixed ) {
-	wp_delete_term( $term_fixed, WDP_Taxonomy::TAXONOMY );
+foreach ( array( $cat_home, $cat_cloth ) as $c ) {
+	if ( $c ) {
+		wp_delete_term( $c, 'product_cat' );
+	}
 }
 echo "  انجام شد.\n";
 

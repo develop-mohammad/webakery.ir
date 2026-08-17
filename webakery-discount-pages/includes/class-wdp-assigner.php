@@ -23,6 +23,18 @@ class WDP_Assigner {
 		add_filter( 'handle_bulk_actions-edit-product', array( __CLASS__, 'handle_bulk_action' ), 10, 3 );
 
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_box' ) );
+
+		// اگر دسته‌بندی محصول (product_cat) عوض شود -- حتی بدون ذخیره کامل محصول
+		// (مثلاً ویرایش سریع یا REST API) -- صفحه تخفیف را دوباره بررسی کن، چون
+		// بعضی صفحه‌های تخفیف ممکن است به دسته‌بندی محدود شده باشند.
+		add_action( 'set_object_terms', array( __CLASS__, 'on_terms_changed' ), 10, 4 );
+	}
+
+	public static function on_terms_changed( $object_id, $terms, $tt_ids, $taxonomy ) {
+		if ( 'product_cat' !== $taxonomy || 'product' !== get_post_type( $object_id ) ) {
+			return;
+		}
+		self::assign( $object_id );
 	}
 
 	/* ─── هوک‌های ووکامرس ──────────────────────────────────────── */
@@ -74,8 +86,10 @@ class WDP_Assigner {
 			return;
 		}
 
-		$discount = self::compute( $product );
-		$term_id  = $discount ? WDP_Util::find_best_match( WDP_Taxonomy::all_rules(), $discount ) : null;
+		$discount   = self::compute( $product );
+		$categories = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+		$categories = is_wp_error( $categories ) ? array() : $categories;
+		$term_id    = $discount ? WDP_Util::find_best_match( WDP_Taxonomy::all_rules(), $discount, $categories ) : null;
 
 		if ( $term_id ) {
 			wp_set_object_terms( $product_id, array( $term_id ), WDP_Taxonomy::TAXONOMY, false );
@@ -223,7 +237,7 @@ class WDP_Assigner {
 			echo '<p class="wdp-muted">در هیچ صفحه تخفیفی قرار ندارد.</p>';
 		}
 
-		echo '<p class="wdp-hint">این مقدار خودکار است و بعد از ذخیره محصول به‌روزرسانی می‌شود.</p>';
+		echo '<p class="wdp-hint">این مقدار خودکار است و بعد از ذخیره محصول یا تغییر دسته‌بندی محصول به‌روزرسانی می‌شود.</p>';
 		echo '</div>';
 	}
 }

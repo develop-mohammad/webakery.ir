@@ -207,6 +207,28 @@
 	max-width: 260px;
 }
 
+.wdp-cat-list {
+	max-height: 220px;
+	overflow: auto;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	padding: 8px 10px;
+	background: #fcfcfd;
+	max-width: 420px;
+}
+
+.wdp-cat {
+	display: block;
+	padding: 3px 0;
+	font-size: 13px;
+}
+
+.wdp-cat em {
+	color: #94a3b8;
+	font-size: 11px;
+	font-style: normal;
+}
+
 /* ─── جعبه در صفحه ویرایش محصول ──────────────────────────── */
 
 .wdp-metabox {
