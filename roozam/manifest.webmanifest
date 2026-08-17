@@ -1,0 +1,20 @@
+{
+  "name": "روزم",
+  "short_name": "روزم",
+  "description": "وب‌اپلیکیشن برنامه‌ریزی روزانه با زمان‌بندی هوشمند",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "fa",
+  "background_color": "#f0f2f5",
+  "theme_color": "#1877F2",
+  "icons": [
+    {
+      "src": "assets/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

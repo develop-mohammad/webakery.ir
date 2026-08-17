@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1877F2" />
+  <meta name="description" content="روزم — وب‌اپلیکیشن برنامه‌ریزی روزانه" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>روزم</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icons/icon.svg" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="assets/css/app.css" />
+</head>
+<body class="rzm-page">
+  <div class="rzm" data-rzm-root>
+    <!-- Top app bar — Facebook style -->
+    <header class="rzm-topbar">
+      <div class="rzm-topbar-inner">
+        <a class="rzm-logo" href="./" aria-label="روزم">روزم</a>
+        <div class="rzm-top-actions">
+          <button type="button" class="rzm-icon-circle" data-rzm-open-task aria-label="کار جدید" title="کار جدید">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          </button>
+          <button type="button" class="rzm-icon-circle" data-rzm-open-prefs aria-label="تنظیمات" title="ساعات روز">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.03 7.03 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 2h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.23-1.12.54-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.69.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54c.05.24.25.42.49.42h3.8c.24 0 .44-.18.49-.42l.36-2.54c.58-.22 1.13-.54 1.63-.94l2.39.96c.26.12.55.02.69-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="rzm-feed">
+      <!-- Date story strip -->
+      <section class="rzm-card rzm-date-card">
+        <button type="button" class="rzm-navbtn" data-rzm-prev aria-label="روز قبل">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+        </button>
+        <div class="rzm-date-main">
+          <strong data-rzm-weekday>—</strong>
+          <span data-rzm-jalali>—</span>
+        </div>
+        <button type="button" class="rzm-navbtn" data-rzm-next aria-label="روز بعد">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </button>
+      </section>
+
+      <!-- Composer / plan CTA — Facebook "What's on your mind" style -->
+      <section class="rzm-card rzm-composer">
+        <div class="rzm-composer-row">
+          <div class="rzm-avatar" aria-hidden="true">ر</div>
+          <button type="button" class="rzm-composer-input" data-rzm-open-task>
+            امروز چه برنامه‌ای داری؟
+          </button>
+        </div>
+        <div class="rzm-composer-actions">
+          <button type="button" class="rzm-chip" data-rzm-open-task>
+            <span class="rzm-chip-dot rzm-chip-dot-green"></span>
+            کار جدید
+          </button>
+          <button type="button" class="rzm-chip" data-rzm-open-routines>
+            <span class="rzm-chip-dot rzm-chip-dot-blue"></span>
+            عادت‌ها
+          </button>
+          <button type="button" class="rzm-chip rzm-chip-primary" data-rzm-plan>
+            برنامه‌ریزی امروز
+          </button>
+        </div>
+      </section>
+
+      <!-- Progress status card -->
+      <section class="rzm-card rzm-progress" aria-label="پیشرفت امروز">
+        <div class="rzm-post-head">
+          <div class="rzm-avatar rzm-avatar-sm" aria-hidden="true">٪</div>
+          <div>
+            <h2 class="rzm-post-title">پیشرفت امروز</h2>
+            <p class="rzm-post-meta" data-rzm-progress-sub>هنوز کاری ثبت نشده</p>
+          </div>
+          <div class="rzm-ring" data-rzm-ring>
+            <svg viewBox="0 0 72 72" width="56" height="56" aria-hidden="true">
+              <circle class="rzm-ring-bg" cx="36" cy="36" r="30"></circle>
+              <circle class="rzm-ring-fg" cx="36" cy="36" r="30" data-rzm-ring-fg></circle>
+            </svg>
+            <span data-rzm-progress-text>۰٪</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="rzm-alert" data-rzm-alert hidden></div>
+
+      <!-- Feed header -->
+      <div class="rzm-section-label">
+        <h2>برنامه روز</h2>
+        <span data-rzm-task-count></span>
+      </div>
+
+      <section class="rzm-timeline" aria-label="برنامه روز">
+        <ul class="rzm-list" data-rzm-list></ul>
+        <div class="rzm-card rzm-empty" data-rzm-empty hidden>
+          <div class="rzm-empty-illu" aria-hidden="true"></div>
+          <p>هنوز پستی در برنامه امروز نیست.</p>
+          <button type="button" class="rzm-btn rzm-btn-primary" data-rzm-open-task>ایجاد کار</button>
+        </div>
+      </section>
+
+      <!-- Note as a post card -->
+      <section class="rzm-card rzm-note">
+        <div class="rzm-post-head">
+          <div class="rzm-avatar rzm-avatar-sm" aria-hidden="true">ی</div>
+          <label for="rzm-note" class="rzm-post-title">یادداشت روز</label>
+        </div>
+        <textarea id="rzm-note" data-rzm-note rows="3" placeholder="چه چیزی در ذهن داری؟"></textarea>
+      </section>
+
+      <section class="rzm-card rzm-tools">
+        <button type="button" class="rzm-text-btn" data-rzm-export>خروجی پشتیبان</button>
+        <label class="rzm-text-btn">
+          بازیابی
+          <input type="file" accept="application/json,.json" data-rzm-import hidden />
+        </label>
+        <button type="button" class="rzm-text-btn" data-rzm-install hidden>نصب اپ</button>
+      </section>
+    </main>
+
+    <!-- Bottom tab bar -->
+    <nav class="rzm-tabbar" aria-label="منوی اصلی">
+      <button type="button" class="rzm-tab is-active" data-rzm-tab="home" aria-current="page">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>خانه</span>
+      </button>
+      <button type="button" class="rzm-tab" data-rzm-open-routines>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <span>عادت‌ها</span>
+      </button>
+      <button type="button" class="rzm-tab" data-rzm-plan>
+        <span class="rzm-tab-fab">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </span>
+        <span>برنامه‌ریز</span>
+      </button>
+      <button type="button" class="rzm-tab" data-rzm-open-prefs>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+        <span>ساعات</span>
+      </button>
+      <button type="button" class="rzm-tab" data-rzm-open-task>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        <span>کارها</span>
+      </button>
+    </nav>
+
+    <dialog class="rzm-dialog" data-rzm-dialog-task>
+      <form method="dialog" class="rzm-dialog-body" data-rzm-task-form>
+        <div class="rzm-dialog-head">
+          <h3>ایجاد کار</h3>
+          <button type="button" class="rzm-icon-circle rzm-icon-circle-sm" data-rzm-close aria-label="بستن">×</button>
+        </div>
+        <label class="rzm-field">عنوان
+          <input type="text" name="title" required maxlength="120" placeholder="مثلاً آماده‌سازی پیشنهاد مشتری" />
+        </label>
+        <div class="rzm-grid2">
+          <label class="rzm-field">مدت (دقیقه)
+            <input type="number" name="duration" min="5" max="480" value="30" required />
+          </label>
+          <label class="rzm-field">اولویت
+            <select name="priority">
+              <option value="high">مهم</option>
+              <option value="medium" selected>عادی</option>
+              <option value="low">کم‌اهمیت</option>
+            </select>
+          </label>
+        </div>
+        <div class="rzm-grid2">
+          <label class="rzm-field">ساعت شروع
+            <input type="time" name="start" />
+          </label>
+          <label class="rzm-field">دسته
+            <input type="text" name="category" maxlength="40" placeholder="کار / شخصی / سلامت" />
+          </label>
+        </div>
+        <div class="rzm-dialog-actions">
+          <button type="button" class="rzm-btn rzm-btn-ghost" data-rzm-close>انصراف</button>
+          <button type="submit" class="rzm-btn rzm-btn-primary">انتشار</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="rzm-dialog" data-rzm-dialog-routines>
+      <div class="rzm-dialog-body">
+        <div class="rzm-dialog-head">
+          <h3>عادت‌های روزانه</h3>
+          <button type="button" class="rzm-icon-circle rzm-icon-circle-sm" data-rzm-close aria-label="بستن">×</button>
+        </div>
+        <p class="rzm-muted">عادت‌های فعال در برنامه‌ریزی هوشمند لحاظ می‌شوند.</p>
+        <ul class="rzm-routine-list" data-rzm-routines></ul>
+        <form class="rzm-routine-form" data-rzm-routine-form>
+          <input type="text" name="title" placeholder="عادت جدید…" required maxlength="80" />
+          <input type="number" name="duration" min="5" max="240" value="20" title="دقیقه" />
+          <button type="submit" class="rzm-btn rzm-btn-primary rzm-btn-icon">+</button>
+        </form>
+      </div>
+    </dialog>
+
+    <dialog class="rzm-dialog" data-rzm-dialog-prefs>
+      <form method="dialog" class="rzm-dialog-body" data-rzm-prefs-form>
+        <div class="rzm-dialog-head">
+          <h3>ساعات روز</h3>
+          <button type="button" class="rzm-icon-circle rzm-icon-circle-sm" data-rzm-close aria-label="بستن">×</button>
+        </div>
+        <div class="rzm-grid2">
+          <label class="rzm-field">بیدار شدن
+            <input type="time" name="wake_time" required />
+          </label>
+          <label class="rzm-field">خواب
+            <input type="time" name="sleep_time" required />
+          </label>
+        </div>
+        <label class="rzm-field">استراحت بین کارها (دقیقه)
+          <input type="number" name="break_minutes" min="0" max="60" />
+        </label>
+        <div class="rzm-dialog-actions">
+          <button type="button" class="rzm-btn rzm-btn-ghost" data-rzm-close>انصراف</button>
+          <button type="submit" class="rzm-btn rzm-btn-primary">ذخیره</button>
+        </div>
+      </form>
+    </dialog>
+  </div>
+
+  <script src="assets/js/jalali.js"></script>
+  <script src="assets/js/planner.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

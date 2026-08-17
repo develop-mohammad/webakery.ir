@@ -1,0 +1,10 @@
+{
+  "name": "roozam",
+  "version": "1.0.0",
+  "private": true,
+  "description": "روزم — وب‌اپلیکیشن برنامه‌ریزی روزانه",
+  "scripts": {
+    "start": "python3 -m http.server 8765",
+    "serve": "python3 -m http.server 8765"
+  }
+}
