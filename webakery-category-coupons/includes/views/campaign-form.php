@@ -198,6 +198,12 @@ $checkbox = function ( $name, $label, $checked, $hint = '' ) {
 				<label class="wbcc-label">فاصله دریافت مجدد هر مشتری (ساعت)</label>
 				<input type="number" name="public_cooldown" min="0" max="8760" value="<?php echo (int) $campaign['public_cooldown']; ?>">
 			</p>
+			<?php $checkbox(
+				'public_restrict_email',
+				'کد فقط برای ایمیل وارد‌شده معتبر باشد',
+				$campaign['public_restrict_email'],
+				'با روشن بودن این گزینه، مشتری باید همان ایمیل را در تسویه‌حساب وارد کند.'
+			); ?>
 			<?php if ( ! $is_new ) : ?>
 				<p class="wbcc-hint-block">
 					شورت‌کد: <code dir="ltr">[webakery_coupon campaign="<?php echo (int) $campaign['id']; ?>"]</code>

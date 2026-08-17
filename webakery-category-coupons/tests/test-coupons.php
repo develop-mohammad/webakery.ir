@@ -252,6 +252,12 @@ if ( ! empty( $public['ok'] ) ) {
 	$check( 'منبع ساخت «public» ثبت شد', 'public' === get_post_meta( $public['coupons'][0]['id'], '_wbcc_source', true ) );
 }
 
+$open = WBCC_Generator::generate( $campaign_clothing, 1, 'public' );
+if ( ! empty( $open['ok'] ) ) {
+	$oc = new WC_Coupon( $open['coupons'][0]['id'] );
+	$check( 'بدون گزینه «محدود به ایمیل»، کد بدون محدودیت ایمیل ساخته می‌شود', array() === $oc->get_email_restrictions() );
+}
+
 echo "\n=== ۷) بدون دسته‌بندی، کد ساخته نمی‌شود ===\n";
 
 $empty_campaign = WBCC_Campaigns::defaults();

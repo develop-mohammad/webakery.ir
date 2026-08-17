@@ -60,6 +60,7 @@ class WBCC_Campaigns {
 			'last_run'             => 0,
 			'public_enabled'       => 0,
 			'public_cooldown'      => 24,
+			'public_restrict_email' => 0,
 			'created'              => 0,
 		);
 	}
@@ -184,6 +185,7 @@ class WBCC_Campaigns {
 			'last_run'             => (int) $prev['last_run'],
 			'public_enabled'       => self::bool( $in, 'public_enabled', $prev ),
 			'public_cooldown'      => self::clamp( $in['public_cooldown'] ?? $prev['public_cooldown'], 0, 8760, $d['public_cooldown'] ),
+			'public_restrict_email' => self::bool( $in, 'public_restrict_email', $prev ),
 			'created'              => (int) $prev['created'],
 		);
 	}

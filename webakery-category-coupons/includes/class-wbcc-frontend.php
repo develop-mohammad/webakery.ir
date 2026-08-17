@@ -120,7 +120,11 @@ class WBCC_Frontend {
 			) );
 		}
 
-		$res = WBCC_Generator::generate( $campaign, 1, 'public', array( 'email' => $email ) );
+		$args = array();
+		if ( ! empty( $campaign['public_restrict_email'] ) ) {
+			$args['email'] = $email;
+		}
+		$res = WBCC_Generator::generate( $campaign, 1, 'public', $args );
 		if ( empty( $res['ok'] ) ) {
 			wp_send_json_error( array( 'message' => $res['message'] ) );
 		}
