@@ -1,0 +1,102 @@
+فایل تنظیمات Perfmatters برای kianstock.ir
+بر اساس گزارش PageSpeed Desktop:
+https://pagespeed.web.dev/analysis/https-kianstock-ir/dvmqiad7b8?form_factor=desktop
+
+==================================================
+روش پیشنهادی: نصب ZIP وردپرس
+==================================================
+فایل:
+  kianstock-perfmatters-setup.zip
+
+1) Perfmatters باید از قبل نصب و فعال باشد.
+2) وردپرس → افزونه‌ها → افزودن → بارگذاری افزونه
+3) ZIP را انتخاب و نصب کن، بعد فعال کن.
+4) با فعال‌سازی، تنظیمات Perfmatters خودکار اعمال می‌شود.
+5) کش را پاک کن و صفحه اصلی را یک‌بار باز کن.
+6) بعد از تست می‌توانی این افزونهٔ کمکی را حذف کنی
+   (تنظیمات Perfmatters باقی می‌ماند).
+7) اگر لازم شد، از نوتیس پیشخوان «بازگردانی تنظیمات قبلی» را بزن.
+
+==================================================
+قبل از نصب (مهم)
+==================================================
+1) اگر WP Rocket هم روشنه، این گزینه‌ها را در Rocket خاموش کن
+   تا با Perfmatters تداخل نکند:
+   - Delay JavaScript execution
+   - Load JavaScript deferred
+   - Remove Unused CSS
+   - LazyLoad images / iframes
+   - Minify CSS / JS (اگر در Perfmatters روشن است)
+
+==================================================
+روش جایگزین: ایمپورت JSON دستی
+==================================================
+1) برو به:
+   وردپرس → Settings → Perfmatters → Tools
+
+2) بخش Import Plugin Settings
+
+3) فایل را انتخاب کن:
+   perfmatters-settings-kianstock-pagespeed-desktop.json
+
+4) روی Import Plugin Settings بزن
+
+5) بعد از ایمپورت:
+   - Clear Used CSS را بزن
+   - کش WP Rocket / سرور / CDN را پاک کن
+   - یک‌بار صفحه اصلی را با کاربر لاگ‌اوت‌شده باز کن تا Used CSS دوباره ساخته شود
+
+==================================================
+این تنظیمات روی چه مشکلات PageSpeed زده
+==================================================
+Desktop Lab حدود 87 بود. تمرکز روی این‌ها:
+
+1) Render-blocking
+   - Delay All Scripts
+   - Remove Unused CSS با رفتار Async
+   - Used CSS به‌صورت File (به‌جای اینلاین سنگین)
+
+2) LCP / تصاویر
+   - Preload Critical Images = 1
+     (قبلاً چند تصویر برند مثل ecco.png هم preload می‌شد)
+   - Exclude Leading Images = 2
+   - Lazy Load + Image Dimensions
+
+3) فونت‌های سنگین / Google Fonts
+   - Disable Google Fonts = روشن
+     (Noto Serif با فرمت TTF حذف می‌شود)
+   - فقط فونت‌های Dana / Anjoman / Woodmart به‌صورت woff2 preload می‌شوند
+   - Display Swap روشن
+
+4) JS بلااستفاده / TBT
+   - Delay JS + Timeout
+   - Minify JS/CSS
+   - Local Analytics (G-RK8W7Z1MH5) در فوتر
+
+==================================================
+بعد از ایمپورت حتماً تست کن
+==================================================
+- صفحه اصلی
+- یک صفحه محصول
+- افزودن به سبد / مینی‌کارت
+- سبد خرید
+- تسویه حساب / درگاه
+- جستجوی هدر Woodmart
+- منوی موبایل
+
+اگر جایی شکست:
+در Perfmatters → Assets → Delay JavaScript → Excluded from Delay
+اسکریپت همان بخش را اضافه کن. مثال‌های رایج:
+
+woodmart
+elementor/assets/js/frontend
+cart-fragments
+add-to-cart
+checkout
+
+==================================================
+نکته درباره Field Data (کاربران واقعی)
+==================================================
+LCP و TTFB واقعی هنوز ضعیف است (حدود 2 ثانیه TTFB).
+این بخش بیشتر به هاست / کش سرور / CDN مربوط است
+و فقط با Perfmatters کامل درست نمی‌شود.
