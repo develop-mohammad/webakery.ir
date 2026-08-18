@@ -106,6 +106,56 @@ $next_run = wp_next_scheduled( WDP_Cron::HOOK );
 		</p>
 	</div>
 
+	<div class="wdp-card-box" style="grid-column:1/-1">
+		<h3>🛒 همه محصولاتی که الان در حراج ووکامرس هستند</h3>
+		<?php $on_sale = WDP_Assigner::list_on_sale_overview(); ?>
+		<?php if ( ! $on_sale ) : ?>
+			<p class="wdp-muted">هیچ محصولی الان در حراج ووکامرس نیست (فیلد «Sale price» هیچ محصولی پر نشده یا خالی شده است).</p>
+		<?php else : ?>
+			<table class="widefat striped wdp-table">
+				<thead>
+					<tr>
+						<th>محصول</th>
+						<th>دسته‌بندی محصول</th>
+						<th>تخفیف محاسبه‌شده</th>
+						<th>باید در کدام صفحه باشد</th>
+						<th>وضعیت</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $on_sale as $row ) : ?>
+						<tr>
+							<td>
+								#<?php echo (int) $row['product_id']; ?> —
+								<?php if ( $row['edit_link'] ) : ?>
+									<a href="<?php echo esc_url( $row['edit_link'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $row['name'] ); ?></a>
+								<?php else : ?>
+									<?php echo esc_html( $row['name'] ); ?>
+								<?php endif; ?>
+							</td>
+							<td><?php echo $row['category_names'] ? esc_html( implode( '، ', $row['category_names'] ) ) : '<span class="wdp-muted">بدون دسته‌بندی</span>'; ?></td>
+							<td>
+								<?php if ( $row['discount'] ) : ?>
+									<?php echo esc_html( WDP_Util::fa_digits( WDP_Util::trim_zeros( $row['discount']['percent'] ) ) ); ?>٪
+									(<?php echo esc_html( WDP_Util::fa_digits( WDP_Util::trim_zeros( $row['discount']['fixed'] ) ) ); ?> <?php echo esc_html( WDP_Taxonomy::currency() ); ?>)
+								<?php else : ?>
+									<span class="wdp-muted">—</span>
+								<?php endif; ?>
+							</td>
+							<td><?php echo esc_html( $row['matched_name'] ); ?></td>
+							<td><?php echo $row['in_sync'] ? '✅ هماهنگ' : '⚠️ نیاز به بازبینی'; ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+			<p class="wdp-hint" style="margin-top:8px">
+				اگر ستون «باید در کدام صفحه باشد» برای محصولی «—» است، یعنی هیچ صفحه تخفیفی با دسته‌بندی و
+				درصد تخفیف همان محصول تطبیق ندارد؛ به دسته‌بندی دقیق آن محصول در این جدول و دسته‌بندی
+				تیک‌خورده روی صفحه تخفیف نگاه کنید — احتمالاً یکی نیستند (مثلاً دو دسته با نام مشابه).
+			</p>
+		<?php endif; ?>
+	</div>
+
 	<div class="wdp-card-box">
 		<h3>🔍 چرا یک محصول در صفحه‌ای قرار نمی‌گیرد؟</h3>
 		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">

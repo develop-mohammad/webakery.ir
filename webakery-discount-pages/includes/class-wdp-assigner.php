@@ -272,6 +272,49 @@ class WDP_Assigner {
 		return $result;
 	}
 
+	/**
+	 * فهرست خلاصه همه محصولاتی که الان در حراج ووکامرس هستند، به‌همراه
+	 * دسته‌بندی، تخفیف محاسبه‌شده و صفحه‌ای که باید در آن باشند —
+	 * برای دیدن یک‌جای همه محصولات به‌جای بررسی تکی هرکدام.
+	 *
+	 * @return array<int,array>
+	 */
+	public static function list_on_sale_overview() {
+		if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'wc_get_product_ids_on_sale' ) ) {
+			return array();
+		}
+
+		$rows = array();
+		foreach ( wc_get_product_ids_on_sale() as $product_id ) {
+			$diag = self::diagnose( $product_id );
+			if ( empty( $diag['exists'] ) ) {
+				continue;
+			}
+
+			$matched_name = '—';
+			if ( $diag['matched_term_id'] ) {
+				$t            = get_term( $diag['matched_term_id'], WDP_Taxonomy::TAXONOMY );
+				$matched_name = ( $t && ! is_wp_error( $t ) ) ? $t->name : ( '#' . $diag['matched_term_id'] );
+			}
+
+			$current = $diag['current_terms'] ?? array();
+			$target  = $diag['matched_term_id'] ? array( $diag['matched_term_id'] ) : array();
+			sort( $current );
+			sort( $target );
+
+			$rows[] = array(
+				'product_id'     => $product_id,
+				'name'           => $diag['name'],
+				'edit_link'      => $diag['edit_link'],
+				'category_names' => $diag['category_names'],
+				'discount'       => $diag['discount'],
+				'matched_name'   => $matched_name,
+				'in_sync'        => ( $current === $target ),
+			);
+		}
+		return $rows;
+	}
+
 	/* ─── اکشن دسته‌ای در فهرست محصولات ──────────────────────────── */
 
 	public static function register_bulk_action( $actions ) {
