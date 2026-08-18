@@ -107,6 +107,30 @@ $next_run = wp_next_scheduled( WDP_Cron::HOOK );
 	</div>
 
 	<div class="wdp-card-box">
+		<h3>🔍 چرا یک محصول در صفحه‌ای قرار نمی‌گیرد؟</h3>
+		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+			<input type="hidden" name="page" value="<?php echo esc_attr( WDP_MENU ); ?>">
+			<input type="hidden" name="tab" value="overview">
+			<p>
+				<label class="wdp-label">شناسه محصول (Product ID)</label>
+				<input type="number" name="wdp_check_product" min="1" style="max-width:160px"
+					value="<?php echo isset( $_GET['wdp_check_product'] ) ? (int) $_GET['wdp_check_product'] : ''; ?>">
+				<button type="submit" class="button">بررسی</button>
+			</p>
+		</form>
+		<p class="wdp-hint">
+			شناسه محصول را از صفحه ویرایش محصول (در آدرس مرورگر، بعد از <code dir="ltr">post=</code>)
+			یا از ستون «شناسه» در فهرست محصولات وردپرس پیدا کنید.
+		</p>
+		<?php
+		if ( ! empty( $_GET['wdp_check_product'] ) ) {
+			$diag = WDP_Assigner::diagnose( (int) $_GET['wdp_check_product'] );
+			include WDP_PATH . 'includes/views/partial-diagnose.php';
+		}
+		?>
+	</div>
+
+	<div class="wdp-card-box">
 		<h3>آخرین اجراهای خودکار</h3>
 		<?php if ( ! is_array( $log ) || ! $log ) : ?>
 			<p class="wdp-muted">هنوز اجرای خودکاری ثبت نشده است.</p>

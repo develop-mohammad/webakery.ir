@@ -180,6 +180,98 @@ class WDP_Assigner {
 		return count( $ids );
 	}
 
+	/* ─── ابزار بررسی محصول (چرا این محصول در صفحه‌ای قرار نگرفت؟) ──── */
+
+	/**
+	 * گزارش کامل وضعیت یک محصول برای عیب‌یابی: تخفیف فعلی، دسته‌بندی‌ها،
+	 * نتیجه بررسی هر صفحه تخفیف و اینکه کدام صفحه انتخاب می‌شود.
+	 *
+	 * @return array
+	 */
+	public static function diagnose( $product_id ) {
+		$product_id = (int) $product_id;
+		$result     = array(
+			'product_id' => $product_id,
+			'exists'     => false,
+			'licensed'   => WDP_Plugin::licensed(),
+			'woo'        => class_exists( 'WooCommerce' ),
+		);
+
+		if ( ! $result['woo'] || ! $product_id || 'product' !== get_post_type( $product_id ) ) {
+			return $result;
+		}
+
+		$product = wc_get_product( $product_id );
+		if ( ! $product ) {
+			return $result;
+		}
+
+		$result['exists']     = true;
+		$result['name']       = $product->get_name();
+		$result['is_on_sale'] = $product->is_on_sale();
+		$result['edit_link']  = get_edit_post_link( $product_id, 'raw' );
+
+		if ( $product->is_type( 'variable' ) && method_exists( $product, 'get_variation_regular_price' ) ) {
+			$result['regular'] = (float) $product->get_variation_regular_price( 'min', true );
+			$result['sale']    = (float) $product->get_variation_sale_price( 'min', true );
+		} else {
+			$result['regular'] = (float) $product->get_regular_price();
+			$result['sale']    = (float) $product->get_sale_price();
+		}
+
+		$result['discount'] = self::compute( $product );
+
+		$cat_ids               = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+		$cat_ids               = is_wp_error( $cat_ids ) ? array() : array_map( 'intval', $cat_ids );
+		$result['category_ids']   = $cat_ids;
+		$result['category_names'] = array();
+		foreach ( $cat_ids as $cat_id ) {
+			$cat_term = get_term( $cat_id, 'product_cat' );
+			if ( $cat_term && ! is_wp_error( $cat_term ) ) {
+				$result['category_names'][] = $cat_term->name;
+			}
+		}
+
+		$rules  = WDP_Taxonomy::all_rules();
+		$checks = array();
+		foreach ( $rules as $rule ) {
+			$term      = get_term( $rule['term_id'], WDP_Taxonomy::TAXONOMY );
+			$term_name = ( $term && ! is_wp_error( $term ) ) ? $term->name : ( '#' . $rule['term_id'] );
+
+			$cat_ok = empty( $rule['categories'] ) || array_intersect( $rule['categories'], $cat_ids );
+
+			$value_ok  = false;
+			$value_now = null;
+			if ( $result['discount'] ) {
+				$value_now = $result['discount'][ $rule['type'] ];
+				$min       = min( $rule['min'], $rule['max'] );
+				$max       = max( $rule['min'], $rule['max'] );
+				$value_ok  = ( $value_now >= $min - 0.001 && $value_now <= $max + 0.001 );
+			}
+
+			$checks[] = array(
+				'term_id'    => $rule['term_id'],
+				'name'       => $term_name,
+				'type'       => $rule['type'],
+				'min'        => $rule['min'],
+				'max'        => $rule['max'],
+				'categories' => $rule['categories'],
+				'cat_ok'     => (bool) $cat_ok,
+				'value_ok'   => $value_ok,
+				'value_now'  => $value_now,
+				'match'      => $cat_ok && $value_ok,
+			);
+		}
+		$result['rule_checks'] = $checks;
+
+		$result['matched_term_id'] = $result['discount'] ? WDP_Util::find_best_match( $rules, $result['discount'], $cat_ids ) : null;
+
+		$current_terms          = wp_get_object_terms( $product_id, WDP_Taxonomy::TAXONOMY, array( 'fields' => 'ids' ) );
+		$result['current_terms'] = is_wp_error( $current_terms ) ? array() : array_map( 'intval', $current_terms );
+
+		return $result;
+	}
+
 	/* ─── اکشن دسته‌ای در فهرست محصولات ──────────────────────────── */
 
 	public static function register_bulk_action( $actions ) {
