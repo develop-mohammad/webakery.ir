@@ -40,6 +40,7 @@ class WDP_Plugin {
 		require_once WDP_PATH . 'includes/class-wdp-util.php';
 		require_once WDP_PATH . 'includes/class-wdp-taxonomy.php';
 		require_once WDP_PATH . 'includes/class-wdp-assigner.php';
+		require_once WDP_PATH . 'includes/class-wdp-bulk.php';
 		require_once WDP_PATH . 'includes/class-wdp-cron.php';
 
 		WDP_Taxonomy::register();
@@ -69,8 +70,9 @@ class WDP_Plugin {
 			'page'       => 'admin.php?page=' . WDP_MENU . '&tab=license',
 			'features'   => array(
 				'صفحه تخفیف اختصاصی با URL برای هر بازه درصدی یا مبلغ ثابت',
+				'اعمال گروهی تخفیف روی همه محصولات یک دسته‌بندی با یک کلیک',
 				'اختصاص خودکار محصولات به صفحه درست بر اساس تخفیف فعلی',
-				'جابه‌جایی خودکار محصول با تغییر درصد/مبلغ تخفیف',
+				'جابه‌جایی خودکار محصول با تغییر درصد/مبلغ تخفیف یا دسته‌بندی',
 				'پشتیبانی از محصولات متغیر و تخفیف زمان‌بندی‌شده ووکامرس',
 				'شورت‌کد و ویجت المنتور برای فهرست صفحه‌های تخفیف',
 				'به‌روزرسانی خودکار از webakery.ir',

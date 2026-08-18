@@ -25,6 +25,8 @@ class WDP_Admin {
 
 		add_action( 'admin_post_wdp_save_settings', array( $this, 'handle_save_settings' ) );
 		add_action( 'admin_post_wdp_recalculate', array( $this, 'handle_recalculate' ) );
+		add_action( 'admin_post_wdp_bulk_apply', array( $this, 'handle_bulk_apply' ) );
+		add_action( 'admin_post_wdp_bulk_revert', array( $this, 'handle_bulk_revert' ) );
 	}
 
 	public function menu() {
@@ -62,6 +64,7 @@ class WDP_Admin {
 	public static function tabs() {
 		return array(
 			'overview' => 'پیشخوان',
+			'bulk'     => 'اعمال گروهی تخفیف',
 			'settings' => 'تنظیمات',
 			'license'  => 'لایسنس',
 		);
@@ -113,6 +116,56 @@ class WDP_Admin {
 
 		$count = WDP_Assigner::recalculate_all();
 		$this->redirect( array( 'tab' => 'overview' ), $count . ' محصول بررسی و در صورت نیاز جابه‌جا شد.', true );
+	}
+
+	/* ─── اعمال گروهی تخفیف روی یک دسته‌بندی ─────────────────────── */
+
+	public function handle_bulk_apply() {
+		$this->guard( 'wdp_bulk_apply' );
+
+		if ( ! WDP_Plugin::licensed() ) {
+			$this->redirect( array( 'tab' => 'bulk' ), 'دوره آزمایشی به پایان رسیده؛ برای اعمال گروهی تخفیف، لایسنس را فعال کنید.', false );
+		}
+
+		$categories = array_values( array_filter( array_map( 'intval', (array) ( $_POST['bulk_categories'] ?? array() ) ) ) );
+		if ( ! $categories ) {
+			$this->redirect( array( 'tab' => 'bulk' ), 'حداقل یک دسته‌بندی محصول را انتخاب کنید.', false );
+		}
+
+		$include_children = ! empty( $_POST['include_children'] );
+		$type             = ( isset( $_POST['bulk_type'] ) && 'fixed' === $_POST['bulk_type'] ) ? 'fixed' : 'percent';
+		$value            = WDP_Util::to_number( wp_unslash( $_POST['bulk_value'] ?? 0 ) );
+		$overwrite        = ! empty( $_POST['overwrite'] );
+		$date_from        = sanitize_text_field( wp_unslash( $_POST['date_from'] ?? '' ) );
+		$date_to          = sanitize_text_field( wp_unslash( $_POST['date_to'] ?? '' ) );
+
+		if ( $value <= 0 ) {
+			$this->redirect( array( 'tab' => 'bulk' ), 'مقدار تخفیف باید بزرگ‌تر از صفر باشد.', false );
+		}
+
+		$count = WDP_Bulk::apply( $categories, $include_children, $type, $value, $overwrite, $date_from, $date_to );
+		$this->redirect(
+			array( 'tab' => 'bulk' ),
+			$count ? ( $count . ' محصول تخفیف خورد. صفحه‌های تخفیف هم خودکار به‌روزرسانی شدند.' ) : 'هیچ محصولی تغییر نکرد (شاید همه از قبل تخفیف داشتند و «بازنویسی» را تیک نزده بودید، یا قیمت اصلی نامعتبر بود).',
+			(bool) $count
+		);
+	}
+
+	public function handle_bulk_revert() {
+		$this->guard( 'wdp_bulk_revert' );
+
+		$categories = array_values( array_filter( array_map( 'intval', (array) ( $_POST['bulk_categories'] ?? array() ) ) ) );
+		if ( ! $categories ) {
+			$this->redirect( array( 'tab' => 'bulk' ), 'حداقل یک دسته‌بندی محصول را انتخاب کنید.', false );
+		}
+
+		$include_children = ! empty( $_POST['include_children'] );
+		$count            = WDP_Bulk::revert( $categories, $include_children );
+		$this->redirect(
+			array( 'tab' => 'bulk' ),
+			$count ? ( $count . ' محصول از تخفیف خارج شد.' ) : 'هیچ محصولی تخفیف فعالی نداشت.',
+			true
+		);
 	}
 
 	/* ─── ابزارها ──────────────────────────────────────────────── */

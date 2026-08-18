@@ -112,7 +112,17 @@ $check(
 	"before={$c5_before} after={$c5_after}"
 );
 
-echo "\n=== ۶) برچسب بازه ===\n";
+echo "\n=== ۶) محاسبه قیمت فروش برای اعمال گروهی تخفیف روی دسته‌بندی ===\n";
+
+$check( '۲۰٪ تخفیف روی ۱۰۰,۰۰۰ می‌شود ۸۰,۰۰۰', 80000.0 === WDP_Util::calc_sale_price( 100000, 'percent', 20 ) );
+$check( 'تخفیف مبلغ ثابت ۱۵,۰۰۰ روی ۱۰۰,۰۰۰ می‌شود ۸۵,۰۰۰', 85000.0 === WDP_Util::calc_sale_price( 100000, 'fixed', 15000 ) );
+$check( 'تخفیف مبلغ ثابت بزرگ‌تر از قیمت اصلی رد می‌شود (null)', null === WDP_Util::calc_sale_price( 100000, 'fixed', 150000 ) );
+$check( 'قیمت اصلی نامعتبر (صفر) رد می‌شود', null === WDP_Util::calc_sale_price( 0, 'percent', 20 ) );
+$check( 'مقدار تخفیف صفر یا منفی رد می‌شود', null === WDP_Util::calc_sale_price( 100000, 'percent', 0 ) );
+$sp = WDP_Util::calc_sale_price( 100000, 'percent', 500 );
+$check( 'درصد خیلی بالا به ۹۹.۹۹٪ محدود می‌شود و صفر نمی‌شود', null !== $sp && $sp > 0, 'sale=' . var_export( $sp, true ) );
+
+echo "\n=== ۷) برچسب بازه ===\n";
 $check( 'برچسب بازه درصدی', '۲۰ تا ۳۰ درصد' === WDP_Util::fa_digits( WDP_Util::range_label( 'percent', 20, 30 ) ) );
 $check( 'برچسب بازه مبلغ ثابت', '۵۰۰۰۰ تا ۱۰۰۰۰۰ تومان' === WDP_Util::fa_digits( WDP_Util::range_label( 'fixed', 50000, 100000 ) ) );
 $check( 'برچسب بازه با مقدار ثابت (بدون «تا»)', '۲۰ درصد' === WDP_Util::fa_digits( WDP_Util::range_label( 'percent', 20, 20 ) ) );

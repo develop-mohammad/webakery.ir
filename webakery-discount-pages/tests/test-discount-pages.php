@@ -158,16 +158,59 @@ $check(
 	'terms=' . implode( ',', $terms6 )
 );
 
+echo "\n=== ۹) اعمال گروهی تخفیف روی یک دسته‌بندی (تابع معکوس) ===\n";
+
+$cat_bulk = wp_insert_term( 'تست اعمال گروهی', 'product_cat' );
+$cat_bulk = is_wp_error( $cat_bulk ) ? 0 : (int) $cat_bulk['term_id'];
+
+$bulk_a = $make_product( 200000 ); // بدون تخفیف
+$bulk_b = $make_product( 500000 ); // بدون تخفیف
+wp_set_object_terms( $bulk_a->get_id(), array( $cat_bulk ), 'product_cat' );
+wp_set_object_terms( $bulk_b->get_id(), array( $cat_bulk ), 'product_cat' );
+
+$applied = WDP_Bulk::apply( array( $cat_bulk ), false, 'percent', 20, false );
+$check( 'اعمال گروهی روی ۲ محصول دسته انجام شد', 2 === $applied, "applied={$applied}" );
+
+$bulk_a_fresh = wc_get_product( $bulk_a->get_id() );
+$bulk_b_fresh = wc_get_product( $bulk_b->get_id() );
+$check(
+	'قیمت فروش محصول اول درست محاسبه شد (۲۰٪ از ۲۰۰,۰۰۰ = ۱۶۰,۰۰۰)',
+	160000.0 === (float) $bulk_a_fresh->get_sale_price(),
+	'sale=' . $bulk_a_fresh->get_sale_price()
+);
+$check(
+	'قیمت فروش محصول دوم درست محاسبه شد (۲۰٪ از ۵۰۰,۰۰۰ = ۴۰۰,۰۰۰)',
+	400000.0 === (float) $bulk_b_fresh->get_sale_price(),
+	'sale=' . $bulk_b_fresh->get_sale_price()
+);
+$check( 'بعد از اعمال گروهی، محصول اول خودکار در صفحه «۱۰ تا ۲۰٪» قرار گرفت', array( $term_low ) === $assigned_terms( $bulk_a->get_id() ) );
+
+$applied_again = WDP_Bulk::apply( array( $cat_bulk ), false, 'percent', 50, false );
+$check( 'بدون تیک «بازنویسی»، روی محصولات از‌قبل‌تخفیف‌دار دوباره اعمال نمی‌شود', 0 === $applied_again, "applied_again={$applied_again}" );
+
+$applied_overwrite = WDP_Bulk::apply( array( $cat_bulk ), false, 'percent', 50, true );
+$check( 'با تیک «بازنویسی»، تخفیف جدید جایگزین می‌شود', 2 === $applied_overwrite, "applied_overwrite={$applied_overwrite}" );
+$bulk_a_fresh2 = wc_get_product( $bulk_a->get_id() );
+$check( 'قیمت فروش با تخفیف جدید ۵۰٪ به‌روزرسانی شد (۱۰۰,۰۰۰)', 100000.0 === (float) $bulk_a_fresh2->get_sale_price(), 'sale=' . $bulk_a_fresh2->get_sale_price() );
+
+$reverted = WDP_Bulk::revert( array( $cat_bulk ), false );
+$check( 'حذف گروهی تخفیف، هر دو محصول را برگرداند', 2 === $reverted, "reverted={$reverted}" );
+$bulk_a_fresh3 = wc_get_product( $bulk_a->get_id() );
+$check( 'بعد از حذف، قیمت فروش خالی است', '' === $bulk_a_fresh3->get_sale_price() );
+$check( 'بعد از حذف، محصول دیگر در هیچ صفحه تخفیفی نیست', array() === $assigned_terms( $bulk_a->get_id() ) );
+
 echo "\n=== پاک‌سازی داده‌های تست ===\n";
 wp_delete_post( $product->get_id(), true );
 wp_delete_post( $product2->get_id(), true );
 wp_delete_post( $product3->get_id(), true );
+wp_delete_post( $bulk_a->get_id(), true );
+wp_delete_post( $bulk_b->get_id(), true );
 foreach ( array( $term_low, $term_high, $term_fixed, $term_home_only, $term_general ) as $t ) {
 	if ( $t ) {
 		wp_delete_term( $t, WDP_Taxonomy::TAXONOMY );
 	}
 }
-foreach ( array( $cat_home, $cat_cloth ) as $c ) {
+foreach ( array( $cat_home, $cat_cloth, $cat_bulk ) as $c ) {
 	if ( $c ) {
 		wp_delete_term( $c, 'product_cat' );
 	}

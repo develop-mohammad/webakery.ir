@@ -124,6 +124,31 @@ class WDP_Util {
 		return $matches[0]['term_id'];
 	}
 
+	/**
+	 * محاسبه قیمت فروش (تخفیف‌خورده) از قیمت اصلی — برای اعمال گروهی تخفیف
+	 * روی همه محصولات یک دسته‌بندی (تابع معکوسِ compute_discount).
+	 *
+	 * @return float|null null یعنی قابل اعمال نیست (قیمت اصلی/مقدار نامعتبر یا نتیجه بی‌معنی)
+	 */
+	public static function calc_sale_price( $regular, $type, $value, $decimals = 0 ) {
+		$regular = (float) $regular;
+		$value   = (float) $value;
+		if ( $regular <= 0 || $value <= 0 ) {
+			return null;
+		}
+		if ( 'fixed' === $type ) {
+			$sale = $regular - $value;
+		} else {
+			$value = min( 99.99, $value );
+			$sale  = $regular * ( 1 - $value / 100 );
+		}
+		$sale = round( $sale, max( 0, (int) $decimals ) );
+		if ( $sale <= 0 || $sale >= $regular ) {
+			return null;
+		}
+		return $sale;
+	}
+
 	/** برچسب فارسی بازه تخفیف برای نمایش، مثلاً «۲۰ تا ۳۰ درصد» یا «۵۰,۰۰۰ تا ۱۰۰,۰۰۰ تومان» */
 	public static function range_label( $type, $min, $max, $currency = 'تومان' ) {
 		$min_l = self::trim_zeros( $min );

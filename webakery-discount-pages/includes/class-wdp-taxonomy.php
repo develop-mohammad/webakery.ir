@@ -149,11 +149,13 @@ class WDP_Taxonomy {
 	}
 
 	/**
-	 * چک‌باکس‌های دسته‌بندی محصول (سلسله‌مراتبی) برای محدود کردن یک صفحه تخفیف.
+	 * چک‌باکس‌های دسته‌بندی محصول (سلسله‌مراتبی)؛ هم برای محدود کردن یک صفحه
+	 * تخفیف و هم برای فرم «اعمال گروهی تخفیف» استفاده می‌شود.
 	 *
-	 * @param int[] $selected شناسه دسته‌بندی‌های تیک‌خورده
+	 * @param int[]  $selected شناسه دسته‌بندی‌های تیک‌خورده
+	 * @param string $name     نام فیلد فرم (مثلاً wdp_categories[] یا bulk_categories[])
 	 */
-	protected static function render_category_checklist( array $selected ) {
+	public static function render_category_checklist( array $selected, $name = 'wdp_categories[]' ) {
 		$tree = self::category_tree();
 		if ( ! $tree ) {
 			echo '<p class="wdp-muted">دسته‌بندی محصولی یافت نشد.</p>';
@@ -162,8 +164,9 @@ class WDP_Taxonomy {
 		echo '<div class="wdp-cat-list">';
 		foreach ( $tree as $row ) {
 			printf(
-				'<label class="wdp-cat" style="padding-right:%dpx"><input type="checkbox" name="wdp_categories[]" value="%d" %s> %s <em>(%d)</em></label><br>',
+				'<label class="wdp-cat" style="padding-right:%dpx"><input type="checkbox" name="%s" value="%d" %s> %s <em>(%d)</em></label><br>',
 				(int) $row['depth'] * 16,
+				esc_attr( $name ),
 				(int) $row['id'],
 				checked( in_array( $row['id'], $selected, true ), true, false ),
 				esc_html( $row['name'] ),

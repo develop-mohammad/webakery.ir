@@ -192,6 +192,21 @@
 	font-size: 12px;
 }
 
+.wdp-danger-btn {
+	color: #b91c1c;
+	border-color: #fecaca;
+}
+
+.wdp-range {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.wdp-range > span {
+	display: block;
+}
+
 .wdp-admin-hint {
 	color: #b45309;
 	background: #fffbeb;
