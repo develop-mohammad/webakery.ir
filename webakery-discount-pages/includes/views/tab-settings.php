@@ -5,6 +5,7 @@ $settings = wp_parse_args(
 	get_option( 'wdp_settings', array() ),
 	array(
 		'url_base'    => 'discount',
+		'show_badge'  => 1,
 		'delete_data' => 0,
 	)
 );
@@ -13,7 +14,7 @@ $settings = wp_parse_args(
 <div class="wdp-grid wdp-grid-2">
 
 	<div class="wdp-card-box">
-		<h3>تنظیمات آدرس</h3>
+		<h3>تنظیمات آدرس و نمایش</h3>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'wdp_save_settings' ); ?>
 			<input type="hidden" name="action" value="wdp_save_settings">
@@ -25,6 +26,16 @@ $settings = wp_parse_args(
 			<p class="wdp-hint-block">
 				مثال: با مقدار <code dir="ltr">discount</code> آدرس صفحه‌ها می‌شود
 				<code dir="ltr"><?php echo esc_html( home_url( '/discount/your-page/' ) ); ?></code>
+			</p>
+
+			<label class="wdp-check">
+				<input type="hidden" name="show_badge" value="0">
+				<input type="checkbox" name="show_badge" value="1" <?php checked( ! empty( $settings['show_badge'] ) ); ?>>
+				<span>نشان «٪ تخفیف» روی محصولات (فروشگاه و صفحه محصول) نمایش داده شود</span>
+			</label>
+			<p class="wdp-hint-block">
+				اگر خودِ صفحه تخفیف بازه‌اش را نشان می‌دهد (مثلاً «۵۰ تا ۶۰٪») و نیازی به تکرار درصد
+				روی هر محصول نیست، این گزینه را خاموش کنید.
 			</p>
 
 			<label class="wdp-check">

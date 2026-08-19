@@ -20,7 +20,17 @@ class WDP_Frontend {
 		wp_enqueue_style( 'wdp-front', WDP_URL . 'assets/front.css', array(), WDP_VERSION );
 	}
 
+	/** آیا نشان تخفیف روی محصولات نشان داده شود؟ (قابل تغییر از تب تنظیمات) */
+	public static function badge_enabled() {
+		$settings = get_option( 'wdp_settings', array() );
+		return ! isset( $settings['show_badge'] ) || ! empty( $settings['show_badge'] );
+	}
+
 	protected static function badge_html( $product_id ) {
+		if ( ! self::badge_enabled() ) {
+			return '';
+		}
+
 		$terms = get_the_terms( $product_id, WDP_Taxonomy::TAXONOMY );
 		if ( ! $terms || is_wp_error( $terms ) ) {
 			return '';

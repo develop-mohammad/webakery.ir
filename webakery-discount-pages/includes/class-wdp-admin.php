@@ -95,6 +95,7 @@ class WDP_Admin {
 			'wdp_settings',
 			array(
 				'url_base'    => $url_base,
+				'show_badge'  => empty( $_POST['show_badge'] ) ? 0 : 1,
 				'delete_data' => empty( $_POST['delete_data'] ) ? 0 : 1,
 			),
 			false

@@ -10,13 +10,15 @@
 'webakery-discount-pages' => [
 	'name'         => 'صفحه‌های تخفیف هوشمند',
 	'price'        => 329000,          // تومان
-	'version'      => '1.2.0',
+	'version'      => '1.2.1',
 	'file'         => 'webakery-discount-pages.zip',
 	'homepage'     => 'https://webakery.ir/product/webakery-discount-pages/',
 	'requires'     => '5.8',
 	'requires_php' => '7.4',
 	'tested'       => '6.7',
-	'changelog'    => '<h4>1.2.0</h4><ul>'
+	'changelog'    => '<h4>1.2.1</h4><ul>'
+		. '<li>گزینه خاموش/روشن کردن نشان تخفیف روی محصولات</li>'
+		. '</ul><h4>1.2.0</h4><ul>'
 		. '<li>اعمال گروهی تخفیف روی همه محصولات یک دسته‌بندی + بازگرداندن گروهی</li>'
 		. '</ul><h4>1.1.1</h4><ul>'
 		. '<li>جدول همه محصولات در حراج در پیشخوان</li>'
