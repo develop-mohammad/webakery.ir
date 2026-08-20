@@ -16,7 +16,7 @@ require_once __DIR__ . '/includes/Database.php';
 require_once __DIR__ . '/includes/Invoice.php';
 
 $MERCHANT = defined( 'EO_ZIBAL_MERCHANT' ) ? EO_ZIBAL_MERCHANT : 'zibal';
-$AMOUNT   = defined( 'EO_PRICE_RIAL' ) ? (int) EO_PRICE_RIAL : 50000000;
+$AMOUNT   = defined( 'EO_PRICE_RIAL' ) ? (int) EO_PRICE_RIAL : 27500000;
 $SERVICE  = defined( 'EO_SERVICE_TITLE' ) ? EO_SERVICE_TITLE : 'خدمات دریافت اینماد';
 $SELF_URL = eo_self_url();
 
@@ -146,6 +146,9 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' && isset( $_POST['eo_submit'] ) ) {
 					'access_type'   => $access_type,
 					'access_note'   => $access_note,
 					'amount'        => $AMOUNT,
+					'total_amount'  => eo_price_total_rial(),
+					'remaining'     => eo_price_remaining_rial( $AMOUNT ),
+					'payment_kind'  => 'prepay',
 					'status'        => 'pending',
 					'created_at'    => date( 'Y-m-d H:i:s' ),
 				]
@@ -218,7 +221,7 @@ function eo_render_invoice_page( array $order ): void {
 function eo_render_wizard( array $errors, array $old, int $amount, string $service ): void {
 	eo_page_head(
 		$service . ' — پرداخت آنلاین',
-		'ثبت سفارش و پرداخت ' . eo_toman( $amount ) . ' تومان برای دریافت اینماد — اطلاعات را مرحله‌به‌مرحله وارد کنید و فاکتور بگیرید.'
+		'ثبت سفارش اینماد با پیش‌پرداخت ' . eo_toman( $amount ) . ' تومان — اطلاعات را مرحله‌به‌مرحله وارد کنید و فاکتور بگیرید.'
 	);
 
 	$access_options = [
@@ -230,7 +233,7 @@ function eo_render_wizard( array $errors, array $old, int $amount, string $servi
 	echo '<div class="hero">'
 		. '<div class="ic">🛡️</div>'
 		. '<h1>' . eo_e( $service ) . '</h1>'
-		. '<div class="price">' . eo_toman( $amount ) . ' تومان <small>هزینه نهایی، یک‌بار پرداخت</small></div>'
+		. '<div class="price">' . eo_toman( $amount ) . ' تومان <small>پیش‌پرداخت — از مجموع ' . eo_toman( eo_price_total_rial() ) . ' تومان</small></div>'
 		. '</div>';
 
 	echo '<div class="stepper">';
@@ -322,14 +325,19 @@ function eo_render_wizard( array $errors, array $old, int $amount, string $servi
 	/* ── مرحله ۵: بازبینی و پرداخت ── */
 	echo '<div class="step' . ( 4 === $active_step ? ' active' : '' ) . '">'
 		. '<h2>✅ بازبینی نهایی و پرداخت</h2>'
-		. '<p class="step-desc">قبل از پرداخت، اطلاعات زیر را یک بار بازبینی کنید.</p>'
+		. '<p class="step-desc">قبل از پرداخت پیش‌پرداخت، اطلاعات زیر را یک بار بازبینی کنید.</p>'
 		. '<div class="summary" id="review_summary"></div>'
+		. '<div class="summary" style="margin-top:-6px">'
+		. '<div class="row"><span class="k">هزینه کل خدمات</span><span class="v">' . eo_toman( eo_price_total_rial() ) . ' تومان</span></div>'
+		. '<div class="row"><span class="k">پیش‌پرداخت الان</span><span class="v">' . eo_toman( $amount ) . ' تومان</span></div>'
+		. '<div class="row"><span class="k">مانده پس از این پرداخت</span><span class="v">' . eo_toman( eo_price_remaining_rial( $amount ) ) . ' تومان</span></div>'
+		. '</div>'
 		. '<div class="field' . ( isset( $errors['accept_terms'] ) ? ' has-error' : '' ) . '">'
 		. '<label class="check-line"><input type="checkbox" name="accept_terms" value="1" data-required data-error-msg="برای ادامه باید این مورد را تأیید کنید."' . ( ! empty( $old['accept_terms'] ) ? ' checked' : '' ) . '> اطلاعات فوق را تأیید می‌کنم و می‌دانم پس از پرداخت، اطلاعات ورود (رمز عبور ایمیل/هاست) را جداگانه و امن برای وب‌آکری ارسال خواهم کرد.</label>'
 		. '<span class="err-msg" style="' . ( isset( $errors['accept_terms'] ) ? 'display:block' : '' ) . '">' . eo_e( $errors['accept_terms'] ?? 'برای ادامه باید این مورد را تأیید کنید.' ) . '</span>'
 		. '</div>'
 		. '<div class="nav-row"><button type="button" class="btn btn-back js-back">→ قبلی</button>'
-		. '<button type="submit" name="eo_submit" value="1" class="btn btn-pay">پرداخت ' . eo_toman( $amount ) . ' تومان با زیبال 💳</button></div>'
+		. '<button type="submit" name="eo_submit" value="1" class="btn btn-pay">پرداخت پیش‌پرداخت ' . eo_toman( $amount ) . ' تومان با زیبال 💳</button></div>'
 		. '</div>';
 
 	echo '</form>';

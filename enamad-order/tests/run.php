@@ -65,7 +65,8 @@ assert_eq( '1234567890', eo_normalize_postal( '۱۲۳۴۵۶۷۸۹۰' ), 'کد پ
 assert_eq( '', eo_normalize_postal( '12345' ), 'کد پستی کوتاه رد شود' );
 assert_eq( 'shop.ir', eo_normalize_website( 'https://shop.ir/' ), 'وب‌سایت بدون پروتکل' );
 assert_eq( 'https://shop.ir', eo_website_url( 'shop.ir' ), 'URL کامل وب‌سایت' );
-assert_eq( '5,000,000', eo_toman( 50000000 ), '۵ میلیون تومان از ریال' );
+assert_eq( '2,750,000', eo_toman( 27500000 ), '۲ میلیون و ۷۵۰ هزار تومان از ریال' );
+assert_eq( 22500000, eo_price_remaining_rial( 27500000 ), 'مانده ۲٫۲۵۰ میلیون تومان' );
 assert_true( eo_strlen( 'علی' ) === 3, 'طول رشته فارسی' );
 
 $code = eo_generate_order_code();
@@ -87,7 +88,9 @@ $sample = [
 	'tax_code'       => 'TAX-998877',
 	'access_type'    => 'both',
 	'access_note'    => 'هاست سی‌پنل',
-	'amount'         => 50000000,
+	'amount'         => 27500000,
+	'total_amount'   => 50000000,
+	'remaining'      => 22500000,
 	'status'         => 'paid',
 	'created_at'     => '2026-08-20 12:00:00',
 	'paid_at_jalali' => '۲۹ مرداد ۱۴۰۵ - ساعت ۱۵:۳۰',
@@ -95,7 +98,9 @@ $sample = [
 
 $customer = eo_customer_invoice_html( $sample );
 assert_true( strpos( $customer, 'EN-2508-TEST' ) !== false, 'فاکتور مشتری شامل کد سفارش' );
-assert_true( strpos( $customer, '5,000,000' ) !== false, 'فاکتور مشتری شامل مبلغ' );
+assert_true( strpos( $customer, '2,750,000' ) !== false, 'فاکتور مشتری شامل پیش‌پرداخت' );
+assert_true( strpos( $customer, '5,000,000' ) !== false, 'فاکتور مشتری شامل هزینه کل' );
+assert_true( strpos( $customer, '2,250,000' ) !== false, 'فاکتور مشتری شامل مانده' );
 assert_true( strpos( $customer, 'علی محمدی' ) !== false, 'فاکتور مشتری شامل نام' );
 assert_true( strpos( $customer, '<script' ) === false, 'فاکتور مشتری بدون اسکریپت تزریقی' );
 
@@ -141,7 +146,8 @@ assert_true( strpos( $html, 'assets/wizard.js' ) !== false, 'اسکریپت وی
 assert_true( strpos( $html, 'og:title' ) !== false, 'متای اشتراک‌گذاری OG' );
 assert_true( strpos( $html, 'https://webakery.ir/enamad-order/' ) !== false, 'og:url یا کالبک به مسیر فرم اشاره دارد' );
 assert_true( preg_match( '/<script src="assets\/wizard\.js"><\/script>\s*<\/body>/', $html ) === 1, 'اسکریپت قبل از </body> است' );
-assert_true( strpos( $html, '5,000,000' ) !== false, 'قیمت ۵ میلیون تومان در هدر' );
+assert_true( strpos( $html, '2,750,000' ) !== false, 'قیمت پیش‌پرداخت ۲٫۷۵۰ میلیون در هدر' );
+assert_true( strpos( $html, 'پیش‌پرداخت' ) !== false, 'برچسب پیش‌پرداخت در صفحه' );
 assert_true( strpos( $html, 'lang="fa"' ) !== false && strpos( $html, 'dir="rtl"' ) !== false, 'صفحه فارسی و RTL' );
 
 echo "\n== validation POST ==\n";

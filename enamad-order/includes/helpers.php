@@ -77,6 +77,22 @@ function eo_toman( int $rial ): string {
 	return number_format( (int) ( $rial / 10 ) );
 }
 
+/** مبلغ پیش‌پرداخت این فرم (ریال) — همان مبلغ درگاه */
+function eo_price_prepay_rial(): int {
+	return defined( 'EO_PRICE_RIAL' ) ? (int) EO_PRICE_RIAL : 27500000;
+}
+
+/** هزینه کل خدمات اینماد (ریال) */
+function eo_price_total_rial(): int {
+	return defined( 'EO_TOTAL_RIAL' ) ? (int) EO_TOTAL_RIAL : 50000000;
+}
+
+/** مانده پس از پیش‌پرداخت (ریال) */
+function eo_price_remaining_rial( ?int $paid_rial = null ): int {
+	$paid = $paid_rial !== null ? $paid_rial : eo_price_prepay_rial();
+	return max( 0, eo_price_total_rial() - $paid );
+}
+
 /** درخواست POST به درگاه زیبال */
 function eo_zibal_post( string $url, array $data ): array {
 	$ch = curl_init( $url );

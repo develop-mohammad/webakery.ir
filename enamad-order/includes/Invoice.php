@@ -5,7 +5,9 @@
 
 /** فاکتور جذاب برای مشتری — بعد از پرداخت موفق نمایش داده می‌شود */
 function eo_customer_invoice_html( array $order ): string {
-	$amount = eo_toman( (int) $order['amount'] );
+	$amount    = eo_toman( (int) $order['amount'] );
+	$total     = eo_toman( (int) ( $order['total_amount'] ?? eo_price_total_rial() ) );
+	$remaining = eo_toman( (int) ( $order['remaining'] ?? eo_price_remaining_rial( (int) $order['amount'] ) ) );
 	$rows   = [
 		[ '👤 نام متقاضی', $order['full_name'] ?? '' ],
 		[ '🏪 کسب‌وکار / فروشگاه', $order['business_name'] ?? '' ],
@@ -35,14 +37,16 @@ function eo_customer_invoice_html( array $order ): string {
 	<div class="code">' . eo_e( $order['order_code'] ?? '' ) . '</div>
 	<table class="invoice-table">
 		' . $rows_html . '
-		<tr><td>💳 مبلغ پرداخت‌شده</td><td style="color:#16a34a;font-size:14px">' . $amount . ' تومان</td></tr>
+		<tr><td>💳 پیش‌پرداخت پرداخت‌شده</td><td style="color:#16a34a;font-size:14px">' . $amount . ' تومان</td></tr>
+		<tr><td>📦 هزینه کل خدمات</td><td>' . $total . ' تومان</td></tr>
+		<tr><td>⏳ مانده قابل تسویه</td><td>' . $remaining . ' تومان</td></tr>
 	</table>
 </div>
 
 <p style="font-size:12.5px;color:#374151;line-height:1.9;margin-bottom:18px">
-	سلام ' . eo_e( $order['full_name'] ?? '' ) . '؛ پرداخت شما با موفقیت ثبت شد. همکاران ما در وب‌آکری اطلاعات ارسالی شما را بررسی
+	سلام ' . eo_e( $order['full_name'] ?? '' ) . '؛ پیش‌پرداخت شما با موفقیت ثبت شد. همکاران ما در وب‌آکری اطلاعات ارسالی شما را بررسی
 	می‌کنند و برای تکمیل فرآیند دریافت نماد اعتماد الکترونیکی (اینماد)، در صورت نیاز به مدارک تکمیلی از طریق
-	ایمیل یا تلگرام با شما در ارتباط خواهند بود.
+	ایمیل یا تلگرام با شما در ارتباط خواهند بود. مانده هزینه پس از انجام کار تسویه می‌شود.
 </p>
 
 <div style="text-align:center;margin-bottom:6px">
@@ -81,15 +85,19 @@ function eo_internal_invoice_html( array $order ): string {
 			. '</tr>';
 	}
 
-	$note = trim( (string) ( $order['access_note'] ?? '' ) );
-	$amount = eo_toman( (int) ( $order['amount'] ?? 0 ) );
+	$note      = trim( (string) ( $order['access_note'] ?? '' ) );
+	$amount    = eo_toman( (int) ( $order['amount'] ?? 0 ) );
+	$total     = eo_toman( (int) ( $order['total_amount'] ?? eo_price_total_rial() ) );
+	$remaining = eo_toman( (int) ( $order['remaining'] ?? eo_price_remaining_rial( (int) ( $order['amount'] ?? 0 ) ) ) );
 
 	return '
 <table class="invoice-table" style="width:100%">
 	<tr><td>👤 نام و نام خانوادگی متقاضی</td><td>' . eo_e( $order['full_name'] ?? '' ) . '</td></tr>
 	<tr><td>🏪 نام کسب‌وکار / فروشگاه</td><td>' . eo_e( $order['business_name'] ?? '' ) . '</td></tr>
 	<tr><td>🧾 شماره سفارش</td><td>' . eo_e( $order['order_code'] ?? '' ) . '</td></tr>
-	<tr><td>💳 وضعیت پرداخت</td><td>' . ( ( $order['status'] ?? '' ) === 'paid' ? '✅ پرداخت‌شده — ' . $amount . ' تومان' : '⏳ ' . eo_e( $order['status'] ?? '' ) ) . '</td></tr>
+	<tr><td>💳 پیش‌پرداخت</td><td>' . ( ( $order['status'] ?? '' ) === 'paid' ? '✅ پرداخت‌شده — ' . $amount . ' تومان' : '⏳ ' . eo_e( $order['status'] ?? '' ) . ' — ' . $amount . ' تومان' ) . '</td></tr>
+	<tr><td>📦 هزینه کل</td><td>' . $total . ' تومان</td></tr>
+	<tr><td>⏳ مانده</td><td>' . $remaining . ' تومان</td></tr>
 	<tr><td>📅 تاریخ ثبت</td><td>' . eo_e( $order['created_at'] ?? '' ) . '</td></tr>
 </table>
 
@@ -111,11 +119,15 @@ function eo_access_type_label( string $type ): string {
 
 /** متن ساده برای اعلان تلگرام (بدون HTML) */
 function eo_internal_invoice_text( array $order ): string {
-	$amount = eo_toman( (int) ( $order['amount'] ?? 0 ) );
-	$lines  = [
-		'🟣 سفارش جدید اینماد پرداخت شد',
+	$amount    = eo_toman( (int) ( $order['amount'] ?? 0 ) );
+	$total     = eo_toman( (int) ( $order['total_amount'] ?? eo_price_total_rial() ) );
+	$remaining = eo_toman( (int) ( $order['remaining'] ?? eo_price_remaining_rial( (int) ( $order['amount'] ?? 0 ) ) ) );
+	$lines     = [
+		'🟣 پیش‌پرداخت اینماد پرداخت شد',
 		'شماره سفارش: ' . ( $order['order_code'] ?? '' ),
-		'مبلغ: ' . $amount . ' تومان',
+		'پیش‌پرداخت: ' . $amount . ' تومان',
+		'هزینه کل: ' . $total . ' تومان',
+		'مانده: ' . $remaining . ' تومان',
 		'',
 		'👤 نام: ' . ( $order['full_name'] ?? '' ),
 		'🏪 کسب‌وکار: ' . ( $order['business_name'] ?? '' ),

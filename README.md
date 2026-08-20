@@ -57,5 +57,6 @@
 - مسیر: `enamad-order/`
 - لینک قابل اشتراک: `https://webakery.ir/enamad-order/`
 - پنل داخلی: `https://webakery.ir/enamad-order/admin.php`
-- هزینه: **۵,۰۰۰,۰۰۰ تومان**
+- هزینه کل: **۵,۰۰۰,۰۰۰ تومان**
+- پیش‌پرداخت مشتری در فرم: **۲,۷۵۰,۰۰۰ تومان**
 - نصب: `enamad-order/INSTALL-FA.txt`
