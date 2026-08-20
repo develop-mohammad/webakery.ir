@@ -171,7 +171,7 @@ function eo_val( array $old, string $key ): string {
 
 function eo_page_head( string $title, string $description = '' ): void {
 	if ( $description === '' ) {
-		$description = 'پرداخت آنلاین خدمات دریافت نماد اعتماد الکترونیکی (اینماد) — webakery.ir';
+		$description = 'پرداخت آنلاین خدمات دریافت نماد اعتماد الکترونیکی (اینماد) — ' . eo_brand();
 	}
 	$self = eo_self_url();
 	echo '<!DOCTYPE html><html lang="fa" dir="rtl"><head>'
@@ -181,7 +181,7 @@ function eo_page_head( string $title, string $description = '' ): void {
 		. '<meta name="theme-color" content="#4f46e5">'
 		. '<meta property="og:type" content="website">'
 		. '<meta property="og:locale" content="fa_IR">'
-		. '<meta property="og:site_name" content="webakery.ir">'
+		. '<meta property="og:site_name" content="' . eo_e( eo_brand() ) . '">'
 		. '<meta property="og:title" content="' . eo_e( $title ) . '">'
 		. '<meta property="og:description" content="' . eo_e( $description ) . '">'
 		. '<meta property="og:url" content="' . eo_e( $self ) . '">'
@@ -193,7 +193,7 @@ function eo_page_head( string $title, string $description = '' ): void {
 		. '<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
 		. '<link rel="stylesheet" href="assets/style.css">'
 		. '</head><body><div class="wrap">'
-		. '<div class="brand"><span class="dot"></span> webakery.ir</div>';
+		. '<div class="brand"><span class="dot"></span> ' . eo_e( eo_brand() ) . '</div>';
 }
 
 function eo_page_foot( string $extra = '' ): void {
@@ -274,7 +274,7 @@ function eo_render_wizard( array $errors, array $old, int $amount, string $servi
 		. '<h2>👤 اطلاعات متقاضی</h2>'
 		. '<p class="step-desc">این اطلاعات دقیقاً همان چیزی است که اینماد در فرآیند بررسی از آن استفاده می‌کند؛ لطفاً دقیق وارد کنید.</p>'
 		. eo_field( 'full_name', 'نام و نام خانوادگی متقاضی', $old, $errors, [ 'placeholder' => 'مثلاً: علی محمدی' ] )
-		. eo_field( 'business_name', 'نام کسب‌وکار / فروشگاه', $old, $errors, [ 'placeholder' => 'مثلاً: فروشگاه اینترنتی وب‌آکری' ] )
+		. eo_field( 'business_name', 'نام کسب‌وکار / فروشگاه', $old, $errors, [ 'placeholder' => 'مثلاً: فروشگاه اینترنتی وب‌بیکری' ] )
 		. eo_field( 'mobile', 'شماره موبایل به نام متقاضی', $old, $errors, [ 'placeholder' => '09xxxxxxxxx', 'type' => 'tel', 'pattern' => '^0?9\\d{9}$' ] )
 		. '<div class="nav-row"><button type="button" class="btn btn-next js-next">مرحله بعد ←</button></div>'
 		. '</div>';
@@ -333,7 +333,7 @@ function eo_render_wizard( array $errors, array $old, int $amount, string $servi
 		. '<div class="row"><span class="k">مانده پس از این پرداخت</span><span class="v">' . eo_toman( eo_price_remaining_rial( $amount ) ) . ' تومان</span></div>'
 		. '</div>'
 		. '<div class="field' . ( isset( $errors['accept_terms'] ) ? ' has-error' : '' ) . '">'
-		. '<label class="check-line"><input type="checkbox" name="accept_terms" value="1" data-required data-error-msg="برای ادامه باید این مورد را تأیید کنید."' . ( ! empty( $old['accept_terms'] ) ? ' checked' : '' ) . '> اطلاعات فوق را تأیید می‌کنم و می‌دانم پس از پرداخت، اطلاعات ورود (رمز عبور ایمیل/هاست) را جداگانه و امن برای وب‌آکری ارسال خواهم کرد.</label>'
+		. '<label class="check-line"><input type="checkbox" name="accept_terms" value="1" data-required data-error-msg="برای ادامه باید این مورد را تأیید کنید."' . ( ! empty( $old['accept_terms'] ) ? ' checked' : '' ) . '> اطلاعات فوق را تأیید می‌کنم و می‌دانم پس از پرداخت، اطلاعات ورود (رمز عبور ایمیل/هاست) را جداگانه و امن برای وب‌بیکری ارسال خواهم کرد.</label>'
 		. '<span class="err-msg" style="' . ( isset( $errors['accept_terms'] ) ? 'display:block' : '' ) . '">' . eo_e( $errors['accept_terms'] ?? 'برای ادامه باید این مورد را تأیید کنید.' ) . '</span>'
 		. '</div>'
 		. '<div class="nav-row"><button type="button" class="btn btn-back js-back">→ قبلی</button>'
@@ -346,7 +346,7 @@ function eo_render_wizard( array $errors, array $old, int $amount, string $servi
 	echo '<div class="trust-row"><span>🔒 پرداخت امن با زیبال</span><span>🧾 صدور فاکتور رسمی</span><span>🛟 پشتیبانی اختصاصی</span></div>';
 	echo '<p class="footer-note">این لینک را می‌توانید در تلگرام و اینستاگرام هم برای مشتریان خود ارسال کنید.<br>'
 		. '<button type="button" class="print-btn" id="copy_share_link" style="margin-top:10px">🔗 کپی لینک صفحه</button>'
-		. '<br>© ' . date( 'Y' ) . ' webakery.ir</p>';
+		. '<br>© ' . date( 'Y' ) . ' ' . eo_e( eo_brand() ) . '</p>';
 
 	eo_page_foot( '<script src="assets/wizard.js"></script>' );
 	exit;

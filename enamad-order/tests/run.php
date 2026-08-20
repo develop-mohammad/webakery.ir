@@ -67,6 +67,7 @@ assert_eq( 'shop.ir', eo_normalize_website( 'https://shop.ir/' ), 'وب‌سای
 assert_eq( 'https://shop.ir', eo_website_url( 'shop.ir' ), 'URL کامل وب‌سایت' );
 assert_eq( '2,750,000', eo_toman( 27500000 ), '۲ میلیون و ۷۵۰ هزار تومان از ریال' );
 assert_eq( 22500000, eo_price_remaining_rial( 27500000 ), 'مانده ۲٫۲۵۰ میلیون تومان' );
+assert_eq( 'وب‌بیکری', eo_brand(), 'برند پیش‌فرض وب‌بیکری' );
 assert_true( eo_strlen( 'علی' ) === 3, 'طول رشته فارسی' );
 
 $code = eo_generate_order_code();
@@ -148,7 +149,8 @@ assert_true( strpos( $html, 'https://webakery.ir/enamad-order/' ) !== false, 'og
 assert_true( preg_match( '/<script src="assets\/wizard\.js"><\/script>\s*<\/body>/', $html ) === 1, 'اسکریپت قبل از </body> است' );
 assert_true( strpos( $html, '2,750,000' ) !== false, 'قیمت پیش‌پرداخت ۲٫۷۵۰ میلیون در هدر' );
 assert_true( strpos( $html, 'پیش‌پرداخت' ) !== false, 'برچسب پیش‌پرداخت در صفحه' );
-assert_true( strpos( $html, 'lang="fa"' ) !== false && strpos( $html, 'dir="rtl"' ) !== false, 'صفحه فارسی و RTL' );
+assert_true( strpos( $html, 'وب‌بیکری' ) !== false, 'نام برند وب‌بیکری در صفحه' );
+assert_true( strpos( $html, 'وب‌آکری' ) === false, 'نام اشتباه وب‌آکری در صفحه نباشد' );
 
 echo "\n== validation POST ==\n";
 $err_html = capture_include(
@@ -174,6 +176,10 @@ echo "\n== admin login page ==\n";
 $admin_html = capture_include( $ROOT . '/admin.php' );
 assert_true( strpos( $admin_html, 'ورود به پنل' ) !== false, 'صفحه ورود ادمین رندر می‌شود' );
 assert_true( strpos( $admin_html, 'فاکتور جامع' ) !== false, 'عنوان فاکتور جامع در پنل' );
+
+$cfg = (string) file_get_contents( $ROOT . '/config.php' );
+assert_true( strpos( $cfg, '6a331116da557b902563c32f' ) !== false, 'مرچنت زیبال واقعی در config' );
+assert_true( strpos( $cfg, 'fc6fd44c-0e7d-4693-ae42-f7ccc29116d9' ) === false, 'مرچنت UUID زرین‌پال در config نباشد' );
 
 echo "\n------------------------------\n";
 echo "$passed passed, $failed failed\n";

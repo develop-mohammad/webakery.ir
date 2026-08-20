@@ -49,7 +49,7 @@ $orders = $authed ? EO_Database::all( $limit, ( $page - 1 ) * $limit ) : [];
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>پنل سفارش‌های اینماد — webakery.ir</title>
+<title>پنل سفارش‌های اینماد — <?= htmlspecialchars( defined( 'EO_BRAND_NAME' ) ? EO_BRAND_NAME : 'وب‌بیکری' ) ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>

@@ -59,6 +59,11 @@ function eo_website_url( string $domain ): string {
 	return $domain !== '' ? 'https://' . $domain : '';
 }
 
+/** نام فارسی برند */
+function eo_brand(): string {
+	return defined( 'EO_BRAND_NAME' ) && EO_BRAND_NAME !== '' ? EO_BRAND_NAME : 'وب‌بیکری';
+}
+
 /** htmlspecialchars کوتاه */
 function eo_e( ?string $s ): string {
 	return htmlspecialchars( (string) $s, ENT_QUOTES, 'UTF-8' );
