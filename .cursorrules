@@ -15,6 +15,7 @@ Monorepo of **webakery.ir** PHP products. Primary UI language is **Persian (Fars
 | `webakery-quiet-notices/` | سکوت نوتیف | Quiet admin notices |
 | `webakery-unused-assets/` | Chrome extension (MV3) | Not a WP plugin |
 | `license-server/` | License / pay / updates API | Standalone PHP; JSON storage |
+| `enamad-order/` | فرم پرداخت اینماد | Standalone PHP; Zibal; JSON orders |
 | `license-server-updates/` | Ops notes for registering products | |
 
 Root `*.zip` files are shipped artifacts. See `README.md` for the catalog (versions there may lag — trust plugin headers + `LS_UPDATES`).
