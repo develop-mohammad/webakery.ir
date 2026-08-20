@@ -98,7 +98,7 @@ input[type=text],input[type=password]{width:100%;padding:11px 14px;border:1.5px 
 <div class="card no-print" style="background:#eef2ff;border-color:#c7d2fe">
 	<div style="font-size:12.5px;color:#4338ca;line-height:1.8">
 		<b>لینک قابل اشتراک فرم:</b>
-		<span style="direction:ltr;display:inline-block;font-weight:700"><?= htmlspecialchars( rtrim( defined( 'EO_BASE_URL' ) ? EO_BASE_URL : 'https://webakery.ir', '/' ) . '/enamad-order/' ) ?></span>
+		<span style="direction:ltr;display:inline-block;font-weight:700"><?= htmlspecialchars( defined( 'EO_PUBLIC_URL' ) && EO_PUBLIC_URL !== '' ? rtrim( EO_PUBLIC_URL, '/' ) . '/' : ( rtrim( defined( 'EO_BASE_URL' ) ? EO_BASE_URL : 'https://webakery.ir', '/' ) . '/enamad-order/' ) ) ?></span>
 		<div style="margin-top:6px;color:#64748b">این لینک را در تلگرام و اینستاگرام بفرستید. بعد از پرداخت، فاکتور جامع همین‌جا برای اقدام اینماد آماده می‌شود.</div>
 	</div>
 </div>

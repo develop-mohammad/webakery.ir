@@ -145,7 +145,13 @@ function eo_detect_base_url(): string {
 
 /** آدرس کامل خود همین اسکریپت (independent از نام پوشه نصب) */
 function eo_self_url(): string {
+	if ( defined( 'EO_PUBLIC_URL' ) && EO_PUBLIC_URL !== '' ) {
+		return rtrim( EO_PUBLIC_URL, '/' ) . '/';
+	}
 	$dir = rtrim( str_replace( '\\', '/', dirname( $_SERVER['SCRIPT_NAME'] ?? '/enamad-order/index.php' ) ), '/' );
+	if ( $dir === '/' || $dir === '\\' || $dir === '.' ) {
+		$dir = '/enamad-order';
+	}
 	return eo_detect_base_url() . $dir . '/';
 }
 

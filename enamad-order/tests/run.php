@@ -139,6 +139,7 @@ assert_true( strpos( $html, 'name="tax_code"' ) !== false, 'فیلد کد رهگ
 assert_true( strpos( $html, 'name="access_type"' ) !== false, 'فیلد نوع دسترسی' );
 assert_true( strpos( $html, 'assets/wizard.js' ) !== false, 'اسکریپت ویزارد لود می‌شود' );
 assert_true( strpos( $html, 'og:title' ) !== false, 'متای اشتراک‌گذاری OG' );
+assert_true( strpos( $html, 'https://webakery.ir/enamad-order/' ) !== false, 'og:url یا کالبک به مسیر فرم اشاره دارد' );
 assert_true( preg_match( '/<script src="assets\/wizard\.js"><\/script>\s*<\/body>/', $html ) === 1, 'اسکریپت قبل از </body> است' );
 assert_true( strpos( $html, '5,000,000' ) !== false, 'قیمت ۵ میلیون تومان در هدر' );
 assert_true( strpos( $html, 'lang="fa"' ) !== false && strpos( $html, 'dir="rtl"' ) !== false, 'صفحه فارسی و RTL' );
