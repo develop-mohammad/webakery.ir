@@ -1,40 +1,66 @@
-# افزودن «صفحات تخفیف» به سرور لایسنس
+# افزودن «صفحات تخفیف» بدون از دست دادن لایسنس‌های قبلی
 
-شناسه محصول: `webakery-discount-pages`
+شناسه: `webakery-discount-pages`
 
-## چرا فقط ZIP کافی نیست؟
+## مهم
 
-لیست محصولات پنل ادمین / صفحه پرداخت از **`config.php`** خوانده می‌شود  
-(`LS_PRICES` + `LS_PLUGIN_LABELS` + `LS_PLUGIN_META` + `LS_UPDATES`).  
-گذاشتن فایل داخل `updates/` به‌تنهایی محصول را در لیست لایسنس‌ها نشان نمی‌دهد.
+| چه چیزی | کجا ذخیره می‌شود | با این تغییر چه می‌شود |
+|---------|------------------|-------------------------|
+| لایسنس‌های صادرشده | `license-server/data/licenses.json` | **دست نخورده می‌ماند** |
+| لیست محصولات / قیمت | `license-server/config.php` | فقط یک محصول **اضافه** می‌شود |
+| فایل ZIP آپدیت | `license-server/updates/*.zip` | فقط آپلود فایل |
 
-## ۱) آپلود ZIP
+**هرگز** کل `config.php` سرور را با فایل گیت جایگزین نکنید  
+(رمز دیتابیس / درگاه / ادمین سرور از بین می‌رود).  
+**هرگز** `data/licenses.json` را پاک یا جایگزین نکنید.
 
-نام فایل باید دقیقاً این باشد:
+---
+
+## کار روی سرور (امن)
+
+### ۱) ZIP
+نام دقیق:
 
 `license-server/updates/webakery-discount-pages.zip`
 
-(نه `webakery-discount-pages (6).zip`)
+### ۲) فقط این خطوط را به `config.php` فعلی سرور اضافه کنید
 
-## ۲) ثبت در `config.php` روی سرور
+داخل آرایه `LS_PRICES` (کنار بقیه محصولات):
 
-این ورودی‌ها اضافه شده‌اند (قیمت پیش‌فرض ۲۹۹٬۰۰۰ تومان = ۲٬۹۹۰٬۰۰۰ ریال):
+```php
+'webakery-discount-pages'  => 2990000,   // صفحات تخفیف — ۲۹۹,۰۰۰ تومان
+```
 
-- `LS_PRICES['webakery-discount-pages']`
-- `LS_PLUGIN_LABELS['webakery-discount-pages']`
-- `LS_PLUGIN_META['webakery-discount-pages']`
-- `LS_UPDATES['webakery-discount-pages']`
+داخل آرایه `LS_PLUGIN_LABELS`:
 
-فایل به‌روزشده را از ریپو روی سرور کپی کنید، یا همان کلیدها را دستی در `config.php` سرور بگذارید.  
-**مراقب باشید** رمز دیتابیس / درگاه / `ADMIN_*` واقعی سرور را با placeholder گیت جایگزین نکنید — فقط بلوک‌های محصول را ادغام کنید.
+```php
+'webakery-discount-pages'  => 'صفحات تخفیف — ساخت صفحه تخفیف ووکامرس',
+```
 
-## ۳) بررسی
+داخل آرایه `LS_PLUGIN_META`:
 
-1. پنل ادمین → ساخت لایسنس دستی → در dropdown محصول باید «صفحات تخفیف» دیده شود  
-2. صفحه پرداخت:  
-   `https://webakery.ir/license-server/pay/?plugin=webakery-discount-pages`
+```php
+'webakery-discount-pages' => [
+    'icon' => '🏷️',
+    'desc' => 'ساخت و مدیریت صفحات تخفیف برای فروشگاه ووکامرس',
+],
+```
 
-## نکات
+داخل آرایه `LS_UPDATES`:
 
-- اگر افزونه داخل خودش شناسه لایسنس دیگری دارد، باید با `webakery-discount-pages` یکی باشد.
-- قیمت را در صورت نیاز در `LS_PRICES` عوض کنید.
+```php
+'webakery-discount-pages' => [
+    'version'      => '1.0.0',
+    'package'      => 'https://webakery.ir/license-server/updates/webakery-discount-pages.zip',
+    'requires'     => '5.8',
+    'tested'       => '6.7',
+    'requires_php' => '7.4',
+    'changelog'    => 'نسخه ۱.۰.۰: انتشار اولیه صفحات تخفیف.',
+],
+```
+
+### ۳) بررسی
+- پنل ادمین → ساخت لایسنس → باید «صفحات تخفیف» در dropdown باشد
+- لایسنس‌های قبلی در همان لیست لایسنس‌ها باقی می‌مانند
+
+قیمت پیش‌فرض: ۲۹۹٬۰۰۰ تومان (۲٬۹۹۰٬۰۰۰ ریال) — در صورت نیاز همان یک عدد را عوض کنید.
