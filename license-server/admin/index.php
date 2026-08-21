@@ -104,7 +104,8 @@ if ( $authed ) {
         $msg_type = $r['success'] ? 'success' : 'error';
     }
 
-    // ─── تغییر نام‌کاربری/رمز عبور پنل ادمین (بدون دست زدن به config.php) ──
+    // ─── تغییر نام‌کاربری/رمز عبور پنل ادمین ──
+    // در data/admin-auth.json ذخیره می‌شود و در صورت امکان config.php هم هم‌سان می‌شود.
     if ( isset( $_POST['save_account'] ) ) {
         $result = AdminAuth::update(
             (string) ( $_POST['current_pass'] ?? '' ),
@@ -114,6 +115,9 @@ if ( $authed ) {
         );
         $msg      = $result['message'];
         $msg_type = $result['success'] ? 'success' : 'error';
+        if ( ! empty( $result['success'] ) ) {
+            $_SESSION['ls_admin_user'] = AdminAuth::username();
+        }
     }
 
     $page    = max( 1, (int)($_GET['p'] ?? 1) );
@@ -290,10 +294,15 @@ tbody tr:last-child td{border-bottom:none}
         <div class="msg msg-error"><?= $login_error ?></div>
     <?php endif; ?>
     <form method="post" style="text-align:right">
-        <div style="margin-bottom:14px"><label>نام کاربری</label><input type="text" name="u" autofocus></div>
-        <div style="margin-bottom:18px"><label>رمز عبور</label><input type="password" name="p"></div>
-        <button class="btn btn-primary" name="login" style="width:100%;justify-content:center">ورود</button>
+        <div style="margin-bottom:14px"><label>نام کاربری</label><input type="text" name="u" autofocus autocomplete="username"></div>
+        <div style="margin-bottom:18px"><label>رمز عبور</label><input type="password" name="p" autocomplete="current-password"></div>
+        <button type="submit" class="btn btn-primary" name="login" value="1" style="width:100%;justify-content:center">ورود</button>
     </form>
+    <p style="color:#94a3b8;font-size:11.5px;margin-top:14px;line-height:1.7">
+        اگر رمز را فراموش کردید:
+        <code dir="ltr">tools/reset-admin.php?key=RESET_NOW_2026</code>
+        — بعد از ریست همان فایل را حذف کنید.
+    </p>
 </div>
 
 <?php else: ?>
@@ -721,14 +730,15 @@ tbody tr:last-child td{border-bottom:none}
         <strong style="color:#1e293b;direction:ltr;display:inline-block"><?= htmlspecialchars( AdminAuth::username() ) ?></strong>
     </p>
     <p style="color:#64748b;font-size:12px;margin-bottom:18px;line-height:1.7;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px">
-        یوزرنیم و پسورد در فایل جداگانه <code>data/admin-auth.json</code> ذخیره می‌شود.
-        بقیه اطلاعات <code>config.php</code> (دیتابیس، قیمت‌ها، گوگل، …) دست نخورده می‌ماند.
+        با ذخیره، رمز در <code>data/admin-auth.json</code> به‌روز می‌شود و در صورت امکان
+        <code>ADMIN_USER</code> / <code>ADMIN_PASS</code> داخل <code>config.php</code> هم هم‌سان می‌شود
+        تا ورود قطع نشود. بقیه تنظیمات config (دیتابیس، قیمت، گوگل، …) دست نخورده می‌ماند.
     </p>
-    <form method="post">
+    <form method="post" autocomplete="off">
         <div style="margin-bottom:16px">
             <label>رمز عبور فعلی *</label>
             <input type="password" name="current_pass" required autocomplete="current-password">
-            <span class="hint">برای تأیید هویت، رمز فعلی الزامی است.</span>
+            <span class="hint">همان رمزی که الان با آن وارد پنل شده‌اید (یا رمز فعلی config.php).</span>
         </div>
 
         <hr style="border:none;border-top:1px dashed #e2e8f0;margin:18px 0">
@@ -746,8 +756,12 @@ tbody tr:last-child td{border-bottom:none}
             <input type="password" name="confirm_pass" placeholder="فقط اگر رمز جدید وارد کردید" autocomplete="new-password">
         </div>
 
-        <button class="btn btn-primary" name="save_account" style="width:100%;justify-content:center">💾 ذخیره تغییرات حساب مدیر</button>
+        <button type="submit" class="btn btn-primary" name="save_account" value="1" style="width:100%;justify-content:center">💾 ذخیره تغییرات حساب مدیر</button>
     </form>
+    <p style="color:#94a3b8;font-size:11.5px;margin-top:14px;line-height:1.7">
+        اگر رمز را فراموش کرده‌اید و وارد نمی‌شوید، از ابزار اضطراری
+        <code>tools/reset-admin.php?key=RESET_NOW_2026</code> استفاده کنید و بعد همان فایل را حذف کنید.
+    </p>
 </div>
 
 <?php endif; ?>

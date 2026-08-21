@@ -5,11 +5,9 @@
  * استفاده:
  * 1) این فایل را روی سرور در مسیر license-server/tools/ بگذارید
  * 2) در مرورگر باز کنید:
- *    https://webakery.ir/license-server/tools/reset-admin.php?key=RESET_NOW_2026
+ *    https://YOUR-DOMAIN/license-server/tools/reset-admin.php?key=RESET_NOW_2026
  * 3) یوزر و پسورد جدید را ذخیره کنید
  * 4) همین فایل را از سرور حذف کنید
- *
- * نکته: فقط وقتی data/admin-auth.json یا ADMIN_* در config قابل استفاده نیست.
  */
 session_start();
 
@@ -33,40 +31,19 @@ $msg      = '';
 $msg_type = '';
 
 if ( isset( $_POST['do_reset'] ) ) {
-	$user = trim( (string) ( $_POST['username'] ?? '' ) );
-	$pass = (string) ( $_POST['password'] ?? '' );
+	$user    = trim( (string) ( $_POST['username'] ?? '' ) );
+	$pass    = (string) ( $_POST['password'] ?? '' );
 	$confirm = (string) ( $_POST['confirm'] ?? '' );
 
-	if ( $user === '' || ! preg_match( '/^[A-Za-z0-9._@-]{3,64}$/', $user ) ) {
-		$msg = 'نام کاربری معتبر نیست (۳ تا ۶۴ کاراکتر: حروف، عدد، . _ @ -).';
-		$msg_type = 'error';
-	} elseif ( strlen( $pass ) < 6 ) {
-		$msg = 'رمز عبور باید حداقل ۶ کاراکتر باشد.';
-		$msg_type = 'error';
-	} elseif ( $pass !== $confirm ) {
-		$msg = 'رمز و تکرار آن یکسان نیستند.';
+	if ( $pass !== $confirm ) {
+		$msg      = 'رمز و تکرار آن یکسان نیستند.';
 		$msg_type = 'error';
 	} else {
-		$path = dirname( __DIR__ ) . '/data/admin-auth.json';
-		$dir  = dirname( $path );
-		if ( ! is_dir( $dir ) ) {
-			@mkdir( $dir, 0755, true );
-		}
-		$payload = array(
-			'username'      => $user,
-			'password_hash' => password_hash( $pass, PASSWORD_DEFAULT ),
-			'updated_at'    => gmdate( 'c' ),
-			'reset_via'     => 'tools/reset-admin.php',
-		);
-		$json = json_encode( $payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
-		$ok   = $json !== false && file_put_contents( $path, $json . "\n", LOCK_EX ) !== false;
-		if ( $ok ) {
-			@chmod( $path, 0640 );
-			$msg = 'ریست شد. الان با یوزرنیم/رمز جدید وارد /license-server/admin/ شوید و این فایل tools/reset-admin.php را حذف کنید.';
-			$msg_type = 'success';
-		} else {
-			$msg = 'نوشتن data/admin-auth.json ناموفق بود. مجوز پوشه data را روی 755/775 بگذارید.';
-			$msg_type = 'error';
+		$result   = AdminAuth::force_set( $user, $pass );
+		$msg      = $result['message'];
+		$msg_type = $result['success'] ? 'success' : 'error';
+		if ( $result['success'] ) {
+			$msg .= ' سپس فایل tools/reset-admin.php را از هاست حذف کنید.';
 		}
 	}
 }
@@ -113,6 +90,7 @@ code{background:#f8fafc;padding:1px 5px;border-radius:4px}
 	<div class="warn">
 		بعد از موفقیت، فایل <code>tools/reset-admin.php</code> را از هاست حذف کنید.
 		این صفحه فقط با کلید <code>?key=RESET_NOW_2026</code> باز می‌شود.
+		هم <code>data/admin-auth.json</code> و هم (در صورت امکان) <code>ADMIN_*</code> داخل config.php به‌روز می‌شوند.
 	</div>
 </div>
 </body>
