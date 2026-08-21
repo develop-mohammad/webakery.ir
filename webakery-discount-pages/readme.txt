@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
 WC requires at least: 6.0
-Stable tag: 1.2.1
+Stable tag: 1.3.0
 License: GPLv2 or later
 
 برای هر بازه تخفیف ووکامرس (درصدی یا مبلغ ثابت) یک صفحه با URL اختصاصی بساز؛
@@ -52,6 +52,10 @@ License: GPLv2 or later
 `[webakery_discount_pages columns="3" show_empty="0"]`
 
 == تغییرات ==
+
+= 1.3.0 =
+* نسخه بدون لایسنس: حذف کلاینت لایسنس، تب لایسنس و محدودیت دوره آزمایشی؛
+  همه قابلیت‌ها بدون فعال‌سازی کلید کار می‌کنند.
 
 = 1.2.1 =
 * افزودن گزینه «نمایش نشان تخفیف روی محصولات» در تب تنظیمات (پیش‌فرض روشن)؛

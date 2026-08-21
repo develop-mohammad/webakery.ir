@@ -2,7 +2,8 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * راه‌انداز اصلی افزونه: لایسنس، تکسونومی، موتور تشخیص، زمان‌بند و پیشخوان.
+ * راه‌انداز اصلی افزونه: تکسونومی، موتور تشخیص، زمان‌بند و پیشخوان.
+ * این بیلد بدون لایسنس است؛ همه قابلیت‌ها آزادند.
  */
 class WDP_Plugin {
 
@@ -35,8 +36,6 @@ class WDP_Plugin {
 	}
 
 	private function __construct() {
-		$this->boot_license();
-
 		require_once WDP_PATH . 'includes/class-wdp-util.php';
 		require_once WDP_PATH . 'includes/class-wdp-taxonomy.php';
 		require_once WDP_PATH . 'includes/class-wdp-assigner.php';
@@ -58,31 +57,9 @@ class WDP_Plugin {
 		add_action( 'admin_notices', array( __CLASS__, 'woo_notice' ) );
 	}
 
-	private function boot_license() {
-		require_once WDP_PATH . 'includes/class-wb-license.php';
-		WB_License::init( array(
-			'product'    => WDP_PRODUCT,
-			'name'       => 'صفحه‌های تخفیف هوشمند — webakery.ir',
-			'price'      => '۳۲۹,۰۰۰ تومان',
-			'file'       => WDP_FILE,
-			'version'    => WDP_VERSION,
-			'trial_days' => 7,
-			'page'       => 'admin.php?page=' . WDP_MENU . '&tab=license',
-			'features'   => array(
-				'صفحه تخفیف اختصاصی با URL برای هر بازه درصدی یا مبلغ ثابت',
-				'اعمال گروهی تخفیف روی همه محصولات یک دسته‌بندی با یک کلیک',
-				'اختصاص خودکار محصولات به صفحه درست بر اساس تخفیف فعلی',
-				'جابه‌جایی خودکار محصول با تغییر درصد/مبلغ تخفیف یا دسته‌بندی',
-				'پشتیبانی از محصولات متغیر و تخفیف زمان‌بندی‌شده ووکامرس',
-				'شورت‌کد و ویجت المنتور برای فهرست صفحه‌های تخفیف',
-				'به‌روزرسانی خودکار از webakery.ir',
-			),
-		) );
-	}
-
-	/** آیا افزونه مجاز به کار است؟ (لایسنس معتبر یا دوره آزمایشی) */
+	/** همیشه true — نسخه بدون لایسنس. */
 	public static function licensed() {
-		return class_exists( 'WB_License' ) && WB_License::is_active( WDP_PRODUCT );
+		return true;
 	}
 
 	public static function woo_available() {

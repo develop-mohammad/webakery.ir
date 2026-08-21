@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * پیشخوان افزونه: فهرست صفحه‌های تخفیف، تنظیمات و لایسنس.
+ * پیشخوان افزونه: فهرست صفحه‌های تخفیف، اعمال گروهی و تنظیمات.
  */
 class WDP_Admin {
 
@@ -66,7 +66,6 @@ class WDP_Admin {
 			'overview' => 'پیشخوان',
 			'bulk'     => 'اعمال گروهی تخفیف',
 			'settings' => 'تنظیمات',
-			'license'  => 'لایسنس',
 		);
 	}
 
@@ -111,10 +110,6 @@ class WDP_Admin {
 	public function handle_recalculate() {
 		$this->guard( 'wdp_recalculate' );
 
-		if ( ! WDP_Plugin::licensed() ) {
-			$this->redirect( array( 'tab' => 'overview' ), 'دوره آزمایشی به پایان رسیده؛ برای بازبینی خودکار محصولات، لایسنس را فعال کنید.', false );
-		}
-
 		$count = WDP_Assigner::recalculate_all();
 		$this->redirect( array( 'tab' => 'overview' ), $count . ' محصول بررسی و در صورت نیاز جابه‌جا شد.', true );
 	}
@@ -123,10 +118,6 @@ class WDP_Admin {
 
 	public function handle_bulk_apply() {
 		$this->guard( 'wdp_bulk_apply' );
-
-		if ( ! WDP_Plugin::licensed() ) {
-			$this->redirect( array( 'tab' => 'bulk' ), 'دوره آزمایشی به پایان رسیده؛ برای اعمال گروهی تخفیف، لایسنس را فعال کنید.', false );
-		}
 
 		$categories = array_values( array_filter( array_map( 'intval', (array) ( $_POST['bulk_categories'] ?? array() ) ) ) );
 		if ( ! $categories ) {

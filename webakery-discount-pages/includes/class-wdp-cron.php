@@ -21,7 +21,7 @@ class WDP_Cron {
 	}
 
 	public static function run() {
-		if ( ! WDP_Plugin::woo_available() || ! WDP_Plugin::licensed() ) {
+		if ( ! WDP_Plugin::woo_available() ) {
 			return;
 		}
 

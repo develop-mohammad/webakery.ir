@@ -5,8 +5,7 @@
  * اجرا:
  *   wp eval-file wp-content/plugins/webakery-discount-pages/tests/test-discount-pages.php
  *
- * پیش‌نیاز: ووکامرس فعال. اگر لایسنس فعال نیست، دوره آزمایشی ۷ روزه باید
- * هنوز تمام نشده باشد (این تست‌ها به موتور تشخیص نیاز دارند).
+ * پیش‌نیاز: ووکامرس فعال.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -43,7 +42,7 @@ $assigned_terms = function ( $product_id ) {
 
 echo "\n=== ۰) پیش‌نیازها ===\n";
 $check( 'تکسونومی صفحه تخفیف ثبت شده', taxonomy_exists( WDP_Taxonomy::TAXONOMY ) );
-$check( 'موتور تشخیص مجاز به کار است (لایسنس/دوره آزمایشی)', WDP_Plugin::licensed(), 'اگر این FAIL شد یعنی دوره آزمایشی تمام شده؛ بقیه تست‌ها هم شکست می‌خورند' );
+$check( 'موتور تشخیص در دسترس است', WDP_Plugin::licensed() );
 
 echo "\n=== ۱) ساخت دو صفحه تخفیف (۱۰ تا ۲۰٪ و ۴۰ تا ۶۰٪) ===\n";
 

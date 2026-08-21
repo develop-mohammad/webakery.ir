@@ -62,7 +62,7 @@ class WDP_Assigner {
 	 * @param WC_Product|null $product
 	 */
 	public static function assign( $product_id_or_object, $product = null ) {
-		if ( ! class_exists( 'WooCommerce' ) || ! WDP_Plugin::licensed() ) {
+		if ( ! class_exists( 'WooCommerce' ) ) {
 			return;
 		}
 

@@ -4,15 +4,6 @@ defined( 'ABSPATH' ) || exit;
 ?>
 <div class="wdp-diagnose">
 
-	<?php if ( empty( $diag['licensed'] ) ) : ?>
-		<div class="notice notice-error inline" style="margin:10px 0">
-			<p>
-				⚠️ لایسنس/دوره آزمایشی این افزونه فعال نیست؛ به همین دلیل هیچ محصولی به‌طور خودکار به
-				صفحه‌های تخفیف اضافه نمی‌شود. برای رفع این مشکل، به تب «لایسنس» بروید.
-			</p>
-		</div>
-	<?php endif; ?>
-
 	<?php if ( empty( $diag['woo'] ) ) : ?>
 		<p class="wdp-admin-hint">ووکامرس فعال نیست.</p>
 	<?php elseif ( empty( $diag['exists'] ) ) : ?>
