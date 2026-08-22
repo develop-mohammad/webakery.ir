@@ -15,12 +15,13 @@ define( 'ZIBAL_MERCHANT', '6a331116da557b902563c32f' );
 
 // ─── قیمت جداگانه برای هر محصول (به ریال) ────
 define( 'LS_PRICES', [
-    'wccp'          => 1990000,
-    'access-levels' => 999990,
-    'sokhte-jet'    => 0,
-    'hesabdar'      => 7990000,
-    'nobat-man'     => 5990000,
-    'webakery-chat' => 1500000,
+    'wccp'                     => 1990000,
+    'access-levels'            => 999990,
+    'sokhte-jet'               => 0,
+    'hesabdar'                 => 7990000,
+    'nobat-man'                => 5990000,
+    'webakery-chat'            => 1500000,
+    'webakery-discount-pages'  => 2990000,
 ] );
 
 // ─── پلن‌های چت باکس (ماهانه / ۳ ماهه / دائمی) ───
@@ -52,12 +53,13 @@ define( 'LS_PROMOS', [
 ] );
 
 define( 'LS_PLUGIN_LABELS', [
-    'wccp'          => 'baget ادیت فیلدهای پرداخت',
-    'access-levels' => 'Barbari — مدیریت دسترسی کاربران',
-    'sokhte-jet'    => 'Sokhte Jet — تحلیل و بهینه‌سازی عملکرد',
-    'hesabdar'      => 'Hesabdar — پرتال حسابدار',
-    'nobat-man'     => 'نوبت من — رزرو نوبت مشاوره',
-    'webakery-chat' => 'چت باکس — پشتیبانی آنلاین سایت',
+    'wccp'                     => 'baget ادیت فیلدهای پرداخت',
+    'access-levels'            => 'Barbari — مدیریت دسترسی کاربران',
+    'sokhte-jet'               => 'Sokhte Jet — تحلیل و بهینه‌سازی عملکرد',
+    'hesabdar'                 => 'Hesabdar — پرتال حسابدار',
+    'nobat-man'                => 'نوبت من — رزرو نوبت مشاوره',
+    'webakery-chat'            => 'چت باکس — پشتیبانی آنلاین سایت',
+    'webakery-discount-pages'  => 'صفحات تخفیف — ساخت صفحه تخفیف ووکامرس',
 ] );
 
 define( 'LS_PLUGIN_META', [
@@ -84,6 +86,10 @@ define( 'LS_PLUGIN_META', [
     'webakery-chat' => [
         'icon' => '💬',
         'desc' => 'چت باکس — ماهانه، ۳ ماهه یا دائمی + اعلان تلگرام/واتساپ',
+    ],
+    'webakery-discount-pages' => [
+        'icon' => '🏷️',
+        'desc' => 'ساخت و مدیریت صفحات تخفیف برای فروشگاه ووکامرس',
     ],
 ] );
 
@@ -135,6 +141,14 @@ define( 'LS_UPDATES', [
         'tested'       => '6.7',
         'requires_php' => '7.4',
         'changelog'    => 'نسخه ۱.۴.۲: قیمت ماهانه ۱۵۰، ۳ ماهه ۳۵۰ و دائمی ۷۹۹ هزار تومان.',
+    ],
+    'webakery-discount-pages' => [
+        'version'      => '1.0.0',
+        'package'      => 'https://webakery.ir/license-server/updates/webakery-discount-pages.zip',
+        'requires'     => '5.8',
+        'tested'       => '6.7',
+        'requires_php' => '7.4',
+        'changelog'    => 'نسخه ۱.۰.۰: انتشار اولیه صفحات تخفیف.',
     ],
 ] );
 
