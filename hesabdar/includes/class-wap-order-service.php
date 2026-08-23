@@ -588,52 +588,145 @@ class WAP_Order_Service {
 	}
 
 	/**
+	 * نرمال‌سازی حروف فارسی/عربی برای جستجو (ی/ي ، ک/ك و فاصله‌ها).
+	 */
+	public static function normalize_fa( string $text ): string {
+		$map = array(
+			'ي' => 'ی',
+			'ى' => 'ی',
+			'ك' => 'ک',
+			'ۀ' => 'ه',
+			'ة' => 'ه',
+			'‌' => ' ', // ZWNJ
+		);
+		$text = strtr( $text, $map );
+		$text = preg_replace( '/\s+/u', ' ', $text );
+		return trim( (string) $text );
+	}
+
+	/**
 	 * @return array<int,array<string,mixed>>
 	 */
-	public static function search_products( string $term, int $limit = 20 ): array {
-		$term = trim( $term );
+	public static function search_products( string $term, int $limit = 30 ): array {
+		$term = self::normalize_fa( trim( $term ) );
 		if ( $term === '' || ! class_exists( 'WooCommerce' ) ) {
 			return array();
 		}
 
-		$args = array(
-			'status' => array( 'publish' ),
-			'limit'  => $limit,
-			'return' => 'objects',
-		);
+		$out  = array();
+		$seen = array();
+		$add  = function( $product ) use ( &$out, &$seen, $limit ) {
+			if ( ! $product || count( $out ) >= $limit ) {
+				return;
+			}
+			$id = (int) $product->get_id();
+			if ( isset( $seen[ $id ] ) ) {
+				return;
+			}
+			// برای ورییشن، والد را ترجیح بده مگر خود ورییشن صریحاً پیدا شده باشد
+			if ( $product->is_type( 'variation' ) ) {
+				$parent = wc_get_product( $product->get_parent_id() );
+				if ( $parent ) {
+					$pid = (int) $parent->get_id();
+					if ( ! isset( $seen[ $pid ] ) ) {
+						$seen[ $pid ] = true;
+						$out[] = self::product_payload( $parent );
+					}
+					return;
+				}
+			}
+			$seen[ $id ] = true;
+			$out[] = self::product_payload( $product );
+		};
 
 		if ( is_numeric( $term ) ) {
-			$args['include'] = array( absint( $term ) );
-		} else {
-			$args['s'] = $term;
-			$args['sku'] = $term;
-		}
-
-		$products = wc_get_products( $args );
-		$out      = array();
-		$seen     = array();
-
-		foreach ( $products as $product ) {
-			if ( ! $product ) {
-				continue;
+			$product = wc_get_product( absint( $term ) );
+			if ( $product ) {
+				$add( $product );
 			}
-			$out[] = self::product_payload( $product );
-			$seen[ $product->get_id() ] = true;
+			return $out;
 		}
 
-		// جستجوی SKU جداگانه
-		if ( ! is_numeric( $term ) ) {
-			$by_sku = wc_get_products( array(
-				'status' => 'publish',
-				'sku'    => $term,
+		global $wpdb;
+
+		// چند واریانت نوشتاری برای LIKE
+		$variants = array_unique( array_filter( array(
+			$term,
+			strtr( $term, array( 'ی' => 'ي', 'ک' => 'ك' ) ),
+			strtr( $term, array( 'ي' => 'ی', 'ك' => 'ک' ) ),
+		) ) );
+
+		$ids = array();
+		foreach ( $variants as $variant ) {
+			$like = '%' . $wpdb->esc_like( $variant ) . '%';
+			$found = $wpdb->get_col( $wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts}
+				 WHERE post_type = 'product'
+				   AND post_status IN ('publish','private')
+				   AND post_title LIKE %s
+				 ORDER BY post_title ASC
+				 LIMIT %d",
+				$like,
+				$limit
+			) );
+			if ( $found ) {
+				$ids = array_merge( $ids, $found );
+			}
+		}
+
+		// جستجوی کلمه‌ای: همه کلمات عنوان را پوشش دهد
+		if ( count( $ids ) < $limit ) {
+			$words = preg_split( '/\s+/u', $term, -1, PREG_SPLIT_NO_EMPTY );
+			if ( $words && count( $words ) > 1 ) {
+				$sql   = "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'product' AND post_status IN ('publish','private')";
+				$params = array();
+				foreach ( $words as $word ) {
+					$sql     .= ' AND post_title LIKE %s';
+					$params[] = '%' . $wpdb->esc_like( $word ) . '%';
+				}
+				$sql     .= ' ORDER BY post_title ASC LIMIT %d';
+				$params[] = $limit;
+				$found = $wpdb->get_col( $wpdb->prepare( $sql, $params ) );
+				if ( $found ) {
+					$ids = array_merge( $ids, $found );
+				}
+			}
+		}
+
+		// SKU
+		$sku_ids = $wpdb->get_col( $wpdb->prepare(
+			"SELECT post_id FROM {$wpdb->postmeta} pm
+			 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+			 WHERE pm.meta_key = '_sku'
+			   AND pm.meta_value LIKE %s
+			   AND p.post_type IN ('product','product_variation')
+			   AND p.post_status IN ('publish','private')
+			 LIMIT %d",
+			'%' . $wpdb->esc_like( $term ) . '%',
+			$limit
+		) );
+		if ( $sku_ids ) {
+			$ids = array_merge( $ids, $sku_ids );
+		}
+
+		$ids = array_values( array_unique( array_map( 'absint', $ids ) ) );
+		foreach ( $ids as $id ) {
+			if ( count( $out ) >= $limit ) {
+				break;
+			}
+			$add( wc_get_product( $id ) );
+		}
+
+		// Fallback: جستجوی استاندارد ووکامرس (بدون ترکیب همزمان با sku)
+		if ( empty( $out ) ) {
+			$products = wc_get_products( array(
+				'status' => array( 'publish', 'private' ),
 				'limit'  => $limit,
 				'return' => 'objects',
+				's'      => $term,
 			) );
-			foreach ( $by_sku as $product ) {
-				if ( isset( $seen[ $product->get_id() ] ) ) {
-					continue;
-				}
-				$out[] = self::product_payload( $product );
+			foreach ( $products as $product ) {
+				$add( $product );
 			}
 		}
 

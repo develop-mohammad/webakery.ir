@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.10.1',
+        'version'      => '1.10.2',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۱۰.۱: خریداران محصول — همه وضعیت‌ها (موفق+لغو)، نمایش سریع بعد از انتخاب محصول، ستون وضعیت‌ها.',
+        'changelog'    => 'نسخه ۱.۱۰.۲: رفع جستجوی فارسی محصولات در تب خریداران (LIKE عنوان + نرمال ی/ک).',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',

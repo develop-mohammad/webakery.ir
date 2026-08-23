@@ -346,6 +346,8 @@
                 hideResults();
                 return;
             }
+            resultsEl.innerHTML = '<div class="wap-ac-empty">در حال جستجو…</div>';
+            resultsEl.hidden = false;
             var url = (cfg.ajaxUrl || '/wp-admin/admin-ajax.php')
                 + '?action=wap_search_products&nonce=' + encodeURIComponent(cfg.searchNonce || '')
                 + '&term=' + encodeURIComponent(term);
@@ -354,10 +356,18 @@
                 .then(function (json) {
                     var list = (json && json.success && Array.isArray(json.data)) ? json.data : [];
                     resultsEl.innerHTML = '';
+                    if (!json || json.success === false) {
+                        var err = document.createElement('div');
+                        err.className = 'wap-ac-empty';
+                        err.textContent = (json && json.data && json.data.message) ? json.data.message : 'خطا در جستجو. صفحه را تازه کنید.';
+                        resultsEl.appendChild(err);
+                        resultsEl.hidden = false;
+                        return;
+                    }
                     if (!list.length) {
                         var empty = document.createElement('div');
                         empty.className = 'wap-ac-empty';
-                        empty.textContent = 'محصولی یافت نشد.';
+                        empty.textContent = 'محصولی یافت نشد. چند حرف از نام یا SKU را امتحان کنید.';
                         resultsEl.appendChild(empty);
                     } else {
                         list.forEach(function (p) {
@@ -376,7 +386,10 @@
                     }
                     resultsEl.hidden = false;
                 })
-                .catch(function () { hideResults(); });
+                .catch(function () {
+                    resultsEl.innerHTML = '<div class="wap-ac-empty">خطای شبکه در جستجوی محصول.</div>';
+                    resultsEl.hidden = false;
+                });
         }
 
         searchEl.addEventListener('input', function () {

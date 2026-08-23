@@ -37,7 +37,9 @@ class WAP_Portal {
         if ( ! class_exists( 'WAP_Order_Service' ) ) {
             wp_send_json_success( array() );
         }
-        $term = sanitize_text_field( wp_unslash( $_GET['term'] ?? $_POST['term'] ?? '' ) );
+        $term = isset( $_REQUEST['term'] ) ? wp_unslash( (string) $_REQUEST['term'] ) : '';
+        $term = sanitize_text_field( $term );
+        // sanitize_text_field گاهی فاصله‌های خاص را تغییر می‌دهد؛ نرمال فارسی در search_products انجام می‌شود
         wp_send_json_success( WAP_Order_Service::search_products( $term ) );
     }
 
