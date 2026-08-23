@@ -1109,3 +1109,110 @@ a.wap-bar-fill:hover { filter: brightness(1.1); }
     width: auto;
     margin-top: 0;
 }
+
+/* فیلتر گسترده + انتخابگر محصول */
+.wap-field-wide {
+    flex: 1 1 100%;
+    min-width: 220px;
+}
+.wap-hint {
+    margin: 4px 0 0;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--wap-text-muted);
+}
+.wap-selected-products {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: var(--wap-text-muted);
+}
+.wap-alert-info {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1e3a8a;
+}
+.wap-alert-info::before { content: 'ℹ️'; }
+.wap-product-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.wap-product-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 0;
+}
+.wap-product-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 999px;
+    color: #065f46;
+    font-size: 12px;
+    font-weight: 600;
+}
+.wap-product-chip button {
+    border: 0;
+    background: transparent;
+    color: #047857;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+}
+.wap-product-search-wrap {
+    position: relative;
+}
+.wap-product-search {
+    width: 100%;
+    direction: rtl !important;
+    text-align: right !important;
+}
+.wap-ac-results {
+    position: absolute;
+    z-index: 40;
+    top: calc(100% + 4px);
+    right: 0;
+    left: 0;
+    max-height: 240px;
+    overflow: auto;
+    background: var(--wap-surface);
+    border: 1px solid var(--wap-border);
+    border-radius: var(--wap-radius-sm);
+    box-shadow: var(--wap-shadow-sm);
+}
+.wap-ac-results[hidden] {
+    display: none !important;
+}
+.wap-ac-item {
+    display: block;
+    width: 100%;
+    text-align: right;
+    border: 0;
+    background: transparent;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--wap-text);
+}
+.wap-ac-item:hover,
+.wap-ac-item:focus {
+    background: #f0fdf4;
+    outline: none;
+}
+.wap-ac-item small {
+    display: block;
+    color: var(--wap-text-muted);
+    font-size: 11px;
+    margin-top: 2px;
+}
+.wap-ac-empty {
+    padding: 12px;
+    color: var(--wap-text-muted);
+    font-size: 12px;
+}

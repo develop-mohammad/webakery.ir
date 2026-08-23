@@ -25,11 +25,93 @@ class WAP_Data {
             'date_to'      => $date_to,
             'period'       => in_array( $src['period'] ?? '', array( 'day', 'week', 'month', 'quarter', 'year' ), true ) ? $src['period'] : 'month',
             'order_status' => sanitize_text_field( $src['order_status'] ?? '' ),
+            'product_cat'  => absint( $src['product_cat'] ?? 0 ),
+            'product_ids'  => self::parse_ids( $src['product_ids'] ?? array() ),
             'min_total'    => isset( $src['min_total'] ) && $src['min_total'] !== '' ? (float) $src['min_total'] : null,
             'max_total'    => isset( $src['max_total'] ) && $src['max_total'] !== '' ? (float) $src['max_total'] : null,
             'min_count'    => isset( $src['min_count'] ) && $src['min_count'] !== '' ? (int) $src['min_count'] : null,
             'max_count'    => isset( $src['max_count'] ) && $src['max_count'] !== '' ? (int) $src['max_count'] : null,
         );
+    }
+
+    /** پارس لیست شناسه از GET/POST (آرایه یا رشتهٔ جداشده با ویرگول). */
+    public static function parse_ids( $raw ): array {
+        if ( is_string( $raw ) ) {
+            $raw = preg_split( '/[\s,]+/', $raw );
+        }
+        if ( ! is_array( $raw ) ) {
+            return array();
+        }
+        $ids = array();
+        foreach ( $raw as $v ) {
+            $id = absint( $v );
+            if ( $id > 0 ) {
+                $ids[ $id ] = $id;
+            }
+        }
+        return array_values( $ids );
+    }
+
+    /** دسته‌بندی‌های محصول برای فیلتر گزارش. */
+    public static function get_product_categories(): array {
+        if ( ! taxonomy_exists( 'product_cat' ) ) {
+            return array();
+        }
+        $terms = get_terms( array(
+            'taxonomy'   => 'product_cat',
+            'hide_empty' => false,
+            'orderby'    => 'name',
+            'order'      => 'ASC',
+        ) );
+        if ( is_wp_error( $terms ) || empty( $terms ) ) {
+            return array();
+        }
+        $out = array();
+        foreach ( $terms as $term ) {
+            $out[] = array(
+                'id'   => (int) $term->term_id,
+                'name' => $term->name,
+                'slug' => $term->slug,
+            );
+        }
+        return $out;
+    }
+
+    /** آیا محصول (یا والد ورییشن) عضو این دسته است؟ */
+    public static function product_in_category( int $product_id, int $cat_id ): bool {
+        if ( $cat_id <= 0 || $product_id <= 0 ) {
+            return $cat_id <= 0;
+        }
+        $ids = array( $product_id );
+        $product = wc_get_product( $product_id );
+        if ( $product && $product->get_parent_id() ) {
+            $ids[] = (int) $product->get_parent_id();
+        }
+        foreach ( $ids as $pid ) {
+            $term_ids = wc_get_product_term_ids( $pid, 'product_cat' );
+            if ( in_array( $cat_id, $term_ids, true ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * وقتی وضعیت مشخص انتخاب شده، همان وضعیت ملاک است؛
+     * وقتی «همه»، فقط سفارش‌های موفق (مثل قبل).
+     */
+    public static function should_require_paid( array $f ): bool {
+        return empty( $f['order_status'] );
+    }
+
+    /** آیا آیتم سفارش با یکی از شناسه‌های انتخاب‌شده (محصول یا ورییشن) جور است؟ */
+    public static function line_matches_products( $item, array $product_ids ): bool {
+        if ( empty( $product_ids ) ) {
+            return false;
+        }
+        $pid = (int) $item->get_product_id();
+        $vid = (int) $item->get_variation_id();
+        return in_array( $pid, $product_ids, true ) || ( $vid > 0 && in_array( $vid, $product_ids, true ) );
     }
 
     // وضعیت‌هایی که در مجموع فروش لحاظ نمی‌شوند (ناموفق، لغوشده، مسترد، در انتظار پرداخت)
@@ -300,14 +382,17 @@ class WAP_Data {
     }
 
     // ── فروش محصولات ─────────────────────────────────────────────────────────────
-    public static function get_product_sales( array $orders ): array {
+    public static function get_product_sales( array $orders, bool $paid_only = true, int $product_cat = 0 ): array {
         $products = array();
         foreach ( $orders as $order ) {
-            if ( ! self::is_paid_order( $order ) ) {
+            if ( $paid_only && ! self::is_paid_order( $order ) ) {
                 continue;
             }
             foreach ( $order->get_items() as $item ) {
-                $pid = $item->get_product_id();
+                $pid = (int) $item->get_product_id();
+                if ( $product_cat > 0 && ! self::product_in_category( $pid, $product_cat ) ) {
+                    continue;
+                }
                 if ( ! isset( $products[ $pid ] ) ) {
                     $products[ $pid ] = array(
                         'pid'     => $pid,
@@ -327,14 +412,14 @@ class WAP_Data {
         return array_values( $products );
     }
 
-    public static function get_product_drilldown( array $orders, int $product_id ): array {
+    public static function get_product_drilldown( array $orders, int $product_id, bool $paid_only = true ): array {
         $rows = array();
         foreach ( $orders as $order ) {
-            if ( ! self::is_paid_order( $order ) ) {
+            if ( $paid_only && ! self::is_paid_order( $order ) ) {
                 continue;
             }
             foreach ( $order->get_items() as $item ) {
-                if ( (int) $item->get_product_id() === $product_id ) {
+                if ( (int) $item->get_product_id() === $product_id || (int) $item->get_variation_id() === $product_id ) {
                     $rows[] = array( 'order' => $order, 'qty' => $item->get_quantity(), 'revenue' => (float) $item->get_total() );
                     break;
                 }
@@ -346,6 +431,111 @@ class WAP_Data {
             return $tb <=> $ta;
         } );
         return $rows;
+    }
+
+    /**
+     * مشتریان یکتایی که حداقل یکی از محصولات انتخاب‌شده را در سفارش‌های فیلترشده خریده‌اند.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public static function get_buyers_by_products( array $orders, array $product_ids, bool $paid_only = true ): array {
+        $product_ids = self::parse_ids( $product_ids );
+        if ( empty( $product_ids ) ) {
+            return array();
+        }
+
+        $buyers = array();
+        foreach ( $orders as $order ) {
+            if ( $paid_only && ! self::is_paid_order( $order ) ) {
+                continue;
+            }
+
+            $qty = 0;
+            $revenue = 0.0;
+            $matched = false;
+            foreach ( $order->get_items() as $item ) {
+                if ( ! self::line_matches_products( $item, $product_ids ) ) {
+                    continue;
+                }
+                $matched = true;
+                $qty     += (int) $item->get_quantity();
+                $revenue += (float) $item->get_total();
+            }
+            if ( ! $matched ) {
+                continue;
+            }
+
+            $customer_id = (int) $order->get_customer_id();
+            $email       = strtolower( trim( (string) $order->get_billing_email() ) );
+            $phone       = preg_replace( '/\D+/', '', (string) $order->get_billing_phone() );
+            if ( $customer_id > 0 ) {
+                $key = 'u:' . $customer_id;
+            } elseif ( $email !== '' ) {
+                $key = 'e:' . $email;
+            } elseif ( $phone !== '' ) {
+                $key = 'p:' . $phone;
+            } else {
+                $key = 'o:' . $order->get_id();
+            }
+
+            $created = $order->get_date_created();
+            $ts      = $created ? $created->getTimestamp() : 0;
+
+            if ( ! isset( $buyers[ $key ] ) ) {
+                $buyers[ $key ] = array(
+                    'key'          => $key,
+                    'customer_id'  => $customer_id,
+                    'name'         => trim( $order->get_formatted_billing_full_name() ),
+                    'phone'        => (string) $order->get_billing_phone(),
+                    'email'        => (string) $order->get_billing_email(),
+                    'city'         => (string) $order->get_billing_city(),
+                    'orders_count' => 0,
+                    'qty'          => 0,
+                    'revenue'      => 0.0,
+                    'last_order_ts'=> 0,
+                    'order_ids'    => array(),
+                );
+            }
+
+            $buyers[ $key ]['orders_count']++;
+            $buyers[ $key ]['qty']       += $qty;
+            $buyers[ $key ]['revenue']   += $revenue;
+            $buyers[ $key ]['order_ids'][] = $order->get_id();
+            if ( $ts >= $buyers[ $key ]['last_order_ts'] ) {
+                $buyers[ $key ]['last_order_ts'] = $ts;
+                if ( $buyers[ $key ]['name'] === '' ) {
+                    $buyers[ $key ]['name'] = trim( $order->get_formatted_billing_full_name() );
+                }
+                if ( $buyers[ $key ]['phone'] === '' ) {
+                    $buyers[ $key ]['phone'] = (string) $order->get_billing_phone();
+                }
+                if ( $buyers[ $key ]['email'] === '' ) {
+                    $buyers[ $key ]['email'] = (string) $order->get_billing_email();
+                }
+                if ( $buyers[ $key ]['city'] === '' ) {
+                    $buyers[ $key ]['city'] = (string) $order->get_billing_city();
+                }
+            }
+        }
+
+        $list = array_values( $buyers );
+        usort( $list, function( $a, $b ) {
+            if ( $a['qty'] !== $b['qty'] ) {
+                return $b['qty'] <=> $a['qty'];
+            }
+            return $b['last_order_ts'] <=> $a['last_order_ts'];
+        } );
+        return $list;
+    }
+
+    /** برچسب‌های نام محصول برای شناسه‌های انتخاب‌شده. */
+    public static function product_labels( array $product_ids ): array {
+        $out = array();
+        foreach ( self::parse_ids( $product_ids ) as $pid ) {
+            $product = wc_get_product( $pid );
+            $out[ $pid ] = $product ? $product->get_name() : ( '#' . $pid );
+        }
+        return $out;
     }
 
     // ── نمودار دایره‌ای وضعیت سفارش‌ها ─────────────────────────────────────────────

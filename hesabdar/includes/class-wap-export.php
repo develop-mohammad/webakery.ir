@@ -65,7 +65,7 @@ class WAP_Export {
     }
 
     /** خلاصه فروش محصولات (لیست همه محصولات) */
-    public static function products_csv( array $orders ) {
+    public static function products_csv( array $orders, bool $paid_only = true, int $product_cat = 0 ) {
         while ( ob_get_level() ) { ob_end_clean(); }
         header( 'Content-Type: text/csv; charset=UTF-8' );
         header( 'Content-Disposition: attachment; filename="products-sales-' . date( 'Y-m-d' ) . '.csv"' );
@@ -74,7 +74,7 @@ class WAP_Export {
         $fp = fopen( 'php://output', 'w' );
         fputs( $fp, "\xEF\xBB\xBF" );
         fputcsv( $fp, array( 'نام محصول', 'SKU', 'تعداد فروخته‌شده', 'تعداد سفارشات', 'درآمد کل' ) );
-        foreach ( WAP_Data::get_product_sales( $orders ) as $p ) {
+        foreach ( WAP_Data::get_product_sales( $orders, $paid_only, $product_cat ) as $p ) {
             fputcsv( $fp, array( $p['name'], $p['sku'], $p['qty'], $p['orders'], $p['revenue'] ) );
         }
         fclose( $fp );
@@ -82,7 +82,7 @@ class WAP_Export {
     }
 
     /** سفارش‌های یک محصول (drill-down) */
-    public static function product_orders_csv( array $orders, int $product_id ) {
+    public static function product_orders_csv( array $orders, int $product_id, bool $paid_only = true ) {
         while ( ob_get_level() ) { ob_end_clean(); }
 
         $product_obj  = wc_get_product( $product_id );
@@ -104,7 +104,7 @@ class WAP_Export {
         fputs( $fp, "\xEF\xBB\xBF" );
         fputcsv( $fp, $headers );
 
-        foreach ( WAP_Data::get_product_drilldown( $orders, $product_id ) as $row ) {
+        foreach ( WAP_Data::get_product_drilldown( $orders, $product_id, $paid_only ) as $row ) {
             $order = $row['order'];
             $name  = trim( $order->get_billing_first_name() . ' ' . $order->get_billing_last_name() );
             $line  = array(
@@ -123,6 +123,32 @@ class WAP_Export {
             fputcsv( $fp, $line );
         }
 
+        fclose( $fp );
+        exit;
+    }
+
+    /** لیست مشتریان خریدار محصولات انتخاب‌شده */
+    public static function buyers_csv( array $buyers ) {
+        while ( ob_get_level() ) { ob_end_clean(); }
+        header( 'Content-Type: text/csv; charset=UTF-8' );
+        header( 'Content-Disposition: attachment; filename="product-buyers-' . date( 'Y-m-d' ) . '.csv"' );
+        header( 'Pragma: no-cache' );
+
+        $fp = fopen( 'php://output', 'w' );
+        fputs( $fp, "\xEF\xBB\xBF" );
+        fputcsv( $fp, array( 'نام', 'تلفن', 'ایمیل', 'شهر', 'تعداد سفارش', 'تعداد اقلام', 'مبلغ محصولات انتخابی', 'آخرین خرید' ) );
+        foreach ( $buyers as $b ) {
+            fputcsv( $fp, array(
+                $b['name'] ?: '—',
+                $b['phone'],
+                $b['email'],
+                $b['city'],
+                $b['orders_count'],
+                $b['qty'],
+                $b['revenue'],
+                ! empty( $b['last_order_ts'] ) ? date_i18n( 'Y/m/d H:i', $b['last_order_ts'] ) : '',
+            ) );
+        }
         fclose( $fp );
         exit;
     }

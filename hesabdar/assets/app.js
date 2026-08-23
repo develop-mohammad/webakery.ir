@@ -274,4 +274,116 @@
             link.click();
         });
     }
+
+    // انتخابگر چندمحصولی برای تب خریداران
+    (function initProductPicker() {
+        var picker = document.getElementById('wap_product_picker');
+        if (!picker) return;
+
+        var chipsEl = document.getElementById('wap_product_chips');
+        var inputsEl = document.getElementById('wap_product_ids_inputs');
+        var searchEl = document.getElementById('wap_product_search');
+        var resultsEl = document.getElementById('wap_product_results');
+        var cfg = window.WAP_SHEETS || {};
+        var selected = [];
+        var timer = null;
+
+        try {
+            selected = JSON.parse(picker.getAttribute('data-selected') || '[]') || [];
+        } catch (e) {
+            selected = [];
+        }
+
+        function render() {
+            chipsEl.innerHTML = '';
+            inputsEl.innerHTML = '';
+            selected.forEach(function (item) {
+                var chip = document.createElement('span');
+                chip.className = 'wap-product-chip';
+                chip.textContent = item.name || ('#' + item.id);
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.setAttribute('aria-label', 'حذف');
+                btn.textContent = '×';
+                btn.addEventListener('click', function () {
+                    selected = selected.filter(function (x) { return String(x.id) !== String(item.id); });
+                    render();
+                });
+                chip.appendChild(btn);
+                chipsEl.appendChild(chip);
+
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'product_ids[]';
+                input.value = String(item.id);
+                inputsEl.appendChild(input);
+            });
+        }
+
+        function hideResults() {
+            resultsEl.innerHTML = '';
+            resultsEl.hidden = true;
+        }
+
+        function addProduct(item) {
+            if (!item || !item.id) return;
+            var exists = selected.some(function (x) { return String(x.id) === String(item.id); });
+            if (!exists) {
+                selected.push({ id: item.id, name: item.name || ('#' + item.id) });
+                render();
+            }
+            searchEl.value = '';
+            hideResults();
+        }
+
+        function search(term) {
+            if (!term || term.length < 1) {
+                hideResults();
+                return;
+            }
+            var url = (cfg.ajaxUrl || '/wp-admin/admin-ajax.php')
+                + '?action=wap_search_products&nonce=' + encodeURIComponent(cfg.searchNonce || '')
+                + '&term=' + encodeURIComponent(term);
+            fetch(url, { credentials: 'same-origin' })
+                .then(function (r) { return r.json(); })
+                .then(function (json) {
+                    var list = (json && json.success && Array.isArray(json.data)) ? json.data : [];
+                    resultsEl.innerHTML = '';
+                    if (!list.length) {
+                        var empty = document.createElement('div');
+                        empty.className = 'wap-ac-empty';
+                        empty.textContent = 'محصولی یافت نشد.';
+                        resultsEl.appendChild(empty);
+                    } else {
+                        list.forEach(function (p) {
+                            var btn = document.createElement('button');
+                            btn.type = 'button';
+                            btn.className = 'wap-ac-item';
+                            btn.innerHTML = '<strong></strong><small></small>';
+                            btn.querySelector('strong').textContent = p.name || ('#' + p.id);
+                            var meta = [];
+                            if (p.sku) meta.push('SKU: ' + p.sku);
+                            meta.push('#' + p.id);
+                            btn.querySelector('small').textContent = meta.join(' · ');
+                            btn.addEventListener('click', function () { addProduct(p); });
+                            resultsEl.appendChild(btn);
+                        });
+                    }
+                    resultsEl.hidden = false;
+                })
+                .catch(function () { hideResults(); });
+        }
+
+        searchEl.addEventListener('input', function () {
+            clearTimeout(timer);
+            var term = searchEl.value.trim();
+            timer = setTimeout(function () { search(term); }, 280);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!picker.contains(e.target)) hideResults();
+        });
+
+        render();
+    })();
 })();
