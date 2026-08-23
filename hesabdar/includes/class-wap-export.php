@@ -136,14 +136,19 @@ class WAP_Export {
 
         $fp = fopen( 'php://output', 'w' );
         fputs( $fp, "\xEF\xBB\xBF" );
-        fputcsv( $fp, array( 'نام', 'تلفن', 'ایمیل', 'شهر', 'تعداد سفارش', 'تعداد اقلام', 'مبلغ محصولات انتخابی', 'آخرین خرید' ) );
+        fputcsv( $fp, array( 'نام', 'تلفن', 'ایمیل', 'شهر', 'تعداد سفارش', 'وضعیت‌ها', 'تعداد اقلام', 'مبلغ محصولات انتخابی', 'آخرین خرید' ) );
         foreach ( $buyers as $b ) {
+            $status_bits = array();
+            foreach ( (array) ( $b['statuses'] ?? array() ) as $st => $cnt ) {
+                $status_bits[] = ( function_exists( 'wc_get_order_status_name' ) ? wc_get_order_status_name( $st ) : $st ) . ' (' . (int) $cnt . ')';
+            }
             fputcsv( $fp, array(
                 $b['name'] ?: '—',
                 $b['phone'],
                 $b['email'],
                 $b['city'],
                 $b['orders_count'],
+                implode( ' | ', $status_bits ),
                 $b['qty'],
                 $b['revenue'],
                 ! empty( $b['last_order_ts'] ) ? date_i18n( 'Y/m/d H:i', $b['last_order_ts'] ) : '',

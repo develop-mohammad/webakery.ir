@@ -97,21 +97,45 @@ class WAP_Data {
     }
 
     /**
-     * وقتی وضعیت مشخص انتخاب شده، همان وضعیت ملاک است؛
-     * وقتی «همه»، فقط سفارش‌های موفق (مثل قبل).
+     * فقط وقتی صراحتاً «فقط موفق» انتخاب شود، سفارش‌های ناموفق/لغو کنار گذاشته می‌شوند.
+     * مقدار خالی = همه وضعیت‌ها (موفق + لغو شده + …).
      */
     public static function should_require_paid( array $f ): bool {
-        return empty( $f['order_status'] );
+        return ( $f['order_status'] ?? '' ) === '__paid__';
     }
 
-    /** آیا آیتم سفارش با یکی از شناسه‌های انتخاب‌شده (محصول یا ورییشن) جور است؟ */
+    /** وضعیت قابل‌ارسال به wc_get_orders (مقادیر مجازی مثل __paid__ حذف می‌شوند). */
+    public static function wc_status_filter( array $f ): array {
+        $status = (string) ( $f['order_status'] ?? '' );
+        if ( $status === '' || $status === '__paid__' ) {
+            return array();
+        }
+        return array( $status );
+    }
+
+    /** آیا آیتم سفارش با یکی از شناسه‌های انتخاب‌شده (محصول، ورییشن، یا والد) جور است؟ */
     public static function line_matches_products( $item, array $product_ids ): bool {
         if ( empty( $product_ids ) ) {
             return false;
         }
         $pid = (int) $item->get_product_id();
         $vid = (int) $item->get_variation_id();
-        return in_array( $pid, $product_ids, true ) || ( $vid > 0 && in_array( $vid, $product_ids, true ) );
+        if ( in_array( $pid, $product_ids, true ) || ( $vid > 0 && in_array( $vid, $product_ids, true ) ) ) {
+            return true;
+        }
+        // اگر ورییشن انتخاب شده ولی آیتم فقط parent دارد (یا برعکس)، والد را هم چک کن
+        if ( $vid > 0 ) {
+            $variation = wc_get_product( $vid );
+            if ( $variation && in_array( (int) $variation->get_parent_id(), $product_ids, true ) ) {
+                return true;
+            }
+        }
+        $product = wc_get_product( $pid );
+        if ( $product && $product->is_type( 'variable' ) ) {
+            // parent انتخاب شده — آیتم‌های ورییشن همین parent را در product_id دارند؛ بالا پوشش داده شد
+            return false;
+        }
+        return false;
     }
 
     // وضعیت‌هایی که در مجموع فروش لحاظ نمی‌شوند (ناموفق، لغوشده، مسترد، در انتظار پرداخت)
@@ -135,7 +159,10 @@ class WAP_Data {
         if ( ! class_exists( 'WooCommerce' ) ) return array();
         $all_statuses = array_map( function( $s ) { return str_replace( 'wc-', '', $s ); }, array_keys( wc_get_order_statuses() ) );
         $args = array( 'limit' => -1, 'return' => 'objects', 'type' => 'shop_order', 'status' => $all_statuses );
-        if ( ! empty( $f['order_status'] ) ) { $args['status'] = array( $f['order_status'] ); }
+        $status_filter = self::wc_status_filter( $f );
+        if ( ! empty( $status_filter ) ) {
+            $args['status'] = $status_filter;
+        }
         $ts_from = ! empty( $f['date_from'] ) ? WAP_Jalali::str_to_timestamp( $f['date_from'], false ) : 0;
         $ts_to   = ! empty( $f['date_to'] )   ? WAP_Jalali::str_to_timestamp( $f['date_to'],   true  ) : 0;
         if ( $ts_from && $ts_to ) { $args['date_created'] = $ts_from . '...' . $ts_to; }
@@ -314,7 +341,10 @@ class WAP_Data {
 
         $all_statuses = array_map( function( $s ) { return str_replace( 'wc-', '', $s ); }, array_keys( wc_get_order_statuses() ) );
         $args = array( 'limit' => -1, 'orderby' => 'date', 'order' => $f['order'], 'return' => 'objects', 'type' => 'shop_order', 'status' => $all_statuses );
-        if ( ! empty( $f['order_status'] ) ) { $args['status'] = array( $f['order_status'] ); }
+        $status_filter = self::wc_status_filter( $f );
+        if ( ! empty( $status_filter ) ) {
+            $args['status'] = $status_filter;
+        }
         if ( ! empty( $f['payment_method'] ) ) { $args['payment_method'] = $f['payment_method']; }
 
         $ts_from = ! empty( $f['date_from'] ) ? WAP_Jalali::str_to_timestamp( $f['date_from'], false ) : 0;
@@ -493,9 +523,17 @@ class WAP_Data {
                     'qty'          => 0,
                     'revenue'      => 0.0,
                     'last_order_ts'=> 0,
+                    'last_status'  => '',
+                    'statuses'     => array(),
                     'order_ids'    => array(),
                 );
             }
+
+            $status = $order->get_status();
+            if ( ! isset( $buyers[ $key ]['statuses'][ $status ] ) ) {
+                $buyers[ $key ]['statuses'][ $status ] = 0;
+            }
+            $buyers[ $key ]['statuses'][ $status ]++;
 
             $buyers[ $key ]['orders_count']++;
             $buyers[ $key ]['qty']       += $qty;
@@ -503,6 +541,7 @@ class WAP_Data {
             $buyers[ $key ]['order_ids'][] = $order->get_id();
             if ( $ts >= $buyers[ $key ]['last_order_ts'] ) {
                 $buyers[ $key ]['last_order_ts'] = $ts;
+                $buyers[ $key ]['last_status']  = $status;
                 if ( $buyers[ $key ]['name'] === '' ) {
                     $buyers[ $key ]['name'] = trim( $order->get_formatted_billing_full_name() );
                 }

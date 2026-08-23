@@ -956,7 +956,8 @@ class WAP_Portal {
             <div class="wap-field">
                 <label>وضعیت سفارش</label>
                 <select name="order_status">
-                    <option value="">همه (فقط موفق)</option>
+                    <option value="">همه وضعیت‌ها</option>
+                    <option value="__paid__" <?php selected( $f['order_status'], '__paid__' ); ?>>فقط موفق</option>
                     <?php foreach ( wc_get_order_statuses() as $slug => $label ) :
                         $val = str_replace( 'wc-', '', $slug ); ?>
                         <option value="<?php echo esc_attr( $val ); ?>" <?php selected( $f['order_status'], $val ); ?>><?php echo esc_html( $label ); ?></option>
@@ -1127,7 +1128,8 @@ class WAP_Portal {
             <div class="wap-field">
                 <label>وضعیت سفارش</label>
                 <select name="order_status">
-                    <option value="">همه (فقط موفق)</option>
+                    <option value="">همه وضعیت‌ها (موفق + لغو شده + …)</option>
+                    <option value="__paid__" <?php selected( $f['order_status'], '__paid__' ); ?>>فقط موفق</option>
                     <?php foreach ( wc_get_order_statuses() as $slug => $label ) :
                         $val = str_replace( 'wc-', '', $slug ); ?>
                         <option value="<?php echo esc_attr( $val ); ?>" <?php selected( $f['order_status'], $val ); ?>><?php echo esc_html( $label ); ?></option>
@@ -1185,6 +1187,7 @@ class WAP_Portal {
                         <th>ایمیل</th>
                         <th>شهر</th>
                         <th>تعداد سفارش</th>
+                        <th>وضعیت‌ها</th>
                         <th>تعداد اقلام</th>
                         <th>مبلغ</th>
                         <th>آخرین خرید</th>
@@ -1192,7 +1195,7 @@ class WAP_Portal {
                     </thead>
                     <tbody>
                     <?php if ( empty( $buyers ) ) : ?>
-                        <tr><td colspan="9" class="wap-empty">مشتری‌ای با این فیلترها یافت نشد.</td></tr>
+                        <tr><td colspan="10" class="wap-empty">مشتری‌ای با این فیلترها یافت نشد. بازه تاریخ را بزرگ‌تر کنید یا وضعیت را روی «همه وضعیت‌ها» بگذارید.</td></tr>
                     <?php else : $i = 1; foreach ( $buyers as $b ) : ?>
                         <tr>
                             <td><?php echo (int) $i++; ?></td>
@@ -1201,6 +1204,13 @@ class WAP_Portal {
                             <td><?php echo esc_html( $b['email'] !== '' ? $b['email'] : '—' ); ?></td>
                             <td><?php echo esc_html( $b['city'] !== '' ? $b['city'] : '—' ); ?></td>
                             <td><?php echo esc_html( number_format( $b['orders_count'] ) ); ?></td>
+                            <td><?php
+                            $status_bits = array();
+                            foreach ( (array) ( $b['statuses'] ?? array() ) as $st => $cnt ) {
+                                $status_bits[] = wc_get_order_status_name( $st ) . ' (' . number_format( (int) $cnt ) . ')';
+                            }
+                            echo esc_html( $status_bits ? implode( '، ', $status_bits ) : '—' );
+                            ?></td>
                             <td><strong><?php echo esc_html( number_format( $b['qty'] ) ); ?></strong></td>
                             <td><strong><?php echo esc_html( number_format( $b['revenue'] ) . ' ' . $currency ); ?></strong></td>
                             <td><?php echo esc_html( $b['last_order_ts'] ? date_i18n( 'Y/m/d H:i', $b['last_order_ts'] ) : '—' ); ?></td>

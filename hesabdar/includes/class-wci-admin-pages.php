@@ -935,7 +935,7 @@ function wci_products_page() {
     $product_cat   = absint( isset( $_GET['product_cat'] ) ? $_GET['product_cat'] : 0 );
     $orderby_p     = sanitize_text_field( isset( $_GET['orderby'] )   ? $_GET['orderby']   : 'revenue' );
     $order_dir     = ( isset( $_GET['order'] ) && $_GET['order'] === 'ASC' ) ? 'ASC' : 'DESC';
-    $paid_only     = ( $order_status === '' );
+    $paid_only     = ( $order_status === '__paid__' );
     $categories    = class_exists( 'WAP_Data' ) ? WAP_Data::get_product_categories() : array();
 
     // CSV export (handles both summary and drilldown)
@@ -948,7 +948,7 @@ function wci_products_page() {
     // Build order args
     $all_statuses = array_map( function( $s ) { return str_replace( 'wc-', '', $s ); }, array_keys( wc_get_order_statuses() ) );
     $args = array( 'limit' => -1, 'return' => 'objects', 'type' => 'shop_order', 'status' => $all_statuses );
-    if ( $order_status !== '' ) {
+    if ( $order_status !== '' && $order_status !== '__paid__' ) {
         $args['status'] = array( $order_status );
     }
     $ts_from = $date_from ? wci_date_to_timestamp( $date_from, false ) : 0;
@@ -993,7 +993,8 @@ function wci_products_page() {
             echo '<span style="margin:0 4px">تا</span>';
             echo '<input type="date" name="date_to" id="wci_date_to" value="' . esc_attr( $date_to ) . '">';
         }
-        echo '<select name="order_status"><option value="">همه (فقط موفق)</option>';
+        echo '<select name="order_status"><option value="">همه وضعیت‌ها</option>';
+        echo '<option value="__paid__"' . selected( $order_status, '__paid__', false ) . '>فقط موفق</option>';
         foreach ( wc_get_order_statuses() as $slug => $label ) {
             $val = str_replace( 'wc-', '', $slug );
             echo '<option value="' . esc_attr( $val ) . '"' . selected( $order_status, $val, false ) . '>' . esc_html( $label ) . '</option>';
@@ -1101,7 +1102,8 @@ function wci_products_page() {
         echo '<span style="margin:0 4px">تا</span>';
         echo '<input type="date" name="date_to" id="wci_date_to" value="' . esc_attr( $date_to ) . '">';
     }
-    echo '<select name="order_status"><option value="">همه (فقط موفق)</option>';
+    echo '<select name="order_status"><option value="">همه وضعیت‌ها</option>';
+    echo '<option value="__paid__"' . selected( $order_status, '__paid__', false ) . '>فقط موفق</option>';
     foreach ( wc_get_order_statuses() as $slug => $label ) {
         $val = str_replace( 'wc-', '', $slug );
         echo '<option value="' . esc_attr( $val ) . '"' . selected( $order_status, $val, false ) . '>' . esc_html( $label ) . '</option>';
@@ -1223,10 +1225,10 @@ function wci_export_products_csv( $date_from = '', $date_to = '', $product_id = 
     if ( $order_status === '' ) $order_status = sanitize_text_field( isset( $_GET['order_status'] ) ? $_GET['order_status'] : '' );
     if ( ! $product_cat )      $product_cat  = absint( isset( $_GET['product_cat'] ) ? $_GET['product_cat'] : 0 );
 
-    $paid_only    = ( $order_status === '' );
+    $paid_only    = ( $order_status === '__paid__' );
     $all_statuses = array_map( function( $s ) { return str_replace( 'wc-', '', $s ); }, array_keys( wc_get_order_statuses() ) );
     $args = array( 'limit' => -1, 'return' => 'objects', 'type' => 'shop_order', 'status' => $all_statuses );
-    if ( $order_status !== '' ) {
+    if ( $order_status !== '' && $order_status !== '__paid__' ) {
         $args['status'] = array( $order_status );
     }
     $ts_from = $date_from ? wci_date_to_timestamp( $date_from, false ) : 0;
@@ -1296,14 +1298,14 @@ function wci_product_buyers_page() {
     $date_to      = sanitize_text_field( $_GET['date_to'] ?? '' );
     $order_status = sanitize_text_field( $_GET['order_status'] ?? '' );
     $product_ids  = WAP_Data::parse_ids( $_GET['product_ids'] ?? array() );
-    $paid_only    = ( $order_status === '' );
+    $paid_only    = ( $order_status === '__paid__' );
     $labels       = WAP_Data::product_labels( $product_ids );
 
     if ( isset( $_GET['action'] ) && $_GET['action'] === 'wci_export_buyers_csv' ) {
         check_admin_referer( 'wci_buyers_export' );
         $all_statuses = array_map( function( $s ) { return str_replace( 'wc-', '', $s ); }, array_keys( wc_get_order_statuses() ) );
         $args = array( 'limit' => -1, 'return' => 'objects', 'type' => 'shop_order', 'status' => $all_statuses );
-        if ( $order_status !== '' ) {
+        if ( $order_status !== '' && $order_status !== '__paid__' ) {
             $args['status'] = array( $order_status );
         }
         $ts_from = $date_from ? wci_date_to_timestamp( $date_from, false ) : 0;
@@ -1320,7 +1322,7 @@ function wci_product_buyers_page() {
     if ( ! empty( $product_ids ) ) {
         $all_statuses = array_map( function( $s ) { return str_replace( 'wc-', '', $s ); }, array_keys( wc_get_order_statuses() ) );
         $args = array( 'limit' => -1, 'return' => 'objects', 'type' => 'shop_order', 'status' => $all_statuses );
-        if ( $order_status !== '' ) {
+        if ( $order_status !== '' && $order_status !== '__paid__' ) {
             $args['status'] = array( $order_status );
         }
         $ts_from = $date_from ? wci_date_to_timestamp( $date_from, false ) : 0;
@@ -1351,7 +1353,8 @@ function wci_product_buyers_page() {
         echo '<span style="margin:0 4px">تا</span>';
         echo '<input type="date" name="date_to" id="wci_date_to" value="' . esc_attr( $date_to ) . '">';
     }
-    echo '<select name="order_status"><option value="">همه (فقط موفق)</option>';
+    echo '<select name="order_status"><option value="">همه وضعیت‌ها</option>';
+    echo '<option value="__paid__"' . selected( $order_status, '__paid__', false ) . '>فقط موفق</option>';
     foreach ( wc_get_order_statuses() as $slug => $label ) {
         $val = str_replace( 'wc-', '', $slug );
         echo '<option value="' . esc_attr( $val ) . '"' . selected( $order_status, $val, false ) . '>' . esc_html( $label ) . '</option>';

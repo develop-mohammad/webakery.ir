@@ -334,6 +334,11 @@
             }
             searchEl.value = '';
             hideResults();
+            // بلافاصله بعد از انتخاب محصول، نتایج را نشان بده
+            var form = document.getElementById('wap_buyers_form');
+            if (form && selected.length) {
+                form.submit();
+            }
         }
 
         function search(term) {

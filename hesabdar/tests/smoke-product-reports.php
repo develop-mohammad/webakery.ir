@@ -126,7 +126,8 @@ $buyers_pending = WAP_Data::get_buyers_by_products( $orders, array( 100 ), false
 assert( count( $buyers_pending ) === 2, 'two buyers when unpaid included' );
 
 assert( WAP_Data::parse_ids( '1,2,2' ) === array( 1, 2 ), 'parse_ids' );
-assert( WAP_Data::should_require_paid( array( 'order_status' => '' ) ) === true, 'paid when no status' );
-assert( WAP_Data::should_require_paid( array( 'order_status' => 'pending' ) ) === false, 'not paid-only when status set' );
+assert( WAP_Data::should_require_paid( array( 'order_status' => '' ) ) === false, 'all statuses by default' );
+assert( WAP_Data::should_require_paid( array( 'order_status' => '__paid__' ) ) === true, 'paid-only when selected' );
+assert( WAP_Data::should_require_paid( array( 'order_status' => 'pending' ) ) === false, 'specific status not paid-only filter' );
 
 echo "ALL SMOKE TESTS PASSED\n";
