@@ -107,52 +107,101 @@ $next_run = wp_next_scheduled( WDP_Cron::HOOK );
 	</div>
 
 	<div class="wdp-card-box" style="grid-column:1/-1">
-		<h3>🛒 همه محصولاتی که الان در حراج ووکامرس هستند</h3>
-		<?php $on_sale = WDP_Assigner::list_on_sale_overview(); ?>
-		<?php if ( ! $on_sale ) : ?>
-			<p class="wdp-muted">هیچ محصولی الان در حراج ووکامرس نیست (فیلد «Sale price» هیچ محصولی پر نشده یا خالی شده است).</p>
-		<?php else : ?>
-			<table class="widefat striped wdp-table">
-				<thead>
-					<tr>
-						<th>محصول</th>
-						<th>دسته‌بندی محصول</th>
-						<th>تخفیف محاسبه‌شده</th>
-						<th>باید در کدام صفحه باشد</th>
-						<th>وضعیت</th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php foreach ( $on_sale as $row ) : ?>
-						<tr>
-							<td>
-								#<?php echo (int) $row['product_id']; ?> —
-								<?php if ( $row['edit_link'] ) : ?>
-									<a href="<?php echo esc_url( $row['edit_link'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $row['name'] ); ?></a>
-								<?php else : ?>
-									<?php echo esc_html( $row['name'] ); ?>
-								<?php endif; ?>
-							</td>
-							<td><?php echo $row['category_names'] ? esc_html( implode( '، ', $row['category_names'] ) ) : '<span class="wdp-muted">بدون دسته‌بندی</span>'; ?></td>
-							<td>
-								<?php if ( $row['discount'] ) : ?>
-									<?php echo esc_html( WDP_Util::fa_digits( WDP_Util::trim_zeros( $row['discount']['percent'] ) ) ); ?>٪
-									(<?php echo esc_html( WDP_Util::fa_digits( WDP_Util::trim_zeros( $row['discount']['fixed'] ) ) ); ?> <?php echo esc_html( WDP_Taxonomy::currency() ); ?>)
-								<?php else : ?>
-									<span class="wdp-muted">—</span>
-								<?php endif; ?>
-							</td>
-							<td><?php echo esc_html( $row['matched_name'] ); ?></td>
-							<td><?php echo $row['in_sync'] ? '✅ هماهنگ' : '⚠️ نیاز به بازبینی'; ?></td>
-						</tr>
-					<?php endforeach; ?>
-				</tbody>
-			</table>
-			<p class="wdp-hint" style="margin-top:8px">
-				اگر ستون «باید در کدام صفحه باشد» برای محصولی «—» است، یعنی هیچ صفحه تخفیفی با دسته‌بندی و
-				درصد تخفیف همان محصول تطبیق ندارد؛ به دسته‌بندی دقیق آن محصول در این جدول و دسته‌بندی
-				تیک‌خورده روی صفحه تخفیف نگاه کنید — احتمالاً یکی نیستند (مثلاً دو دسته با نام مشابه).
+		<h3>🛒 محصولات در حراج ووکامرس</h3>
+		<?php
+		$show_on_sale = ! empty( $_GET['wdp_show_on_sale'] );
+		$on_sale_page = isset( $_GET['wdp_on_sale_page'] ) ? max( 1, (int) $_GET['wdp_on_sale_page'] ) : 1;
+		$base_args    = array(
+			'page' => WDP_MENU,
+			'tab'  => 'overview',
+		);
+		?>
+		<?php if ( ! $show_on_sale ) : ?>
+			<p class="wdp-muted">
+				برای جلوگیری از کند شدن پیشخوان، این فهرست به‌صورت پیش‌فرض بارگذاری نمی‌شود.
+				در فروشگاه‌های پرتعداد، خواندن همه محصولات حراج می‌تواند چند ثانیه طول بکشد.
 			</p>
+			<p>
+				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?' . http_build_query( array_merge( $base_args, array( 'wdp_show_on_sale' => 1 ) ) ) ) ); ?>">
+					نمایش فهرست محصولات حراج
+				</a>
+			</p>
+		<?php else : ?>
+			<?php
+			$overview = WDP_Assigner::list_on_sale_overview( $on_sale_page, 40 );
+			$on_sale  = $overview['rows'];
+			?>
+			<p class="wdp-hint" style="margin-bottom:10px">
+				<?php
+				echo esc_html(
+					WDP_Util::fa_digits( (string) count( $on_sale ) )
+					. ' از '
+					. WDP_Util::fa_digits( (string) $overview['total'] )
+					. ' محصول حراج (صفحه '
+					. WDP_Util::fa_digits( (string) $overview['page'] )
+					. ' از '
+					. WDP_Util::fa_digits( (string) max( 1, $overview['pages'] ) )
+					. ')'
+				);
+				?>
+				—
+				<a href="<?php echo esc_url( admin_url( 'admin.php?' . http_build_query( $base_args ) ) ); ?>">بستن فهرست</a>
+			</p>
+			<?php if ( ! $on_sale ) : ?>
+				<p class="wdp-muted">هیچ محصولی الان در حراج ووکامرس نیست (فیلد «Sale price» هیچ محصولی پر نشده یا خالی شده است).</p>
+			<?php else : ?>
+				<table class="widefat striped wdp-table">
+					<thead>
+						<tr>
+							<th>محصول</th>
+							<th>دسته‌بندی محصول</th>
+							<th>تخفیف محاسبه‌شده</th>
+							<th>باید در کدام صفحه باشد</th>
+							<th>وضعیت</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $on_sale as $row ) : ?>
+							<tr>
+								<td>
+									#<?php echo (int) $row['product_id']; ?> —
+									<?php if ( $row['edit_link'] ) : ?>
+										<a href="<?php echo esc_url( $row['edit_link'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $row['name'] ); ?></a>
+									<?php else : ?>
+										<?php echo esc_html( $row['name'] ); ?>
+									<?php endif; ?>
+								</td>
+								<td><?php echo $row['category_names'] ? esc_html( implode( '، ', $row['category_names'] ) ) : '<span class="wdp-muted">بدون دسته‌بندی</span>'; ?></td>
+								<td>
+									<?php if ( $row['discount'] ) : ?>
+										<?php echo esc_html( WDP_Util::fa_digits( WDP_Util::trim_zeros( $row['discount']['percent'] ) ) ); ?>٪
+										(<?php echo esc_html( WDP_Util::fa_digits( WDP_Util::trim_zeros( $row['discount']['fixed'] ) ) ); ?> <?php echo esc_html( WDP_Taxonomy::currency() ); ?>)
+									<?php else : ?>
+										<span class="wdp-muted">—</span>
+									<?php endif; ?>
+								</td>
+								<td><?php echo esc_html( $row['matched_name'] ); ?></td>
+								<td><?php echo $row['in_sync'] ? '✅ هماهنگ' : '⚠️ نیاز به بازبینی'; ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+				<?php if ( $overview['pages'] > 1 ) : ?>
+					<p class="wdp-bar" style="margin-top:10px">
+						<?php if ( $overview['page'] > 1 ) : ?>
+							<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?' . http_build_query( array_merge( $base_args, array( 'wdp_show_on_sale' => 1, 'wdp_on_sale_page' => $overview['page'] - 1 ) ) ) ) ); ?>">← قبلی</a>
+						<?php endif; ?>
+						<?php if ( $overview['page'] < $overview['pages'] ) : ?>
+							<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?' . http_build_query( array_merge( $base_args, array( 'wdp_show_on_sale' => 1, 'wdp_on_sale_page' => $overview['page'] + 1 ) ) ) ) ); ?>">بعدی →</a>
+						<?php endif; ?>
+					</p>
+				<?php endif; ?>
+				<p class="wdp-hint" style="margin-top:8px">
+					اگر ستون «باید در کدام صفحه باشد» برای محصولی «—» است، یعنی هیچ صفحه تخفیفی با دسته‌بندی و
+					درصد تخفیف همان محصول تطبیق ندارد؛ به دسته‌بندی دقیق آن محصول در این جدول و دسته‌بندی
+					تیک‌خورده روی صفحه تخفیف نگاه کنید — احتمالاً یکی نیستند (مثلاً دو دسته با نام مشابه).
+				</p>
+			<?php endif; ?>
 		<?php endif; ?>
 	</div>
 

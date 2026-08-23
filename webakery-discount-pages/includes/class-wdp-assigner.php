@@ -12,111 +12,257 @@ class WDP_Assigner {
 	const META_PERCENT = '_wdp_discount_percent';
 	const META_FIXED    = '_wdp_discount_fixed';
 
+	/** متاهای قیمت/تخفیف که تغییرشان باید صفحه تخفیف را عوض کند. */
+	const PRICE_META_KEYS = array(
+		'_sale_price',
+		'_regular_price',
+		'_price',
+		'_sale_price_dates_from',
+		'_sale_price_dates_to',
+	);
+
+	/** @var array<int,true> صف اختصاص معوق تا پایان درخواست (جلوگیری از چندبار اجرا) */
+	private static $pending = array();
+
+	/** @var bool */
+	private static $shutdown_hooked = false;
+
+	/** @var bool جلوگیری از بازگشت بی‌نهایت هنگام wp_set_object_terms */
+	private static $assigning = false;
+
 	public static function register() {
-		add_action( 'woocommerce_new_product', array( __CLASS__, 'assign' ), 20, 2 );
-		add_action( 'woocommerce_update_product', array( __CLASS__, 'assign' ), 20, 2 );
-		add_action( 'woocommerce_new_product_variation', array( __CLASS__, 'assign_from_variation' ) );
-		add_action( 'woocommerce_update_product_variation', array( __CLASS__, 'assign_from_variation' ) );
-		add_action( 'save_post_product', array( __CLASS__, 'on_save_post' ), 30, 3 );
+		// مسیر استاندارد ذخیرهٔ محصول/متغیر در ووکامرس (داده تازه است).
+		add_action( 'woocommerce_after_product_object_save', array( __CLASS__, 'on_product_object_save' ), 20, 1 );
+		add_action( 'woocommerce_new_product', array( __CLASS__, 'queue_assign' ), 20 );
+		add_action( 'woocommerce_update_product', array( __CLASS__, 'queue_assign' ), 20 );
+		add_action( 'woocommerce_new_product_variation', array( __CLASS__, 'queue_assign_from_variation' ) );
+		add_action( 'woocommerce_update_product_variation', array( __CLASS__, 'queue_assign_from_variation' ) );
+		add_action( 'save_post_product', array( __CLASS__, 'on_save_post' ), 40, 3 );
+
+		// ویرایش سریع / ویرایش دسته‌ای فهرست محصولات.
+		add_action( 'woocommerce_product_quick_edit_save', array( __CLASS__, 'on_quick_or_bulk_save' ) );
+		add_action( 'woocommerce_product_bulk_edit_save', array( __CLASS__, 'on_quick_or_bulk_save' ) );
+
+		// تغییر مستقیم متای قیمت (افزونه‌ها، ایمپورت، REST که CRUD کامل نزنند).
+		add_action( 'updated_post_meta', array( __CLASS__, 'on_price_meta_changed' ), 20, 4 );
+		add_action( 'added_post_meta', array( __CLASS__, 'on_price_meta_changed' ), 20, 4 );
+		add_action( 'deleted_post_meta', array( __CLASS__, 'on_price_meta_deleted' ), 20, 4 );
+
+		// شروع/پایان تخفیف زمان‌بندی‌شده ووکامرس.
+		add_action( 'woocommerce_scheduled_sales', array( __CLASS__, 'on_scheduled_sales' ), 20 );
 
 		add_filter( 'bulk_actions-edit-product', array( __CLASS__, 'register_bulk_action' ) );
 		add_filter( 'handle_bulk_actions-edit-product', array( __CLASS__, 'handle_bulk_action' ), 10, 3 );
 
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_box' ) );
 
-		// اگر دسته‌بندی محصول (product_cat) عوض شود -- حتی بدون ذخیره کامل محصول
-		// (مثلاً ویرایش سریع یا REST API) -- صفحه تخفیف را دوباره بررسی کن، چون
-		// بعضی صفحه‌های تخفیف ممکن است به دسته‌بندی محدود شده باشند.
+		// اگر دسته‌بندی محصول (product_cat) عوض شود — حتی بدون ذخیره کامل محصول.
 		add_action( 'set_object_terms', array( __CLASS__, 'on_terms_changed' ), 10, 4 );
 	}
 
+	/**
+	 * صف‌کردن اختصاص؛ در shutdown یک‌بار با دادهٔ نهایی دیتابیس اجرا می‌شود.
+	 *
+	 * @param int|WC_Product $product_id_or_object
+	 */
+	public static function queue_assign( $product_id_or_object ) {
+		$product_id = self::normalize_product_id( $product_id_or_object );
+		if ( ! $product_id ) {
+			return;
+		}
+
+		$type = get_post_type( $product_id );
+		if ( 'product_variation' === $type ) {
+			$parent = wp_get_post_parent_id( $product_id );
+			if ( $parent ) {
+				$product_id = (int) $parent;
+			} else {
+				return;
+			}
+		} elseif ( 'product' !== $type ) {
+			return;
+		}
+
+		self::$pending[ $product_id ] = true;
+		if ( ! self::$shutdown_hooked ) {
+			self::$shutdown_hooked = true;
+			add_action( 'shutdown', array( __CLASS__, 'flush_pending' ), 5 );
+		}
+	}
+
+	public static function flush_pending() {
+		if ( ! self::$pending || self::$assigning ) {
+			return;
+		}
+		$ids           = array_keys( self::$pending );
+		self::$pending = array();
+		foreach ( $ids as $id ) {
+			self::assign( $id );
+		}
+	}
+
+	public static function on_product_object_save( $product ) {
+		if ( ! $product instanceof WC_Product ) {
+			return;
+		}
+		if ( $product->is_type( 'variation' ) ) {
+			$parent = $product->get_parent_id();
+			if ( $parent ) {
+				self::queue_assign( $parent );
+			}
+			return;
+		}
+		self::queue_assign( $product->get_id() );
+	}
+
 	public static function on_terms_changed( $object_id, $terms, $tt_ids, $taxonomy ) {
+		if ( self::$assigning ) {
+			return;
+		}
 		if ( 'product_cat' !== $taxonomy || 'product' !== get_post_type( $object_id ) ) {
 			return;
 		}
-		self::assign( $object_id );
+		self::queue_assign( $object_id );
 	}
-
-	/* ─── هوک‌های ووکامرس ──────────────────────────────────────── */
 
 	public static function on_save_post( $post_id, $post, $update ) {
 		if ( wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
 			return;
 		}
-		self::assign( $post_id );
+		self::queue_assign( $post_id );
 	}
 
-	public static function assign_from_variation( $variation_id ) {
-		$parent_id = wp_get_post_parent_id( $variation_id );
-		if ( $parent_id ) {
-			self::assign( $parent_id );
+	public static function on_quick_or_bulk_save( $product ) {
+		if ( $product instanceof WC_Product ) {
+			self::queue_assign( $product->get_id() );
 		}
+	}
+
+	public static function queue_assign_from_variation( $variation_id ) {
+		self::queue_assign( (int) $variation_id );
+	}
+
+	/**
+	 * @param int    $meta_id
+	 * @param int    $object_id
+	 * @param string $meta_key
+	 * @param mixed  $meta_value
+	 */
+	public static function on_price_meta_changed( $meta_id, $object_id, $meta_key, $meta_value = null ) {
+		unset( $meta_id, $meta_value );
+		if ( self::$assigning || ! in_array( (string) $meta_key, self::PRICE_META_KEYS, true ) ) {
+			return;
+		}
+		self::queue_assign( (int) $object_id );
+	}
+
+	/**
+	 * @param array  $meta_ids
+	 * @param int    $object_id
+	 * @param string $meta_key
+	 * @param mixed  $meta_value
+	 */
+	public static function on_price_meta_deleted( $meta_ids, $object_id, $meta_key, $meta_value = null ) {
+		unset( $meta_ids, $meta_value );
+		if ( self::$assigning || ! in_array( (string) $meta_key, self::PRICE_META_KEYS, true ) ) {
+			return;
+		}
+		self::queue_assign( (int) $object_id );
+	}
+
+	public static function on_scheduled_sales() {
+		self::recalculate_all();
+	}
+
+	/**
+	 * @param int|WC_Product $product_id_or_object
+	 * @return int
+	 */
+	private static function normalize_product_id( $product_id_or_object ) {
+		if ( $product_id_or_object instanceof WC_Product ) {
+			return (int) $product_id_or_object->get_id();
+		}
+		return (int) $product_id_or_object;
 	}
 
 	/**
 	 * محصول را بررسی و به صفحه تخفیف درست می‌فرستد (یا از همه صفحه‌ها حذف می‌کند).
-	 * هم با شناسه عددی و هم با شیء WC_Product قابل فراخوانی است (سازگار با
-	 * امضای هوک‌های مختلف نسخه‌های ووکامرس).
+	 * همیشه از دیتابیس تازه خوانده می‌شود تا دادهٔ کهنهٔ کش مانع جابه‌جایی نشود.
 	 *
 	 * @param int|WC_Product $product_id_or_object
-	 * @param WC_Product|null $product
+	 * @param WC_Product|null $product نادیده گرفته می‌شود (سازگاری امضا)
 	 */
 	public static function assign( $product_id_or_object, $product = null ) {
-		if ( ! class_exists( 'WooCommerce' ) ) {
+		unset( $product );
+		if ( ! class_exists( 'WooCommerce' ) || self::$assigning ) {
 			return;
 		}
 
-		if ( $product instanceof WC_Product ) {
-			$product_id = $product->get_id();
-		} elseif ( $product_id_or_object instanceof WC_Product ) {
-			$product    = $product_id_or_object;
-			$product_id = $product->get_id();
-		} else {
-			$product_id = (int) $product_id_or_object;
-			$product    = null;
-		}
-
-		if ( ! $product_id || 'product' !== get_post_type( $product_id ) ) {
-			return;
-		}
-		if ( ! $product ) {
-			$product = wc_get_product( $product_id );
-		}
-		if ( ! $product ) {
+		$product_id = self::normalize_product_id( $product_id_or_object );
+		if ( ! $product_id ) {
 			return;
 		}
 
-		$discount   = self::compute( $product );
-		$categories = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
-		$categories = is_wp_error( $categories ) ? array() : $categories;
-		$term_id    = $discount ? WDP_Util::find_best_match( WDP_Taxonomy::all_rules(), $discount, $categories ) : null;
-
-		if ( $term_id ) {
-			wp_set_object_terms( $product_id, array( $term_id ), WDP_Taxonomy::TAXONOMY, false );
-		} else {
-			wp_set_object_terms( $product_id, array(), WDP_Taxonomy::TAXONOMY, false );
+		$type = get_post_type( $product_id );
+		if ( 'product_variation' === $type ) {
+			$parent = wp_get_post_parent_id( $product_id );
+			if ( $parent ) {
+				self::assign( $parent );
+			}
+			return;
 		}
-
-		if ( $discount ) {
-			update_post_meta( $product_id, self::META_PERCENT, $discount['percent'] );
-			update_post_meta( $product_id, self::META_FIXED, $discount['fixed'] );
-		} else {
-			delete_post_meta( $product_id, self::META_PERCENT );
-			delete_post_meta( $product_id, self::META_FIXED );
+		if ( 'product' !== $type ) {
+			return;
 		}
 
 		if ( function_exists( 'wc_delete_product_transients' ) ) {
 			wc_delete_product_transients( $product_id );
 		}
+		clean_post_cache( $product_id );
+		wp_cache_delete( 'product-' . $product_id, 'products' );
 
-		/**
-		 * پس از اختصاص/حذف صفحه تخفیف یک محصول.
-		 *
-		 * @param int        $product_id
-		 * @param int|null   $term_id
-		 * @param array|null $discount
-		 */
-		do_action( 'wdp_product_assigned', $product_id, $term_id, $discount );
+		$product = wc_get_product( $product_id );
+		if ( ! $product ) {
+			return;
+		}
+
+		self::$assigning = true;
+		unset( self::$pending[ $product_id ] );
+		try {
+			$discount   = self::compute( $product );
+			$categories = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+			$categories = is_wp_error( $categories ) ? array() : array_map( 'intval', $categories );
+			$term_id    = $discount ? WDP_Util::find_best_match( WDP_Taxonomy::all_rules(), $discount, $categories ) : null;
+
+			if ( $term_id ) {
+				wp_set_object_terms( $product_id, array( (int) $term_id ), WDP_Taxonomy::TAXONOMY, false );
+			} else {
+				wp_set_object_terms( $product_id, array(), WDP_Taxonomy::TAXONOMY, false );
+			}
+
+			if ( $discount ) {
+				update_post_meta( $product_id, self::META_PERCENT, $discount['percent'] );
+				update_post_meta( $product_id, self::META_FIXED, $discount['fixed'] );
+			} else {
+				delete_post_meta( $product_id, self::META_PERCENT );
+				delete_post_meta( $product_id, self::META_FIXED );
+			}
+
+			if ( function_exists( 'wc_delete_product_transients' ) ) {
+				wc_delete_product_transients( $product_id );
+			}
+
+			/**
+			 * پس از اختصاص/حذف صفحه تخفیف یک محصول.
+			 *
+			 * @param int        $product_id
+			 * @param int|null   $term_id
+			 * @param array|null $discount
+			 */
+			do_action( 'wdp_product_assigned', $product_id, $term_id, $discount );
+		} finally {
+			self::$assigning = false;
+		}
 	}
 
 	/**
@@ -273,46 +419,85 @@ class WDP_Assigner {
 	}
 
 	/**
-	 * فهرست خلاصه همه محصولاتی که الان در حراج ووکامرس هستند، به‌همراه
-	 * دسته‌بندی، تخفیف محاسبه‌شده و صفحه‌ای که باید در آن باشند —
-	 * برای دیدن یک‌جای همه محصولات به‌جای بررسی تکی هرکدام.
+	 * فهرست خلاصه محصولات حراج (سبک‌تر از diagnose کامل).
+	 * فقط وقتی صریحاً درخواست شود صدا زده می‌شود تا پیشخوان کند نشود.
 	 *
-	 * @return array<int,array>
+	 * @param int $page  صفحه (از ۱)
+	 * @param int $per_page تعداد در هر صفحه
+	 * @return array{rows:array,total:int,page:int,per_page:int,pages:int}
 	 */
-	public static function list_on_sale_overview() {
+	public static function list_on_sale_overview( $page = 1, $per_page = 40 ) {
+		$page     = max( 1, (int) $page );
+		$per_page = max( 5, min( 100, (int) $per_page ) );
+
+		$empty = array(
+			'rows'     => array(),
+			'total'    => 0,
+			'page'     => $page,
+			'per_page' => $per_page,
+			'pages'    => 0,
+		);
+
 		if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'wc_get_product_ids_on_sale' ) ) {
-			return array();
+			return $empty;
 		}
 
-		$rows = array();
-		foreach ( wc_get_product_ids_on_sale() as $product_id ) {
-			$diag = self::diagnose( $product_id );
-			if ( empty( $diag['exists'] ) ) {
+		$ids   = array_values( array_unique( array_map( 'intval', (array) wc_get_product_ids_on_sale() ) ) );
+		$total = count( $ids );
+		$pages = $total ? (int) ceil( $total / $per_page ) : 0;
+		$slice = array_slice( $ids, ( $page - 1 ) * $per_page, $per_page );
+
+		$rules = WDP_Taxonomy::all_rules();
+		$rows  = array();
+
+		foreach ( $slice as $product_id ) {
+			$product = wc_get_product( $product_id );
+			if ( ! $product ) {
 				continue;
 			}
 
-			$matched_name = '—';
-			if ( $diag['matched_term_id'] ) {
-				$t            = get_term( $diag['matched_term_id'], WDP_Taxonomy::TAXONOMY );
-				$matched_name = ( $t && ! is_wp_error( $t ) ) ? $t->name : ( '#' . $diag['matched_term_id'] );
+			$discount   = self::compute( $product );
+			$cat_ids    = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+			$cat_ids    = is_wp_error( $cat_ids ) ? array() : array_map( 'intval', $cat_ids );
+			$cat_names  = array();
+			foreach ( $cat_ids as $cat_id ) {
+				$cat_term = get_term( $cat_id, 'product_cat' );
+				if ( $cat_term && ! is_wp_error( $cat_term ) ) {
+					$cat_names[] = $cat_term->name;
+				}
 			}
 
-			$current = $diag['current_terms'] ?? array();
-			$target  = $diag['matched_term_id'] ? array( $diag['matched_term_id'] ) : array();
+			$matched_id   = $discount ? WDP_Util::find_best_match( $rules, $discount, $cat_ids ) : null;
+			$matched_name = '—';
+			if ( $matched_id ) {
+				$t            = get_term( $matched_id, WDP_Taxonomy::TAXONOMY );
+				$matched_name = ( $t && ! is_wp_error( $t ) ) ? $t->name : ( '#' . $matched_id );
+			}
+
+			$current = wp_get_object_terms( $product_id, WDP_Taxonomy::TAXONOMY, array( 'fields' => 'ids' ) );
+			$current = is_wp_error( $current ) ? array() : array_map( 'intval', $current );
+			$target  = $matched_id ? array( (int) $matched_id ) : array();
 			sort( $current );
 			sort( $target );
 
 			$rows[] = array(
 				'product_id'     => $product_id,
-				'name'           => $diag['name'],
-				'edit_link'      => $diag['edit_link'],
-				'category_names' => $diag['category_names'],
-				'discount'       => $diag['discount'],
+				'name'           => $product->get_name(),
+				'edit_link'      => get_edit_post_link( $product_id, 'raw' ),
+				'category_names' => $cat_names,
+				'discount'       => $discount,
 				'matched_name'   => $matched_name,
 				'in_sync'        => ( $current === $target ),
 			);
 		}
-		return $rows;
+
+		return array(
+			'rows'     => $rows,
+			'total'    => $total,
+			'page'     => $page,
+			'per_page' => $per_page,
+			'pages'    => $pages,
+		);
 	}
 
 	/* ─── اکشن دسته‌ای در فهرست محصولات ──────────────────────────── */
@@ -372,7 +557,7 @@ class WDP_Assigner {
 			echo '<p class="wdp-muted">در هیچ صفحه تخفیفی قرار ندارد.</p>';
 		}
 
-		echo '<p class="wdp-hint">این مقدار خودکار است و بعد از ذخیره محصول یا تغییر دسته‌بندی محصول به‌روزرسانی می‌شود.</p>';
+		echo '<p class="wdp-hint">این مقدار خودکار است و بعد از ذخیره محصول، تغییر قیمت حراج، یا تغییر دسته‌بندی محصول به‌روزرسانی می‌شود.</p>';
 		echo '</div>';
 	}
 }

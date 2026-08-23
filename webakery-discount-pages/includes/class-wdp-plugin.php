@@ -19,10 +19,12 @@ class WDP_Plugin {
 
 	public static function activate() {
 		require_once WDP_PATH . 'includes/class-wdp-taxonomy.php';
+		require_once WDP_PATH . 'includes/class-wdp-cron.php';
 		WDP_Taxonomy::register_taxonomy();
 
+		add_filter( 'cron_schedules', array( 'WDP_Cron', 'schedules' ) );
 		if ( ! wp_next_scheduled( 'wdp_recalculate_all' ) ) {
-			wp_schedule_event( time() + 300, 'hourly', 'wdp_recalculate_all' );
+			wp_schedule_event( time() + 120, 'wdp_every_fifteen_minutes', 'wdp_recalculate_all' );
 		}
 		flush_rewrite_rules();
 	}

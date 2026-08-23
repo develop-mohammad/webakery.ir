@@ -2,22 +2,50 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * بازبینی خودکار ساعتی صفحه‌های تخفیف؛ برای گرفتن شروع/پایان تخفیف
- * زمان‌بندی‌شده ووکامرس، حتی وقتی کسی محصول را دستی باز و ذخیره نمی‌کند.
+ * بازبینی خودکار صفحه‌های تخفیف؛ برای گرفتن شروع/پایان تخفیف
+ * زمان‌بندی‌شده ووکامرس و همگام‌سازی در صورت تغییر قیمت خارج از مسیر ذخیره.
  */
 class WDP_Cron {
 
-	const HOOK = 'wdp_recalculate_all';
+	const HOOK     = 'wdp_recalculate_all';
+	const INTERVAL = 'wdp_every_fifteen_minutes';
 
 	public static function register() {
+		add_filter( 'cron_schedules', array( __CLASS__, 'schedules' ) );
 		add_action( self::HOOK, array( __CLASS__, 'run' ) );
 		add_action( 'init', array( __CLASS__, 'ensure_schedule' ) );
 	}
 
+	/**
+	 * @param array $schedules
+	 * @return array
+	 */
+	public static function schedules( $schedules ) {
+		$schedules[ self::INTERVAL ] = array(
+			'interval' => 15 * MINUTE_IN_SECONDS,
+			'display'  => 'هر ۱۵ دقیقه (صفحه‌های تخفیف Webakery)',
+		);
+		return $schedules;
+	}
+
 	public static function ensure_schedule() {
-		if ( ! wp_next_scheduled( self::HOOK ) ) {
-			wp_schedule_event( time() + 300, 'hourly', self::HOOK );
+		$next = wp_next_scheduled( self::HOOK );
+		if ( ! $next ) {
+			wp_schedule_event( time() + 120, self::INTERVAL, self::HOOK );
+			return;
 		}
+
+		// مهاجرت از زمان‌بندی ساعتی قدیمی به هر ۱۵ دقیقه.
+		$crons = _get_cron_array();
+		if ( ! is_array( $crons ) || empty( $crons[ $next ][ self::HOOK ] ) ) {
+			return;
+		}
+		$event = reset( $crons[ $next ][ self::HOOK ] );
+		if ( empty( $event['schedule'] ) || self::INTERVAL === $event['schedule'] ) {
+			return;
+		}
+		wp_unschedule_event( $next, self::HOOK );
+		wp_schedule_event( time() + 120, self::INTERVAL, self::HOOK );
 	}
 
 	public static function run() {
