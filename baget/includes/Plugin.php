@@ -28,6 +28,25 @@ class Plugin {
 		$this->boot_admin();
 		$this->boot_frontend();
 		$this->boot_checkout();
+		$this->boot_checkout_page();
+	}
+
+	/** تشخیص صفحه پرداخت + اجبار چک‌اوت کلاسیک (بدون شناسه ثابت) */
+	private function boot_checkout_page() {
+		$start = static function () {
+			try {
+				if ( class_exists( 'WooCommerce' ) && class_exists( __NAMESPACE__ . '\\CheckoutPage' ) ) {
+					CheckoutPage::instance();
+				}
+			} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+			}
+		};
+
+		if ( class_exists( 'WooCommerce' ) ) {
+			$start();
+		} else {
+			add_action( 'woocommerce_loaded', $start, 4 );
+		}
 	}
 
 	private function boot_admin() {

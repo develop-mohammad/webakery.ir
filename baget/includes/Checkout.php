@@ -332,7 +332,13 @@ class Checkout {
 	}
 
 	public function enqueue_assets() {
-		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+		$on_checkout = false;
+		if ( class_exists( __NAMESPACE__ . '\\CheckoutPage' ) ) {
+			$on_checkout = CheckoutPage::is_current_checkout();
+		} elseif ( function_exists( 'is_checkout' ) && is_checkout() ) {
+			$on_checkout = true;
+		}
+		if ( ! $on_checkout ) {
 			return;
 		}
 		wp_enqueue_style( 'wccp-checkout', WCCP_URL . 'assets/checkout.css', array(), WCCP_VERSION );
