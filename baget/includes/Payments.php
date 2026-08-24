@@ -269,20 +269,21 @@ class Payments {
 		nocache_headers();
 		status_header( 200 );
 		echo '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
-		echo '<title>خطای پرداخت</title><style>
-			body{font-family:Tahoma,Arial,sans-serif;background:#f8fafc;margin:0;padding:24px;color:#0f172a}
-			.card{max-width:560px;margin:40px auto;background:#fff;border:1px solid #fecaca;border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,.06)}
-			h1{font-size:18px;margin:0 0 12px;color:#b91c1c}
-			.btn{display:inline-block;background:#6d28d9;color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;margin-top:16px}
-			.hint{margin-top:14px;padding:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;font-size:13px;color:#9a3412}
-		</style></head><body><div class="card">';
+		echo '<title>خطای پرداخت</title><style>'
+			. NoHScroll::inline_css_string()
+			. 'body{font-family:Tahoma,Arial,sans-serif;background:#f8fafc;margin:0;padding:24px;color:#0f172a}'
+			. '.card{max-width:560px;width:100%;margin:40px auto;background:#fff;border:1px solid #fecaca;border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,.06);box-sizing:border-box}'
+			. 'h1{font-size:18px;margin:0 0 12px;color:#b91c1c}'
+			. '.btn{display:inline-block;background:#6d28d9;color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;margin-top:16px}'
+			. '.hint{margin-top:14px;padding:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;font-size:13px;color:#9a3412}'
+			. '</style></head><body class="wccp-no-hscroll-lock"><div class="card">';
 		echo '<h1>پرداخت انجام نشد</h1>';
 		echo '<p>' . wp_kses_post( $message ) . '</p>';
 		if ( current_user_can( 'manage_options' ) ) {
 			echo '<div class="hint">مدیر: در <a href="' . esc_url( admin_url( 'admin.php?page=wccp&tab=payments' ) ) . '">Baget ← پرداخت</a> مرچنت‌کد ۳۶ کاراکتری زرین‌پال را وارد کنید. اگر ووکامرس و درگاه فعال دارید، به‌عنوان جایگزین استفاده می‌شود.</div>';
 		}
 		echo '<a class="btn" href="' . esc_url( $back_url ) . '">بازگشت</a>';
-		echo '</div></body></html>';
+		echo '</div><script>' . NoHScroll::inline_js_string() . '</script></body></html>';
 		exit;
 	}
 
@@ -290,13 +291,14 @@ class Payments {
 		nocache_headers();
 		status_header( 200 );
 		echo '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
-		echo '<title>پرداخت موفق</title><style>
-			body{font-family:Tahoma,Arial,sans-serif;background:#ecfdf5;margin:0;padding:24px;color:#0f172a}
-			.card{max-width:560px;margin:40px auto;background:#fff;border:1px solid #bbf7d0;border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,.06)}
-			h1{font-size:20px;margin:0 0 12px;color:#15803d}
-			.meta{color:#64748b;font-size:13px;margin-top:10px}
-			.btn{display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;margin-top:18px}
-		</style></head><body><div class="card">';
+		echo '<title>پرداخت موفق</title><style>'
+			. NoHScroll::inline_css_string()
+			. 'body{font-family:Tahoma,Arial,sans-serif;background:#ecfdf5;margin:0;padding:24px;color:#0f172a}'
+			. '.card{max-width:560px;width:100%;margin:40px auto;background:#fff;border:1px solid #bbf7d0;border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,.06);box-sizing:border-box}'
+			. 'h1{font-size:20px;margin:0 0 12px;color:#15803d}'
+			. '.meta{color:#64748b;font-size:13px;margin-top:10px}'
+			. '.btn{display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;margin-top:18px}'
+			. '</style></head><body class="wccp-no-hscroll-lock"><div class="card">';
 		echo '<h1>✓ پرداخت با موفقیت انجام شد</h1>';
 		echo '<p>' . esc_html( (string) ( $pending['description'] ?? 'سفارش' ) ) . '</p>';
 		echo '<p><strong>مبلغ:</strong> ' . esc_html( number_format_i18n( (int) ( $pending['amount'] ?? 0 ) ) ) . ' تومان</p>';
@@ -304,7 +306,7 @@ class Payments {
 			echo '<p class="meta">کد پیگیری: <code dir="ltr">' . esc_html( (string) $ref_id ) . '</code></p>';
 		}
 		echo '<a class="btn" href="' . esc_url( home_url( '/' ) ) . '">بازگشت به سایت</a>';
-		echo '</div></body></html>';
+		echo '</div><script>' . NoHScroll::inline_js_string() . '</script></body></html>';
 		exit;
 	}
 }

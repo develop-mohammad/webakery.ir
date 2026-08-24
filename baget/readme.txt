@@ -2,12 +2,16 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.5.13
+Stable tag: 1.5.14
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.5.14 =
+* قفل اجباری اسکرول افقی روی تمام صفحات فرانت (CSS + JS)
+* اعمال همان قفل روی صفحات لینک پرداخت /pay/
 
 = 1.5.13 =
 * رفع اسکرول افقی موبایل: مخفی‌سازی billing_phone دیگر با left:-9999px نیست

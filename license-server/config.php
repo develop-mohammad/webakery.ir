@@ -97,12 +97,12 @@ define( 'LS_PLUGIN_META', [
 // نسخهٔ سرور باید از نسخهٔ نصب‌شده روی سایت مشتری بالاتر باشد تا در «افزونه‌ها» آپدیت نمایش داده شود.
 define( 'LS_UPDATES', [
     'wccp' => [
-        'version'      => '1.5.13',
+        'version'      => '1.5.14',
         'package'      => 'https://webakery.ir/license-server/updates/baget.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۵.۱۳: رفع اسکرول افقی موبایل روی صفحه پرداخت + ۱.۵.۱۲ رفع گوتنبرگ/شناسه صفحه.',
+        'changelog'    => 'نسخه ۱.۵.۱۴: قفل اجباری اسکرول افقی روی همه صفحات + رفع‌های گوتنبرگ و موبایل.',
     ],
     'access-levels' => [
         'version'      => '1.5.8',

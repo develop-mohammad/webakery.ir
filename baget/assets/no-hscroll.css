@@ -1,0 +1,85 @@
+/**
+ * Baget — قفل اجباری اسکرول افقی روی کل فرانت.
+ * هیچ صفحه‌ای نباید افقی اسکرول بخورد.
+ */
+
+/* ریشه سند */
+html{
+	overflow-x:hidden!important;
+	max-width:100%!important;
+	width:100%!important;
+	overscroll-behavior-x:none!important;
+}
+body{
+	overflow-x:hidden!important;
+	max-width:100%!important;
+	width:100%!important;
+	position:relative!important;
+	overscroll-behavior-x:none!important;
+}
+
+/* کانتینرهای رایج قالب/ووکامرس/المنتور */
+.site,
+.site-content,
+#page,
+#content,
+#main,
+.wp-site-blocks,
+.entry-content,
+.woocommerce,
+.woocommerce-page,
+.elementor,
+.elementor-section,
+.elementor-container,
+.elementor-widget-wrap,
+.elementor-row,
+.wp-block-group,
+.wp-block-columns{
+	max-width:100%!important;
+	overflow-x:hidden!important;
+}
+
+/* رسانه‌ها و جداول پهن */
+img,
+video,
+iframe,
+embed,
+object,
+svg,
+canvas,
+figure,
+.wp-block-image,
+.wp-block-video,
+.wp-block-embed,
+.wp-block-table,
+table,
+pre,
+code{
+	max-width:100%!important;
+}
+img,
+video,
+svg,
+canvas{
+	height:auto!important;
+}
+table{
+	display:block!important;
+	overflow-x:auto!important;
+}
+
+/* فیلدهای فرم از عرض بیرون نزنند */
+input,
+select,
+textarea,
+button,
+.button,
+.wp-block-button{
+	max-width:100%!important;
+	box-sizing:border-box!important;
+}
+
+/* جلوگیری از المان absolute خارج از چپ/راستِ سندِ قابل‌اسکرول */
+.wccp-no-hscroll-lock{
+	overflow-x:hidden!important;
+}

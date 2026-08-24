@@ -67,11 +67,14 @@ class Plugin {
 
 	private function boot_frontend() {
 		try {
+			if ( class_exists( __NAMESPACE__ . '\\NoHScroll' ) ) {
+				NoHScroll::instance();
+			}
 			if ( class_exists( __NAMESPACE__ . '\\OnlineProducts' ) ) {
 				OnlineProducts::instance();
 			}
 		} catch ( \Throwable $e ) {
-			$this->notice( 'OnlineProducts: ' . $e->getMessage() );
+			$this->notice( 'Frontend: ' . $e->getMessage() );
 		}
 	}
 

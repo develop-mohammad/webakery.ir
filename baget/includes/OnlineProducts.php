@@ -81,11 +81,11 @@ class OnlineProducts {
 
 		status_header( 200 );
 		nocache_headers();
-		echo '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+		echo '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">';
 		echo '<title>' . esc_html( get_the_title( $post ) ) . '</title>';
 		echo '<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">';
-		echo '<style>' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo '</head><body class="wccp-tpl-' . esc_attr( $tpl_key ) . '"><div class="card">';
+		echo '<style>' . NoHScroll::inline_css_string() . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '</head><body class="wccp-tpl-' . esc_attr( $tpl_key ) . ' wccp-no-hscroll-lock"><div class="card">';
 		echo '<h1>' . esc_html( get_the_title( $post ) ) . '</h1>';
 		echo wpautop( wp_kses_post( $post->post_content ) );
 		if ( $error ) {
@@ -93,7 +93,8 @@ class OnlineProducts {
 				. esc_html( $error ) . '</div>';
 		}
 		echo $this->render_product_form( $product_id ); // phpcs:ignore
-		echo '</div></body></html>';
+		echo '</div><script>' . NoHScroll::inline_js_string() . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '</body></html>';
 		exit;
 	}
 
