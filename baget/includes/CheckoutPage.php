@@ -28,10 +28,17 @@ class CheckoutPage {
 			return;
 		}
 
-		// تبدیل بلاک گوتنبرگ به شورت‌کد کلاسیک روی فرانت
+		// از اول شناسه صفحه را برای ووکامرس درست کن (قبل از is_checkout)
+		add_action( 'init', array( $this, 'early_sync_wc_page_id' ), 1 );
+
+		// تبدیل بلاک گوتنبرگ در سطح بلاک (قابل‌اطمینان‌تر از the_content)
+		add_filter( 'render_block', array( $this, 'maybe_replace_checkout_block' ), 5, 2 );
 		add_filter( 'the_content', array( $this, 'maybe_force_classic_content' ), 5 );
-		// برای قالب‌هایی که content را مستقیم می‌خوانند
 		add_action( 'template_redirect', array( $this, 'maybe_disable_block_checkout' ), 1 );
+
+		// خودترمیمی: اگر صفحه بلاکی است، یک‌بار به کلاسیک تبدیل کن
+		add_action( 'admin_init', array( $this, 'maybe_auto_convert_block_checkout' ), 20 );
+		add_action( 'wp', array( $this, 'maybe_auto_convert_block_checkout_front' ), 5 );
 
 		if ( is_admin() ) {
 			add_action( 'admin_notices', array( $this, 'admin_notice_block_checkout' ) );
@@ -86,23 +93,34 @@ class CheckoutPage {
 		if ( '' === $content ) {
 			return false;
 		}
-		if ( false !== strpos( $content, 'woocommerce/checkout' ) ) {
+		// بلاک کامل Checkout (نه classic-shortcode)
+		if ( preg_match( '/<!--\s*wp:woocommerce\/checkout(?![\w-])/', $content ) ) {
 			return true;
 		}
-		if ( false !== strpos( $content, 'wp:woocommerce/checkout' ) ) {
+		if ( false !== strpos( $content, 'wp-block-woocommerce-checkout' ) ) {
 			return true;
 		}
-		// بلاک‌های قدیمی‌تر / cart-checkout
-		if ( preg_match( '/<!--\s*wp:woocommerce\/(?:checkout|cart-checkout)/', $content ) ) {
-			return true;
+		if ( function_exists( 'has_block' ) ) {
+			// has_block روی رشته محتوا
+			if ( has_block( 'woocommerce/checkout', $content ) ) {
+				return true;
+			}
 		}
 		return false;
 	}
 
-	/** آیا شورت‌کد کلاسیک دارد؟ */
+	/** آیا شورت‌کد کلاسیک یا بلاک classic-shortcode دارد؟ */
 	public static function content_has_classic_shortcode( $content ) {
 		$content = (string) $content;
-		return false !== strpos( $content, '[woocommerce_checkout' );
+		if ( false !== strpos( $content, '[woocommerce_checkout' ) ) {
+			return true;
+		}
+		// بلاک شورت‌کد کلاسیک ووکامرس
+		if ( false !== strpos( $content, 'woocommerce/classic-shortcode' )
+			&& false !== strpos( $content, '"shortcode":"checkout"' ) ) {
+			return true;
+		}
+		return false;
 	}
 
 	/** وضعیت صفحه پرداخت فعلی */
@@ -112,16 +130,16 @@ class CheckoutPage {
 		$wc_id   = function_exists( 'wc_get_page_id' ) ? (int) wc_get_page_id( 'checkout' ) : 0;
 
 		return array(
-			'page_id'        => $id,
-			'wc_page_id'     => $wc_id,
-			'override_id'    => self::override_page_id(),
-			'title'          => $id ? get_the_title( $id ) : '',
-			'permalink'      => $id ? get_permalink( $id ) : '',
-			'has_block'      => self::content_has_checkout_block( $content ),
-			'has_shortcode'  => self::content_has_classic_shortcode( $content ),
-			'force_classic'  => self::force_classic_enabled(),
-			'wc_mismatch'    => ( $id > 0 && $wc_id > 0 && $id !== $wc_id ),
-			'wc_missing'     => ( $wc_id <= 0 || ! self::is_usable_page( $wc_id ) ),
+			'page_id'       => $id,
+			'wc_page_id'    => $wc_id,
+			'override_id'   => self::override_page_id(),
+			'title'         => $id ? get_the_title( $id ) : '',
+			'permalink'     => $id ? get_permalink( $id ) : '',
+			'has_block'     => self::content_has_checkout_block( $content ),
+			'has_shortcode' => self::content_has_classic_shortcode( $content ),
+			'force_classic' => self::force_classic_enabled(),
+			'wc_mismatch'   => ( $id > 0 && $wc_id > 0 && $id !== $wc_id ),
+			'wc_missing'    => ( $wc_id <= 0 || ! self::is_usable_page( $wc_id ) ),
 		);
 	}
 
@@ -134,10 +152,9 @@ class CheckoutPage {
 			array(
 				'post_type'      => 'page',
 				'post_status'    => 'publish',
-				'posts_per_page' => 50,
+				'posts_per_page' => 100,
 				'orderby'        => 'modified',
 				'order'          => 'DESC',
-				's'              => 'woocommerce',
 			)
 		);
 
@@ -152,41 +169,78 @@ class CheckoutPage {
 			}
 		}
 
-		// جستجوی گسترده‌تر بدون s (ممکن است عنوان صفحه فارسی باشد)
-		if ( ! $block_id ) {
-			$pages = get_posts(
-				array(
-					'post_type'      => 'page',
-					'post_status'    => 'publish',
-					'posts_per_page' => 100,
-					'orderby'        => 'ID',
-					'order'          => 'DESC',
-				)
-			);
-			foreach ( $pages as $page ) {
-				$content = (string) $page->post_content;
-				if ( self::content_has_classic_shortcode( $content ) ) {
-					return (int) $page->ID;
-				}
-				if ( ! $block_id && self::content_has_checkout_block( $content ) ) {
-					$block_id = (int) $page->ID;
-				}
-			}
-		}
-
 		return $block_id;
 	}
 
 	/** آیا صفحه فعلی، صفحه پرداخت است؟ (مستقل از شناسه ثابت) */
 	public static function is_current_checkout() {
-		if ( function_exists( 'is_checkout' ) && is_checkout() && ( ! function_exists( 'is_order_received_page' ) || ! is_order_received_page() ) ) {
+		if ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) {
+			return false;
+		}
+		if ( function_exists( 'is_checkout' ) && is_checkout() ) {
 			return true;
 		}
-		if ( ! is_page() ) {
+		if ( ! is_singular( 'page' ) ) {
 			return false;
 		}
 		$resolved = self::resolve_id();
-		return $resolved > 0 && (int) get_queried_object_id() === $resolved;
+		$qid      = (int) get_queried_object_id();
+		if ( $resolved > 0 && $qid === $resolved ) {
+			return true;
+		}
+		// صفحه جاری خودش بلاک/شورت‌کد چک‌اوت دارد
+		$post = get_post( $qid );
+		if ( $post ) {
+			$content = (string) $post->post_content;
+			if ( self::content_has_checkout_block( $content ) || self::content_has_classic_shortcode( $content ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * اگر Baget صفحه دیگری انتخاب کرده، از init برای ووکامرس همگام کن.
+	 */
+	public function early_sync_wc_page_id() {
+		$override = self::override_page_id();
+		if ( $override <= 0 || ! self::is_usable_page( $override ) ) {
+			// اگر ووکامرس به صفحه حذف‌شده اشاره می‌کند، صفحه پیدا‌شده را ست کن
+			$wc_id = (int) get_option( 'woocommerce_checkout_page_id', 0 );
+			if ( $wc_id > 0 && ! self::is_usable_page( $wc_id ) ) {
+				$found = self::find_checkout_page_id();
+				if ( $found > 0 ) {
+					update_option( 'woocommerce_checkout_page_id', $found, false );
+				}
+			}
+			return;
+		}
+		$wc_id = (int) get_option( 'woocommerce_checkout_page_id', 0 );
+		if ( $wc_id !== $override ) {
+			update_option( 'woocommerce_checkout_page_id', $override, false );
+		}
+	}
+
+	/**
+	 * جایگزین کردن بلاک Checkout گوتنبرگ هنگام رندر.
+	 *
+	 * @param string $block_content
+	 * @param array  $block
+	 * @return string
+	 */
+	public function maybe_replace_checkout_block( $block_content, $block ) {
+		if ( is_admin() || ! self::force_classic_enabled() ) {
+			return $block_content;
+		}
+		$name = isset( $block['blockName'] ) ? (string) $block['blockName'] : '';
+		if ( 'woocommerce/checkout' !== $name ) {
+			return $block_content;
+		}
+		if ( ! self::is_current_checkout() ) {
+			// حتی اگر is_checkout هنوز false باشد، بلاک checkout را کلاسیک کن
+			return do_shortcode( '[woocommerce_checkout]' );
+		}
+		return do_shortcode( '[woocommerce_checkout]' );
 	}
 
 	/**
@@ -206,11 +260,8 @@ class CheckoutPage {
 		if ( self::content_has_classic_shortcode( $content ) && ! self::content_has_checkout_block( $content ) ) {
 			return $content;
 		}
-		if ( ! self::content_has_checkout_block( $content ) && self::content_has_classic_shortcode( $content ) ) {
-			return $content;
-		}
-		// بلاک گوتنبرگ یا محتوای خالی/ناقص → شورت‌کد کلاسیک
 		if ( self::content_has_checkout_block( $content ) || ! self::content_has_classic_shortcode( $content ) ) {
+			// رشته شورت‌کد را برگردان تا do_shortcode معمولی وردپرس اجرا شود
 			return '[woocommerce_checkout]';
 		}
 		return $content;
@@ -220,25 +271,17 @@ class CheckoutPage {
 	 * جلوگیری از رندر بلاک Checkout ووکامرس وقتی اجبار کلاسیک فعال است.
 	 */
 	public function maybe_disable_block_checkout() {
-		if ( ! self::force_classic_enabled() || ! self::is_current_checkout() ) {
+		if ( ! self::force_classic_enabled() ) {
 			return;
 		}
-		// Cart/Checkout blocks package
-		if ( class_exists( '\Automattic\WooCommerce\Blocks\Package' ) ) {
-			add_filter( 'woocommerce_feature_block_checkout_enabled', '__return_false', 100 );
+		if ( ! self::is_current_checkout() ) {
+			return;
 		}
-		// اطمینان از اینکه WC صفحه را به‌عنوان checkout بشناسد
+
+		add_filter( 'woocommerce_feature_block_checkout_enabled', '__return_false', 100 );
+
 		$resolved = self::resolve_id();
-		$wc_id    = function_exists( 'wc_get_page_id' ) ? (int) wc_get_page_id( 'checkout' ) : 0;
-		if ( $resolved > 0 && $resolved !== $wc_id && self::is_usable_page( $resolved ) ) {
-			add_filter(
-				'woocommerce_get_checkout_page_id',
-				static function () use ( $resolved ) {
-					return $resolved;
-				},
-				100
-			);
-			// برخی نسخه‌ها از option مستقیم می‌خوانند
+		if ( $resolved > 0 && self::is_usable_page( $resolved ) ) {
 			add_filter(
 				'pre_option_woocommerce_checkout_page_id',
 				static function () use ( $resolved ) {
@@ -247,6 +290,45 @@ class CheckoutPage {
 				100
 			);
 		}
+	}
+
+	/** خودترمیمی در ادمین */
+	public function maybe_auto_convert_block_checkout() {
+		if ( ! self::force_classic_enabled() ) {
+			return;
+		}
+		if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		if ( get_transient( 'wccp_auto_convert_lock' ) ) {
+			return;
+		}
+		$status = self::status();
+		if ( empty( $status['has_block'] ) || empty( $status['page_id'] ) ) {
+			return;
+		}
+		set_transient( 'wccp_auto_convert_lock', 1, 5 * MINUTE_IN_SECONDS );
+		self::convert_page_to_classic( (int) $status['page_id'] );
+	}
+
+	/** خودترمیمی سبک در فرانت (فقط یک‌بار در روز) */
+	public function maybe_auto_convert_block_checkout_front() {
+		if ( is_admin() || ! self::force_classic_enabled() || ! self::is_current_checkout() ) {
+			return;
+		}
+		if ( get_transient( 'wccp_auto_convert_front' ) ) {
+			return;
+		}
+		$id = self::resolve_id();
+		if ( $id <= 0 ) {
+			return;
+		}
+		$content = (string) get_post_field( 'post_content', $id );
+		if ( ! self::content_has_checkout_block( $content ) ) {
+			return;
+		}
+		set_transient( 'wccp_auto_convert_front', 1, DAY_IN_SECONDS );
+		self::convert_page_to_classic( $id );
 	}
 
 	/** ذخیره تنظیمات صفحه پرداخت از فرم ادمین */
@@ -259,12 +341,16 @@ class CheckoutPage {
 		update_option( self::OPTION_FORCE, ! empty( $data['force_classic'] ) ? '1' : '0', false );
 
 		$sync_wc = ! empty( $data['sync_wc_page'] );
-		if ( $sync_wc && $page_id > 0 ) {
-			update_option( 'woocommerce_checkout_page_id', $page_id, false );
-		} elseif ( $sync_wc && $page_id <= 0 ) {
-			$found = self::find_checkout_page_id();
-			if ( $found > 0 ) {
-				update_option( 'woocommerce_checkout_page_id', $found, false );
+		$target  = $page_id > 0 ? $page_id : self::find_checkout_page_id();
+		if ( $sync_wc && $target > 0 ) {
+			update_option( 'woocommerce_checkout_page_id', $target, false );
+		}
+
+		// اگر صفحه بلاکی است و اجبار کلاسیک روشن است، همین‌جا تبدیل کن
+		if ( ! empty( $data['force_classic'] ) && $target > 0 ) {
+			$content = (string) get_post_field( 'post_content', $target );
+			if ( self::content_has_checkout_block( $content ) ) {
+				self::convert_page_to_classic( $target );
 			}
 		}
 
@@ -277,10 +363,17 @@ class CheckoutPage {
 		if ( ! self::is_usable_page( $page_id ) ) {
 			return new \WP_Error( 'page', 'صفحه پرداخت پیدا نشد.' );
 		}
+
+		$classic = '<!-- wp:woocommerce/classic-shortcode {"shortcode":"checkout"} -->'
+			. '<div class="wp-block-woocommerce-classic-shortcode wc-block-checkout">'
+			. '[woocommerce_checkout]'
+			. '</div>'
+			. '<!-- /wp:woocommerce/classic-shortcode -->';
+
 		$updated = wp_update_post(
 			array(
 				'ID'           => $page_id,
-				'post_content' => '<!-- wp:shortcode -->[woocommerce_checkout]<!-- /wp:shortcode -->',
+				'post_content' => $classic,
 			),
 			true
 		);
@@ -290,11 +383,13 @@ class CheckoutPage {
 		update_option( 'woocommerce_checkout_page_id', $page_id, false );
 		update_option( self::OPTION_PAGE_ID, $page_id, false );
 		update_option( self::OPTION_FORCE, '1', false );
+		delete_transient( 'wccp_auto_convert_lock' );
+		delete_transient( 'wccp_auto_convert_front' );
 		return $page_id;
 	}
 
 	public function handle_fix_checkout_page() {
-		if ( ! current_user_can( Admin::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'manage_options' ) ) {
 			wp_die( 'دسترسی غیرمجاز' );
 		}
 		check_admin_referer( 'wccp_fix_checkout_page' );
@@ -312,7 +407,7 @@ class CheckoutPage {
 	}
 
 	public function handle_convert_classic() {
-		if ( ! current_user_can( Admin::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'manage_options' ) ) {
 			wp_die( 'دسترسی غیرمجاز' );
 		}
 		check_admin_referer( 'wccp_convert_classic_checkout' );
@@ -334,7 +429,7 @@ class CheckoutPage {
 	}
 
 	public function admin_notice_block_checkout() {
-		if ( ! current_user_can( Admin::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
@@ -361,10 +456,10 @@ class CheckoutPage {
 		echo '<div class="notice notice-warning"><p><strong>Baget:</strong> ';
 		if ( ! empty( $status['has_block'] ) ) {
 			echo 'صفحه پرداخت با گوتنبرگ/بلاک ساخته شده و فیلدهای سفارشی Baget روی بلاک کار نمی‌کنند. ';
-			echo '<a class="button button-small" href="' . esc_url( $convert_url ) . '">تبدیل به چک‌اوت کلاسیک</a> ';
+			echo '<a class="button button-small button-primary" href="' . esc_url( $convert_url ) . '">تبدیل به چک‌اوت کلاسیک</a> ';
 		}
 		if ( ! empty( $status['wc_missing'] ) || ! empty( $status['wc_mismatch'] ) ) {
-			echo 'شناسه صفحه پرداخت ووکامرس با صفحه واقعی یکی نیست (دیگر ثابت ۷ فرض نمی‌شود). ';
+			echo 'شناسه صفحه پرداخت ووکامرس با صفحه واقعی یکی نیست. ';
 			echo '<a href="' . esc_url( $settings_url ) . '">انتخاب صفحه پرداخت در Baget</a>';
 		}
 		echo '</p></div>';

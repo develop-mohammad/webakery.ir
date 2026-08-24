@@ -97,12 +97,12 @@ define( 'LS_PLUGIN_META', [
 // نسخهٔ سرور باید از نسخهٔ نصب‌شده روی سایت مشتری بالاتر باشد تا در «افزونه‌ها» آپدیت نمایش داده شود.
 define( 'LS_UPDATES', [
     'wccp' => [
-        'version'      => '1.5.10',
+        'version'      => '1.5.12',
         'package'      => 'https://webakery.ir/license-server/updates/baget.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۵.۱۰: رفع قطعی ذخیره‌نشدن فیلد/رضایت‌نامه در قالب + اصلاح تداخل فرم مودال.',
+        'changelog'    => 'نسخه ۱.۵.۱۲: رفع صفحه پرداخت گوتنبرگ — تبدیل خودکار بلاک Checkout به کلاسیک بدون وابستگی به شناسه ثابت ۷.',
     ],
     'access-levels' => [
         'version'      => '1.5.8',

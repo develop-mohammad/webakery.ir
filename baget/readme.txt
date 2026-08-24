@@ -2,12 +2,18 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.5.11
+Stable tag: 1.5.12
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.5.12 =
+* تبدیل قوی‌تر بلاک Checkout گوتنبرگ از طریق render_block
+* خودترمیمی خودکار صفحه بلاکی به چک‌اوت کلاسیک
+* همگام‌سازی زودهنگام شناسه صفحه با ووکامرس (رفع is_checkout وقتی شناسه عوض شده)
+* انتشار ZIP در مسیر آپدیت license-server
 
 = 1.5.11 =
 * رفع ناسازگاری صفحه پرداخت ساخته‌شده با گوتنبرگ/بلاک Checkout
