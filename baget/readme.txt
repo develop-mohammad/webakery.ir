@@ -2,12 +2,16 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.5.12
+Stable tag: 1.5.13
 License: GPLv2 or later
 
 مدیریت فیلدهای پرداخت ووکامرس و محصولات آنلاین با جابه‌جایی و ذخیره مطمئن.
 
 == Changelog ==
+
+= 1.5.13 =
+* رفع اسکرول افقی موبایل: مخفی‌سازی billing_phone دیگر با left:-9999px نیست
+* محدود کردن عرض فیلدها و overflow-x روی فرم پرداخت
 
 = 1.5.12 =
 * تبدیل قوی‌تر بلاک Checkout گوتنبرگ از طریق render_block

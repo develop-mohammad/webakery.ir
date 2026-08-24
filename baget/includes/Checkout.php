@@ -218,10 +218,10 @@ class Checkout {
 			$fields['billing'] = array();
 		}
 		$fields['billing']['billing_phone'] = array(
-			'type'              => 'tel',
+			'type'              => 'hidden',
 			'required'          => false,
-			'label'             => 'شماره موبایل',
-			'class'             => array( 'form-row-wide', 'wccp-hidden-billing-phone', 'wccp-maps-billing-phone' ),
+			'label'             => '',
+			'class'             => array( 'wccp-hidden-billing-phone', 'wccp-maps-billing-phone' ),
 			'priority'          => 5,
 			'custom_attributes' => array( 'data-wccp-synced' => '1', 'autocomplete' => 'tel' ),
 		);

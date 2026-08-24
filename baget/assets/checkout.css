@@ -1,8 +1,25 @@
 .wccp-choice-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
-.wccp-choice{display:flex;align-items:center;gap:8px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;background:#fafafa;cursor:pointer}
-.wccp-choice input{margin:0}
+.wccp-choice{display:flex;align-items:center;gap:8px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;background:#fafafa;cursor:pointer;max-width:100%;box-sizing:border-box}
+.wccp-choice input{margin:0;flex-shrink:0}
 .wccp-radio-list .wccp-choice:has(input:checked){border-color:#6d28d9;background:#f5f3ff}
 .wccp-checkbox-list .wccp-choice:has(input:checked){border-color:#6d28d9;background:#f5f3ff}
+
+/* جلوگیری از اسکرول افقی موبایل روی فرم پرداخت */
+.woocommerce-checkout,
+.woocommerce-checkout .woocommerce,
+.woocommerce-checkout form.checkout,
+.woocommerce-checkout form.woocommerce-checkout{
+	max-width:100%;
+	overflow-x:clip;
+}
+@supports not (overflow:clip){
+	.woocommerce-checkout,
+	.woocommerce-checkout .woocommerce,
+	.woocommerce-checkout form.checkout,
+	.woocommerce-checkout form.woocommerce-checkout{
+		overflow-x:hidden;
+	}
+}
 
 /* جداسازی واضح بین فیلدهای سوال */
 .woocommerce-checkout .form-row.wccp-field-radio,
@@ -19,6 +36,8 @@
 	border-bottom:1px dashed #d8d0ef!important;
 	clear:both;
 	width:100%;
+	max-width:100%;
+	box-sizing:border-box;
 }
 .woocommerce-checkout .form-row[class*="wccp-field-"]:last-of-type{
 	border-bottom:0!important;
@@ -38,6 +57,10 @@
 	border-radius:12px;
 	padding:14px 16px;
 	color:#1e3a8a;
+	max-width:100%;
+	box-sizing:border-box;
+	overflow-wrap:anywhere;
+	word-break:break-word;
 }
 .wccp-info-title{
 	display:block;
@@ -56,10 +79,51 @@
 .wccp-consent-box{background:#ecfdf5;border-color:#bbf7d0}
 .wccp-consent-check{
 	display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:12px;
-	background:#fff;border:1px solid #86efac;border-radius:10px;cursor:pointer;font-weight:700;color:#065f46
+	background:#fff;border:1px solid #86efac;border-radius:10px;cursor:pointer;font-weight:700;color:#065f46;
+	max-width:100%;box-sizing:border-box
 }
-.wccp-consent-check input{margin-top:3px}
+.wccp-consent-check input{margin-top:3px;flex-shrink:0}
+.wccp-consent-check span{min-width:0;overflow-wrap:anywhere}
+
+/*
+ * اگر به‌هر دلیل billing_phone به‌صورت form-row رندر شد،
+ * بدون left:-9999px مخفی شود (آن روش اسکرول افقی موبایل می‌سازد).
+ */
 .woocommerce-checkout .form-row.wccp-hidden-billing-phone,
 .woocommerce-checkout p#billing_phone_field.wccp-hidden-billing-phone{
-	position:absolute!important;left:-9999px!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;border:0!important
+	position:absolute!important;
+	inset:0 auto auto 0!important;
+	width:1px!important;
+	height:1px!important;
+	margin:0!important;
+	padding:0!important;
+	overflow:hidden!important;
+	clip:rect(0,0,0,0)!important;
+	clip-path:inset(50%)!important;
+	border:0!important;
+	opacity:0!important;
+	pointer-events:none!important;
+	contain:strict!important;
+}
+.woocommerce-checkout .form-row.wccp-hidden-billing-phone label,
+.woocommerce-checkout .form-row.wccp-hidden-billing-phone .optional,
+.woocommerce-checkout .form-row.wccp-hidden-billing-phone .required{
+	display:none!important;
+}
+.woocommerce-checkout .form-row.wccp-hidden-billing-phone input,
+.woocommerce-checkout input.wccp-hidden-billing-phone[type="hidden"],
+.woocommerce-checkout input.wccp-hidden-billing-phone{
+	position:absolute!important;
+	left:0!important;
+	top:0!important;
+	width:1px!important;
+	height:1px!important;
+	margin:0!important;
+	padding:0!important;
+	border:0!important;
+	opacity:0!important;
+}
+.woocommerce-checkout form.checkout,
+.woocommerce-checkout form.woocommerce-checkout{
+	position:relative;
 }

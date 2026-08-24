@@ -426,19 +426,24 @@ class Templates {
 		if ( 'minimal' === $layout ) {
 			$extra = '.card{box-shadow:none;border:1px solid rgba(0,0,0,.08)}';
 		} elseif ( 'cover' === $layout ) {
-			$extra = 'body{display:flex;align-items:center;min-height:100vh}.card{margin:24px auto;width:100%}';
+			$extra = 'body{display:flex;align-items:center;min-height:100vh;min-height:100dvh}.card{margin:24px auto;width:100%;max-width:520px;box-sizing:border-box}';
 		}
 
-		return "body{font-family:Vazirmatn,Tahoma,sans-serif;background:{$bg};margin:0;padding:24px;color:{$text}}"
-			. ".card{max-width:520px;margin:40px auto;background:{$card};border-radius:{$radius}px;padding:28px;box-shadow:0 16px 40px rgba(15,23,42,.12)}"
-			. "h1{color:{$text};margin:0 0 12px;font-size:24px}"
-			. ".wccp-field{display:flex;flex-direction:column;gap:8px;margin:0 0 16px;padding:0 0 16px;border-bottom:1px dashed rgba(100,116,139,.35);font-size:13px;color:{$muted}}"
+		return "*,*:before,*:after{box-sizing:border-box}"
+			. "html,body{max-width:100%;overflow-x:clip}"
+			. "body{font-family:Vazirmatn,Tahoma,sans-serif;background:{$bg};margin:0;padding:16px;color:{$text}}"
+			. "@media(min-width:480px){body{padding:24px}}"
+			. ".card{max-width:520px;width:100%;margin:24px auto;background:{$card};border-radius:{$radius}px;padding:20px;box-shadow:0 16px 40px rgba(15,23,42,.12)}"
+			. "@media(min-width:480px){.card{margin:40px auto;padding:28px}}"
+			. "h1{color:{$text};margin:0 0 12px;font-size:22px;overflow-wrap:anywhere}"
+			. "@media(min-width:480px){h1{font-size:24px}}"
+			. ".wccp-field{display:flex;flex-direction:column;gap:8px;margin:0 0 16px;padding:0 0 16px;border-bottom:1px dashed rgba(100,116,139,.35);font-size:13px;color:{$muted};max-width:100%}"
 			. ".wccp-field:last-of-type{border-bottom:0;margin-bottom:8px;padding-bottom:4px}"
 			. ".wccp-field-label{font-weight:700;color:{$text};font-size:14px}"
-			. "input,textarea,select{border:1px solid rgba(100,116,139,.35);border-radius:12px;padding:12px;font-family:inherit;background:{$card};color:{$text}}"
+			. "input,textarea,select{width:100%;max-width:100%;border:1px solid rgba(100,116,139,.35);border-radius:12px;padding:12px;font-family:inherit;background:{$card};color:{$text}}"
 			. ".wccp-choice-list{display:flex;flex-direction:column;gap:10px;margin-top:6px}"
-			. ".wccp-choice{display:flex;align-items:center;gap:8px;padding:12px 14px;border:1px solid rgba(100,116,139,.3);border-radius:12px;background:transparent;cursor:pointer;font-weight:500;color:{$text}}"
-			. ".wccp-choice input{margin:0}"
+			. ".wccp-choice{display:flex;align-items:center;gap:8px;padding:12px 14px;border:1px solid rgba(100,116,139,.3);border-radius:12px;background:transparent;cursor:pointer;font-weight:500;color:{$text};max-width:100%}"
+			. ".wccp-choice input{margin:0;width:auto;flex-shrink:0}"
 			. ".wccp-radio-list .wccp-choice:has(input:checked),.wccp-checkbox-list .wccp-choice:has(input:checked){border-color:{$prim};background:rgba(109,40,217,.08)}"
 			. ".wccp-price{font-weight:700;color:{$prim};margin:12px 0;padding-top:8px;border-top:1px solid rgba(100,116,139,.2)}"
 			. "button,.wccp-pay-btn{background:{$prim};color:{$btn};border:0;border-radius:14px;padding:12px 18px;font-weight:700;width:100%;cursor:pointer;font-family:inherit;margin-top:8px}"
