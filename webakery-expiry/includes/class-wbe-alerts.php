@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class WBE_Alerts {
 
 	const TRANSIENT = 'wbe_alerts_cache';
+	const STATE     = 'wbe_notify_state';
 
 	public static function register() {
 		add_action( 'admin_notices', array( __CLASS__, 'admin_notice' ), 20 );
@@ -19,11 +20,13 @@ class WBE_Alerts {
 	}
 
 	public static function thresholds() {
-		$s = WBE_Settings::get();
+		$points = WBE_Settings::alert_points();
+		$last   = $points ? (int) $points[ count( $points ) - 1 ] : 60;
 		return array(
-			'soon'  => max( 0, (int) $s['alert_soon_days'] ),
-			'month' => max( 1, (int) $s['alert_month_days'] ),
-			'two'   => max( 1, (int) $s['alert_two_month_days'] ),
+			'points' => $points,
+			'soon'   => isset( $points[0] ) ? (int) $points[0] : 7,
+			'month'  => isset( $points[1] ) ? (int) $points[1] : $last,
+			'two'    => $last,
 		);
 	}
 
@@ -32,21 +35,23 @@ class WBE_Alerts {
 	}
 
 	/**
-	 * @return array{soon:array,month:array,two_months:array,expired:array,count:int}
+	 * @return array{points:array<int,array>,expired:array,count:int,order:int[]}
 	 */
 	public static function groups() {
 		$cached = get_transient( self::TRANSIENT );
-		if ( is_array( $cached ) && isset( $cached['count'] ) ) {
+		if ( is_array( $cached ) && isset( $cached['count'], $cached['points'] ) ) {
 			return $cached;
 		}
-		$t = self::thresholds();
+		$points = WBE_Settings::alert_points();
 		$groups = array(
-			'soon'       => array(),
-			'month'      => array(),
-			'two_months' => array(),
-			'expired'    => array(),
-			'count'      => 0,
+			'points'  => array(),
+			'expired' => array(),
+			'count'   => 0,
+			'order'   => $points,
 		);
+		foreach ( $points as $p ) {
+			$groups['points'][ $p ] = array();
+		}
 		if ( ! function_exists( 'wc_get_product' ) ) {
 			return $groups;
 		}
@@ -65,13 +70,13 @@ class WBE_Alerts {
 					'days'      => -1,
 					'expiry_fa' => '—',
 					'stock'     => 0,
-					'urgency'   => 'expired',
+					'point'     => 'expired',
 				);
 				continue;
 			}
-			$days = (int) floor( ( strtotime( $active['expiry'] . ' UTC' ) - strtotime( $today . ' UTC' ) ) / DAY_IN_SECONDS );
-			$u    = WBE_Engine::urgency( $days, $t['soon'], $t['month'], $t['two'] );
-			if ( '' === $u ) {
+			$days  = (int) floor( ( strtotime( $active['expiry'] . ' UTC' ) - strtotime( $today . ' UTC' ) ) / DAY_IN_SECONDS );
+			$point = WBE_Engine::match_point( $days, $points );
+			if ( null === $point ) {
 				continue;
 			}
 			$item = array(
@@ -80,19 +85,27 @@ class WBE_Alerts {
 				'days'      => $days,
 				'expiry_fa' => WBE_Jalali::format_ymd( $active['expiry'], $cal, true ),
 				'stock'     => (int) $active['stock'],
-				'urgency'   => $u,
+				'point'     => $point,
 			);
-			$groups[ $u ][] = $item;
+			if ( 'expired' === $point ) {
+				$groups['expired'][] = $item;
+			} else {
+				$groups['points'][ (int) $point ][] = $item;
+			}
 		}
-		foreach ( array( 'soon', 'month', 'two_months', 'expired' ) as $k ) {
+		foreach ( $points as $p ) {
 			usort(
-				$groups[ $k ],
+				$groups['points'][ $p ],
 				function ( $a, $b ) {
 					return (int) $a['days'] - (int) $b['days'];
 				}
 			);
 		}
-		$groups['count'] = count( $groups['soon'] ) + count( $groups['month'] ) + count( $groups['two_months'] ) + count( $groups['expired'] );
+		$n = count( $groups['expired'] );
+		foreach ( $groups['points'] as $list ) {
+			$n += count( $list );
+		}
+		$groups['count'] = $n;
 		set_transient( self::TRANSIENT, $groups, 10 * MINUTE_IN_SECONDS );
 		return $groups;
 	}
@@ -102,13 +115,15 @@ class WBE_Alerts {
 		return (int) $g['count'];
 	}
 
-	public static function labels() {
-		return array(
-			'soon'       => 'تا ۷ روز / فوری',
-			'month'      => 'تا یک ماه',
-			'two_months' => 'تا دو ماه',
-			'expired'    => 'بدون بچ فعال',
-		);
+	public static function flat_items() {
+		$g    = self::groups();
+		$flat = array();
+		foreach ( $g['order'] as $p ) {
+			if ( ! empty( $g['points'][ $p ] ) ) {
+				$flat = array_merge( $flat, $g['points'][ $p ] );
+			}
+		}
+		return array_merge( $flat, $g['expired'] );
 	}
 
 	public static function admin_notice() {
@@ -128,24 +143,17 @@ class WBE_Alerts {
 		}
 		$report = admin_url( 'admin.php?page=webakery-expiry&wbe_near=1' );
 		$hide   = wp_nonce_url( add_query_arg( 'wbe_dismiss_alert', '1' ), 'wbe_dismiss_alert' );
-		$soon_n = count( $g['soon'] );
-		$m_n    = count( $g['month'] );
-		$t_n    = count( $g['two_months'] );
-		$e_n    = count( $g['expired'] );
 		$bits   = array();
-		if ( $soon_n ) {
-			$bits[] = $soon_n . ' فوری';
+		foreach ( $g['order'] as $p ) {
+			$n = isset( $g['points'][ $p ] ) ? count( $g['points'][ $p ] ) : 0;
+			if ( $n ) {
+				$bits[] = $n . ' مورد تا ' . $p . ' روز';
+			}
 		}
-		if ( $m_n ) {
-			$bits[] = $m_n . ' تا یک ماه';
+		if ( $g['expired'] ) {
+			$bits[] = count( $g['expired'] ) . ' بدون بچ فعال';
 		}
-		if ( $t_n ) {
-			$bits[] = $t_n . ' تا دو ماه';
-		}
-		if ( $e_n ) {
-			$bits[] = $e_n . ' بدون بچ فعال';
-		}
-		$preview = array_slice( array_merge( $g['soon'], $g['month'], $g['two_months'] ), 0, 5 );
+		$preview = array_slice( self::flat_items(), 0, 5 );
 		echo '<div class="notice notice-warning wbe-alarm" dir="rtl"><p><strong>هشدار انقضای کالا:</strong> ';
 		echo esc_html( implode( '، ', $bits ) );
 		echo ' — <a href="' . esc_url( $report ) . '">گزارش</a>';
@@ -174,29 +182,29 @@ class WBE_Alerts {
 	}
 
 	public static function render_widget() {
-		$g     = self::groups();
-		$labels = self::labels();
-		$t      = self::thresholds();
-		$labels['soon']       = 'تا ' . (int) $t['soon'] . ' روز';
-		$labels['month']      = 'تا یک ماه (' . (int) $t['month'] . ' روز)';
-		$labels['two_months'] = 'تا دو ماه (' . (int) $t['two'] . ' روز)';
+		$g = self::groups();
 		if ( $g['count'] <= 0 ) {
-			echo '<p>محصول نزدیک به انقضایی نیست.</p>';
+			echo '<p>محصولی داخل بازه‌های هشدار شما نیست. آستانه‌ها را از تنظیمات انقضای کالا تغییر دهید.</p>';
 			return;
 		}
 		echo '<div class="wbe-widget" dir="rtl">';
-		foreach ( array( 'soon', 'month', 'two_months', 'expired' ) as $k ) {
-			if ( empty( $g[ $k ] ) ) {
+		foreach ( $g['order'] as $p ) {
+			if ( empty( $g['points'][ $p ] ) ) {
 				continue;
 			}
-			echo '<p class="wbe-widget-h wbe-widget-h--' . esc_attr( $k ) . '">' . esc_html( $labels[ $k ] . ' — ' . count( $g[ $k ] ) . ' مورد' ) . '</p>';
+			echo '<p class="wbe-widget-h">تا ' . esc_html( (string) $p ) . ' روز — ' . esc_html( (string) count( $g['points'][ $p ] ) ) . ' مورد</p>';
 			echo '<ul>';
-			foreach ( array_slice( $g[ $k ], 0, 8 ) as $item ) {
+			foreach ( array_slice( $g['points'][ $p ], 0, 8 ) as $item ) {
 				echo '<li><a href="' . esc_url( get_edit_post_link( $item['id'] ) ) . '">' . esc_html( $item['name'] ) . '</a>';
-				if ( 'expired' !== $k ) {
-					echo ' <span class="wbe-muted">' . esc_html( $item['expiry_fa'] . ' · ' . $item['days'] . ' روز · موجودی ' . $item['stock'] ) . '</span>';
-				}
-				echo '</li>';
+				echo ' <span class="wbe-muted">' . esc_html( $item['expiry_fa'] . ' · ' . $item['days'] . ' روز · موجودی ' . $item['stock'] ) . '</span></li>';
+			}
+			echo '</ul>';
+		}
+		if ( $g['expired'] ) {
+			echo '<p class="wbe-widget-h wbe-widget-h--expired">بدون بچ فعال — ' . esc_html( (string) count( $g['expired'] ) ) . ' مورد</p>';
+			echo '<ul>';
+			foreach ( array_slice( $g['expired'], 0, 8 ) as $item ) {
+				echo '<li><a href="' . esc_url( get_edit_post_link( $item['id'] ) ) . '">' . esc_html( $item['name'] ) . '</a></li>';
 			}
 			echo '</ul>';
 		}
@@ -237,30 +245,63 @@ class WBE_Alerts {
 		return $d === WBE_Jalali::today_ymd();
 	}
 
-	public static function digest_text() {
-		$g = self::groups();
-		if ( $g['count'] <= 0 ) {
+	public static function digest_text( $items = null ) {
+		if ( null === $items ) {
+			$items = self::flat_items();
+		}
+		if ( empty( $items ) ) {
 			return '';
 		}
-		$lines = array( 'هشدار انقضای کالا (' . $g['count'] . ' مورد):' );
-		$map   = array(
-			'soon'       => 'فوری',
-			'month'      => 'تا یک ماه',
-			'two_months' => 'تا دو ماه',
-			'expired'    => 'بدون بچ فعال',
-		);
-		foreach ( $map as $k => $label ) {
-			if ( empty( $g[ $k ] ) ) {
-				continue;
+		$lines = array( 'هشدار انقضای کالا (' . count( $items ) . ' مورد):' );
+		$by    = array();
+		foreach ( $items as $item ) {
+			$key = isset( $item['point'] ) ? $item['point'] : 'other';
+			if ( ! isset( $by[ $key ] ) ) {
+				$by[ $key ] = array();
 			}
+			$by[ $key ][] = $item;
+		}
+		foreach ( $by as $key => $list ) {
+			$label = ( 'expired' === $key ) ? 'بدون بچ فعال' : ( 'تا ' . $key . ' روز' );
 			$names = array();
-			foreach ( array_slice( $g[ $k ], 0, 5 ) as $item ) {
-				$names[] = $item['name'] . ( isset( $item['days'] ) && $item['days'] >= 0 ? ' (' . $item['days'] . 'روز)' : '' );
+			foreach ( array_slice( $list, 0, 5 ) as $item ) {
+				$names[] = $item['name'] . ( isset( $item['days'] ) && (int) $item['days'] >= 0 ? ' (' . $item['days'] . 'روز)' : '' );
 			}
-			$more   = count( $g[ $k ] ) > 5 ? ' و ' . ( count( $g[ $k ] ) - 5 ) . ' مورد دیگر' : '';
+			$more    = count( $list ) > 5 ? ' و ' . ( count( $list ) - 5 ) . ' مورد دیگر' : '';
 			$lines[] = $label . ': ' . implode( '، ', $names ) . $more;
 		}
 		return implode( "\n", $lines );
+	}
+
+	/**
+	 * در حالت on_point فقط محصولاتی که تازه وارد یک آستانه شده‌اند.
+	 *
+	 * @return array
+	 */
+	public static function due_for_send() {
+		$g     = self::groups();
+		$s     = WBE_Settings::get();
+		$items = self::flat_items();
+		if ( 'daily' === $s['notify_mode'] ) {
+			return $items;
+		}
+		$state = get_option( self::STATE, array() );
+		if ( ! is_array( $state ) ) {
+			$state = array();
+		}
+		$due     = array();
+		$current = array();
+		foreach ( $items as $item ) {
+			$id    = (int) $item['id'];
+			$point = (string) $item['point'];
+			$current[ $id ] = $point;
+			$prev = isset( $state[ $id ] ) ? (string) $state[ $id ] : '';
+			if ( $prev !== $point ) {
+				$due[] = $item;
+			}
+		}
+		update_option( self::STATE, $current, false );
+		return $due;
 	}
 
 	public static function notify_daily() {
@@ -271,19 +312,19 @@ class WBE_Alerts {
 		if ( get_option( 'wbe_last_notify_date' ) === $today ) {
 			return;
 		}
-		$g = self::groups();
-		if ( $g['count'] <= 0 ) {
+		$items = self::due_for_send();
+		if ( empty( $items ) ) {
 			update_option( 'wbe_last_notify_date', $today, false );
 			return;
 		}
 		$s    = WBE_Settings::get();
-		$text = self::digest_text();
+		$text = self::digest_text( $items );
 		if ( ! empty( $s['email_alert'] ) && $text ) {
 			$to = trim( (string) $s['email_to'] );
 			if ( $to === '' || ! is_email( $to ) ) {
 				$to = get_option( 'admin_email' );
 			}
-			wp_mail( $to, 'هشدار انقضای کالا — ' . $g['count'] . ' مورد', $text );
+			wp_mail( $to, 'هشدار انقضای کالا — ' . count( $items ) . ' مورد', $text );
 		}
 		if ( ! empty( $s['sms_alert'] ) && $text ) {
 			WBE_SMS::send( $s['sms_phone'], $text );

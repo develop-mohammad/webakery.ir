@@ -83,16 +83,29 @@
         </div>
       </section>
 
+      <section class="card" id="wbe-settings-preview">
+        <strong>تنظیمات — آستانه نوتیف ادمین</strong>
+        <p class="muted">خودتان مشخص کنید چند روز مانده به انقضا نوتیف بیاید. با + هر آستانه‌ای که لازم دارید اضافه کنید.</p>
+        <div id="wbe-alert-points">
+          <p class="wbe-point-row">وقتی <input type="number" min="0" max="3650" class="small-text" name="wbe_settings[alert_points][]" value="7" /> روز تا انقضا مانده <button type="button" class="button-link wbe-remove-point">حذف</button></p>
+          <p class="wbe-point-row">وقتی <input type="number" min="0" max="3650" class="small-text" name="wbe_settings[alert_points][]" value="30" /> روز تا انقضا مانده <button type="button" class="button-link wbe-remove-point">حذف</button></p>
+          <p class="wbe-point-row">وقتی <input type="number" min="0" max="3650" class="small-text" name="wbe_settings[alert_points][]" value="60" /> روز تا انقضا مانده <button type="button" class="button-link wbe-remove-point">حذف</button></p>
+        </div>
+        <button type="button" class="button wbe-add-point">+ افزودن آستانه</button>
+        <p class="muted" style="margin-top:12px">زمان ارسال ایمیل / پیامک</p>
+        <label><input type="radio" name="notify_mode" value="on_point" checked /> فقط وقتی محصول تازه به یکی از آستانه‌ها رسید</label><br>
+        <label><input type="radio" name="notify_mode" value="daily" /> هر روز، تا وقتی داخل بازه هستند</label>
+      </section>
+
       <section class="card">
         <strong>آلارم پیشخوان</strong>
         <div class="notice notice-warning wbe-alarm" style="border-right:4px solid #dba617;background:#fff8e5;padding:8px 12px">
-          <p><strong>هشدار انقضای کالا:</strong> ۱ فوری، ۱ تا یک ماه</p>
+          <p><strong>هشدار انقضای کالا:</strong> ۱ مورد تا ۷ روز، ۱ مورد تا ۳۰ روز</p>
           <ul class="wbe-alarm-list">
             <li>شیر خشک نمونه — ۱۴۰۵/۰۱/۱۰ (۱۲ روز)</li>
             <li>بیسکویت جو — ۱۴۰۵/۰۲/۲۰ (۴۵ روز)</li>
           </ul>
         </div>
-        <p class="muted">همین هشدار روی خانهٔ پیشخوان، نوار بالا، و در صورت تنظیم با ایمیل/پیامک روزانه هم می‌رود.</p>
       </section>
 
       <section class="card">
@@ -118,12 +131,33 @@
       body.appendChild(row);
     });
     document.addEventListener('click', function (e) {
-      if (!e.target.classList.contains('wbe-remove-batch')) return;
-      e.preventDefault();
-      var tr = e.target.closest('tr');
-      var body = document.getElementById('wbe-batches-body');
-      if (body.querySelectorAll('tr').length <= 1) return;
-      if (tr && tr.id !== 'wbe-batch-tpl') tr.remove();
+      if (e.target.classList.contains('wbe-remove-batch')) {
+        e.preventDefault();
+        var tr = e.target.closest('tr');
+        var body = document.getElementById('wbe-batches-body');
+        if (body.querySelectorAll('tr').length <= 1) return;
+        if (tr && tr.id !== 'wbe-batch-tpl') tr.remove();
+        return;
+      }
+      if (e.target.classList.contains('wbe-add-point')) {
+        e.preventDefault();
+        var box = document.getElementById('wbe-alert-points');
+        var p = document.createElement('p');
+        p.className = 'wbe-point-row';
+        p.innerHTML = 'وقتی <input type="number" min="0" max="3650" class="small-text" name="wbe_settings[alert_points][]" value="14" /> روز تا انقضا مانده <button type="button" class="button-link wbe-remove-point">حذف</button>';
+        box.appendChild(p);
+        return;
+      }
+      if (e.target.classList.contains('wbe-remove-point')) {
+        e.preventDefault();
+        var box = document.getElementById('wbe-alert-points');
+        if (box.querySelectorAll('.wbe-point-row').length <= 1) {
+          var input = box.querySelector('input');
+          if (input) input.value = '7';
+          return;
+        }
+        e.target.closest('.wbe-point-row').remove();
+      }
     });
   </script>
 </body>

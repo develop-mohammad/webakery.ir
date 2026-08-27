@@ -36,17 +36,36 @@ $sms_msg = isset( $_GET['wbe_sms'] ) ? sanitize_key( wp_unslash( $_GET['wbe_sms'
 		</table>
 
 		<h2>هشدار انقضای نزدیک</h2>
-		<p class="description">آلارم پیشخوان همیشه کار می‌کند. ایمیل روزانه راحت‌ترین روش بدون پنل پیامک است. پیامک اختیاری است.</p>
+		<p class="description">خودتان مشخص کنید چند روز مانده به انقضا نوتیف بیاید. با + هر آستانه‌ای که لازم دارید اضافه کنید (مثلاً ۹۰، ۶۰، ۳۰، ۷، ۳، ۱).</p>
 		<table class="form-table" role="presentation">
 			<tr>
-				<th scope="row">بازه هشدار (روز)</th>
+				<th scope="row">آستانهٔ ارسال نوتیف</th>
 				<td>
-					فوری:
-					<input type="number" min="0" max="365" class="small-text" name="<?php echo esc_attr( $opt ); ?>[alert_soon_days]" value="<?php echo esc_attr( $s['alert_soon_days'] ); ?>" />
-					یک ماه:
-					<input type="number" min="1" max="365" class="small-text" name="<?php echo esc_attr( $opt ); ?>[alert_month_days]" value="<?php echo esc_attr( $s['alert_month_days'] ); ?>" />
-					دو ماه:
-					<input type="number" min="1" max="730" class="small-text" name="<?php echo esc_attr( $opt ); ?>[alert_two_month_days]" value="<?php echo esc_attr( $s['alert_two_month_days'] ); ?>" />
+					<div id="wbe-alert-points">
+						<?php
+						$points = WBE_Settings::alert_points();
+						if ( empty( $points ) ) {
+							$points = array( 7, 30, 60 );
+						}
+						foreach ( $points as $p ) :
+							?>
+							<p class="wbe-point-row">
+								وقتی
+								<input type="number" min="0" max="3650" class="small-text" name="<?php echo esc_attr( $opt ); ?>[alert_points][]" value="<?php echo esc_attr( $p ); ?>" />
+								روز تا انقضا مانده
+								<button type="button" class="button-link wbe-remove-point">حذف</button>
+							</p>
+						<?php endforeach; ?>
+					</div>
+					<button type="button" class="button wbe-add-point">+ افزودن آستانه</button>
+					<p class="description">پیشخوان همیشه محصولاتی که داخل این بازه‌ها هستند را نشان می‌دهد.</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">زمان ارسال ایمیل / پیامک</th>
+				<td>
+					<label><input type="radio" name="<?php echo esc_attr( $opt ); ?>[notify_mode]" value="on_point" <?php checked( $s['notify_mode'], 'on_point' ); ?> /> فقط وقتی محصول تازه به یکی از آستانه‌ها رسید (بدون تکرار هر روز)</label><br>
+					<label><input type="radio" name="<?php echo esc_attr( $opt ); ?>[notify_mode]" value="daily" <?php checked( $s['notify_mode'], 'daily' ); ?> /> هر روز، تا وقتی داخل بازه هستند</label>
 				</td>
 			</tr>
 			<tr>

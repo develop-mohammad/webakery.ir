@@ -77,8 +77,21 @@
 	display: none !important;
 }
 
-.wbe-remove-batch {
+.wbe-remove-batch,
+.wbe-remove-point {
 	color: #b91c1c;
+}
+
+.wbe-point-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0 0 8px;
+}
+
+.wbe-point-row input.small-text {
+	width: 5em;
 }
 
 .wbe-alarm-list {

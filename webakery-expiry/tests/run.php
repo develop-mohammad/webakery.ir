@@ -135,5 +135,16 @@ wbe_check( 'شماره فارسی نرمال می‌شود', '09123456789' === W
 wbe_check( 'شماره با ۹۸', '09123456789' === WBE_Engine::normalize_phone( '989123456789' ) );
 wbe_check( 'شماره نامعتبر رد می‌شود', '' === WBE_Engine::normalize_phone( '123' ) );
 
+echo "\n=== آستانه نوتیف سفارشی ===\n";
+$pts = WBE_Engine::clean_points( array( '۶۰', 7, 30, 30, 'x' ) );
+wbe_check( 'آستانه‌ها یکتا و مرتب می‌شوند', array( 7, 30, 60 ) === $pts, implode( ',', $pts ) );
+wbe_check( '۵ روز روی آستانه ۷ می‌افتد', 7 === WBE_Engine::match_point( 5, array( 7, 30, 60 ) ) );
+wbe_check( '۲۰ روز روی آستانه ۳۰ می‌افتد', 30 === WBE_Engine::match_point( 20, array( 7, 30, 60 ) ) );
+wbe_check( '۴۵ روز روی آستانه ۶۰ می‌افتد', 60 === WBE_Engine::match_point( 45, array( 7, 30, 60 ) ) );
+wbe_check( '۹۰ روز خارج از بازه است', null === WBE_Engine::match_point( 90, array( 7, 30, 60 ) ) );
+wbe_check( 'ادمین می‌تواند آستانه ۹۰ بگذارد', 90 === WBE_Engine::match_point( 80, array( 3, 90 ) ) );
+wbe_check( 'همان روز روی کوچک‌ترین آستانه می‌افتد', 3 === WBE_Engine::match_point( 0, array( 3, 14 ) ) );
+wbe_check( 'آستانه صفر همان روز انقضا است', 0 === WBE_Engine::match_point( 0, array( 0, 7 ) ) );
+
 echo "\n--- {$pass} ok, {$fail} fail ---\n";
 exit( $fail ? 1 : 0 );

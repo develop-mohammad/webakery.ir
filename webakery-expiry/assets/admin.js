@@ -38,4 +38,25 @@
 		}
 		$(this).closest('tr').remove();
 	});
+
+	$(document).on('click', '.wbe-add-point', function (e) {
+		e.preventDefault();
+		var $box = $('#wbe-alert-points');
+		if (!$box.length) {
+			return;
+		}
+		$box.append(
+			'<p class="wbe-point-row">وقتی <input type="number" min="0" max="3650" class="small-text" name="wbe_settings[alert_points][]" value="14" /> روز تا انقضا مانده <button type="button" class="button-link wbe-remove-point">حذف</button></p>'
+		);
+	});
+
+	$(document).on('click', '.wbe-remove-point', function (e) {
+		e.preventDefault();
+		var $box = $('#wbe-alert-points');
+		if ($box.find('.wbe-point-row').length <= 1) {
+			$box.find('input').val('7');
+			return;
+		}
+		$(this).closest('.wbe-point-row').remove();
+	});
 })(jQuery);

@@ -185,6 +185,48 @@ class WBE_Engine {
 		return '';
 	}
 
+	public static function match_point( $days, array $points ) {
+		if ( null === $days || $days === '' ) {
+			return null;
+		}
+		$days = (int) $days;
+		if ( $days < 0 ) {
+			return 'expired';
+		}
+		$points = self::clean_points( $points );
+		foreach ( $points as $point ) {
+			if ( $days <= $point ) {
+				return (int) $point;
+			}
+		}
+		return null;
+	}
+
+	public static function clean_points( $points ) {
+		$out = array();
+		if ( ! is_array( $points ) ) {
+			$points = array( $points );
+		}
+		foreach ( $points as $p ) {
+			if ( class_exists( 'WBE_Jalali' ) ) {
+				$raw = trim( WBE_Jalali::fa_to_en( $p ) );
+			} else {
+				$raw = trim( (string) $p );
+			}
+			$raw = str_replace( array( ',', '٬', '،', ' ' ), '', $raw );
+			if ( $raw === '' || ! is_numeric( $raw ) ) {
+				continue;
+			}
+			$n = (int) $raw;
+			if ( $n >= 0 && $n <= 3650 ) {
+				$out[] = $n;
+			}
+		}
+		$out = array_values( array_unique( $out ) );
+		sort( $out, SORT_NUMERIC );
+		return $out;
+	}
+
 	public static function normalize_phone( $raw ) {
 		$digits = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::fa_to_en( $raw ) : (string) $raw;
 		$digits = preg_replace( '/\D+/', '', $digits );

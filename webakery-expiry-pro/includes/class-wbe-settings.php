@@ -19,6 +19,8 @@ class WBE_Settings {
 			'alert_soon_days'      => 7,
 			'alert_month_days'     => 30,
 			'alert_two_month_days' => 60,
+			'alert_points'         => array( 7, 30, 60 ),
+			'notify_mode'          => 'on_point',
 			'dash_alarm'           => 1,
 			'dash_widget'          => 1,
 			'email_alert'          => 1,
@@ -46,6 +48,22 @@ class WBE_Settings {
 		return ( 'gregorian' === $s['calendar'] ) ? 'gregorian' : 'jalali';
 	}
 
+	public static function alert_points() {
+		$s = self::get();
+		$points = isset( $s['alert_points'] ) ? $s['alert_points'] : array();
+		$points = WBE_Engine::clean_points( $points );
+		if ( empty( $points ) ) {
+			$points = WBE_Engine::clean_points(
+				array(
+					isset( $s['alert_soon_days'] ) ? $s['alert_soon_days'] : 7,
+					isset( $s['alert_month_days'] ) ? $s['alert_month_days'] : 30,
+					isset( $s['alert_two_month_days'] ) ? $s['alert_two_month_days'] : 60,
+				)
+			);
+		}
+		return $points ? $points : array( 7, 30, 60 );
+	}
+
 	public static function sanitize( $input ) {
 		$input = is_array( $input ) ? $input : array();
 		$d     = self::defaults();
@@ -57,6 +75,8 @@ class WBE_Settings {
 			'alert_soon_days'      => max( 0, min( 365, (int) ( $input['alert_soon_days'] ?? $d['alert_soon_days'] ) ) ),
 			'alert_month_days'     => max( 1, min( 365, (int) ( $input['alert_month_days'] ?? $d['alert_month_days'] ) ) ),
 			'alert_two_month_days' => max( 1, min( 730, (int) ( $input['alert_two_month_days'] ?? $d['alert_two_month_days'] ) ) ),
+			'alert_points'         => isset( $input['alert_points'] ) ? WBE_Engine::clean_points( $input['alert_points'] ) : $d['alert_points'],
+			'notify_mode'          => ( isset( $input['notify_mode'] ) && 'daily' === $input['notify_mode'] ) ? 'daily' : 'on_point',
 			'dash_alarm'           => empty( $input['dash_alarm'] ) ? 0 : 1,
 			'dash_widget'          => empty( $input['dash_widget'] ) ? 0 : 1,
 			'email_alert'          => empty( $input['email_alert'] ) ? 0 : 1,
@@ -73,13 +93,17 @@ class WBE_Settings {
 		if ( ! in_array( $out['sms_provider'], $allowed, true ) ) {
 			$out['sms_provider'] = 'melipayamak';
 		}
-		if ( $out['alert_month_days'] < $out['alert_soon_days'] ) {
-			$out['alert_month_days'] = $out['alert_soon_days'];
+		if ( empty( $out['alert_points'] ) ) {
+			$out['alert_points'] = array( 7, 30, 60 );
 		}
-		if ( $out['alert_two_month_days'] < $out['alert_month_days'] ) {
-			$out['alert_two_month_days'] = $out['alert_month_days'];
+		$out['alert_soon_days']      = $out['alert_points'][0];
+		$mid                         = (int) floor( ( count( $out['alert_points'] ) - 1 ) / 2 );
+		$out['alert_month_days']     = $out['alert_points'][ $mid ];
+		$out['alert_two_month_days'] = $out['alert_points'][ count( $out['alert_points'] ) - 1 ];
+		$out['near_expiry_days']     = max( $out['near_expiry_days'], $out['alert_two_month_days'] );
+		if ( class_exists( 'WBE_Alerts' ) ) {
+			WBE_Alerts::flush();
 		}
-		$out['near_expiry_days'] = max( $out['near_expiry_days'], $out['alert_two_month_days'] );
 		return $out;
 	}
 }
