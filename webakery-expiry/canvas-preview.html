@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>انقضای کالا — پیش‌نمایش</title>
+<link rel="stylesheet" href="assets/admin.css" />
+<link rel="stylesheet" href="assets/frontend.css" />
+<style>
+  body { margin: 0; font-family: Tahoma, sans-serif; background: #f0f0f1; color: #1d2327; }
+  .page { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; }
+  .note { color: #646970; font-size: 13px; margin: 0 0 18px; }
+  .grid { display: grid; gap: 18px; }
+  .card { background: #fff; border: 1px solid #c3c4c7; padding: 16px; }
+  .price { font-size: 22px; margin: 0; }
+  .muted { color: #646970; font-size: 13px; }
+  .shop { font-family: Georgia, "Times New Roman", serif; color: #111; background: #fff; }
+  .button { background:#2271b1; color:#fff; border:0; padding:6px 12px; cursor:pointer; font:inherit; }
+  .wbe-remove-batch { background:none; border:0; cursor:pointer; color:#b91c1c; font:inherit; }
+  input.short { padding:4px 8px; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1>انقضای کالا — پیش‌نمایش رابط</h1>
+    <p class="note">سازنده webakery.ir — محمد حاجی مهدیخانی. مشتری دکمه + نمی‌بیند؛ فقط تاریخ انقضای بچ فعال نمایش داده می‌شود.</p>
+
+    <div class="grid">
+      <section class="card">
+        <strong>پیشخوان — کنار قیمت محصول</strong>
+        <p class="muted">دکمه + فقط اینجا است. تقویم این محصول: شمسی (override).</p>
+        <div class="wbe-product-panel" id="wbe-product-panel">
+          <div class="wbe-batches">
+            <div class="wbe-batches__head">
+              <strong>قیمت رزرو، موجودی و تاریخ انقضا</strong>
+              <button type="button" class="button wbe-add-batch" id="demo-add">+ افزودن بچ</button>
+            </div>
+            <table class="widefat wbe-batches-table" style="width:100%;border-collapse:collapse">
+              <thead>
+                <tr><th>قیمت</th><th>موجودی</th><th>تاریخ انقضا</th><th></th></tr>
+              </thead>
+              <tbody id="wbe-batches-body">
+                <tr>
+                  <td><input class="short" value="180000" dir="ltr" /></td>
+                  <td><input class="short" value="12" /></td>
+                  <td><input class="short" value="1405/01/10" dir="ltr" /></td>
+                  <td><button type="button" class="wbe-remove-batch">حذف</button></td>
+                </tr>
+                <tr>
+                  <td><input class="short" value="165000" dir="ltr" /></td>
+                  <td><input class="short" value="40" /></td>
+                  <td><input class="short" value="1405/06/01" dir="ltr" /></td>
+                  <td><button type="button" class="wbe-remove-batch">حذف</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <table hidden>
+              <tbody>
+                <tr id="wbe-batch-tpl">
+                  <td><input class="short" data-name="price" placeholder="قیمت" dir="ltr" /></td>
+                  <td><input class="short" data-name="stock" placeholder="موجودی" /></td>
+                  <td><input class="short wbe-date" data-name="expiry" placeholder="۱۴۰۵/۰۶/۰۵" dir="ltr" /></td>
+                  <td><button type="button" class="wbe-remove-batch">حذف</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card shop">
+        <h2>شیر خشک نمونه</h2>
+        <p class="price">۱۸۰٬۰۰۰ تومان</p>
+        <div class="wbe-expiry wbe-expiry--compact">
+          <span class="wbe-expiry__label">تاریخ انقضا</span>
+          <span class="wbe-expiry__value">۱۴۰۵/۰۱/۱۰</span>
+        </div>
+        <p>توضیحات محصول با فونت همین قالب. قیمت رزرو (۱۶۵ هزار) تا صفر شدن موجودی ۱۲ تایی نمایش داده نمی‌شود.</p>
+        <div class="wbe-expiry wbe-expiry--block">
+          <span class="wbe-expiry__label">تاریخ انقضا</span>
+          <span class="wbe-expiry__value">۱۴۰۵/۰۱/۱۰</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <strong>گزارش — نزدیک به انقضا</strong>
+        <table class="widefat wbe-report" style="width:100%;margin-top:10px;border-collapse:collapse">
+          <thead>
+            <tr><th>محصول</th><th>برند</th><th>انقضا</th><th>موجودی</th><th>فروش</th></tr>
+          </thead>
+          <tbody>
+            <tr class="wbe-row--near"><td>شیر خشک نمونه</td><td>نستله</td><td>۱۴۰۵/۰۱/۱۰</td><td>12</td><td>48</td></tr>
+            <tr><td>بیسکویت جو</td><td>کامور</td><td>۱۴۰۵/۰۹/۲۰</td><td>80</td><td>12</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="assets/admin.js"></script>
+</body>
+</html>

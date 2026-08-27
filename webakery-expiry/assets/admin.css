@@ -1,0 +1,82 @@
+/* انقضای کالا — پیشخوان RTL، بدون گرادیان بنفش */
+
+.wbe-wrap {
+	direction: rtl;
+}
+
+.wbe-ver {
+	font-size: 12px;
+	font-weight: 600;
+	color: #64748b;
+	background: #f1f5f9;
+	border-radius: 99px;
+	padding: 2px 10px;
+}
+
+.wbe-sub {
+	color: #64748b;
+	margin: 0 0 16px;
+	font-size: 13px;
+}
+
+.wbe-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 12px 0 16px;
+}
+
+.wbe-check {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.wbe-muted {
+	color: #94a3b8;
+	font-size: 12px;
+}
+
+.wbe-report td,
+.wbe-report th {
+	text-align: right;
+}
+
+.wbe-row--near td {
+	background: #fffbeb;
+}
+
+.wbe-row--empty td {
+	background: #fef2f2;
+}
+
+.wbe-product-panel {
+	margin: 12px 0 8px;
+	padding: 12px 12px 4px;
+	border: 1px solid #dcdcde;
+	background: #fff;
+	max-width: 640px;
+}
+
+.wbe-batches__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 6px;
+}
+
+.wbe-batches-table input.short {
+	width: 100%;
+	max-width: 160px;
+}
+
+.wbe-batches-table [hidden],
+.wbe-product-panel [hidden] {
+	display: none !important;
+}
+
+.wbe-remove-batch {
+	color: #b91c1c;
+}

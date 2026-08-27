@@ -1,0 +1,14 @@
+=== انقضای کالا | Webakery Expiry ===
+Contributors: webakery.ir
+Requires at least: 5.8
+Requires PHP: 7.4
+Stable tag: 1.0.0
+License: GPLv2 or later
+
+بچ قیمت، موجودی و تاریخ انقضا برای ووکامرس با سوییچ خودکار رزرو.
+
+== Changelog ==
+
+= 1.0.0 =
+* انتشار اولیه نسخه رایگان بدون لایسنس
+* سازنده: webakery.ir — محمد حاجی مهدیخانی
