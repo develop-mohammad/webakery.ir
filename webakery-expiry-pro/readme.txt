@@ -2,12 +2,15 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 
 بچ قیمت، موجودی و تاریخ انقضا برای ووکامرس — نسخه لایسنس‌دار.
 
 == Changelog ==
+
+= 1.0.1 =
+* هشدار پیشخوان، ویجت، نشان منو، ایمیل روزانه و پیامک اختیاری
 
 = 1.0.0 =
 * انتشار اولیه نسخه پرو

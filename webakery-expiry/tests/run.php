@@ -124,5 +124,16 @@ wbe_check( 'هدر فارسی دارد', false !== strpos( $xml, 'تاریخ ا�
 wbe_check( 'ردیف نزدیک به انقضا رنگ جدا دارد', false !== strpos( $xml, 'ss:StyleID="near"' ) );
 wbe_check( 'نام محصول در خروجی است', false !== strpos( $xml, 'شیر خشک' ) );
 
+echo "\n=== هشدار انقضا ===\n";
+wbe_check( '۵ روز = فوری', 'soon' === WBE_Engine::urgency( 5, 7, 30, 60 ) );
+wbe_check( '۲۰ روز = یک ماه', 'month' === WBE_Engine::urgency( 20, 7, 30, 60 ) );
+wbe_check( '۴۵ روز = دو ماه', 'two_months' === WBE_Engine::urgency( 45, 7, 30, 60 ) );
+wbe_check( '۹۰ روز = بدون هشدار', '' === WBE_Engine::urgency( 90, 7, 30, 60 ) );
+wbe_check( 'تاریخ گذشته = منقضی', 'expired' === WBE_Engine::urgency( -1, 7, 30, 60 ) );
+wbe_check( 'مرز ۷ روز هنوز فوری است', 'soon' === WBE_Engine::urgency( 7, 7, 30, 60 ) );
+wbe_check( 'شماره فارسی نرمال می‌شود', '09123456789' === WBE_Engine::normalize_phone( '۰۹۱۲۳۴۵۶۷۸۹' ) );
+wbe_check( 'شماره با ۹۸', '09123456789' === WBE_Engine::normalize_phone( '989123456789' ) );
+wbe_check( 'شماره نامعتبر رد می‌شود', '' === WBE_Engine::normalize_phone( '123' ) );
+
 echo "\n--- {$pass} ok, {$fail} fail ---\n";
 exit( $fail ? 1 : 0 );

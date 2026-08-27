@@ -52,6 +52,9 @@ class WBE_Product {
 		if ( $sync ) {
 			self::sync_wc( $product_id );
 		}
+		if ( class_exists( 'WBE_Alerts' ) ) {
+			WBE_Alerts::flush();
+		}
 	}
 
 	public static function active( $product_id ) {

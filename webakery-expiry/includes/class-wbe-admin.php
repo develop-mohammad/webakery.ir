@@ -23,10 +23,12 @@ class WBE_Admin {
 	}
 
 	public function menu() {
-		$cap = 'manage_woocommerce';
+		$cap   = 'manage_woocommerce';
+		$count = ( class_exists( 'WBE_Alerts' ) && WBE_Plugin::licensed() ) ? WBE_Alerts::count() : 0;
+		$badge = $count ? ' <span class="awaiting-mod">' . (int) $count . '</span>' : '';
 		add_menu_page(
 			'انقضای کالا',
-			'انقضای کالا',
+			'انقضای کالا' . $badge,
 			$cap,
 			'webakery-expiry',
 			array( $this, 'render_reports' ),
@@ -53,6 +55,7 @@ class WBE_Admin {
 	}
 
 	public function assets( $hook ) {
+		wp_enqueue_style( 'wbe-admin', WBE_URL . 'assets/admin.css', array(), WBE_VERSION );
 		$ok = ( false !== strpos( (string) $hook, 'webakery-expiry' ) );
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 		if ( $screen && in_array( $screen->id, array( 'product', 'edit-product' ), true ) ) {
@@ -61,7 +64,6 @@ class WBE_Admin {
 		if ( ! $ok ) {
 			return;
 		}
-		wp_enqueue_style( 'wbe-admin', WBE_URL . 'assets/admin.css', array(), WBE_VERSION );
 		wp_enqueue_script( 'wbe-admin', WBE_URL . 'assets/admin.js', array( 'jquery' ), WBE_VERSION, true );
 	}
 

@@ -44,10 +44,13 @@ class WBE_Plugin {
 		require_once WBE_PATH . 'includes/class-wbe-frontend.php';
 		require_once WBE_PATH . 'includes/class-wbe-reports.php';
 		require_once WBE_PATH . 'includes/class-wbe-export.php';
+		require_once WBE_PATH . 'includes/class-wbe-sms.php';
+		require_once WBE_PATH . 'includes/class-wbe-alerts.php';
 
 		WBE_Stock::register();
 		WBE_Frontend::register();
 		WBE_Reports::register();
+		WBE_Alerts::register();
 
 		if ( is_admin() ) {
 			require_once WBE_PATH . 'includes/class-wbe-admin.php';
@@ -89,6 +92,7 @@ class WBE_Plugin {
 					'سوییچ خودکار به رزرو پس از صفر شدن یا گذشتن انقضا',
 					'نمایش شمسی یا میلادی روی صفحه محصول',
 					'گزارش و خروجی اکسل فارسی راست‌چین',
+					'هشدار پیشخوان و پیامک انقضای نزدیک',
 					'به‌روزرسانی از webakery.ir',
 				),
 			)
@@ -129,6 +133,8 @@ class WBE_Plugin {
 		foreach ( WBE_Product::configured_ids() as $id ) {
 			WBE_Product::sync_wc( $id );
 		}
+		WBE_Alerts::flush();
+		WBE_Alerts::notify_daily();
 	}
 
 	public function action_links( $links ) {

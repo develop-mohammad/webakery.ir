@@ -154,4 +154,46 @@ class WBE_Engine {
 	public static function is_configured( array $batches ) {
 		return ! empty( $batches );
 	}
+
+	/**
+	 * سطح هشدار بر اساس روز مانده تا انقضا.
+	 * soon ≈ یک هفته، month ≈ یک ماه، two_months ≈ دو ماه.
+	 *
+	 * @param int|null $days
+	 * @return string soon|month|two_months|expired|''
+	 */
+	public static function urgency( $days, $soon = 7, $month = 30, $two = 60 ) {
+		if ( null === $days || $days === '' ) {
+			return '';
+		}
+		$days  = (int) $days;
+		$soon  = max( 0, (int) $soon );
+		$month = max( $soon, (int) $month );
+		$two   = max( $month, (int) $two );
+		if ( $days < 0 ) {
+			return 'expired';
+		}
+		if ( $days <= $soon ) {
+			return 'soon';
+		}
+		if ( $days <= $month ) {
+			return 'month';
+		}
+		if ( $days <= $two ) {
+			return 'two_months';
+		}
+		return '';
+	}
+
+	public static function normalize_phone( $raw ) {
+		$digits = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::fa_to_en( $raw ) : (string) $raw;
+		$digits = preg_replace( '/\D+/', '', $digits );
+		if ( strlen( $digits ) === 12 && 0 === strpos( $digits, '98' ) ) {
+			$digits = '0' . substr( $digits, 2 );
+		}
+		if ( strlen( $digits ) === 10 && 0 === strpos( $digits, '9' ) ) {
+			$digits = '0' . $digits;
+		}
+		return preg_match( '/^09\d{9}$/', $digits ) ? $digits : '';
+	}
 }

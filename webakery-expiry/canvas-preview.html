@@ -18,7 +18,7 @@
   .shop { font-family: Georgia, "Times New Roman", serif; color: #111; background: #fff; }
   .button { background:#2271b1; color:#fff; border:0; padding:6px 12px; cursor:pointer; font:inherit; }
   .wbe-remove-batch { background:none; border:0; cursor:pointer; color:#b91c1c; font:inherit; }
-  input.short { padding:4px 8px; }
+  .wbe-batches-table th, .wbe-batches-table td, .wbe-report th, .wbe-report td { border-bottom: 1px solid #dcdcde; padding: 8px; text-align: right; }
 </style>
 </head>
 <body>
@@ -84,7 +84,18 @@
       </section>
 
       <section class="card">
-        <strong>گزارش — نزدیک به انقضا</strong>
+        <strong>آلارم پیشخوان</strong>
+        <div class="notice notice-warning wbe-alarm" style="border-right:4px solid #dba617;background:#fff8e5;padding:8px 12px">
+          <p><strong>هشدار انقضای کالا:</strong> ۱ فوری، ۱ تا یک ماه</p>
+          <ul class="wbe-alarm-list">
+            <li>شیر خشک نمونه — ۱۴۰۵/۰۱/۱۰ (۱۲ روز)</li>
+            <li>بیسکویت جو — ۱۴۰۵/۰۲/۲۰ (۴۵ روز)</li>
+          </ul>
+        </div>
+        <p class="muted">همین هشدار روی خانهٔ پیشخوان، نوار بالا، و در صورت تنظیم با ایمیل/پیامک روزانه هم می‌رود.</p>
+      </section>
+
+      <section class="card">
         <table class="widefat wbe-report" style="width:100%;margin-top:10px;border-collapse:collapse">
           <thead>
             <tr><th>محصول</th><th>برند</th><th>انقضا</th><th>موجودی</th><th>فروش</th></tr>
@@ -97,7 +108,23 @@
       </section>
     </div>
   </div>
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="assets/admin.js"></script>
+  <script>
+    document.querySelector('.wbe-add-batch').addEventListener('click', function (e) {
+      e.preventDefault();
+      var tpl = document.getElementById('wbe-batch-tpl');
+      var body = document.getElementById('wbe-batches-body');
+      var row = tpl.cloneNode(true);
+      row.removeAttribute('id');
+      body.appendChild(row);
+    });
+    document.addEventListener('click', function (e) {
+      if (!e.target.classList.contains('wbe-remove-batch')) return;
+      e.preventDefault();
+      var tr = e.target.closest('tr');
+      var body = document.getElementById('wbe-batches-body');
+      if (body.querySelectorAll('tr').length <= 1) return;
+      if (tr && tr.id !== 'wbe-batch-tpl') tr.remove();
+    });
+  </script>
 </body>
 </html>

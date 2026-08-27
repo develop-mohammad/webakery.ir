@@ -80,3 +80,38 @@
 .wbe-remove-batch {
 	color: #b91c1c;
 }
+
+.wbe-alarm-list {
+	margin: 6px 0 8px 0;
+	padding-right: 18px;
+}
+
+.wbe-widget-h {
+	font-weight: 700;
+	margin: 10px 0 4px;
+}
+
+.wbe-widget-h--soon {
+	color: #b45309;
+}
+
+.wbe-widget-h--month {
+	color: #a16207;
+}
+
+.wbe-widget-h--two_months {
+	color: #334155;
+}
+
+.wbe-widget-h--expired {
+	color: #b91c1c;
+}
+
+#wpadminbar .wbe-ab-alert .ab-item {
+	background: #b45309 !important;
+	color: #fff !important;
+}
+
+.wbe-row--soon td {
+	background: #fff7ed;
+}
