@@ -146,5 +146,49 @@ wbe_check( 'ادمین می‌تواند آستانه ۹۰ بگذارد', 90 ===
 wbe_check( 'همان روز روی کوچک‌ترین آستانه می‌افتد', 3 === WBE_Engine::match_point( 0, array( 3, 14 ) ) );
 wbe_check( 'آستانه صفر همان روز انقضا است', 0 === WBE_Engine::match_point( 0, array( 0, 7 ) ) );
 
+echo "\n=== فعال‌سازی وردپرس ===\n";
+if ( ! defined( 'WBE_PATH' ) ) {
+	define( 'WBE_PATH', dirname( __DIR__ ) . '/' );
+}
+if ( ! defined( 'WBE_FILE' ) ) {
+	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
+}
+if ( ! defined( 'WBE_VERSION' ) ) {
+	define( 'WBE_VERSION', '1.0.3' );
+}
+if ( ! function_exists( 'get_option' ) ) {
+	function get_option( $key, $default = false ) {
+		return $default;
+	}
+}
+if ( ! function_exists( 'add_option' ) ) {
+	$GLOBALS['wbe_added_options'] = array();
+	function add_option( $key, $value, $deprecated = '', $autoload = 'yes' ) {
+		$GLOBALS['wbe_added_options'][ $key ] = $value;
+		return true;
+	}
+}
+if ( ! function_exists( 'wp_next_scheduled' ) ) {
+	function wp_next_scheduled( $hook = '' ) {
+		return false;
+	}
+}
+if ( ! function_exists( 'wp_schedule_event' ) ) {
+	$GLOBALS['wbe_cron_set'] = false;
+	function wp_schedule_event( $timestamp = 0, $recurrence = '', $hook = '' ) {
+		$GLOBALS['wbe_cron_set'] = true;
+		return true;
+	}
+}
+require_once dirname( __DIR__ ) . '/includes/class-wbe-plugin.php';
+try {
+	WBE_Plugin::activate();
+	wbe_check( 'فعال‌سازی کلاس تنظیمات را لود می‌کند', class_exists( 'WBE_Settings', false ) );
+	wbe_check( 'تنظیمات پیش‌فرض نوشته می‌شود', isset( $GLOBALS['wbe_added_options']['wbe_settings'] ) && is_array( $GLOBALS['wbe_added_options']['wbe_settings'] ) );
+	wbe_check( 'کرون روزانه ثبت می‌شود', ! empty( $GLOBALS['wbe_cron_set'] ) );
+} catch ( Throwable $e ) {
+	wbe_check( 'فعال‌سازی بدون fatal', false, $e->getMessage() );
+}
+
 echo "\n--- {$pass} ok, {$fail} fail ---\n";
 exit( $fail ? 1 : 0 );

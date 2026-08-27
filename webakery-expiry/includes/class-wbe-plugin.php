@@ -15,7 +15,29 @@ class WBE_Plugin {
 		return self::$instance;
 	}
 
+	/**
+	 * کلاس‌ها را همین‌جا لود کن — هوک فعال‌سازی وردپرس قبل از plugins_loaded اجرا می‌شود.
+	 */
+	public static function includes() {
+		static $done = false;
+		if ( $done ) {
+			return;
+		}
+		$done = true;
+		require_once WBE_PATH . 'includes/class-wbe-jalali.php';
+		require_once WBE_PATH . 'includes/class-wbe-engine.php';
+		require_once WBE_PATH . 'includes/class-wbe-settings.php';
+		require_once WBE_PATH . 'includes/class-wbe-product.php';
+		require_once WBE_PATH . 'includes/class-wbe-stock.php';
+		require_once WBE_PATH . 'includes/class-wbe-frontend.php';
+		require_once WBE_PATH . 'includes/class-wbe-reports.php';
+		require_once WBE_PATH . 'includes/class-wbe-export.php';
+		require_once WBE_PATH . 'includes/class-wbe-sms.php';
+		require_once WBE_PATH . 'includes/class-wbe-alerts.php';
+	}
+
 	public static function activate() {
+		self::includes();
 		if ( false === get_option( WBE_Settings::OPTION, false ) ) {
 			add_option( WBE_Settings::OPTION, WBE_Settings::defaults(), '', false );
 		}
@@ -32,20 +54,10 @@ class WBE_Plugin {
 	}
 
 	private function __construct() {
+		self::includes();
 		if ( defined( 'WBE_EDITION' ) && 'pro' === WBE_EDITION ) {
 			$this->boot_license();
 		}
-
-		require_once WBE_PATH . 'includes/class-wbe-jalali.php';
-		require_once WBE_PATH . 'includes/class-wbe-engine.php';
-		require_once WBE_PATH . 'includes/class-wbe-settings.php';
-		require_once WBE_PATH . 'includes/class-wbe-product.php';
-		require_once WBE_PATH . 'includes/class-wbe-stock.php';
-		require_once WBE_PATH . 'includes/class-wbe-frontend.php';
-		require_once WBE_PATH . 'includes/class-wbe-reports.php';
-		require_once WBE_PATH . 'includes/class-wbe-export.php';
-		require_once WBE_PATH . 'includes/class-wbe-sms.php';
-		require_once WBE_PATH . 'includes/class-wbe-alerts.php';
 
 		WBE_Stock::register();
 		WBE_Frontend::register();
