@@ -56,7 +56,7 @@
 	padding: 12px 12px 4px;
 	border: 1px solid #dcdcde;
 	background: #fff;
-	max-width: 640px;
+	max-width: 760px;
 }
 
 .wbe-batches__head {
@@ -70,6 +70,14 @@
 .wbe-batches-table input.short {
 	width: 100%;
 	max-width: 160px;
+}
+
+.wbe-batches-table input.wbe-disc {
+	max-width: 72px;
+}
+
+.column-wbe_expiry {
+	width: 9em;
 }
 
 .wbe-batches-table [hidden],

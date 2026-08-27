@@ -130,15 +130,23 @@ class WBE_Engine {
 			if ( $expiry === '' ) {
 				continue;
 			}
-			$id = isset( $row['id'] ) ? preg_replace( '/[^a-zA-Z0-9_\-]/', '', (string) $row['id'] ) : '';
+			$discount = isset( $row['discount'] ) ? (string) $row['discount'] : '0';
+			if ( class_exists( 'WBE_Jalali' ) ) {
+				$discount = WBE_Jalali::fa_to_en( $discount );
+			}
+			$discount = str_replace( array( '%', '٪', ',', '٬', '،', ' ' ), '', $discount );
+			$discount = is_numeric( $discount ) ? (float) $discount : 0;
+			$discount = (int) round( max( 0, min( 100, $discount ) ) );
+			$id       = isset( $row['id'] ) ? preg_replace( '/[^a-zA-Z0-9_\-]/', '', (string) $row['id'] ) : '';
 			if ( $id === '' ) {
 				$id = 'b' . sprintf( '%04d', $n ) . substr( md5( $expiry . '|' . $price . '|' . $n ), 0, 8 );
 			}
 			$out[] = array(
-				'id'     => $id,
-				'price'  => (string) $price,
-				'stock'  => max( 0, $stock ),
-				'expiry' => $expiry,
+				'id'       => $id,
+				'price'    => (string) $price,
+				'discount' => $discount,
+				'stock'    => max( 0, $stock ),
+				'expiry'   => $expiry,
 			);
 			$n++;
 		}
@@ -153,6 +161,58 @@ class WBE_Engine {
 	 */
 	public static function is_configured( array $batches ) {
 		return ! empty( $batches );
+	}
+
+	/**
+	 * درصد تخفیف بچ (۰ تا ۱۰۰).
+	 *
+	 * @param array $batch
+	 * @return int
+	 */
+	public static function discount_of( $batch ) {
+		if ( ! is_array( $batch ) ) {
+			return 0;
+		}
+		return max( 0, min( 100, (int) round( isset( $batch['discount'] ) ? (float) $batch['discount'] : 0 ) ) );
+	}
+
+	/**
+	 * قیمت پس از تخفیف. بدون تخفیف همان قیمت اصلی است.
+	 *
+	 * @param float|string $price
+	 * @param float|int    $discount
+	 * @return float
+	 */
+	public static function sale_price( $price, $discount ) {
+		$price    = (float) $price;
+		$discount = max( 0, min( 100, (float) $discount ) );
+		if ( $discount <= 0 ) {
+			return $price;
+		}
+		return (float) round( $price * ( 100 - $discount ) / 100 );
+	}
+
+	/**
+	 * بند JOIN/ORDER BY برای سورت تاریخ انقضای فعال.
+	 * محصولات بدون تاریخ انتهای لیست می‌مانند.
+	 *
+	 * @param string $join
+	 * @param string $orderby
+	 * @param string $posts_table
+	 * @param string $postmeta_table
+	 * @param string $order ASC|DESC
+	 * @return array{0:string,1:string}
+	 */
+	public static function expiry_order_clauses( $join, $orderby, $posts_table, $postmeta_table, $order = 'ASC' ) {
+		$join    = (string) $join;
+		$orderby = (string) $orderby;
+		if ( false !== strpos( $join, 'wbe_exp' ) ) {
+			return array( $join, $orderby );
+		}
+		$order = ( 'DESC' === strtoupper( (string) $order ) ) ? 'DESC' : 'ASC';
+		$join .= " LEFT JOIN {$postmeta_table} AS wbe_exp ON (wbe_exp.post_id = {$posts_table}.ID AND wbe_exp.meta_key = '_wbe_active_expiry') ";
+		$sql   = " CASE WHEN wbe_exp.meta_value IS NULL OR wbe_exp.meta_value = '' THEN 1 ELSE 0 END ASC, wbe_exp.meta_value {$order}, {$posts_table}.ID ASC ";
+		return array( $join, $sql );
 	}
 
 	/**

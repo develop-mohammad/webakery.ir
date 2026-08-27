@@ -22,6 +22,9 @@ class WBE_Admin_Product {
 		add_action( 'woocommerce_product_options_pricing', array( $this, 'render' ) );
 		add_action( 'woocommerce_admin_process_product_object', array( $this, 'save' ) );
 		add_action( 'woocommerce_process_product_meta', array( $this, 'sync_after_save' ), 40 );
+		add_filter( 'manage_edit-product_columns', array( $this, 'columns' ) );
+		add_action( 'manage_product_posts_custom_column', array( $this, 'column' ), 10, 2 );
+		add_filter( 'manage_edit-product_sortable_columns', array( $this, 'sortable' ) );
 	}
 
 	public function render() {
@@ -54,5 +57,41 @@ class WBE_Admin_Product {
 
 	public function sync_after_save( $product_id ) {
 		WBE_Product::sync_wc( (int) $product_id );
+	}
+
+	public function columns( $cols ) {
+		$out = array();
+		foreach ( $cols as $key => $label ) {
+			$out[ $key ] = $label;
+			if ( 'price' === $key ) {
+				$out['wbe_expiry'] = 'تاریخ انقضا';
+			}
+		}
+		if ( ! isset( $out['wbe_expiry'] ) ) {
+			$out['wbe_expiry'] = 'تاریخ انقضا';
+		}
+		return $out;
+	}
+
+	public function column( $column, $post_id ) {
+		if ( 'wbe_expiry' !== $column ) {
+			return;
+		}
+		$post_id = (int) $post_id;
+		$exp     = get_post_meta( $post_id, WBE_Product::META_ACTIVE_EXPIRY, true );
+		if ( ! $exp ) {
+			$active = WBE_Product::active( $post_id );
+			$exp    = $active ? $active['expiry'] : '';
+		}
+		if ( ! $exp ) {
+			echo '—';
+			return;
+		}
+		echo esc_html( WBE_Jalali::format_ymd( $exp, WBE_Product::calendar( $post_id ), true ) );
+	}
+
+	public function sortable( $cols ) {
+		$cols['wbe_expiry'] = 'wbe_expiry';
+		return $cols;
 	}
 }

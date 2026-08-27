@@ -62,6 +62,7 @@ $export_csv = $export_base . '&format=csv&' . http_build_query( $qs );
 				<th><a href="<?php echo $sort_url( 'expiry' ); ?>">انقضا</a></th>
 				<th><a href="<?php echo $sort_url( 'days' ); ?>">روز مانده</a></th>
 				<th><a href="<?php echo $sort_url( 'price' ); ?>">قیمت</a></th>
+				<th><a href="<?php echo $sort_url( 'discount' ); ?>">تخفیف</a></th>
 				<th><a href="<?php echo $sort_url( 'stock' ); ?>">موجودی</a></th>
 				<th>رزرو</th>
 				<th><a href="<?php echo $sort_url( 'sold_qty' ); ?>">فروش</a></th>
@@ -70,7 +71,7 @@ $export_csv = $export_base . '&format=csv&' . http_build_query( $qs );
 		</thead>
 		<tbody>
 			<?php if ( empty( $rows ) ) : ?>
-				<tr><td colspan="10">محصول تنظیم‌شده‌ای مطابق فیلتر پیدا نشد.</td></tr>
+				<tr><td colspan="11">محصول تنظیم‌شده‌ای مطابق فیلتر پیدا نشد.</td></tr>
 			<?php else : ?>
 				<?php foreach ( $rows as $r ) : ?>
 					<tr class="wbe-row--<?php echo esc_attr( $r['status'] ); ?>">
@@ -83,6 +84,7 @@ $export_csv = $export_base . '&format=csv&' . http_build_query( $qs );
 						<td><?php echo esc_html( $r['expiry_fa'] ); ?></td>
 						<td><?php echo null === $r['days'] ? '—' : esc_html( (string) $r['days'] ); ?></td>
 						<td><?php echo esc_html( (string) $r['price'] ); ?></td>
+						<td><?php echo ! empty( $r['discount'] ) ? esc_html( (string) $r['discount'] ) . '٪' : '—'; ?></td>
 						<td><?php echo esc_html( (string) $r['stock'] ); ?></td>
 						<td><?php echo esc_html( (string) $r['reserves'] ); ?></td>
 						<td><?php echo esc_html( (string) $r['sold_qty'] ); ?></td>

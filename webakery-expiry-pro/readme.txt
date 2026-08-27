@@ -2,12 +2,15 @@
 Contributors: webakery.ir
 Requires at least: 5.8
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 
 بچ قیمت، موجودی و تاریخ انقضا برای ووکامرس — نسخه لایسنس‌دار.
 
 == Changelog ==
+
+= 1.0.4 =
+* نمایش انقضا برای مشتری، تخفیف درصدی هر بچ، سورت انقضا
 
 = 1.0.3 =
 * رفع خطای جدی هنگام فعال‌سازی

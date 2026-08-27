@@ -38,17 +38,19 @@
             </div>
             <table class="widefat wbe-batches-table" style="width:100%;border-collapse:collapse">
               <thead>
-                <tr><th>قیمت</th><th>موجودی</th><th>تاریخ انقضا</th><th></th></tr>
+                <tr><th>قیمت</th><th>تخفیف ٪</th><th>موجودی</th><th>تاریخ انقضا</th><th></th></tr>
               </thead>
               <tbody id="wbe-batches-body">
                 <tr>
                   <td><input class="short" value="180000" dir="ltr" /></td>
+                  <td><input class="short wbe-disc" value="10" dir="ltr" /></td>
                   <td><input class="short" value="12" /></td>
                   <td><input class="short" value="1405/01/10" dir="ltr" /></td>
                   <td><button type="button" class="wbe-remove-batch">حذف</button></td>
                 </tr>
                 <tr>
                   <td><input class="short" value="165000" dir="ltr" /></td>
+                  <td><input class="short wbe-disc" value="" placeholder="۰" dir="ltr" /></td>
                   <td><input class="short" value="40" /></td>
                   <td><input class="short" value="1405/06/01" dir="ltr" /></td>
                   <td><button type="button" class="wbe-remove-batch">حذف</button></td>
@@ -59,6 +61,7 @@
               <tbody>
                 <tr id="wbe-batch-tpl">
                   <td><input class="short" data-name="price" placeholder="قیمت" dir="ltr" /></td>
+                  <td><input class="short wbe-disc" data-name="discount" placeholder="۰" dir="ltr" /></td>
                   <td><input class="short" data-name="stock" placeholder="موجودی" /></td>
                   <td><input class="short wbe-date" data-name="expiry" placeholder="۱۴۰۵/۰۶/۰۵" dir="ltr" /></td>
                   <td><button type="button" class="wbe-remove-batch">حذف</button></td>
@@ -71,13 +74,27 @@
 
       <section class="card shop">
         <h2>شیر خشک نمونه</h2>
-        <p class="price">۱۸۰٬۰۰۰ تومان</p>
+        <p class="price wbe-sale"><del>۱۸۰٬۰۰۰</del> ۱۶۲٬۰۰۰ تومان</p>
         <div class="wbe-expiry wbe-expiry--compact">
           <span class="wbe-expiry__label">تاریخ انقضا</span>
           <span class="wbe-expiry__value">۱۴۰۵/۰۱/۱۰</span>
         </div>
-        <p>توضیحات محصول با فونت همین قالب. قیمت رزرو (۱۶۵ هزار) تا صفر شدن موجودی ۱۲ تایی نمایش داده نمی‌شود.</p>
+        <p>توضیحات محصول با فونت همین قالب. مشتری تاریخ انقضای بچ فعال و قیمت پس از تخفیف ۱۰٪ را می‌بیند.</p>
         <div class="wbe-expiry wbe-expiry--block">
+          <span class="wbe-expiry__label">تاریخ انقضا</span>
+          <span class="wbe-expiry__value">۱۴۰۵/۰۱/۱۰</span>
+        </div>
+      </section>
+
+      <section class="card shop">
+        <strong>فروشگاه — لیست محصولات</strong>
+        <p class="muted">مرتب‌سازی:
+          <select>
+            <option>تاریخ انقضا: نزدیک‌ترین</option>
+            <option>تاریخ انقضا: دورترین</option>
+          </select>
+        </p>
+        <div class="wbe-expiry wbe-expiry--loop">
           <span class="wbe-expiry__label">تاریخ انقضا</span>
           <span class="wbe-expiry__value">۱۴۰۵/۰۱/۱۰</span>
         </div>

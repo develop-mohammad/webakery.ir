@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * کاهش/بازگشت موجودی سفارش و فیلتر قیمت فعال.
+ * کاهش/بازگشت موجودی سفارش و فیلتر قیمت فعال (با تخفیف بچ).
  */
 class WBE_Stock {
 
@@ -12,7 +12,8 @@ class WBE_Stock {
 		add_action( 'woocommerce_reduce_order_stock', array( __CLASS__, 'on_reduce' ) );
 		add_action( 'woocommerce_restore_order_stock', array( __CLASS__, 'on_restore' ) );
 		add_filter( 'woocommerce_product_get_price', array( __CLASS__, 'filter_price' ), 99, 2 );
-		add_filter( 'woocommerce_product_get_regular_price', array( __CLASS__, 'filter_price' ), 99, 2 );
+		add_filter( 'woocommerce_product_get_regular_price', array( __CLASS__, 'filter_regular_price' ), 99, 2 );
+		add_filter( 'woocommerce_product_get_sale_price', array( __CLASS__, 'filter_sale_price' ), 99, 2 );
 		add_filter( 'woocommerce_product_get_stock_quantity', array( __CLASS__, 'filter_stock' ), 99, 2 );
 		add_filter( 'woocommerce_product_is_on_sale', array( __CLASS__, 'filter_on_sale' ), 99, 2 );
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_sync_viewed' ) );
@@ -56,12 +57,34 @@ class WBE_Stock {
 		}
 	}
 
-	public static function filter_price( $price, $product ) {
+	public static function filter_regular_price( $price, $product ) {
 		if ( WBE_Product::is_syncing() || ! self::ok_product( $product ) ) {
 			return $price;
 		}
 		$active = WBE_Product::active( $product->get_id() );
 		return $active ? (string) $active['price'] : $price;
+	}
+
+	public static function filter_sale_price( $price, $product ) {
+		if ( WBE_Product::is_syncing() || ! self::ok_product( $product ) ) {
+			return $price;
+		}
+		$active = WBE_Product::active( $product->get_id() );
+		if ( ! $active || WBE_Engine::discount_of( $active ) <= 0 ) {
+			return '';
+		}
+		return (string) WBE_Engine::sale_price( $active['price'], WBE_Engine::discount_of( $active ) );
+	}
+
+	public static function filter_price( $price, $product ) {
+		if ( WBE_Product::is_syncing() || ! self::ok_product( $product ) ) {
+			return $price;
+		}
+		$active = WBE_Product::active( $product->get_id() );
+		if ( ! $active ) {
+			return $price;
+		}
+		return (string) WBE_Engine::sale_price( $active['price'], WBE_Engine::discount_of( $active ) );
 	}
 
 	public static function filter_stock( $qty, $product ) {
@@ -76,7 +99,8 @@ class WBE_Stock {
 		if ( ! self::ok_product( $product ) ) {
 			return $on_sale;
 		}
-		return false;
+		$active = WBE_Product::active( $product->get_id() );
+		return $active && WBE_Engine::discount_of( $active ) > 0;
 	}
 
 	public static function maybe_sync_viewed() {

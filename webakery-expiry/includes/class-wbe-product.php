@@ -8,8 +8,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WBE_Product {
 
-	const META_BATCHES  = '_wbe_batches';
-	const META_CALENDAR = '_wbe_calendar';
+	const META_BATCHES        = '_wbe_batches';
+	const META_CALENDAR       = '_wbe_calendar';
+	const META_ACTIVE_EXPIRY  = '_wbe_active_expiry';
 
 	/** @var bool */
 	private static $syncing = false;
@@ -91,7 +92,9 @@ class WBE_Product {
 		if ( self::$syncing || ! function_exists( 'wc_get_product' ) ) {
 			return;
 		}
+		$product_id = (int) $product_id;
 		if ( ! self::configured( $product_id ) ) {
+			delete_post_meta( $product_id, self::META_ACTIVE_EXPIRY );
 			return;
 		}
 		$product = wc_get_product( $product_id );
@@ -103,13 +106,24 @@ class WBE_Product {
 		$product->set_manage_stock( true );
 		$product->set_backorders( 'no' );
 		if ( $active ) {
-			$product->set_regular_price( (string) $active['price'] );
-			$product->set_price( (string) $active['price'] );
+			$regular  = (string) $active['price'];
+			$discount = WBE_Engine::discount_of( $active );
+			$product->set_regular_price( $regular );
+			if ( $discount > 0 ) {
+				$sale = (string) WBE_Engine::sale_price( $regular, $discount );
+				$product->set_sale_price( $sale );
+				$product->set_price( $sale );
+			} else {
+				$product->set_sale_price( '' );
+				$product->set_price( $regular );
+			}
 			$product->set_stock_quantity( (int) $active['stock'] );
 			$product->set_stock_status( 'instock' );
+			update_post_meta( $product_id, self::META_ACTIVE_EXPIRY, $active['expiry'] );
 		} else {
 			$product->set_stock_quantity( 0 );
 			$product->set_stock_status( 'outofstock' );
+			delete_post_meta( $product_id, self::META_ACTIVE_EXPIRY );
 		}
 		$product->save();
 		self::$syncing = false;

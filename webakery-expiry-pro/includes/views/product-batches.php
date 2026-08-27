@@ -17,14 +17,15 @@ $placeholder = ( 'jalali' === $effective ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27'
 
 	<div class="wbe-batches">
 		<div class="wbe-batches__head">
-			<strong>قیمت رزرو، موجودی و تاریخ انقضا</strong>
+			<strong>قیمت رزرو، تخفیف، موجودی و تاریخ انقضا</strong>
 			<button type="button" class="button wbe-add-batch">+ افزودن بچ</button>
 		</div>
-		<p class="description">مشتری فقط قیمت و انقضای بچ فعال را می‌بیند. با صفر شدن موجودی یا گذشتن تاریخ، رزرو بعدی خودکار جایگزین می‌شود.</p>
+		<p class="description">مشتری فقط قیمت (با تخفیف) و انقضای بچ فعال را می‌بیند. درصد تخفیف روی همان قیمت بچ اعمال می‌شود.</p>
 		<table class="widefat wbe-batches-table">
 			<thead>
 				<tr>
 					<th>قیمت</th>
+					<th>تخفیف ٪</th>
 					<th>موجودی</th>
 					<th>تاریخ انقضا</th>
 					<th></th>
@@ -35,20 +36,25 @@ $placeholder = ( 'jalali' === $effective ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27'
 				if ( empty( $batches ) ) {
 					$batches = array(
 						array(
-							'id'     => '',
-							'price'  => '',
-							'stock'  => '',
-							'expiry' => '',
+							'id'       => '',
+							'price'    => '',
+							'discount' => '',
+							'stock'    => '',
+							'expiry'   => '',
 						),
 					);
 				}
 				foreach ( $batches as $i => $b ) :
 					$disp = ! empty( $b['expiry'] ) ? WBE_Jalali::format_ymd( $b['expiry'], $effective, false ) : '';
+					$disc = isset( $b['discount'] ) && (int) $b['discount'] > 0 ? (int) $b['discount'] : '';
 					?>
 					<tr>
 						<td>
 							<input type="hidden" name="wbe_batches[<?php echo (int) $i; ?>][id]" value="<?php echo esc_attr( isset( $b['id'] ) ? $b['id'] : '' ); ?>" />
 							<input type="text" class="short" name="wbe_batches[<?php echo (int) $i; ?>][price]" value="<?php echo esc_attr( isset( $b['price'] ) ? $b['price'] : '' ); ?>" placeholder="قیمت" dir="ltr" />
+						</td>
+						<td>
+							<input type="number" class="short wbe-disc" min="0" max="100" step="1" name="wbe_batches[<?php echo (int) $i; ?>][discount]" value="<?php echo esc_attr( $disc ); ?>" placeholder="۰" dir="ltr" />
 						</td>
 						<td>
 							<input type="number" class="short" min="0" step="1" name="wbe_batches[<?php echo (int) $i; ?>][stock]" value="<?php echo esc_attr( isset( $b['stock'] ) ? $b['stock'] : '' ); ?>" placeholder="موجودی" />
@@ -69,6 +75,9 @@ $placeholder = ( 'jalali' === $effective ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27'
 					<td>
 						<input type="hidden" data-name="id" value="" />
 						<input type="text" class="short" data-name="price" value="" placeholder="قیمت" dir="ltr" />
+					</td>
+					<td>
+						<input type="number" class="short wbe-disc" min="0" max="100" step="1" data-name="discount" value="" placeholder="۰" dir="ltr" />
 					</td>
 					<td>
 						<input type="number" class="short" min="0" step="1" data-name="stock" value="" placeholder="موجودی" />

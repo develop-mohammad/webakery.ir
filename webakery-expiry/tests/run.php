@@ -98,6 +98,39 @@ $clean = WBE_Engine::sanitize_batches(
 );
 wbe_check( 'ردیف خالی حذف می‌شود', 1 === count( $clean ), (string) count( $clean ) );
 wbe_check( 'محصول با یک بچ تنظیم شده است', true === WBE_Engine::is_configured( $clean ) );
+wbe_check( 'تخفیف پیش‌فرض صفر است', 0 === (int) $clean[0]['discount'] );
+
+$disc_rows = WBE_Engine::sanitize_batches(
+	array(
+		array(
+			'price'    => '200000',
+			'discount' => '٪۲۰',
+			'stock'    => '5',
+			'expiry'   => '1405/01/10',
+		),
+	),
+	'jalali'
+);
+wbe_check( 'درصد تخفیف فارسی ذخیره می‌شود', isset( $disc_rows[0] ) && 20 === (int) $disc_rows[0]['discount'] );
+wbe_check( 'قیمت بعد از ۲۰٪', 160000.0 === WBE_Engine::sale_price( 200000, 20 ) );
+wbe_check( 'بدون تخفیف همان قیمت است', 180000.0 === WBE_Engine::sale_price( 180000, 0 ) );
+wbe_check( 'تخفیف ۱۰۰٪ صفر می‌شود', 0.0 === WBE_Engine::sale_price( 1000, 100 ) );
+$over = WBE_Engine::sanitize_batches(
+	array(
+		array(
+			'price'    => '10',
+			'discount' => '150',
+			'stock'    => '1',
+			'expiry'   => '2026-12-01',
+		),
+	),
+	'gregorian'
+);
+wbe_check( 'تخفیف بالای ۱۰۰ بریده می‌شود', 100 === (int) $over[0]['discount'] );
+
+list( $join_sql, $order_sql ) = WBE_Engine::expiry_order_clauses( '', 'post_date DESC', 'wp_posts', 'wp_postmeta', 'ASC' );
+wbe_check( 'سورت به متای انقضا وصل می‌شود', false !== strpos( $join_sql, '_wbe_active_expiry' ) );
+wbe_check( 'نزدیک‌ترین انقضا اول می‌آید', false !== strpos( $order_sql, 'wbe_exp.meta_value ASC' ) );
 
 echo "\n=== خروجی اکسل RTL ===\n";
 require dirname( __DIR__ ) . '/includes/class-wbe-export.php';
@@ -110,7 +143,8 @@ $xml = WBE_Export::xml_document(
 			'brand'     => 'نستله',
 			'expiry_fa' => '۱۴۰۵/۰۱/۱۰',
 			'days'      => 12,
-			'price'     => 180000,
+			'price'     => 162000,
+			'discount'  => 10,
 			'stock'     => 12,
 			'reserves'  => 1,
 			'sold_qty'  => 48,
@@ -121,6 +155,7 @@ $xml = WBE_Export::xml_document(
 );
 wbe_check( 'ورک‌شیت راست‌چین است', false !== strpos( $xml, 'ss:RightToLeft="1"' ) );
 wbe_check( 'هدر فارسی دارد', false !== strpos( $xml, 'تاریخ انقضا' ) );
+wbe_check( 'ستون تخفیف در اکسل هست', false !== strpos( $xml, 'تخفیف' ) );
 wbe_check( 'ردیف نزدیک به انقضا رنگ جدا دارد', false !== strpos( $xml, 'ss:StyleID="near"' ) );
 wbe_check( 'نام محصول در خروجی است', false !== strpos( $xml, 'شیر خشک' ) );
 
@@ -154,7 +189,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.0.3' );
+	define( 'WBE_VERSION', '1.0.4' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {
