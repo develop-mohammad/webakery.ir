@@ -193,6 +193,66 @@ class WBE_Engine {
 	}
 
 	/**
+	 * درصد تخفیف از قیمت اصلی و قیمت فروش ووکامرس.
+	 *
+	 * @param float|string     $regular
+	 * @param float|string|null $sale
+	 * @return int
+	 */
+	public static function discount_from_prices( $regular, $sale ) {
+		$regular = (float) $regular;
+		if ( $sale === null || $sale === '' || ! is_numeric( $sale ) ) {
+			return 0;
+		}
+		$sale = (float) $sale;
+		if ( $regular <= 0 || $sale < 0 || $sale >= $regular ) {
+			return 0;
+		}
+		return max( 0, min( 100, (int) round( 100 - ( ( $sale / $regular ) * 100 ) ) ) );
+	}
+
+	/**
+	 * قیمت ووکامرس را روی بچ فعال می‌نویسد (تغییر گروهی / محصول تازه).
+	 * اگر بچ فعال نباشد، اولین ردیف به‌روز می‌شود.
+	 *
+	 * @param array            $batches
+	 * @param float|string     $regular
+	 * @param float|string|null $sale
+	 * @param string           $today
+	 * @param bool             $update_discount اگر false باشد درصد تخفیف قبلی می‌ماند
+	 * @return array
+	 */
+	public static function apply_wc_price_to_active( array $batches, $regular, $sale, $today, $update_discount = true ) {
+		if ( empty( $batches ) ) {
+			return $batches;
+		}
+		$regular = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::number( $regular ) : (float) $regular;
+		if ( $regular <= 0 ) {
+			return $batches;
+		}
+		$idx = self::active_index( $batches, $today );
+		if ( null === $idx ) {
+			$keys = array_keys( $batches );
+			$idx  = (int) $keys[0];
+		}
+		if ( ! isset( $batches[ $idx ] ) || ! is_array( $batches[ $idx ] ) ) {
+			return $batches;
+		}
+		$same_price = (string) (float) $batches[ $idx ]['price'] === (string) (float) $regular;
+		if ( $update_discount ) {
+			$discount = self::discount_from_prices( $regular, $sale );
+			if ( $same_price && (int) self::discount_of( $batches[ $idx ] ) === $discount ) {
+				return $batches;
+			}
+			$batches[ $idx ]['discount'] = $discount;
+		} elseif ( $same_price ) {
+			return $batches;
+		}
+		$batches[ $idx ]['price'] = (string) $regular;
+		return $batches;
+	}
+
+	/**
 	 * بند JOIN/ORDER BY برای سورت تاریخ انقضای فعال.
 	 * محصولات بدون تاریخ انتهای لیست می‌مانند.
 	 *

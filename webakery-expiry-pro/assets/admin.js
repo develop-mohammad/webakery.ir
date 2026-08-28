@@ -26,6 +26,10 @@
 			var name = $(this).attr('data-name');
 			$(this).attr('name', 'wbe_batches[' + i + '][' + name + ']').removeAttr('data-name');
 		});
+		var wcPrice = $('#_regular_price').val() || $('#wbe-product-panel').attr('data-wc-price') || '';
+		if (wcPrice && !$row.find('input[name$="[price]"]').val()) {
+			$row.find('input[name$="[price]"]').val(wcPrice);
+		}
 		$('#wbe-batches-body').append($row);
 	});
 
@@ -58,5 +62,37 @@
 			return;
 		}
 		$(this).closest('.wbe-point-row').remove();
+	});
+
+	$(document).on('focus', '#_regular_price', function () {
+		$(this).data('wbePrev', $(this).val());
+	});
+
+	$(document).on('change', '#_regular_price', function () {
+		var val = $(this).val();
+		var prev = $(this).data('wbePrev');
+		var $rows = $('#wbe-batches-body tr');
+		if (!$rows.length) {
+			return;
+		}
+		if ($rows.length === 1) {
+			$rows.find('input[name*="[price]"]').val(val);
+			return;
+		}
+		var $match = $();
+		$rows.each(function () {
+			if (String($(this).find('input[name*="[price]"]').val()) === String(prev)) {
+				$match = $match.add(this);
+			}
+		});
+		if ($match.length === 1) {
+			$match.find('input[name*="[price]"]').val(val);
+		}
+	});
+
+	$(document).on('change', '#wbe-batches-body input[name*="[price]"]', function () {
+		if ($('#wbe-batches-body tr').length === 1) {
+			$('#_regular_price').val($(this).val());
+		}
 	});
 })(jQuery);

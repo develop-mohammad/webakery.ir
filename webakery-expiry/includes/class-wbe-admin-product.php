@@ -37,6 +37,18 @@ class WBE_Admin_Product {
 		$override  = get_post_meta( $pid, WBE_Product::META_CALENDAR, true );
 		$effective = WBE_Product::calendar( $pid );
 		$global    = WBE_Settings::calendar();
+		$wc_price  = '';
+		$wc_disc   = '';
+		if ( function_exists( 'wc_get_product' ) ) {
+			$wc_product = wc_get_product( $pid );
+			if ( $wc_product ) {
+				$wc_price = $wc_product->get_regular_price( 'edit' );
+				$wc_disc  = (string) WBE_Engine::discount_from_prices( $wc_price, $wc_product->get_sale_price( 'edit' ) );
+				if ( '0' === $wc_disc ) {
+					$wc_disc = '';
+				}
+			}
+		}
 		include WBE_PATH . 'includes/views/product-batches.php';
 	}
 

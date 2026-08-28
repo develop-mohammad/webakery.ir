@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 $placeholder = ( 'jalali' === $effective ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27';
 ?>
-<div class="wbe-product-panel" id="wbe-product-panel" dir="rtl">
+<div class="wbe-product-panel" id="wbe-product-panel" dir="rtl" data-wc-price="<?php echo esc_attr( isset( $wc_price ) ? $wc_price : '' ); ?>">
 	<p class="form-field wbe-calendar-field">
 		<label for="wbe_calendar">تقویم تاریخ انقضا</label>
 		<select id="wbe_calendar" name="wbe_calendar">
@@ -20,7 +20,7 @@ $placeholder = ( 'jalali' === $effective ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27'
 			<strong>قیمت رزرو، تخفیف، موجودی و تاریخ انقضا</strong>
 			<button type="button" class="button wbe-add-batch">+ افزودن بچ</button>
 		</div>
-		<p class="description">مشتری فقط قیمت (با تخفیف) و انقضای بچ فعال را می‌بیند. درصد تخفیف روی همان قیمت بچ اعمال می‌شود.</p>
+		<p class="description">مشتری فقط قیمت (با تخفیف) و انقضای بچ فعال را می‌بیند. تغییر قیمت گروهی ووکامرس، ویرایش سریع، REST و ساخت محصول (مثلاً از دسته) روی بچ فعال مچ می‌شود. ردیف خالی محصول تازه قیمت ووکامرس را می‌گیرد.</p>
 		<table class="widefat wbe-batches-table">
 			<thead>
 				<tr>
@@ -37,8 +37,8 @@ $placeholder = ( 'jalali' === $effective ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27'
 					$batches = array(
 						array(
 							'id'       => '',
-							'price'    => '',
-							'discount' => '',
+							'price'    => isset( $wc_price ) ? $wc_price : '',
+							'discount' => isset( $wc_disc ) ? $wc_disc : '',
 							'stock'    => '',
 							'expiry'   => '',
 						),

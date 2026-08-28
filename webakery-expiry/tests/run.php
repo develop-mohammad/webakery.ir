@@ -132,6 +132,28 @@ list( $join_sql, $order_sql ) = WBE_Engine::expiry_order_clauses( '', 'post_date
 wbe_check( 'سورت به متای انقضا وصل می‌شود', false !== strpos( $join_sql, '_wbe_active_expiry' ) );
 wbe_check( 'نزدیک‌ترین انقضا اول می‌آید', false !== strpos( $order_sql, 'wbe_exp.meta_value ASC' ) );
 
+wbe_check( 'تخفیف از قیمت فروش ووکامرس', 20 === WBE_Engine::discount_from_prices( 200000, 160000 ) );
+wbe_check( 'بدون قیمت فروش تخفیف صفر است', 0 === WBE_Engine::discount_from_prices( 200000, '' ) );
+$priced = array(
+	array( 'id' => 'a', 'price' => '100000', 'discount' => 10, 'stock' => 4, 'expiry' => '2026-03-01' ),
+	array( 'id' => 'b', 'price' => '90000', 'discount' => 0, 'stock' => 8, 'expiry' => '2026-10-01' ),
+);
+$pulled = WBE_Engine::apply_wc_price_to_active( $priced, '150000', '', '2026-01-15', false );
+wbe_check( 'تغییر گروهی قیمت بچ فعال را عوض می‌کند', '150000' === $pulled[0]['price'] );
+wbe_check( 'درصد تخفیف بچ فعال اگر فروش عوض نشده بماند', 10 === (int) $pulled[0]['discount'] );
+wbe_check( 'قیمت رزرو دست نمی‌خورد', '90000' === $pulled[1]['price'] );
+$pulled2 = WBE_Engine::apply_wc_price_to_active( $priced, '200000', '160000', '2026-01-15', true );
+wbe_check( 'قیمت فروش گروهی تخفیف را مچ می‌کند', 20 === (int) $pulled2[0]['discount'] && '200000' === $pulled2[0]['price'] );
+$expired_only = array(
+	array( 'id' => 'old', 'price' => '10', 'discount' => 0, 'stock' => 1, 'expiry' => '2020-01-01' ),
+);
+$pulled3 = WBE_Engine::apply_wc_price_to_active( $expired_only, '50000', '', '2026-01-15', true );
+wbe_check( 'بدون بچ فعال، اولین ردیف مچ می‌شود', '50000' === $pulled3[0]['price'] );
+wbe_check( 'بدون بچ، قیمت ووکامرس بچ نمی‌سازد', array() === WBE_Engine::apply_wc_price_to_active( array(), '90000', '', '2026-01-15', true ) );
+wbe_check( 'قیمت صفر بچ را عوض نمی‌کند', $priced === WBE_Engine::apply_wc_price_to_active( $priced, '0', '', '2026-01-15', true ) );
+$same = WBE_Engine::apply_wc_price_to_active( $priced, '100000', '', '2026-01-15', false );
+wbe_check( 'اگر قیمت از قبل یکی باشد آرایه دست نمی‌خورد', $priced === $same );
+
 echo "\n=== خروجی اکسل RTL ===\n";
 require dirname( __DIR__ ) . '/includes/class-wbe-export.php';
 $xml = WBE_Export::xml_document(
@@ -189,7 +211,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.0.4' );
+	define( 'WBE_VERSION', '1.0.5' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {
