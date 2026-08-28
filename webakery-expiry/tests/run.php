@@ -166,6 +166,11 @@ $until = WBE_Engine::sale_dates_text( '', '2026-01-31', 'gregorian', false );
 wbe_check( 'فقط تا تاریخ پایان', 'تا 2026/01/31' === $until, $until );
 wbe_check( 'رشته تاریخ به Y-m-d', '2026-08-28' === WBE_Jalali::datetime_to_ymd( '2026-08-28 23:59:59' ) );
 wbe_check( 'خالی تاریخ ندارد', '' === WBE_Jalali::datetime_to_ymd( '' ) );
+$cd = WBE_Engine::countdown_parts( 1000 + 90061, 1000 );
+wbe_check( 'تایمر ۱ روز ۱ ساعت ۱ دقیقه ۱ ثانیه', 1 === $cd['days'] && 1 === $cd['hours'] && 1 === $cd['minutes'] && 1 === $cd['seconds'] );
+$cd0 = WBE_Engine::countdown_parts( 1000, 2000 );
+wbe_check( 'تایمر تمام‌شده صفر است', 0 === $cd0['remaining'] && 0 === $cd0['seconds'] );
+wbe_check( 'پایان روز timestamp دارد', WBE_Engine::ymd_end_ts( '2026-08-28' ) > 0 );
 
 echo "\n=== خروجی اکسل RTL ===\n";
 require dirname( __DIR__ ) . '/includes/class-wbe-export.php';
@@ -225,7 +230,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.0.6' );
+	define( 'WBE_VERSION', '1.0.7' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

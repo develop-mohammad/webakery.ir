@@ -38,6 +38,15 @@ class WBE_Frontend {
 			array(),
 			WBE_VERSION
 		);
+		if ( ! empty( WBE_Settings::get()['show_sale_countdown'] ) ) {
+			wp_enqueue_script(
+				'wbe-countdown',
+				WBE_URL . 'assets/frontend.js',
+				array(),
+				WBE_VERSION,
+				true
+			);
+		}
 	}
 
 	public static function want_product_page() {
@@ -109,6 +118,9 @@ class WBE_Frontend {
 			'webakery_expiry'
 		);
 		wp_enqueue_style( 'wbe-frontend', WBE_URL . 'assets/frontend.css', array(), WBE_VERSION );
+		if ( ! empty( WBE_Settings::get()['show_sale_countdown'] ) ) {
+			wp_enqueue_script( 'wbe-countdown', WBE_URL . 'assets/frontend.js', array(), WBE_VERSION, true );
+		}
 		return self::field_html( (int) $atts['id'], 'compact' );
 	}
 
@@ -142,23 +154,30 @@ class WBE_Frontend {
 		$html  = '<div class="' . esc_attr( $class ) . '" dir="rtl">';
 		$html .= '<p class="wbe-expiry__row"><span class="wbe-expiry__label">تاریخ انقضا</span> ';
 		$html .= '<span class="wbe-expiry__value">' . esc_html( $date ) . '</span></p>';
-		$sale_row = self::sale_dates_row( $product_id, $active, $cal );
-		if ( $sale_row !== '' ) {
-			$html .= $sale_row;
+		$timer = self::sale_countdown_html( $product_id, $active, $variant );
+		if ( $timer !== '' ) {
+			$html .= $timer;
 		}
 		$html .= '</div>';
 		return $html;
 	}
 
 	/**
-	 * بازه فروش فوق‌العاده فقط وقتی تخفیف الان اعمال می‌شود.
+	 * تایمر معکوس تا پایان فروش — بدون متن تاریخ از/تا. اختیاری از تنظیمات.
 	 *
-	 * @param int   $product_id
-	 * @param array $active
-	 * @param string $calendar
+	 * @param int    $product_id
+	 * @param array  $active
+	 * @param string $variant
 	 * @return string
 	 */
-	public static function sale_dates_row( $product_id, $active, $calendar ) {
+	public static function sale_countdown_html( $product_id, $active, $variant ) {
+		if ( 'loop' === $variant ) {
+			return '';
+		}
+		$s = WBE_Settings::get();
+		if ( empty( $s['show_sale_countdown'] ) ) {
+			return '';
+		}
 		if ( WBE_Engine::discount_of( $active ) <= 0 ) {
 			return '';
 		}
@@ -169,14 +188,46 @@ class WBE_Frontend {
 		if ( ! WBE_Engine::sale_window_live( $from, $to, $today ) ) {
 			return '';
 		}
-		$text = WBE_Engine::sale_dates_text( $from, $to, $calendar, true );
-		if ( $text === '' ) {
+		$end_ts = 0;
+		if ( function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $product_id );
+			if ( $product && method_exists( $product, 'get_date_on_sale_to' ) ) {
+				$dt = $product->get_date_on_sale_to( 'edit' );
+				if ( is_object( $dt ) && method_exists( $dt, 'getTimestamp' ) ) {
+					$end_ts = (int) $dt->getTimestamp();
+				}
+			}
+		}
+		if ( $end_ts <= 0 ) {
+			$end_ts = WBE_Engine::ymd_end_ts( $to );
+		}
+		$parts = WBE_Engine::countdown_parts( $end_ts, time() );
+		if ( $parts['remaining'] <= 0 ) {
 			return '';
 		}
-		$html  = '<p class="wbe-expiry__row wbe-sale-dates">';
-		$html .= '<span class="wbe-expiry__label">فروش فوق‌العاده</span> ';
-		$html .= '<span class="wbe-expiry__value">' . esc_html( $text ) . '</span>';
-		$html .= '</p>';
+		$pad = function ( $n ) {
+			$n = max( 0, (int) $n );
+			$s = (string) $n;
+			if ( strlen( $s ) < 2 ) {
+				$s = '0' . $s;
+			}
+			return WBE_Jalali::en_to_fa( $s );
+		};
+		$unit = function ( $key, $val, $label ) use ( $pad ) {
+			$html  = '<span class="wbe-countdown__unit" data-unit="' . esc_attr( $key ) . '">';
+			$html .= '<span class="wbe-countdown__num">' . esc_html( $pad( $val ) ) . '</span>';
+			$html .= '<span class="wbe-countdown__lbl">' . esc_html( $label ) . '</span>';
+			$html .= '</span>';
+			return $html;
+		};
+		$html  = '<div class="wbe-countdown" data-end="' . esc_attr( (string) $end_ts ) . '">';
+		$html .= '<span class="wbe-countdown__title">مانده تا پایان فروش</span>';
+		$html .= '<span class="wbe-countdown__units">';
+		$html .= $unit( 'd', $parts['days'], 'روز' );
+		$html .= $unit( 'h', $parts['hours'], 'ساعت' );
+		$html .= $unit( 'm', $parts['minutes'], 'دقیقه' );
+		$html .= $unit( 's', $parts['seconds'], 'ثانیه' );
+		$html .= '</span></div>';
 		return $html;
 	}
 

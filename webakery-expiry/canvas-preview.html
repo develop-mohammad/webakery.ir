@@ -76,9 +76,17 @@
         <h2>شیر خشک نمونه</h2>
         <div class="wbe-expiry wbe-expiry--block">
           <p class="wbe-expiry__row"><span class="wbe-expiry__label">تاریخ انقضا</span> <span class="wbe-expiry__value">۱۴۰۵/۰۱/۱۰</span></p>
-          <p class="wbe-expiry__row wbe-sale-dates"><span class="wbe-expiry__label">فروش فوق‌العاده</span> <span class="wbe-expiry__value">تا ۱۴۰۵/۰۱/۱۰</span></p>
+          <div class="wbe-countdown" data-end="1893455999">
+            <span class="wbe-countdown__title">مانده تا پایان فروش</span>
+            <span class="wbe-countdown__units">
+              <span class="wbe-countdown__unit" data-unit="d"><span class="wbe-countdown__num">۰۲</span><span class="wbe-countdown__lbl">روز</span></span>
+              <span class="wbe-countdown__unit" data-unit="h"><span class="wbe-countdown__num">۰۵</span><span class="wbe-countdown__lbl">ساعت</span></span>
+              <span class="wbe-countdown__unit" data-unit="m"><span class="wbe-countdown__num">۱۲</span><span class="wbe-countdown__lbl">دقیقه</span></span>
+              <span class="wbe-countdown__unit" data-unit="s"><span class="wbe-countdown__num">۴۴</span><span class="wbe-countdown__lbl">ثانیه</span></span>
+            </span>
+          </div>
         </div>
-        <p class="muted">توضیحات کوتاه محصول از اینجا شروع می‌شود. تاریخ انقضا و بازه فروش فوق‌العاده بالای همین متن است.</p>
+        <p class="muted">توضیحات کوتاه محصول از اینجا شروع می‌شود. تاریخ انقضا بالای متن است؛ تاریخ فروش فوق‌العاده نشان داده نمی‌شود.</p>
         <p class="price wbe-sale"><del>۱۸۰٬۰۰۰</del> ۱۶۲٬۰۰۰ تومان</p>
       </section>
 
@@ -172,6 +180,13 @@
         e.target.closest('.wbe-point-row').remove();
       }
     });
+  </script>
+  <script src="assets/frontend.js"></script>
+  <script>
+    var el = document.querySelector('.wbe-countdown[data-end]');
+    if (el) {
+      el.setAttribute('data-end', String(Math.floor(Date.now() / 1000) + (2 * 86400) + (5 * 3600) + (12 * 60) + 44));
+    }
   </script>
 </body>
 </html>

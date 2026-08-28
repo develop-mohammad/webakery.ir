@@ -238,6 +238,43 @@ class WBE_Engine {
 	}
 
 	/**
+	 * پایان روز Y-m-d به timestamp یونیکس (منطقه زمانی سایت).
+	 *
+	 * @param string $ymd
+	 * @return int
+	 */
+	public static function ymd_end_ts( $ymd ) {
+		$ymd = (string) $ymd;
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $ymd ) ) {
+			return 0;
+		}
+		if ( function_exists( 'wp_timezone' ) ) {
+			$dt = date_create( $ymd . ' 23:59:59', wp_timezone() );
+			return $dt ? $dt->getTimestamp() : 0;
+		}
+		$ts = strtotime( $ymd . ' 23:59:59' );
+		return $ts ? (int) $ts : 0;
+	}
+
+	/**
+	 * قطعات تایمر معکوس.
+	 *
+	 * @param int $end_ts
+	 * @param int $now_ts
+	 * @return array{remaining:int,days:int,hours:int,minutes:int,seconds:int}
+	 */
+	public static function countdown_parts( $end_ts, $now_ts ) {
+		$left = max( 0, (int) $end_ts - (int) $now_ts );
+		return array(
+			'remaining' => $left,
+			'days'      => (int) floor( $left / 86400 ),
+			'hours'     => (int) floor( ( $left % 86400 ) / 3600 ),
+			'minutes'   => (int) floor( ( $left % 3600 ) / 60 ),
+			'seconds'   => (int) ( $left % 60 ),
+		);
+	}
+
+	/**
 	 * درصد تخفیف از قیمت اصلی و قیمت فروش ووکامرس.
 	 *
 	 * @param float|string     $regular
