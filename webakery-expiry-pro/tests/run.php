@@ -171,6 +171,9 @@ wbe_check( 'تایمر ۱ روز ۱ ساعت ۱ دقیقه ۱ ثانیه', 1 ===
 $cd0 = WBE_Engine::countdown_parts( 1000, 2000 );
 wbe_check( 'تایمر تمام‌شده صفر است', 0 === $cd0['remaining'] && 0 === $cd0['seconds'] );
 wbe_check( 'پایان روز timestamp دارد', WBE_Engine::ymd_end_ts( '2026-08-28' ) > 0 );
+wbe_check( 'تایمر سراسری خاموش = هیچ‌جا نیست', false === WBE_Engine::countdown_allowed( 0, 0 ) );
+wbe_check( 'تایمر سراسری روشن و محصول مخفی نشده', true === WBE_Engine::countdown_allowed( 1, 0 ) );
+wbe_check( 'یک تیک روی محصول تایمر را خاموش می‌کند', false === WBE_Engine::countdown_allowed( 1, 1 ) );
 
 echo "\n=== خروجی اکسل RTL ===\n";
 require dirname( __DIR__ ) . '/includes/class-wbe-export.php';
@@ -230,7 +233,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.0.7' );
+	define( 'WBE_VERSION', '1.0.8' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

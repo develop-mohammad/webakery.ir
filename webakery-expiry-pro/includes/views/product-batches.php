@@ -12,6 +12,14 @@ $placeholder = ( 'jalali' === $effective ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27'
 		</select>
 		<span class="description">فقط روی همین محصول اعمال می‌شود. اگر خالی باشد همان تنظیمات افزونه است.</span>
 	</p>
+	<p class="form-field wbe-countdown-field">
+		<label for="wbe_hide_countdown">زمان تا پایان کمپین</label>
+		<label class="wbe-inline-check">
+			<input type="checkbox" id="wbe_hide_countdown" name="wbe_hide_countdown" value="1" <?php checked( ! empty( $hide_cd ) ); ?> />
+			تایمر «مانده تا پایان کمپین» را برای این محصول نشان نده
+		</label>
+		<span class="description">یک تیک بزنید و محصول را ذخیره کنید. برای خاموش کردن روی همه محصولات: انقضای کالا ← تنظیمات.</span>
+	</p>
 
 	<?php wp_nonce_field( 'wbe_save_batches', 'wbe_batches_nonce' ); ?>
 

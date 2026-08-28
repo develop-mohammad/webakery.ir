@@ -31,6 +31,9 @@
         <strong>پیشخوان — کنار قیمت محصول</strong>
         <p class="muted">دکمه + فقط اینجا است. تقویم این محصول: شمسی (override).</p>
         <div class="wbe-product-panel" id="wbe-product-panel">
+          <p class="form-field wbe-countdown-field">
+            <label class="wbe-inline-check"><input type="checkbox" /> تایمر «مانده تا پایان کمپین» را برای این محصول نشان نده</label>
+          </p>
           <div class="wbe-batches">
             <div class="wbe-batches__head">
               <strong>قیمت رزرو، موجودی و تاریخ انقضا</strong>
@@ -77,7 +80,7 @@
         <div class="wbe-expiry wbe-expiry--block">
           <p class="wbe-expiry__row"><span class="wbe-expiry__label">تاریخ انقضا</span> <span class="wbe-expiry__value">۱۴۰۵/۰۱/۱۰</span></p>
           <div class="wbe-countdown" data-end="1893455999">
-            <span class="wbe-countdown__title">مانده تا پایان فروش</span>
+            <span class="wbe-countdown__title">مانده تا پایان کمپین</span>
             <span class="wbe-countdown__units">
               <span class="wbe-countdown__unit" data-unit="d"><span class="wbe-countdown__num">۰۲</span><span class="wbe-countdown__lbl">روز</span></span>
               <span class="wbe-countdown__unit" data-unit="h"><span class="wbe-countdown__num">۰۵</span><span class="wbe-countdown__lbl">ساعت</span></span>
@@ -105,7 +108,10 @@
       </section>
 
       <section class="card" id="wbe-settings-preview">
-        <strong>تنظیمات — آستانه نوتیف ادمین</strong>
+        <strong>تنظیمات — زمان تا پایان کمپین</strong>
+        <p class="muted"><label><input type="checkbox" checked /> تایمر معکوس «مانده تا پایان کمپین» را نشان بده</label></p>
+        <p class="muted">تیک را بردارید تا روی همه محصولات خاموش شود.</p>
+        <strong>آستانه نوتیف ادمین</strong>
         <p class="muted">خودتان مشخص کنید چند روز مانده به انقضا نوتیف بیاید. با + هر آستانه‌ای که لازم دارید اضافه کنید.</p>
         <div id="wbe-alert-points">
           <p class="wbe-point-row">وقتی <input type="number" min="0" max="3650" class="small-text" name="wbe_settings[alert_points][]" value="7" /> روز تا انقضا مانده <button type="button" class="button-link wbe-remove-point">حذف</button></p>

@@ -32,9 +32,15 @@ $sms_msg = isset( $_GET['wbe_sms'] ) ? sanitize_key( wp_unslash( $_GET['wbe_sms'
 					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_near_price]" value="1" <?php checked( $s['show_near_price'], 1 ); ?> /> در ابتدای توضیحات کوتاه صفحه محصول</label><br>
 					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_in_description]" value="1" <?php checked( $s['show_in_description'], 1 ); ?> /> اگر توضیحات کوتاه خالی بود باز هم اول صفحه محصول نشان بده</label><br>
 					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_on_loop]" value="1" <?php checked( $s['show_on_loop'], 1 ); ?> /> در لیست محصولات فروشگاه (کارت‌ها)</label><br>
-					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[catalog_sort]" value="1" <?php checked( $s['catalog_sort'], 1 ); ?> /> گزینه مرتب‌سازی «تاریخ انقضا» در فروشگاه</label><br>
-					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_sale_countdown]" value="1" <?php checked( ! empty( $s['show_sale_countdown'] ), 1 ); ?> /> تایمر معکوس تا پایان فروش فوق‌العاده (بدون نمایش تاریخ از/تا)</label>
+					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[catalog_sort]" value="1" <?php checked( $s['catalog_sort'], 1 ); ?> /> گزینه مرتب‌سازی «تاریخ انقضا» در فروشگاه</label>
 					<p class="description">شورت‌کد برای قالب/المنتور: <code>[webakery_expiry]</code></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">زمان تا پایان کمپین</th>
+				<td>
+					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_sale_countdown]" value="1" <?php checked( ! empty( $s['show_sale_countdown'] ), 1 ); ?> /> تایمر معکوس «مانده تا پایان کمپین» را نشان بده</label>
+					<p class="description">اگر تیک را بردارید، تایمر روی <strong>همه محصولات</strong> خاموش می‌شود. برای یک محصول جدا: ویرایش همان محصول ← «تایمر را نشان نده».</p>
 				</td>
 			</tr>
 		</table>

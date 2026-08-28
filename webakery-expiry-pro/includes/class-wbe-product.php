@@ -8,9 +8,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WBE_Product {
 
-	const META_BATCHES        = '_wbe_batches';
-	const META_CALENDAR       = '_wbe_calendar';
-	const META_ACTIVE_EXPIRY  = '_wbe_active_expiry';
+	const META_BATCHES         = '_wbe_batches';
+	const META_CALENDAR        = '_wbe_calendar';
+	const META_ACTIVE_EXPIRY   = '_wbe_active_expiry';
+	const META_HIDE_COUNTDOWN  = '_wbe_hide_countdown';
 
 	/** @var bool */
 	private static $syncing = false;
@@ -39,6 +40,24 @@ class WBE_Product {
 
 	public static function configured( $product_id ) {
 		return WBE_Engine::is_configured( self::batches( $product_id ) );
+	}
+
+	/**
+	 * آیا تایمر تا پایان کمپین برای این محصول مجاز است؟
+	 */
+	public static function countdown_enabled( $product_id ) {
+		$global = ! empty( WBE_Settings::get()['show_sale_countdown'] );
+		$hidden = (string) get_post_meta( (int) $product_id, self::META_HIDE_COUNTDOWN, true ) === '1';
+		return WBE_Engine::countdown_allowed( $global, $hidden );
+	}
+
+	public static function save_hide_countdown( $product_id, $hide ) {
+		$product_id = (int) $product_id;
+		if ( $hide ) {
+			update_post_meta( $product_id, self::META_HIDE_COUNTDOWN, '1' );
+		} else {
+			delete_post_meta( $product_id, self::META_HIDE_COUNTDOWN );
+		}
 	}
 
 	/**

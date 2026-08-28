@@ -37,6 +37,7 @@ class WBE_Admin_Product {
 		$override  = get_post_meta( $pid, WBE_Product::META_CALENDAR, true );
 		$effective = WBE_Product::calendar( $pid );
 		$global    = WBE_Settings::calendar();
+		$hide_cd   = (string) get_post_meta( $pid, WBE_Product::META_HIDE_COUNTDOWN, true ) === '1';
 		$wc_price  = '';
 		$wc_disc   = '';
 		if ( function_exists( 'wc_get_product' ) ) {
@@ -65,6 +66,7 @@ class WBE_Admin_Product {
 		$rows     = isset( $_POST['wbe_batches'] ) && is_array( $_POST['wbe_batches'] ) ? wp_unslash( $_POST['wbe_batches'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 		$batches  = WBE_Engine::sanitize_batches( $rows, $cal );
 		WBE_Product::save_batches( $pid, $batches, $override, false );
+		WBE_Product::save_hide_countdown( $pid, ! empty( $_POST['wbe_hide_countdown'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 	}
 
 	public function sync_after_save( $product_id ) {

@@ -164,6 +164,23 @@ class WBE_Engine {
 	}
 
 	/**
+	 * تایمر کمپین: تنظیمات سراسری روشن باشد و روی محصول مخفی نشده باشد.
+	 *
+	 * @param mixed $global_on
+	 * @param mixed $product_hidden
+	 * @return bool
+	 */
+	public static function countdown_allowed( $global_on, $product_hidden ) {
+		if ( empty( $global_on ) || '0' === (string) $global_on ) {
+			return false;
+		}
+		if ( ! empty( $product_hidden ) && '0' !== (string) $product_hidden ) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
 	 * درصد تخفیف بچ (۰ تا ۱۰۰).
 	 *
 	 * @param array $batch

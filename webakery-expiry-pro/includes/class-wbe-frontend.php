@@ -174,8 +174,7 @@ class WBE_Frontend {
 		if ( 'loop' === $variant ) {
 			return '';
 		}
-		$s = WBE_Settings::get();
-		if ( empty( $s['show_sale_countdown'] ) ) {
+		if ( ! WBE_Product::countdown_enabled( $product_id ) ) {
 			return '';
 		}
 		if ( WBE_Engine::discount_of( $active ) <= 0 ) {
@@ -221,7 +220,7 @@ class WBE_Frontend {
 			return $html;
 		};
 		$html  = '<div class="wbe-countdown" data-end="' . esc_attr( (string) $end_ts ) . '">';
-		$html .= '<span class="wbe-countdown__title">مانده تا پایان فروش</span>';
+		$html .= '<span class="wbe-countdown__title">مانده تا پایان کمپین</span>';
 		$html .= '<span class="wbe-countdown__units">';
 		$html .= $unit( 'd', $parts['days'], 'روز' );
 		$html .= $unit( 'h', $parts['hours'], 'ساعت' );

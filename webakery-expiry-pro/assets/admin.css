@@ -51,6 +51,18 @@
 	background: #fef2f2;
 }
 
+.wbe-inline-check {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 400;
+}
+
+.wbe-countdown-field .description {
+	display: block;
+	margin-top: 4px;
+}
+
 .wbe-product-panel {
 	margin: 12px 0 8px;
 	padding: 12px 12px 4px;
