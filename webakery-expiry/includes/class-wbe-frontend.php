@@ -10,9 +10,9 @@ class WBE_Frontend {
 
 	public static function register() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'assets' ) );
-		add_action( 'woocommerce_single_product_summary', array( __CLASS__, 'near_price' ), 25 );
+		add_filter( 'woocommerce_short_description', array( __CLASS__, 'prepend_short_description' ), 4 );
+		add_action( 'woocommerce_single_product_summary', array( __CLASS__, 'before_excerpt' ), 19 );
 		add_action( 'woocommerce_after_shop_loop_item_title', array( __CLASS__, 'on_loop' ), 15 );
-		add_filter( 'the_content', array( __CLASS__, 'in_description' ), 20 );
 		add_filter( 'woocommerce_blocks_product_grid_item_html', array( __CLASS__, 'block_grid_html' ), 10, 3 );
 		add_shortcode( 'webakery_expiry', array( __CLASS__, 'shortcode' ) );
 		add_filter( 'woocommerce_catalog_orderby', array( __CLASS__, 'orderby_options' ) );
@@ -40,12 +40,37 @@ class WBE_Frontend {
 		);
 	}
 
-	public static function near_price() {
+	public static function want_product_page() {
 		$s = WBE_Settings::get();
-		if ( empty( $s['show_near_price'] ) ) {
+		return ! empty( $s['show_near_price'] ) || ! empty( $s['show_in_description'] );
+	}
+
+	public static function prepend_short_description( $content ) {
+		if ( is_admin() && ! ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) ) {
+			return $content;
+		}
+		if ( ! function_exists( 'is_product' ) || ! is_product() || ! self::want_product_page() ) {
+			return $content;
+		}
+		$html = self::field_html( get_the_ID(), 'block' );
+		if ( ! $html ) {
+			return $content;
+		}
+		return $html . $content;
+	}
+
+	/**
+	 * اگر توضیحات کوتاه خالی باشد فیلتر excerpt اجرا نمی‌شود — همین‌جا اول صفحه می‌گذاریم.
+	 */
+	public static function before_excerpt() {
+		if ( ! function_exists( 'is_product' ) || ! is_product() || ! self::want_product_page() ) {
 			return;
 		}
-		echo self::field_html( get_the_ID(), 'compact' ); // phpcs:ignore WordPress.Security.EscapeOutput
+		global $post;
+		if ( $post && trim( (string) $post->post_excerpt ) !== '' ) {
+			return;
+		}
+		echo self::field_html( get_the_ID(), 'block' ); // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 
 	public static function on_loop() {
@@ -54,21 +79,6 @@ class WBE_Frontend {
 			return;
 		}
 		echo self::field_html( get_the_ID(), 'loop' ); // phpcs:ignore WordPress.Security.EscapeOutput
-	}
-
-	public static function in_description( $content ) {
-		if ( ! function_exists( 'is_product' ) || ! is_product() || ! in_the_loop() || ! is_main_query() ) {
-			return $content;
-		}
-		$s = WBE_Settings::get();
-		if ( empty( $s['show_in_description'] ) ) {
-			return $content;
-		}
-		$html = self::field_html( get_the_ID(), 'block' );
-		if ( ! $html ) {
-			return $content;
-		}
-		return $content . $html;
 	}
 
 	public static function block_grid_html( $html, $data, $product ) {
@@ -130,9 +140,43 @@ class WBE_Frontend {
 		);
 		$class = isset( $map[ $variant ] ) ? $map[ $variant ] : $map['block'];
 		$html  = '<div class="' . esc_attr( $class ) . '" dir="rtl">';
-		$html .= '<span class="wbe-expiry__label">تاریخ انقضا</span>';
-		$html .= '<span class="wbe-expiry__value">' . esc_html( $date ) . '</span>';
+		$html .= '<p class="wbe-expiry__row"><span class="wbe-expiry__label">تاریخ انقضا</span> ';
+		$html .= '<span class="wbe-expiry__value">' . esc_html( $date ) . '</span></p>';
+		$sale_row = self::sale_dates_row( $product_id, $active, $cal );
+		if ( $sale_row !== '' ) {
+			$html .= $sale_row;
+		}
 		$html .= '</div>';
+		return $html;
+	}
+
+	/**
+	 * بازه فروش فوق‌العاده فقط وقتی تخفیف الان اعمال می‌شود.
+	 *
+	 * @param int   $product_id
+	 * @param array $active
+	 * @param string $calendar
+	 * @return string
+	 */
+	public static function sale_dates_row( $product_id, $active, $calendar ) {
+		if ( WBE_Engine::discount_of( $active ) <= 0 ) {
+			return '';
+		}
+		$today = WBE_Jalali::today_ymd();
+		$pair  = WBE_Product::sale_ymd_pair( $product_id );
+		$from  = $pair[0];
+		$to    = $pair[1] !== '' ? $pair[1] : ( isset( $active['expiry'] ) ? (string) $active['expiry'] : '' );
+		if ( ! WBE_Engine::sale_window_live( $from, $to, $today ) ) {
+			return '';
+		}
+		$text = WBE_Engine::sale_dates_text( $from, $to, $calendar, true );
+		if ( $text === '' ) {
+			return '';
+		}
+		$html  = '<p class="wbe-expiry__row wbe-sale-dates">';
+		$html .= '<span class="wbe-expiry__label">فروش فوق‌العاده</span> ';
+		$html .= '<span class="wbe-expiry__value">' . esc_html( $text ) . '</span>';
+		$html .= '</p>';
 		return $html;
 	}
 

@@ -70,7 +70,7 @@ class WBE_Stock {
 			return $price;
 		}
 		$active = WBE_Product::active( $product->get_id() );
-		if ( ! $active || WBE_Engine::discount_of( $active ) <= 0 ) {
+		if ( ! self::discount_live( $product, $active ) ) {
 			return '';
 		}
 		return (string) WBE_Engine::sale_price( $active['price'], WBE_Engine::discount_of( $active ) );
@@ -83,6 +83,9 @@ class WBE_Stock {
 		$active = WBE_Product::active( $product->get_id() );
 		if ( ! $active ) {
 			return $price;
+		}
+		if ( ! self::discount_live( $product, $active ) ) {
+			return (string) $active['price'];
 		}
 		return (string) WBE_Engine::sale_price( $active['price'], WBE_Engine::discount_of( $active ) );
 	}
@@ -100,7 +103,25 @@ class WBE_Stock {
 			return $on_sale;
 		}
 		$active = WBE_Product::active( $product->get_id() );
-		return $active && WBE_Engine::discount_of( $active ) > 0;
+		return self::discount_live( $product, $active );
+	}
+
+	/**
+	 * تخفیف بچ فقط در بازه فروش فوق‌العاده (اگر تاریخ از/تا ست شده باشد).
+	 *
+	 * @param WC_Product $product
+	 * @param array|null $active
+	 * @return bool
+	 */
+	public static function discount_live( $product, $active ) {
+		if ( ! is_array( $active ) || WBE_Engine::discount_of( $active ) <= 0 ) {
+			return false;
+		}
+		$today = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
+		$pair  = WBE_Product::sale_ymd_pair( $product );
+		$from  = $pair[0];
+		$to    = $pair[1] !== '' ? $pair[1] : ( isset( $active['expiry'] ) ? (string) $active['expiry'] : '' );
+		return WBE_Engine::sale_window_live( $from, $to, $today );
 	}
 
 	public static function maybe_sync_viewed() {

@@ -149,6 +149,37 @@ class WBE_Jalali {
 		return $fa_digits ? self::en_to_fa( $out ) : $out;
 	}
 
+	/**
+	 * WC_DateTime / timestamp / رشته → Y-m-d در منطقه زمانی سایت.
+	 *
+	 * @param mixed $value
+	 * @return string
+	 */
+	public static function datetime_to_ymd( $value ) {
+		if ( empty( $value ) && ! is_numeric( $value ) ) {
+			return '';
+		}
+		if ( is_object( $value ) && method_exists( $value, 'date' ) ) {
+			$ymd = $value->date( 'Y-m-d' );
+			return preg_match( '/^\d{4}-\d{2}-\d{2}$/', (string) $ymd ) ? (string) $ymd : '';
+		}
+		if ( is_numeric( $value ) ) {
+			$ts = (int) $value;
+			if ( $ts <= 0 ) {
+				return '';
+			}
+			if ( function_exists( 'wp_date' ) ) {
+				return wp_date( 'Y-m-d', $ts );
+			}
+			return gmdate( 'Y-m-d', $ts );
+		}
+		$raw = trim( (string) $value );
+		if ( preg_match( '/^(\d{4}-\d{2}-\d{2})/', $raw, $m ) ) {
+			return $m[1];
+		}
+		return '';
+	}
+
 	public static function number( $value ) {
 		$value = self::fa_to_en( $value );
 		$value = str_replace( array( ',', '٬', '،', ' ' ), '', $value );

@@ -154,6 +154,19 @@ wbe_check( 'قیمت صفر بچ را عوض نمی‌کند', $priced === WBE_E
 $same = WBE_Engine::apply_wc_price_to_active( $priced, '100000', '', '2026-01-15', false );
 wbe_check( 'اگر قیمت از قبل یکی باشد آرایه دست نمی‌خورد', $priced === $same );
 
+echo "\n=== بازه فروش فوق‌العاده ===\n";
+wbe_check( 'بدون تاریخ، بازه زنده است', true === WBE_Engine::sale_window_live( '', '', '2026-01-15' ) );
+wbe_check( 'قبل از شروع زنده نیست', false === WBE_Engine::sale_window_live( '2026-02-01', '2026-02-10', '2026-01-15' ) );
+wbe_check( 'داخل بازه زنده است', true === WBE_Engine::sale_window_live( '2026-01-01', '2026-01-31', '2026-01-15' ) );
+wbe_check( 'بعد از پایان زنده نیست', false === WBE_Engine::sale_window_live( '2026-01-01', '2026-01-10', '2026-01-15' ) );
+wbe_check( 'همان روز پایان هنوز زنده است', true === WBE_Engine::sale_window_live( '', '2026-01-15', '2026-01-15' ) );
+$range = WBE_Engine::sale_dates_text( '2026-01-01', '2026-01-31', 'gregorian', false );
+wbe_check( 'متن بازه از و تا', 'از 2026/01/01 تا 2026/01/31' === $range, $range );
+$until = WBE_Engine::sale_dates_text( '', '2026-01-31', 'gregorian', false );
+wbe_check( 'فقط تا تاریخ پایان', 'تا 2026/01/31' === $until, $until );
+wbe_check( 'رشته تاریخ به Y-m-d', '2026-08-28' === WBE_Jalali::datetime_to_ymd( '2026-08-28 23:59:59' ) );
+wbe_check( 'خالی تاریخ ندارد', '' === WBE_Jalali::datetime_to_ymd( '' ) );
+
 echo "\n=== خروجی اکسل RTL ===\n";
 require dirname( __DIR__ ) . '/includes/class-wbe-export.php';
 $xml = WBE_Export::xml_document(
@@ -178,6 +191,7 @@ $xml = WBE_Export::xml_document(
 wbe_check( 'ورک‌شیت راست‌چین است', false !== strpos( $xml, 'ss:RightToLeft="1"' ) );
 wbe_check( 'هدر فارسی دارد', false !== strpos( $xml, 'تاریخ انقضا' ) );
 wbe_check( 'ستون تخفیف در اکسل هست', false !== strpos( $xml, 'تخفیف' ) );
+wbe_check( 'ستون قیمت قبل تخفیف در اکسل هست', false !== strpos( $xml, 'قیمت قبل تخفیف' ) );
 wbe_check( 'ردیف نزدیک به انقضا رنگ جدا دارد', false !== strpos( $xml, 'ss:StyleID="near"' ) );
 wbe_check( 'نام محصول در خروجی است', false !== strpos( $xml, 'شیر خشک' ) );
 
@@ -211,7 +225,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.0.5' );
+	define( 'WBE_VERSION', '1.0.6' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

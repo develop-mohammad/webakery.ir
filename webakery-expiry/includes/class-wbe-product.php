@@ -130,9 +130,12 @@ class WBE_Product {
 				$sale = (string) WBE_Engine::sale_price( $regular, $discount );
 				$product->set_sale_price( $sale );
 				$product->set_price( $sale );
+				self::ensure_sale_dates( $product, $active['expiry'] );
 			} else {
 				$product->set_sale_price( '' );
 				$product->set_price( $regular );
+				$product->set_date_on_sale_from( '' );
+				$product->set_date_on_sale_to( '' );
 			}
 			$product->set_stock_quantity( (int) $active['stock'] );
 			$product->set_stock_status( 'instock' );
@@ -148,6 +151,50 @@ class WBE_Product {
 
 	public static function is_syncing() {
 		return self::$syncing;
+	}
+
+	/**
+	 * اگر بازه فروش فوق‌العاده خالی یا گذشته باشد، پایان فروش = تاریخ انقضای بچ فعال.
+	 *
+	 * @param WC_Product $product
+	 * @param string     $expiry_ymd
+	 */
+	public static function ensure_sale_dates( $product, $expiry_ymd ) {
+		if ( ! is_object( $product ) || ! method_exists( $product, 'set_date_on_sale_to' ) ) {
+			return;
+		}
+		$expiry_ymd = (string) $expiry_ymd;
+		if ( $expiry_ymd === '' ) {
+			return;
+		}
+		$today   = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
+		$to_ymd  = method_exists( $product, 'get_date_on_sale_to' ) ? WBE_Jalali::datetime_to_ymd( $product->get_date_on_sale_to( 'edit' ) ) : '';
+		$from_ymd = method_exists( $product, 'get_date_on_sale_from' ) ? WBE_Jalali::datetime_to_ymd( $product->get_date_on_sale_from( 'edit' ) ) : '';
+		if ( $to_ymd === '' || $to_ymd < $today ) {
+			$product->set_date_on_sale_to( $expiry_ymd . ' 23:59:59' );
+			$to_ymd = $expiry_ymd;
+		}
+		if ( $from_ymd !== '' && $from_ymd > $to_ymd ) {
+			$product->set_date_on_sale_from( '' );
+		}
+	}
+
+	/**
+	 * بازه فروش فوق‌العاده ذخیره‌شده روی محصول (بدون فیلتر نمایش).
+	 *
+	 * @param WC_Product|int $product
+	 * @return array{0:string,1:string} from, to به Y-m-d
+	 */
+	public static function sale_ymd_pair( $product ) {
+		if ( is_numeric( $product ) && function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( (int) $product );
+		}
+		if ( ! is_object( $product ) ) {
+			return array( '', '' );
+		}
+		$from = method_exists( $product, 'get_date_on_sale_from' ) ? WBE_Jalali::datetime_to_ymd( $product->get_date_on_sale_from( 'edit' ) ) : '';
+		$to   = method_exists( $product, 'get_date_on_sale_to' ) ? WBE_Jalali::datetime_to_ymd( $product->get_date_on_sale_to( 'edit' ) ) : '';
+		return array( $from, $to );
 	}
 
 	/**

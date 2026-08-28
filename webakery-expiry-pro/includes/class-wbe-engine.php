@@ -193,6 +193,51 @@ class WBE_Engine {
 	}
 
 	/**
+	 * آیا امروز داخل بازه فروش فوق‌العاده است؟ تاریخ خالی = بدون محدودیت.
+	 *
+	 * @param string $from_ymd Y-m-d یا خالی
+	 * @param string $to_ymd   Y-m-d یا خالی
+	 * @param string $today    Y-m-d
+	 * @return bool
+	 */
+	public static function sale_window_live( $from_ymd, $to_ymd, $today ) {
+		$today = (string) $today;
+		$from  = (string) $from_ymd;
+		$to    = (string) $to_ymd;
+		if ( $from !== '' && $from > $today ) {
+			return false;
+		}
+		if ( $to !== '' && $to < $today ) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * متن بازه فروش فوق‌العاده برای مشتری.
+	 *
+	 * @param string $from_ymd
+	 * @param string $to_ymd
+	 * @param string $calendar jalali|gregorian
+	 * @param bool   $fa_digits
+	 * @return string
+	 */
+	public static function sale_dates_text( $from_ymd, $to_ymd, $calendar = 'jalali', $fa_digits = true ) {
+		$from_f = ( $from_ymd !== '' && class_exists( 'WBE_Jalali' ) ) ? WBE_Jalali::format_ymd( $from_ymd, $calendar, $fa_digits ) : '';
+		$to_f   = ( $to_ymd !== '' && class_exists( 'WBE_Jalali' ) ) ? WBE_Jalali::format_ymd( $to_ymd, $calendar, $fa_digits ) : '';
+		if ( $from_f && $to_f ) {
+			return 'از ' . $from_f . ' تا ' . $to_f;
+		}
+		if ( $to_f ) {
+			return 'تا ' . $to_f;
+		}
+		if ( $from_f ) {
+			return 'از ' . $from_f;
+		}
+		return '';
+	}
+
+	/**
 	 * درصد تخفیف از قیمت اصلی و قیمت فروش ووکامرس.
 	 *
 	 * @param float|string     $regular

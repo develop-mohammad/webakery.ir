@@ -29,8 +29,8 @@ $sms_msg = isset( $_GET['wbe_sms'] ) ? sanitize_key( wp_unslash( $_GET['wbe_sms'
 			<tr>
 				<th scope="row">نمایش در فروشگاه</th>
 				<td>
-					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_near_price]" value="1" <?php checked( $s['show_near_price'], 1 ); ?> /> زیر قیمت در صفحه محصول</label><br>
-					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_in_description]" value="1" <?php checked( $s['show_in_description'], 1 ); ?> /> در توضیحات صفحه محصول</label><br>
+					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_near_price]" value="1" <?php checked( $s['show_near_price'], 1 ); ?> /> در ابتدای توضیحات کوتاه صفحه محصول (انقضا + بازه فروش فوق‌العاده)</label><br>
+					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_in_description]" value="1" <?php checked( $s['show_in_description'], 1 ); ?> /> اگر توضیحات کوتاه خالی بود باز هم اول صفحه محصول نشان بده</label><br>
 					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_on_loop]" value="1" <?php checked( $s['show_on_loop'], 1 ); ?> /> در لیست محصولات فروشگاه (کارت‌ها)</label><br>
 					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[catalog_sort]" value="1" <?php checked( $s['catalog_sort'], 1 ); ?> /> گزینه مرتب‌سازی «تاریخ انقضا» در فروشگاه</label>
 					<p class="description">شورت‌کد برای قالب/المنتور: <code>[webakery_expiry]</code></p>

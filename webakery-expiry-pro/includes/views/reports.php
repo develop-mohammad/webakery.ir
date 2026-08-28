@@ -61,7 +61,7 @@ $export_csv = $export_base . '&format=csv&' . http_build_query( $qs );
 				<th>برند</th>
 				<th><a href="<?php echo $sort_url( 'expiry' ); ?>">انقضا</a></th>
 				<th><a href="<?php echo $sort_url( 'days' ); ?>">روز مانده</a></th>
-				<th><a href="<?php echo $sort_url( 'price' ); ?>">قیمت</a></th>
+				<th><a href="<?php echo $sort_url( 'price' ); ?>">قیمت قبل تخفیف</a></th>
 				<th><a href="<?php echo $sort_url( 'discount' ); ?>">تخفیف</a></th>
 				<th><a href="<?php echo $sort_url( 'stock' ); ?>">موجودی</a></th>
 				<th>رزرو</th>
