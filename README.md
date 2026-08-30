@@ -67,7 +67,8 @@
 - مسیر: `webakery-seo-studio/`
 - ZIP: `webakery-seo-studio.zip`
 - ماژول‌ها: تغییر رتبه، کیورد ریسرچ، تولید محتوا، سئو تکنیکال، بک‌لینک، رپورتاژ
-- پیش‌نمایش بدون وردپرس: `webakery-seo-studio/canvas-preview.html`
+- روی لپ‌تاپ (بدون وردپرس): `webakery-seo-studio/index.html` یا `start-laptop.bat` — راهنما: `LAPTOP-FA.txt`
+- ZIP لپ‌تاپ: `seo-studio-laptop.zip`
 - راهنمای لایسنس (فعلاً بدون قفل): `license-server-updates/ADD-WEBAKERY-SEO-STUDIO.md`
 
 ## سکوت نوتیف (Quiet Notices)

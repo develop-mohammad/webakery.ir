@@ -177,7 +177,32 @@
 		};
 	}
 
-	var store = seed();
+	var KEY = 'wbss_laptop_store_v1';
+
+	function persist() {
+		try {
+			global.localStorage.setItem(KEY, JSON.stringify(store));
+		} catch (e) { /* private mode */ }
+	}
+
+	function loadStore() {
+		try {
+			var raw = global.localStorage.getItem(KEY);
+			if (raw) {
+				var parsed = JSON.parse(raw);
+				if (parsed && parsed.projects) {
+					return parsed;
+				}
+			}
+		} catch (e) { /* ignore */ }
+		var fresh = seed();
+		try {
+			global.localStorage.setItem(KEY, JSON.stringify(fresh));
+		} catch (err) { /* ignore */ }
+		return fresh;
+	}
+
+	var store = loadStore();
 
 	function ok(data) { return { success: true, data: data }; }
 	function fail(message) { return { success: false, data: { message: message } }; }
@@ -204,19 +229,23 @@
 				if (data.id) {
 					var p = store.projects.find(function (x) { return String(x.id) === String(data.id); });
 					if (p) Object.assign(p, data);
+					persist();
 					return ok({ id: Number(data.id) });
 				}
 				var np = { id: nid(store), name: data.name, domain: data.domain, notes: data.notes };
 				store.projects.push(np);
+				persist();
 				return ok({ id: np.id });
 			}
 			if (action === 'wbss_save_rank') {
+				var when = data.checked_at && /^\d{4}-\d{2}-\d{2}/.test(String(data.checked_at)) ? String(data.checked_at).slice(0, 10) : today();
 				store.ranks.push({
-					id: nid(store), keyword_id: Number(data.keyword_id), checked_at: today(),
+					id: nid(store), keyword_id: Number(data.keyword_id), checked_at: when,
 					position: Number(data.position) || 101, page_url: data.page_url || '',
 				});
 				var kw = store.keywords.find(function (k) { return String(k.id) === String(data.keyword_id); });
 				log(store, pid, 'rank', 'checked', 'ثبت رتبه «' + (kw ? kw.keyword : '') + '»: جایگاه ' + data.position, data.keyword_id, 0);
+				persist();
 				return ok({ id: store._id });
 			}
 			var mod = req.module;
@@ -225,25 +254,45 @@
 				var row = (store[mod] || []).find(function (r) { return String(r.id) === String(data.id); });
 				if (row) Object.assign(row, data);
 				log(store, pid, mod, 'updated', 'ویرایش مورد', data.id, 0);
+				persist();
 				return ok({ id: Number(data.id) });
 			}
 			data.id = nid(store);
 			store[mod] = store[mod] || [];
 			store[mod].push(data);
 			log(store, pid, mod, 'created', 'ثبت مورد جدید', data.id, 0);
+			persist();
 			return ok({ id: data.id });
 		}
 		if (action === 'wbss_delete') {
 			store[req.module] = (store[req.module] || []).filter(function (r) { return String(r.id) !== String(req.id); });
 			log(store, pid, req.module, 'deleted', 'حذف مورد', req.id, 0);
+			persist();
 			return ok({});
 		}
 		if (action === 'wbss_delete_project') {
 			store.projects = store.projects.filter(function (p) { return String(p.id) !== String(req.id); });
+			persist();
 			return ok({});
 		}
-		if (action === 'wbss_export') return ok({ project: store.projects[0], keywords: store.keywords, demo: true });
-		if (action === 'wbss_reseed') { store = seed(); return ok({ id: 1 }); }
+		if (action === 'wbss_export') return ok(store);
+		if (action === 'wbss_import') {
+			var incoming = req.data || {};
+			if (!incoming.projects) return fail('فایل پشتیبان نامعتبر است.');
+			store = incoming;
+			persist();
+			return ok({ id: 1 });
+		}
+		if (action === 'wbss_empty') {
+			store = {
+				_id: 1,
+				projects: [ { id: 1, name: 'پروژه من', domain: '', notes: '' } ],
+				keywords: [], ranks: [], content: [], technical: [], backlinks: [], press: [], activity: [],
+			};
+			persist();
+			return ok({ id: 1 });
+		}
+		if (action === 'wbss_reseed') { store = seed(); persist(); return ok({ id: 1 }); }
 		return fail('اکشن نامعتبر');
 	}
 

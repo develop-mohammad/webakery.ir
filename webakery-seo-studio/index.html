@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>سئو استودیو — پیش‌نمایش لوکال</title>
+	<title>سئو استودیو — روی لپ‌تاپ</title>
 	<link rel="stylesheet" href="assets/css/admin.css">
 	<style>
 		body { margin: 0; background: #e8eaed; }
@@ -16,16 +16,19 @@
 			font: 13px/1.6 Tahoma, sans-serif;
 			border-bottom: 1px solid #dadce0;
 		}
+		.button { font: 13px Tahoma, sans-serif; padding: 6px 12px; border: 1px solid #dadce0; background: #fff; border-radius: 4px; cursor: pointer; }
+		.button-primary { background: #1565c0; border-color: #1565c0; color: #fff; }
+		.button-link { background: none; border: 0; color: #1565c0; cursor: pointer; font: inherit; }
 	</style>
 </head>
 <body>
-	<p class="wbss-preview-note">همین برنامه روی لپ‌تاپ شماست. برای استفاده روزمره فایل <a href="index.html">index.html</a> یا <code>start-laptop.bat</code> را باز کنید. داده در مرورگر همین سیستم ذخیره می‌شود.</p>
+	<p class="wbss-preview-note">سئو استودیو روی همین لپ‌تاپ است — اینترنت لازم نیست. هر اقدام سئو در مرورگر ذخیره می‌شود. برای پشتیبان از «خروجی JSON» استفاده کنید.</p>
 	<div class="wrap wbss-wrap">
 		<div class="wbss-app" dir="rtl" lang="fa">
 			<aside class="wbss-nav">
 				<div class="wbss-brand">
 					<strong>سئو استودیو</strong>
-					<span>گزارش مصور لوکال</span>
+					<span>گزارش مصور روی لپ‌تاپ</span>
 				</div>
 				<nav>
 					<button type="button" class="wbss-nav-btn is-active" data-view="dashboard">نمای کلی</button>
@@ -37,13 +40,13 @@
 					<button type="button" class="wbss-nav-btn" data-view="activity">گزارش اقدامات</button>
 					<button type="button" class="wbss-nav-btn" data-view="settings">پروژه‌ها</button>
 				</nav>
-				<p class="wbss-nav-meta">webakery.ir · پیش‌نمایش ۱.۰.۰</p>
+				<p class="wbss-nav-meta">webakery.ir · لپ‌تاپ ۱.۰.۰</p>
 			</aside>
 			<main class="wbss-main">
 				<header class="wbss-bar">
 					<div>
 						<h1 id="wbss-title">نمای کلی</h1>
-						<p class="wbss-sub" id="wbss-sub">هر اقدام سئو اینجا ثبت و نمودار می‌شود.</p>
+						<p class="wbss-sub" id="wbss-sub">رتبه، کیورد، محتوا، تکنیکال، بک‌لینک و رپورتاژ — همه روی همین سیستم.</p>
 					</div>
 					<div class="wbss-bar-tools">
 						<label class="wbss-field"><span>پروژه</span><select id="wbss-project"></select></label>
@@ -76,15 +79,10 @@
 			</div>
 		</div>
 	</div>
-	<style>
-		.button { font: 13px Tahoma, sans-serif; padding: 6px 12px; border: 1px solid #dadce0; background: #fff; border-radius: 4px; cursor: pointer; }
-		.button-primary { background: #1565c0; border-color: #1565c0; color: #fff; }
-		.button-link { background: none; border: 0; color: #1565c0; cursor: pointer; font: inherit; }
-	</style>
 	<script>
 		window.WBSS = {
 			ajax: '',
-			nonce: 'demo',
+			nonce: 'laptop',
 			today: new Date().toISOString().slice(0, 10),
 			todayFa: '',
 			i18n: {

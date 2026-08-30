@@ -467,8 +467,11 @@
 		}).join('');
 		$('#wbss-view').innerHTML =
 			'<div class="wbss-toolbar"><button type="button" class="button button-primary" id="wbss-new-project">پروژه جدید</button>' +
-			'<button type="button" class="button" id="wbss-seed">افزودن داده نمونه</button></div>' +
-			card('پروژه‌های سئو', table(['نام', 'دامنه', ''], rows));
+			'<button type="button" class="button" id="wbss-seed">افزودن داده نمونه</button>' +
+			(window.WbssDemo ? '<button type="button" class="button" id="wbss-empty">شروع خالی روی لپ‌تاپ</button><label class="button" id="wbss-import-lab">بازیابی JSON<input type="file" id="wbss-import" accept="application/json" hidden></label>' : '') +
+			'</div>' +
+			card('پروژه‌های سئو', table(['نام', 'دامنه', ''], rows)) +
+			(window.WbssDemo ? '<p class="wbss-hint">روی لپ‌تاپ، داده‌ها داخل همین مرورگر ذخیره می‌شوند. برای جابه‌جایی بین سیستم‌ها از «خروجی JSON» و بازیابی استفاده کنید.</p>' : '');
 		$('#wbss-new-project').onclick = function () { openModal('پروژه جدید', 'project', {}); };
 		$('#wbss-seed').onclick = function () {
 			if (!confirm('یک پروژه نمونه با دادهٔ نمایشی اضافه شود؟')) return;
@@ -476,6 +479,36 @@
 				if (r.success) { toast('داده نمونه اضافه شد'); boot(); }
 			});
 		};
+		var emptyBtn = $('#wbss-empty');
+		if (emptyBtn) {
+			emptyBtn.onclick = function () {
+				if (!confirm('همه داده‌های این مرورگر پاک شود و یک پروژه خالی ساخته شود؟')) return;
+				post('wbss_empty').then(function (r) {
+					if (r.success) { state.projectId = 1; toast('پروژه خالی آماده است'); boot(); }
+				});
+			};
+		}
+		var imp = $('#wbss-import');
+		if (imp) {
+			imp.onchange = function () {
+				var file = this.files && this.files[0];
+				if (!file) return;
+				var reader = new FileReader();
+				reader.onload = function () {
+					try {
+						var parsed = JSON.parse(reader.result);
+						post('wbss_import', { data: parsed }).then(function (r) {
+							if (r.success) { toast('بازیابی شد'); boot(); }
+							else toast((r.data && r.data.message) || WBSS.i18n.error, true);
+						});
+					} catch (err) {
+						toast('فایل JSON معتبر نیست.', true);
+					}
+				};
+				reader.readAsText(file);
+				this.value = '';
+			};
+		}
 		$('#wbss-view').onclick = function (e) {
 			var btn = e.target.closest('[data-act]');
 			if (!btn) return;
