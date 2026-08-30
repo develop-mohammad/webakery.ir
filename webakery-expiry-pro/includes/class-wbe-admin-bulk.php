@@ -20,6 +20,7 @@ class WBE_Admin_Bulk {
 
 	private function __construct() {
 		add_action( 'admin_post_wbe_bulk_apply', array( $this, 'handle_apply' ) );
+		add_action( 'wp_ajax_wbe_bulk_save', array( $this, 'ajax_save' ) );
 		add_action( 'woocommerce_product_bulk_edit_end', array( $this, 'wc_bulk_fields' ) );
 		add_action( 'woocommerce_product_bulk_edit_save', array( $this, 'wc_bulk_save' ), 25 );
 	}
@@ -77,6 +78,27 @@ class WBE_Admin_Bulk {
 			$ops['clear_sale'] = true;
 		}
 
+		$smode = isset( $src['wbe_stock_mode'] ) ? sanitize_key( wp_unslash( $src['wbe_stock_mode'] ) ) : 'none';
+		$sval  = array_key_exists( 'wbe_stock_value', $src ) ? WBE_Engine::parse_amount( wp_unslash( $src['wbe_stock_value'] ) ) : null;
+		if ( in_array( $smode, $ok, true ) && 'none' !== $smode && null !== $sval ) {
+			$ops['stock_mode'] = $smode;
+			$ops['stock']      = $sval;
+		}
+
+		if ( isset( $src['wbe_expiry'] ) && '' !== trim( (string) wp_unslash( $src['wbe_expiry'] ) ) ) {
+			$exp = WBE_Jalali::parse_to_ymd( wp_unslash( $src['wbe_expiry'] ), $calendar );
+			if ( '' !== $exp ) {
+				$ops['expiry'] = $exp;
+			}
+		}
+
+		if ( isset( $src['wbe_round'] ) ) {
+			$round = sanitize_key( wp_unslash( $src['wbe_round'] ) );
+			if ( in_array( $round, array( 'round', 'ceil', 'floor' ), true ) ) {
+				$ops['round'] = $round;
+			}
+		}
+
 		$ops = array_merge( $ops, self::dates_from_src( $src, $calendar, 'wbe_sale_from', 'wbe_sale_to' ) );
 		return $ops;
 	}
@@ -113,6 +135,19 @@ class WBE_Admin_Bulk {
 			$ops['clear_sale'] = true;
 		}
 
+		$stock = array_key_exists( 'stock', $row ) ? WBE_Engine::parse_amount( $row['stock'] ) : null;
+		if ( null !== $stock ) {
+			$ops['stock_mode'] = 'set';
+			$ops['stock']      = $stock;
+		}
+
+		if ( isset( $row['expiry'] ) && '' !== trim( (string) $row['expiry'] ) ) {
+			$exp = WBE_Jalali::parse_to_ymd( $row['expiry'], $calendar );
+			if ( '' !== $exp ) {
+				$ops['expiry'] = $exp;
+			}
+		}
+
 		$ops = array_merge( $ops, self::dates_from_src( $row, $calendar, 'from', 'to' ) );
 		return $ops;
 	}
@@ -124,11 +159,20 @@ class WBE_Admin_Bulk {
 	 * @return bool
 	 */
 	public static function ops_meaningful( array $ops ) {
-		if ( WBE_Engine::has_price_ops( $ops ) ) {
+		if ( WBE_Engine::has_batch_ops( $ops ) ) {
 			return true;
 		}
 		return ( isset( $ops['sale_from'] ) && '' !== $ops['sale_from'] )
 			|| ( isset( $ops['sale_to'] ) && '' !== $ops['sale_to'] );
+	}
+
+	/**
+	 * تعداد محصول در هر تکهٔ AJAX.
+	 *
+	 * @return int
+	 */
+	public static function chunk_size() {
+		return 40;
 	}
 
 	/**
@@ -182,50 +226,154 @@ class WBE_Admin_Bulk {
 	 * @return array<int,array>
 	 */
 	public function collect_rows( array $filters ) {
-		$q   = isset( $filters['q'] ) ? trim( (string) $filters['q'] ) : '';
-		$cat = isset( $filters['category'] ) ? (int) $filters['category'] : 0;
+		global $wpdb;
+		if ( ! isset( $wpdb ) || ! is_object( $wpdb ) ) {
+			return array();
+		}
+
+		$q          = isset( $filters['q'] ) ? trim( (string) $filters['q'] ) : '';
+		$cat        = isset( $filters['category'] ) ? (int) $filters['category'] : 0;
+		$today      = WBE_Jalali::today_ymd();
+		$default_cal = WBE_Settings::calendar();
+
+		$sql = "SELECT p.ID, p.post_title,
+				sku.meta_value AS sku,
+				batches.meta_value AS batches_raw,
+				cal.meta_value AS calendar,
+				sf.meta_value AS sale_from,
+				st.meta_value AS sale_to
+			FROM {$wpdb->posts} p
+			INNER JOIN {$wpdb->postmeta} batches ON batches.post_id = p.ID AND batches.meta_key = '_wbe_batches'
+			LEFT JOIN {$wpdb->postmeta} sku ON sku.post_id = p.ID AND sku.meta_key = '_sku'
+			LEFT JOIN {$wpdb->postmeta} cal ON cal.post_id = p.ID AND cal.meta_key = '_wbe_calendar'
+			LEFT JOIN {$wpdb->postmeta} sf ON sf.post_id = p.ID AND sf.meta_key = '_sale_price_dates_from'
+			LEFT JOIN {$wpdb->postmeta} st ON st.post_id = p.ID AND st.meta_key = '_sale_price_dates_to'
+			WHERE p.post_type = 'product'
+			AND p.post_status IN ('publish','private','draft')";
+
+		$args = array();
+		if ( $cat && function_exists( 'get_term_children' ) ) {
+			$term_ids = array( $cat );
+			$kids     = get_term_children( $cat, 'product_cat' );
+			if ( ! is_wp_error( $kids ) && $kids ) {
+				$term_ids = array_merge( $term_ids, array_map( 'intval', $kids ) );
+			}
+			$term_ids = array_filter( array_map( 'intval', $term_ids ) );
+			if ( $term_ids ) {
+				$in   = implode( ',', $term_ids );
+				$sql .= " AND p.ID IN (
+					SELECT tr.object_id FROM {$wpdb->term_relationships} tr
+					INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id
+					WHERE tt.taxonomy = 'product_cat' AND tt.term_id IN ({$in})
+				)";
+			}
+		}
+		if ( $q ) {
+			$like  = '%' . $wpdb->esc_like( $q ) . '%';
+			$sql  .= ' AND (p.post_title LIKE %s OR sku.meta_value LIKE %s)';
+			$args[] = $like;
+			$args[] = $like;
+		}
+		$sql .= ' ORDER BY p.post_title ASC LIMIT 2500';
+		if ( $args ) {
+			$sql = $wpdb->prepare( $sql, $args ); // phpcs:ignore WordPress.DB.PreparedSQL
+		}
+
+		$records = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL
+		if ( ! $records ) {
+			return array();
+		}
+
 		$out = array();
-		foreach ( WBE_Product::configured_ids() as $id ) {
-			$post = get_post( $id );
-			if ( ! $post ) {
+		foreach ( $records as $rec ) {
+			$batches = maybe_unserialize( $rec->batches_raw );
+			if ( ! is_array( $batches ) || empty( $batches ) ) {
 				continue;
 			}
-			$sku = (string) get_post_meta( $id, '_sku', true );
-			if ( $q ) {
-				$hay = $post->post_title . ' ' . $sku;
-				if ( function_exists( 'mb_stripos' ) ) {
-					if ( false === mb_stripos( $hay, $q ) ) {
-						continue;
-					}
-				} elseif ( false === stripos( $hay, $q ) ) {
-					continue;
-				}
-			}
-			if ( $cat && function_exists( 'has_term' ) && ! has_term( $cat, 'product_cat', $id ) ) {
-				continue;
-			}
-			$active   = WBE_Product::active( $id );
-			$cal      = WBE_Product::calendar( $id );
-			$regular  = $active ? (string) $active['price'] : '';
-			$discount = $active ? WBE_Engine::discount_of( $active ) : 0;
-			$sale     = ( '' !== $regular ) ? (string) WBE_Engine::sale_price( $regular, $discount ) : '';
-			$pair     = WBE_Product::sale_ymd_pair( $id );
-			$out[]    = array(
-				'id'       => $id,
-				'name'     => $post->post_title,
-				'sku'      => $sku,
-				'regular'  => $regular,
-				'discount' => $discount,
-				'sale'     => $sale,
-				'from'     => $pair[0],
-				'to'       => $pair[1],
-				'from_fa'  => $pair[0] ? WBE_Jalali::format_ymd( $pair[0], $cal, false ) : '',
-				'to_fa'    => $pair[1] ? WBE_Jalali::format_ymd( $pair[1], $cal, false ) : '',
-				'expiry'   => $active && ! empty( $active['expiry'] ) ? WBE_Jalali::format_ymd( $active['expiry'], $cal, false ) : '',
-				'has_active' => (bool) $active,
+			$cal   = ( 'jalali' === $rec->calendar || 'gregorian' === $rec->calendar ) ? $rec->calendar : $default_cal;
+			$out[] = WBE_Engine::bulk_row_from_record(
+				$rec->ID,
+				$rec->post_title,
+				isset( $rec->sku ) ? $rec->sku : '',
+				$batches,
+				$cal,
+				$rec->sale_from,
+				$rec->sale_to,
+				$today
 			);
 		}
 		return $out;
+	}
+
+	/**
+	 * ذخیرهٔ تکه‌ای با AJAX تا تایم‌اوت نشود.
+	 */
+	public function ajax_save() {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'message' => 'دسترسی غیرمجاز' ), 403 );
+		}
+		check_ajax_referer( 'wbe_bulk', 'nonce' );
+		if ( ! WBE_Plugin::licensed() ) {
+			wp_send_json_error( array( 'message' => 'لایسنس نامعتبر است.' ), 403 );
+		}
+
+		$calendar = WBE_Settings::calendar();
+		$limit    = self::chunk_size();
+		$mode     = isset( $_POST['wbe_bulk_mode'] ) ? sanitize_key( wp_unslash( $_POST['wbe_bulk_mode'] ) ) : 'rows';
+		$updated  = 0;
+		$skipped  = 0;
+
+		if ( 'selected' === $mode ) {
+			$ops = self::ops_from_request( $_POST, $calendar ); // phpcs:ignore WordPress.Security.NonceVerification
+			$ids = isset( $_POST['ids'] ) ? array_map( 'intval', (array) wp_unslash( $_POST['ids'] ) ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			$ids = array_slice( array_values( array_filter( $ids ) ), 0, $limit );
+			if ( ! self::ops_meaningful( $ops ) || ! $ids ) {
+				wp_send_json_success(
+					array(
+						'updated' => 0,
+						'skipped' => 0,
+						'empty'   => 1,
+					)
+				);
+			}
+			foreach ( $ids as $id ) {
+				if ( WBE_Product::apply_bulk( $id, $ops, false ) ) {
+					$updated++;
+				} else {
+					$skipped++;
+				}
+			}
+		} else {
+			$rows = isset( $_POST['wbe_row'] ) && is_array( $_POST['wbe_row'] ) ? wp_unslash( $_POST['wbe_row'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			$n    = 0;
+			foreach ( $rows as $id => $row ) {
+				if ( $n >= $limit ) {
+					break;
+				}
+				$ops = self::ops_from_row( $row, $calendar );
+				if ( ! self::ops_meaningful( $ops ) ) {
+					continue;
+				}
+				$n++;
+				if ( WBE_Product::apply_bulk( (int) $id, $ops, false ) ) {
+					$updated++;
+				} else {
+					$skipped++;
+				}
+			}
+		}
+
+		if ( class_exists( 'WBE_Alerts' ) ) {
+			WBE_Alerts::flush();
+		}
+
+		wp_send_json_success(
+			array(
+				'updated' => $updated,
+				'skipped' => $skipped,
+				'chunk'   => $limit,
+			)
+		);
 	}
 
 	public function handle_apply() {
@@ -250,7 +398,7 @@ class WBE_Admin_Bulk {
 				if ( ! self::ops_meaningful( $ops ) ) {
 					continue;
 				}
-				if ( WBE_Product::apply_bulk( (int) $id, $ops ) ) {
+				if ( WBE_Product::apply_bulk( (int) $id, $ops, false ) ) {
 					$updated++;
 				} else {
 					$skipped++;
@@ -268,13 +416,16 @@ class WBE_Admin_Bulk {
 					if ( $id <= 0 ) {
 						continue;
 					}
-					if ( WBE_Product::apply_bulk( $id, $ops ) ) {
+					if ( WBE_Product::apply_bulk( $id, $ops, false ) ) {
 						$updated++;
 					} else {
 						$skipped++;
 					}
 				}
 			}
+		}
+		if ( class_exists( 'WBE_Alerts' ) ) {
+			WBE_Alerts::flush();
 		}
 
 		$args = array(

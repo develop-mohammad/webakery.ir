@@ -406,51 +406,180 @@ class WBE_Product {
 	}
 
 	/**
-	 * ویرایش گروهی بچ فعال و بازه جشنواره برای یک محصول.
+	 * ویرایش گروهی بچ فعال — بدون WC_Product::save تا روی تعداد بالا کند نشود.
 	 *
 	 * @param int   $product_id شناسه محصول.
 	 * @param array $ops        عملیات موتور + sale_from / sale_to (Y-m-d).
-	 * @return bool اگر بچ وجود داشت و ذخیره شد.
+	 * @param bool  $flush_alerts بعد از هر محصول هشدار را تازه نکن (در ذخیرهٔ تکه‌ای false بگذار).
+	 * @return bool اگر بچ وجود داشت.
 	 */
-	public static function apply_bulk( $product_id, array $ops ) {
+	public static function apply_bulk( $product_id, array $ops, $flush_alerts = true ) {
 		$product_id = (int) $product_id;
 		$batches    = self::batches( $product_id );
 		if ( ! $batches ) {
 			return false;
 		}
 
-		$today = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
-		$next  = WBE_Engine::apply_bulk_to_active( $batches, $ops, $today );
-
-		self::$syncing = true;
-		self::save_batches( $product_id, $next, null, false );
-		self::$syncing = false;
-		self::sync_wc( $product_id );
-
-		$touch_dates = ! empty( $ops['clear_sale'] )
+		$today           = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
+		$next            = WBE_Engine::apply_bulk_to_active( $batches, $ops, $today );
+		$batches_changed = $next !== $batches;
+		$touch_dates     = ! empty( $ops['clear_sale'] )
 			|| ( isset( $ops['sale_from'] ) && '' !== $ops['sale_from'] )
 			|| ( isset( $ops['sale_to'] ) && '' !== $ops['sale_to'] );
 
-		if ( $touch_dates && function_exists( 'wc_get_product' ) ) {
-			$product = wc_get_product( $product_id );
-			if ( $product && method_exists( $product, 'set_date_on_sale_from' ) ) {
-				self::$syncing = true;
-				if ( ! empty( $ops['clear_sale'] ) ) {
-					$product->set_date_on_sale_from( '' );
-					$product->set_date_on_sale_to( '' );
-				} else {
-					if ( isset( $ops['sale_from'] ) && '' !== $ops['sale_from'] ) {
-						$product->set_date_on_sale_from( $ops['sale_from'] );
-					}
-					if ( isset( $ops['sale_to'] ) && '' !== $ops['sale_to'] ) {
-						$product->set_date_on_sale_to( $ops['sale_to'] . ' 23:59:59' );
-					}
-				}
-				$product->save();
-				self::$syncing = false;
-			}
+		if ( ! $batches_changed && ! $touch_dates ) {
+			return true;
 		}
 
+		self::$syncing = true;
+		if ( $batches_changed ) {
+			update_post_meta( $product_id, self::META_BATCHES, $next );
+			self::push_wc_price_meta( $product_id, $next );
+		}
+		if ( $touch_dates ) {
+			self::push_wc_sale_dates( $product_id, $ops );
+		} elseif ( $batches_changed ) {
+			self::ensure_sale_date_meta( $product_id, $next );
+		}
+		self::refresh_wc_index( $product_id );
+		self::$syncing = false;
+
+		if ( $flush_alerts && class_exists( 'WBE_Alerts' ) ) {
+			WBE_Alerts::flush();
+		}
 		return true;
+	}
+
+	/**
+	 * قیمت و موجودی ووکامرس را مستقیم روی متا می‌نویسد (بدون بارگذاری شیء محصول).
+	 *
+	 * @param int   $product_id
+	 * @param array $batches
+	 */
+	public static function push_wc_price_meta( $product_id, array $batches ) {
+		$product_id = (int) $product_id;
+		$today      = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
+		$idx        = WBE_Engine::active_index( $batches, $today );
+		if ( null === $idx ) {
+			update_post_meta( $product_id, '_stock', 0 );
+			update_post_meta( $product_id, '_stock_status', 'outofstock' );
+			delete_post_meta( $product_id, self::META_ACTIVE_EXPIRY );
+			return;
+		}
+		$active   = $batches[ $idx ];
+		$regular  = (string) $active['price'];
+		$discount = WBE_Engine::discount_of( $active );
+		update_post_meta( $product_id, '_manage_stock', 'yes' );
+		update_post_meta( $product_id, '_backorders', 'no' );
+		update_post_meta( $product_id, '_regular_price', $regular );
+		if ( $discount > 0 ) {
+			$sale = (string) WBE_Engine::sale_price( $regular, $discount );
+			update_post_meta( $product_id, '_sale_price', $sale );
+			update_post_meta( $product_id, '_price', $sale );
+		} else {
+			update_post_meta( $product_id, '_sale_price', '' );
+			update_post_meta( $product_id, '_price', $regular );
+			delete_post_meta( $product_id, '_sale_price_dates_from' );
+			delete_post_meta( $product_id, '_sale_price_dates_to' );
+		}
+		$stock = (int) $active['stock'];
+		update_post_meta( $product_id, '_stock', $stock );
+		update_post_meta( $product_id, '_stock_status', $stock > 0 ? 'instock' : 'outofstock' );
+		update_post_meta( $product_id, self::META_ACTIVE_EXPIRY, $active['expiry'] );
+	}
+
+	/**
+	 * @param int   $product_id
+	 * @param array $ops
+	 */
+	public static function push_wc_sale_dates( $product_id, array $ops ) {
+		$product_id = (int) $product_id;
+		if ( ! empty( $ops['clear_sale'] ) ) {
+			delete_post_meta( $product_id, '_sale_price_dates_from' );
+			delete_post_meta( $product_id, '_sale_price_dates_to' );
+			return;
+		}
+		if ( isset( $ops['sale_from'] ) && '' !== $ops['sale_from'] ) {
+			$ts = self::ymd_to_ts( $ops['sale_from'], false );
+			if ( $ts ) {
+				update_post_meta( $product_id, '_sale_price_dates_from', $ts );
+			}
+		}
+		if ( isset( $ops['sale_to'] ) && '' !== $ops['sale_to'] ) {
+			$ts = self::ymd_to_ts( $ops['sale_to'], true );
+			if ( $ts ) {
+				update_post_meta( $product_id, '_sale_price_dates_to', $ts );
+			}
+		}
+	}
+
+	/**
+	 * اگر تخفیف هست و بازه جشنواره خالی/گذشته است، پایان = انقضای بچ.
+	 *
+	 * @param int   $product_id
+	 * @param array $batches
+	 */
+	public static function ensure_sale_date_meta( $product_id, array $batches ) {
+		$today = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
+		$idx   = WBE_Engine::active_index( $batches, $today );
+		if ( null === $idx ) {
+			return;
+		}
+		$active = $batches[ $idx ];
+		if ( WBE_Engine::discount_of( $active ) <= 0 ) {
+			return;
+		}
+		$to_raw = get_post_meta( $product_id, '_sale_price_dates_to', true );
+		$to_ymd = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $to_raw ) : '';
+		if ( '' === $to_ymd || $to_ymd < $today ) {
+			$ts = self::ymd_to_ts( $active['expiry'], true );
+			if ( $ts ) {
+				update_post_meta( $product_id, '_sale_price_dates_to', $ts );
+			}
+		}
+	}
+
+	/**
+	 * @param string $ymd
+	 * @param bool   $end_of_day
+	 * @return int
+	 */
+	public static function ymd_to_ts( $ymd, $end_of_day = false ) {
+		$ymd = (string) $ymd;
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $ymd ) ) {
+			return 0;
+		}
+		$time = $end_of_day ? '23:59:59' : '00:00:00';
+		if ( function_exists( 'wp_timezone' ) ) {
+			$dt = date_create( $ymd . ' ' . $time, wp_timezone() );
+			return $dt ? $dt->getTimestamp() : 0;
+		}
+		$ts = strtotime( $ymd . ' ' . $time );
+		return $ts ? (int) $ts : 0;
+	}
+
+	/**
+	 * کش و جدول جستجوی ووکامرس را برای یک محصول تازه می‌کند.
+	 *
+	 * @param int $product_id
+	 */
+	public static function refresh_wc_index( $product_id ) {
+		$product_id = (int) $product_id;
+		if ( function_exists( 'clean_post_cache' ) ) {
+			clean_post_cache( $product_id );
+		}
+		if ( function_exists( 'wc_delete_product_transients' ) ) {
+			wc_delete_product_transients( $product_id );
+		}
+		if ( ! class_exists( 'WC_Data_Store' ) ) {
+			return;
+		}
+		try {
+			$store = WC_Data_Store::load( 'product' );
+			if ( $store && method_exists( $store, 'update_lookup_table' ) ) {
+				$store->update_lookup_table( $product_id, 'wc_product_meta_lookup' );
+			}
+		} catch ( Exception $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
+		}
 	}
 }

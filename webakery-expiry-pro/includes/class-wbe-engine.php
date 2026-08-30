@@ -514,6 +514,27 @@ class WBE_Engine {
 	}
 
 	/**
+	 * گرد کردن مبلغ بعد از تغییر درصدی.
+	 *
+	 * @param float  $amount
+	 * @param string $mode   none|round|ceil|floor
+	 * @return float
+	 */
+	public static function round_money( $amount, $mode ) {
+		$amount = (float) $amount;
+		switch ( $mode ) {
+			case 'ceil':
+				return (float) ceil( $amount );
+			case 'floor':
+				return (float) floor( $amount );
+			case 'round':
+				return (float) round( $amount );
+			default:
+				return round( $amount, 2 );
+		}
+	}
+
+	/**
 	 * آیا $ops تغییری روی قیمت/تخفیف دارد؟
 	 *
 	 * @param array $ops
@@ -536,6 +557,22 @@ class WBE_Engine {
 	}
 
 	/**
+	 * قیمت، موجودی یا انقضای بچ فعال.
+	 *
+	 * @param array $ops
+	 * @return bool
+	 */
+	public static function has_batch_ops( array $ops ) {
+		if ( self::has_price_ops( $ops ) ) {
+			return true;
+		}
+		if ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] ) {
+			return true;
+		}
+		return ! empty( $ops['expiry'] );
+	}
+
+	/**
 	 * اعمال عملیات گروهی فقط روی بچ فعال. رزرو دست نمی‌خورد.
 	 *
 	 * کلیدهای $ops:
@@ -551,7 +588,7 @@ class WBE_Engine {
 	 * @return array
 	 */
 	public static function apply_bulk_to_active( array $batches, array $ops, $today ) {
-		if ( empty( $batches ) || ! self::has_price_ops( $ops ) ) {
+		if ( empty( $batches ) || ! self::has_batch_ops( $ops ) ) {
 			return $batches;
 		}
 		$i = self::active_index( $batches, $today );
@@ -561,9 +598,11 @@ class WBE_Engine {
 
 		$b       = $batches[ $i ];
 		$regular = isset( $b['price'] ) ? (float) $b['price'] : 0;
+		$round   = isset( $ops['round'] ) ? (string) $ops['round'] : '';
 
 		if ( ! empty( $ops['regular_mode'] ) && 'none' !== $ops['regular_mode'] && array_key_exists( 'regular_value', $ops ) && null !== $ops['regular_value'] && '' !== $ops['regular_value'] ) {
 			$regular    = self::change_amount( $regular, $ops['regular_mode'], $ops['regular_value'] );
+			$regular    = self::round_money( $regular, $round );
 			$b['price'] = (string) $regular;
 		}
 
@@ -571,7 +610,7 @@ class WBE_Engine {
 			$b['discount'] = 0;
 		} elseif ( ! empty( $ops['sale_mode'] ) && 'none' !== $ops['sale_mode'] && array_key_exists( 'sale_value', $ops ) && null !== $ops['sale_value'] && '' !== $ops['sale_value'] ) {
 			$current_sale = self::sale_price( $regular, isset( $b['discount'] ) ? $b['discount'] : 0 );
-			$new_sale     = self::change_amount( $current_sale, $ops['sale_mode'], $ops['sale_value'] );
+			$new_sale     = self::round_money( self::change_amount( $current_sale, $ops['sale_mode'], $ops['sale_value'] ), $round );
 			if ( $new_sale >= $regular ) {
 				$b['discount'] = 0;
 			} else {
@@ -581,7 +620,62 @@ class WBE_Engine {
 			$b['discount'] = max( 0, min( 100, (int) round( (float) $ops['discount'] ) ) );
 		}
 
+		if ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] ) {
+			$sm         = ! empty( $ops['stock_mode'] ) ? (string) $ops['stock_mode'] : 'set';
+			$b['stock'] = (int) max( 0, self::change_amount( isset( $b['stock'] ) ? $b['stock'] : 0, $sm, $ops['stock'] ) );
+		}
+
+		if ( ! empty( $ops['expiry'] ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', (string) $ops['expiry'] ) ) {
+			$b['expiry'] = (string) $ops['expiry'];
+		}
+
 		$batches[ $i ] = $b;
 		return $batches;
+	}
+
+	/**
+	 * یک ردیف جدول گروهی از دادهٔ خام دیتابیس.
+	 *
+	 * @param int         $id
+	 * @param string      $title
+	 * @param string      $sku
+	 * @param array       $batches
+	 * @param string      $calendar
+	 * @param mixed       $sale_from
+	 * @param mixed       $sale_to
+	 * @param string      $today
+	 * @return array
+	 */
+	public static function bulk_row_from_record( $id, $title, $sku, array $batches, $calendar, $sale_from, $sale_to, $today ) {
+		$idx      = self::active_index( $batches, $today );
+		$active   = ( null !== $idx && isset( $batches[ $idx ] ) ) ? $batches[ $idx ] : null;
+		$regular  = $active && isset( $active['price'] ) ? (string) $active['price'] : '';
+		$discount = $active ? self::discount_of( $active ) : 0;
+		$sale     = ( '' !== $regular ) ? (string) self::sale_price( $regular, $discount ) : '';
+		$from     = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_from ) : '';
+		$to       = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_to ) : '';
+		$expiry   = ( $active && ! empty( $active['expiry'] ) ) ? (string) $active['expiry'] : '';
+		$fmt      = function ( $ymd ) use ( $calendar ) {
+			if ( ! $ymd || ! class_exists( 'WBE_Jalali' ) ) {
+				return '';
+			}
+			return WBE_Jalali::format_ymd( $ymd, $calendar, false );
+		};
+		return array(
+			'id'         => (int) $id,
+			'name'       => (string) $title,
+			'sku'        => (string) $sku,
+			'regular'    => $regular,
+			'discount'   => $discount,
+			'sale'       => $sale,
+			'stock'      => $active ? (int) $active['stock'] : '',
+			'from'       => $from,
+			'to'         => $to,
+			'from_fa'    => $fmt( $from ),
+			'to_fa'      => $fmt( $to ),
+			'expiry'     => $expiry,
+			'expiry_fa'  => $fmt( $expiry ),
+			'has_active' => (bool) $active,
+		);
 	}
 }

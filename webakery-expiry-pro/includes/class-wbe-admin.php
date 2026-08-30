@@ -36,7 +36,7 @@ class WBE_Admin {
 			56
 		);
 		add_submenu_page( 'webakery-expiry', 'گزارش انقضا', 'گزارش', $cap, 'webakery-expiry', array( $this, 'render_reports' ) );
-		add_submenu_page( 'webakery-expiry', 'ویرایش گروهی قیمت', 'ویرایش گروهی', $cap, 'webakery-expiry-bulk', array( WBE_Admin_Bulk::instance(), 'render_page' ) );
+		add_submenu_page( 'webakery-expiry', 'ویرایش گروهی محصول', 'ویرایش گروهی', $cap, 'webakery-expiry-bulk', array( WBE_Admin_Bulk::instance(), 'render_page' ) );
 		add_submenu_page( 'webakery-expiry', 'تنظیمات انقضای کالا', 'تنظیمات', $cap, 'webakery-expiry-settings', array( $this, 'render_settings' ) );
 		if ( defined( 'WBE_EDITION' ) && 'pro' === WBE_EDITION ) {
 			add_submenu_page( 'webakery-expiry', 'لایسنس انقضای کالا', 'لایسنس', 'manage_options', 'webakery-expiry-license', array( $this, 'render_license' ) );
@@ -66,6 +66,17 @@ class WBE_Admin {
 			return;
 		}
 		wp_enqueue_script( 'wbe-admin', WBE_URL . 'assets/admin.js', array( 'jquery' ), WBE_VERSION, true );
+		if ( false !== strpos( (string) $hook, 'webakery-expiry-bulk' ) ) {
+			wp_localize_script(
+				'wbe-admin',
+				'wbeBulk',
+				array(
+					'ajax'  => admin_url( 'admin-ajax.php' ),
+					'nonce' => wp_create_nonce( 'wbe_bulk' ),
+					'chunk' => (int) WBE_Admin_Bulk::chunk_size(),
+				)
+			);
+		}
 	}
 
 	public function render_reports() {

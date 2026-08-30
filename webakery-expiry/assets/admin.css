@@ -183,8 +183,52 @@
 	gap: 8px;
 }
 
+.wbe-bulk-scroll {
+	max-height: 70vh;
+	overflow: auto;
+	border: 1px solid #dcdcde;
+	background: #fff;
+}
+
+.wbe-bulk-scroll thead th,
+.wbe-bulk-scroll thead td {
+	position: sticky;
+	top: 0;
+	background: #f6f7f7;
+	z-index: 1;
+}
+
 .wbe-bulk-table input.small-text {
 	width: 7em;
+}
+
+.wbe-bulk-row.is-dirty td {
+	background: #fffbeb;
+}
+
+.wbe-bulk-progress {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0 0 12px;
+}
+
+.wbe-bulk-progress[hidden] {
+	display: none !important;
+}
+
+.wbe-bulk-progress__track {
+	flex: 1;
+	height: 8px;
+	background: #dcdcde;
+	border-radius: 99px;
+	overflow: hidden;
+}
+
+.wbe-bulk-progress__bar {
+	height: 8px;
+	width: 0;
+	background: #2271b1;
 }
 
 .wbe-wc-bulk .title {

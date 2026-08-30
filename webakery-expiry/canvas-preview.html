@@ -136,32 +136,32 @@
       </section>
 
       <section class="card" id="wbe-bulk-preview">
-        <strong>پیشخوان — ویرایش گروهی قیمت تخفیف و جشنواره</strong>
-        <p class="muted">انقضای کالا ← ویرایش گروهی. تیک بزنید و یک بار اعمال کنید؛ رزرو دست نمی‌خورد.</p>
+        <strong>پیشخوان — ویرایش گروهی یکجا</strong>
+        <p class="muted">انقضای کالا ← ویرایش گروهی. قیمت، تخفیف، جشنواره، موجودی و انقضا در یک جدول. ذخیره تکه‌تکه است.</p>
         <div class="wbe-bulk-toolbar">
           <div class="wbe-bulk-field">
-            <label>قیمت با تخفیف — درصد</label>
+            <label>تخفیف ٪</label>
             <input type="text" value="20" dir="ltr" />
           </div>
           <div class="wbe-bulk-field">
-            <label>قیمت جشنواره — مبلغ</label>
+            <label>قیمت جشنواره</label>
             <select><option>تنظیم روی</option></select>
             <input class="wbe-bulk-value" type="text" value="162000" dir="ltr" />
           </div>
           <div class="wbe-bulk-field">
-            <label>جشنواره از / تا</label>
-            <input type="text" value="1405/06/01" dir="ltr" />
-            <input type="text" value="1405/06/15" dir="ltr" />
+            <label>موجودی</label>
+            <select><option>افزایش مبلغ</option></select>
+            <input class="wbe-bulk-value" type="text" value="10" dir="ltr" />
           </div>
           <button type="button" class="button">اعمال روی انتخاب‌شده‌ها</button>
         </div>
         <table class="widefat wbe-report wbe-bulk-table" style="width:100%;border-collapse:collapse">
           <thead>
-            <tr><th></th><th>محصول</th><th>تخفیف ٪</th><th>قیمت با تخفیف</th><th>جشنواره تا</th></tr>
+            <tr><th></th><th>محصول</th><th>تخفیف ٪</th><th>جشنواره</th><th>موجودی</th><th>انقضا</th></tr>
           </thead>
           <tbody>
-            <tr><td><input type="checkbox" checked /></td><td>شیر خشک نمونه</td><td>10</td><td>162000</td><td>۱۴۰۵/۰۱/۱۰</td></tr>
-            <tr><td><input type="checkbox" checked /></td><td>بیسکویت جو</td><td>0</td><td>90000</td><td>—</td></tr>
+            <tr><td><input type="checkbox" checked /></td><td>شیر خشک نمونه</td><td>10</td><td>162000</td><td>12</td><td>۱۴۰۵/۰۱/۱۰</td></tr>
+            <tr><td><input type="checkbox" checked /></td><td>بیسکویت جو</td><td>0</td><td>90000</td><td>80</td><td>۱۴۰۵/۰۹/۲۰</td></tr>
           </tbody>
         </table>
       </section>

@@ -218,6 +218,29 @@ wbe_check( 'بدون بچ فعال، گروهی دست نمی‌زند', $expire
 wbe_check( 'بدون عملیات قیمت، آرایه همان است', $bulk === WBE_Engine::apply_bulk_to_active( $bulk, array(), '2026-01-15' ) );
 wbe_check( 'عملیات قیمت تشخیص داده می‌شود', true === WBE_Engine::has_price_ops( array( 'discount' => 10 ) ) );
 wbe_check( 'عملیات خالی تشخیص داده می‌شود', false === WBE_Engine::has_price_ops( array() ) );
+wbe_check( 'موجودی هم عملیات بچ است', true === WBE_Engine::has_batch_ops( array( 'stock' => 3 ) ) );
+wbe_check( 'گرد کردن به بالا', 109.0 === WBE_Engine::round_money( 108.9, 'ceil' ) );
+wbe_check( 'گرد کردن به پایین', 108.0 === WBE_Engine::round_money( 108.9, 'floor' ) );
+$st = WBE_Engine::apply_bulk_to_active( $bulk, array( 'stock' => 99, 'stock_mode' => 'set' ), '2026-01-15' );
+wbe_check( 'موجودی گروهی فقط بچ فعال', 99 === (int) $st[0]['stock'] && 8 === (int) $st[1]['stock'] );
+$ex = WBE_Engine::apply_bulk_to_active( $bulk, array( 'expiry' => '2026-12-15' ), '2026-01-15' );
+wbe_check( 'انقضای گروهی فقط بچ فعال', '2026-12-15' === $ex[0]['expiry'] && '2026-10-01' === $ex[1]['expiry'] );
+$tiny = array(
+	array( 'id' => 't', 'price' => '99', 'discount' => 0, 'stock' => 1, 'expiry' => '2026-03-01' ),
+);
+$ceilp = WBE_Engine::apply_bulk_to_active(
+	$tiny,
+	array(
+		'regular_mode'  => 'inc_pct',
+		'regular_value' => 10,
+		'round'         => 'ceil',
+	),
+	'2026-01-15'
+);
+wbe_check( 'افزایش درصدی با گرد کردن به بالا', '109' === $ceilp[0]['price'] );
+$row = WBE_Engine::bulk_row_from_record( 7, 'شیر', 'S1', $bulk, 'gregorian', '2026-01-01', '2026-01-31', '2026-01-15' );
+wbe_check( 'ردیف گروهی از بچ فعال ساخته می‌شود', 7 === $row['id'] && '200000' === $row['regular'] && 10 === (int) $row['discount'] && 4 === (int) $row['stock'] );
+wbe_check( 'تاریخ جشنواره در ردیف گروهی', '2026-01-01' === $row['from'] && '2026-01-31' === $row['to'] );
 
 echo "\n=== بازه فروش فوق‌العاده ===\n";
 wbe_check( 'بدون تاریخ، بازه زنده است', true === WBE_Engine::sale_window_live( '', '', '2026-01-15' ) );
@@ -298,7 +321,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.0.9' );
+	define( 'WBE_VERSION', '1.1.0' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {
