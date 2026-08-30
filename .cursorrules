@@ -3,7 +3,7 @@
 این ریپو مونوریپوی محصولات و افزونه‌های وردپرس **webakery.ir** است (فارسی/RTL).
 
 ## محصول‌ها
-- هر افزونه در پوشهٔ مستقل خودش است (مثل `nobat-man/`, `webakery-login/`, `hesabdar/`).
+- هر افزونه در پوشهٔ مستقل خودش است (مثل `nobat-man/`, `webakery-login/`, `hesabdar/`, `webakery-seo-studio/`).
 - برای توزیع، ZIP هم‌نام در ریشه ساخته می‌شود (مثل `webakery-login.zip`).
 - سازنده همیشه `webakery.ir` است؛ هدر افزونه WordPress را حفظ کن.
 

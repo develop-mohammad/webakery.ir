@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>سئو استودیو — پیش‌نمایش لوکال</title>
+	<link rel="stylesheet" href="assets/css/admin.css">
+	<style>
+		body { margin: 0; background: #e8eaed; }
+		.wbss-wrap { margin: 0; }
+		.wbss-app { min-height: 100vh; border: 0; }
+		.wbss-preview-note {
+			background: #e8f0fe;
+			color: #0d47a1;
+			padding: 8px 16px;
+			font: 13px/1.6 Tahoma, sans-serif;
+			border-bottom: 1px solid #dadce0;
+		}
+	</style>
+</head>
+<body>
+	<p class="wbss-preview-note">پیش‌نمایش لوکال سئو استودیو (بدون وردپرس) — داده نمونه در مرورگر است. نسخه واقعی: افزونه <code>webakery-seo-studio</code> در پیشخوان.</p>
+	<div class="wrap wbss-wrap">
+		<div class="wbss-app" dir="rtl" lang="fa">
+			<aside class="wbss-nav">
+				<div class="wbss-brand">
+					<strong>سئو استودیو</strong>
+					<span>گزارش مصور لوکال</span>
+				</div>
+				<nav>
+					<button type="button" class="wbss-nav-btn is-active" data-view="dashboard">نمای کلی</button>
+					<button type="button" class="wbss-nav-btn" data-view="keywords">کیورد و رتبه</button>
+					<button type="button" class="wbss-nav-btn" data-view="content">تولید محتوا</button>
+					<button type="button" class="wbss-nav-btn" data-view="technical">سئو تکنیکال</button>
+					<button type="button" class="wbss-nav-btn" data-view="backlinks">بک‌لینک</button>
+					<button type="button" class="wbss-nav-btn" data-view="press">رپورتاژ</button>
+					<button type="button" class="wbss-nav-btn" data-view="activity">گزارش اقدامات</button>
+					<button type="button" class="wbss-nav-btn" data-view="settings">پروژه‌ها</button>
+				</nav>
+				<p class="wbss-nav-meta">webakery.ir · پیش‌نمایش ۱.۰.۰</p>
+			</aside>
+			<main class="wbss-main">
+				<header class="wbss-bar">
+					<div>
+						<h1 id="wbss-title">نمای کلی</h1>
+						<p class="wbss-sub" id="wbss-sub">هر اقدام سئو اینجا ثبت و نمودار می‌شود.</p>
+					</div>
+					<div class="wbss-bar-tools">
+						<label class="wbss-field"><span>پروژه</span><select id="wbss-project"></select></label>
+						<label class="wbss-field" id="wbss-days-wrap"><span>بازه</span>
+							<select id="wbss-days">
+								<option value="7">۷ روز</option>
+								<option value="30" selected>۳۰ روز</option>
+								<option value="90">۹۰ روز</option>
+								<option value="180">۱۸۰ روز</option>
+							</select>
+						</label>
+						<button type="button" class="button button-primary" id="wbss-add" hidden>ثبت مورد جدید</button>
+						<button type="button" class="button" id="wbss-export">خروجی JSON</button>
+					</div>
+				</header>
+				<div id="wbss-view" class="wbss-view"></div>
+			</main>
+		</div>
+		<div class="wbss-modal" id="wbss-modal" hidden>
+			<div class="wbss-modal-card" role="dialog" aria-modal="true">
+				<header>
+					<h2 id="wbss-modal-title">فرم</h2>
+					<button type="button" class="wbss-icon-btn" id="wbss-modal-close" aria-label="بستن">×</button>
+				</header>
+				<form id="wbss-form"></form>
+				<footer>
+					<button type="button" class="button" id="wbss-modal-cancel">انصراف</button>
+					<button type="submit" form="wbss-form" class="button button-primary" id="wbss-modal-save">ذخیره</button>
+				</footer>
+			</div>
+		</div>
+	</div>
+	<style>
+		.button { font: 13px Tahoma, sans-serif; padding: 6px 12px; border: 1px solid #dadce0; background: #fff; border-radius: 4px; cursor: pointer; }
+		.button-primary { background: #1565c0; border-color: #1565c0; color: #fff; }
+		.button-link { background: none; border: 0; color: #1565c0; cursor: pointer; font: inherit; }
+	</style>
+	<script>
+		window.WBSS = {
+			ajax: '',
+			nonce: 'demo',
+			today: new Date().toISOString().slice(0, 10),
+			todayFa: '',
+			i18n: {
+				modules: { dashboard: 'نمای کلی', keywords: 'کیورد و رتبه', content: 'تولید محتوا', technical: 'سئو تکنیکال', backlinks: 'بک‌لینک', press: 'رپورتاژ', activity: 'گزارش اقدامات', settings: 'پروژه‌ها' },
+				intent: { informational: 'اطلاعاتی', transactional: 'تراکنشی', commercial: 'تجاری', navigational: 'ناوبری' },
+				kw_status: { active: 'فعال', paused: 'متوقف', archived: 'بایگانی' },
+				content_st: { draft: 'پیش‌نویس', published: 'منتشرشده', updated: 'به‌روزشده' },
+				tech_cat: { speed: 'سرعت', index: 'ایندکس', schema: 'اسکیما', mobile: 'موبایل', security: 'امنیت', crawl: 'خزش', other: 'سایر' },
+				severity: { low: 'کم', medium: 'متوسط', high: 'زیاد', critical: 'بحرانی' },
+				tech_st: { open: 'باز', in_progress: 'در حال انجام', done: 'انجام‌شده' },
+				rel: { dofollow: 'Dofollow', nofollow: 'Nofollow', ugc: 'UGC', sponsored: 'Sponsored' },
+				bl_st: { pending: 'در انتظار', live: 'زنده', lost: 'از دست رفته' },
+				press_st: { planned: 'برنامه‌ریزی', published: 'منتشرشده', lost: 'حذف‌شده' },
+				mod_label: { keywords: 'کیورد', rank: 'رتبه', content: 'محتوا', technical: 'تکنیکال', backlinks: 'بک‌لینک', press: 'رپورتاژ', project: 'پروژه' },
+				act_label: { created: 'ثبت', updated: 'ویرایش', deleted: 'حذف', checked: 'چک رتبه' },
+				save: 'ذخیره', cancel: 'انصراف', delete: 'حذف', edit: 'ویرایش', empty: 'هنوز موردی ثبت نشده.', error: 'خطا', confirm_del: 'این مورد حذف شود؟', ok: 'ذخیره شد.'
+			}
+		};
+	</script>
+	<script src="assets/js/charts.js"></script>
+	<script src="assets/js/demo-api.js"></script>
+	<script src="assets/js/admin.js"></script>
+</body>
+</html>
