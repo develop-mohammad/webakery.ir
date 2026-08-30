@@ -1,0 +1,159 @@
+<?php
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * توابع محاسباتی خالص (بدون وابستگی به ووکامرس/وردپرس)؛ به‌همین‌دلیل
+ * به‌سادگی و بدون نیاز به نصب وردپرس قابل تست است (نگاه کنید به tests/test-util.php).
+ */
+class WDP_Util {
+
+	/** تبدیل ارقام فارسی/عربی به لاتین */
+	public static function digits( $value ) {
+		$fa = array( '۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹' );
+		$ar = array( '٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩' );
+		$en = array( '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' );
+		return str_replace( array_merge( $fa, $ar ), array_merge( $en, $en ), (string) $value );
+	}
+
+	/** تبدیل ارقام لاتین به فارسی (برای نمایش) */
+	public static function fa_digits( $value ) {
+		$en = array( '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' );
+		$fa = array( '۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹' );
+		return str_replace( $en, $fa, (string) $value );
+	}
+
+	/** ورودی فرم (احتمالاً با ارقام فارسی) را به عدد اعشاری تبدیل می‌کند */
+	public static function to_number( $value ) {
+		$value = self::digits( (string) $value );
+		$value = preg_replace( '/[^0-9.\-]/', '', $value );
+		return '' === $value || '-' === $value || '.' === $value ? 0.0 : (float) $value;
+	}
+
+	/** حذف صفرهای اضافه اعشار برای نمایش تمیزتر (مثلاً 20.00 → 20) */
+	public static function trim_zeros( $number ) {
+		$number = (float) $number;
+		if ( $number === floor( $number ) ) {
+			return (string) (int) $number;
+		}
+		return rtrim( rtrim( number_format( $number, 2, '.', '' ), '0' ), '.' );
+	}
+
+	/**
+	 * محاسبه درصد و مبلغ تخفیف از روی قیمت اصلی و قیمت فروش.
+	 *
+	 * @return array{percent:float,fixed:float}|null null یعنی تخفیف معتبری وجود ندارد
+	 */
+	public static function compute_discount( $regular, $sale ) {
+		$regular = (float) $regular;
+		$sale    = (float) $sale;
+		if ( $regular <= 0 || $sale <= 0 || $sale >= $regular ) {
+			return null;
+		}
+		return array(
+			'percent' => round( ( $regular - $sale ) / $regular * 100, 2 ),
+			'fixed'   => round( $regular - $sale, 2 ),
+		);
+	}
+
+	/**
+	 * از میان چند «قانون صفحه تخفیف»، بهترین منطبق با تخفیف فعلی محصول را برمی‌گرداند.
+	 * اگر قانونی به یک یا چند دسته‌بندی محصول محدود شده باشد («categories»)، فقط وقتی
+	 * محصول در یکی از آن دسته‌ها باشد واجد شرایط آن قانون است؛ قانون بدون دسته‌بندی
+	 * برای همه محصولات باز است.
+	 *
+	 * ترتیب برنده‌شدن: عدد priority بیشتر ← قانونِ محدود به دسته‌بندی (نسبت به قانون عمومی)
+	 * ← باریک‌ترین بازه ← کوچک‌ترین شناسه ترم.
+	 *
+	 * @param array $rules              هر عضو: array('term_id'=>int,'type'=>'percent'|'fixed','min'=>float,'max'=>float,'priority'=>int,'categories'=>int[])
+	 * @param array $discount           خروجی compute_discount(): array('percent'=>float,'fixed'=>float)
+	 * @param int[] $product_categories شناسه دسته‌بندی‌های محصول (product_cat) — برای اعمال محدودیت دسته‌بندی قانون‌ها
+	 *
+	 * @return int|null شناسه ترم منتخب یا null
+	 */
+	public static function find_best_match( array $rules, array $discount, array $product_categories = array() ) {
+		$matches            = array();
+		$product_categories = array_map( 'intval', $product_categories );
+
+		foreach ( $rules as $rule ) {
+			$type = ( isset( $rule['type'] ) && 'fixed' === $rule['type'] ) ? 'fixed' : 'percent';
+			if ( ! isset( $discount[ $type ] ) ) {
+				continue;
+			}
+
+			$categories = array_map( 'intval', (array) ( $rule['categories'] ?? array() ) );
+			if ( $categories && ! array_intersect( $categories, $product_categories ) ) {
+				continue; // این قانون به دسته‌بندی‌هایی محدود شده که محصول در آن‌ها نیست.
+			}
+
+			$value = (float) $discount[ $type ];
+			$min   = (float) ( $rule['min'] ?? 0 );
+			$max   = (float) ( $rule['max'] ?? 0 );
+			if ( $max < $min ) {
+				list( $min, $max ) = array( $max, $min );
+			}
+			if ( $value >= $min - 0.001 && $value <= $max + 0.001 ) {
+				$matches[] = array(
+					'term_id'    => (int) $rule['term_id'],
+					'width'      => $max - $min,
+					'priority'   => (int) ( $rule['priority'] ?? 10 ),
+					'has_cat'    => $categories ? 1 : 0,
+				);
+			}
+		}
+
+		if ( ! $matches ) {
+			return null;
+		}
+
+		usort(
+			$matches,
+			function ( $a, $b ) {
+				if ( $a['priority'] !== $b['priority'] ) {
+					return $b['priority'] <=> $a['priority'];
+				}
+				if ( $a['has_cat'] !== $b['has_cat'] ) {
+					return $b['has_cat'] <=> $a['has_cat'];
+				}
+				if ( $a['width'] !== $b['width'] ) {
+					return $a['width'] <=> $b['width'];
+				}
+				return $a['term_id'] <=> $b['term_id'];
+			}
+		);
+
+		return $matches[0]['term_id'];
+	}
+
+	/**
+	 * محاسبه قیمت فروش (تخفیف‌خورده) از قیمت اصلی — برای اعمال گروهی تخفیف
+	 * روی همه محصولات یک دسته‌بندی (تابع معکوسِ compute_discount).
+	 *
+	 * @return float|null null یعنی قابل اعمال نیست (قیمت اصلی/مقدار نامعتبر یا نتیجه بی‌معنی)
+	 */
+	public static function calc_sale_price( $regular, $type, $value, $decimals = 0 ) {
+		$regular = (float) $regular;
+		$value   = (float) $value;
+		if ( $regular <= 0 || $value <= 0 ) {
+			return null;
+		}
+		if ( 'fixed' === $type ) {
+			$sale = $regular - $value;
+		} else {
+			$value = min( 99.99, $value );
+			$sale  = $regular * ( 1 - $value / 100 );
+		}
+		$sale = round( $sale, max( 0, (int) $decimals ) );
+		if ( $sale <= 0 || $sale >= $regular ) {
+			return null;
+		}
+		return $sale;
+	}
+
+	/** برچسب فارسی بازه تخفیف برای نمایش، مثلاً «۲۰ تا ۳۰ درصد» یا «۵۰,۰۰۰ تا ۱۰۰,۰۰۰ تومان» */
+	public static function range_label( $type, $min, $max, $currency = 'تومان' ) {
+		$min_l = self::trim_zeros( $min );
+		$max_l = self::trim_zeros( $max );
+		$rng   = ( $min_l === $max_l ) ? $min_l : ( $min_l . ' تا ' . $max_l );
+		return 'percent' === $type ? ( $rng . ' درصد' ) : ( $rng . ' ' . $currency );
+	}
+}
