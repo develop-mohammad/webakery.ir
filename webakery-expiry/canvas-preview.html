@@ -136,8 +136,8 @@
       </section>
 
       <section class="card" id="wbe-bulk-preview">
-        <strong>پیشخوان — ویرایش گروهی یکجا</strong>
-        <p class="muted">انقضای کالا ← ویرایش گروهی. قیمت، تخفیف، جشنواره، موجودی و انقضا در یک جدول. ذخیره تکه‌تکه است.</p>
+        <strong>پیشخوان — ویرایش گروهی همه محصولات</strong>
+        <p class="muted">انقضای کالا ← ویرایش گروهی. همه محصولات ووکامرس در همین افزونه؛ افزونهٔ جدا لازم نیست. نام، SKU، وضعیت، قیمت، موجودی و انقضا. اگر انقضا را پر کنید بچ ساخته می‌شود.</p>
         <div class="wbe-bulk-toolbar">
           <div class="wbe-bulk-field">
             <label>تخفیف ٪</label>
@@ -153,15 +153,19 @@
             <select><option>افزایش مبلغ</option></select>
             <input class="wbe-bulk-value" type="text" value="10" dir="ltr" />
           </div>
+          <div class="wbe-bulk-field">
+            <label>وضعیت</label>
+            <select><option>بدون تغییر</option><option>پیش‌نویس</option></select>
+          </div>
           <button type="button" class="button">اعمال روی انتخاب‌شده‌ها</button>
         </div>
         <table class="widefat wbe-report wbe-bulk-table" style="width:100%;border-collapse:collapse">
           <thead>
-            <tr><th></th><th>محصول</th><th>تخفیف ٪</th><th>جشنواره</th><th>موجودی</th><th>انقضا</th></tr>
+            <tr><th></th><th>نام</th><th>SKU</th><th>وضعیت</th><th>تخفیف ٪</th><th>جشنواره</th><th>موجودی</th><th>انقضا</th></tr>
           </thead>
           <tbody>
-            <tr><td><input type="checkbox" checked /></td><td>شیر خشک نمونه</td><td>10</td><td>162000</td><td>12</td><td>۱۴۰۵/۰۱/۱۰</td></tr>
-            <tr><td><input type="checkbox" checked /></td><td>بیسکویت جو</td><td>0</td><td>90000</td><td>80</td><td>۱۴۰۵/۰۹/۲۰</td></tr>
+            <tr><td><input type="checkbox" checked /></td><td>شیر خشک نمونه</td><td>M1</td><td>منتشرشده</td><td>10</td><td>162000</td><td>12</td><td>۱۴۰۵/۰۱/۱۰</td></tr>
+            <tr><td><input type="checkbox" checked /></td><td>بیسکویت جو</td><td>B2</td><td>منتشرشده</td><td>0</td><td>90000</td><td>80</td><td>—</td></tr>
           </tbody>
         </table>
       </section>

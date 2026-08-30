@@ -155,7 +155,10 @@
 		var q = $.trim($(this).val()).toLowerCase();
 		var n = 0;
 		$('.wbe-bulk-row').each(function () {
-			var hay = String($(this).data('name') || '').toLowerCase();
+			var $tr = $(this);
+			var hay = String($tr.data('name') || '').toLowerCase();
+			hay += ' ' + String($tr.find('[data-field="name"]').val() || '').toLowerCase();
+			hay += ' ' + String($tr.find('[data-field="sku"]').val() || '').toLowerCase();
 			var show = !q || hay.indexOf(q) !== -1;
 			$(this).toggle(show);
 			if (show) {

@@ -20,6 +20,7 @@ class WBE_Admin_Bulk {
 
 	private function __construct() {
 		add_action( 'admin_post_wbe_bulk_apply', array( $this, 'handle_apply' ) );
+		add_action( 'admin_post_wbe_bulk_csv', array( $this, 'handle_csv' ) );
 		add_action( 'wp_ajax_wbe_bulk_save', array( $this, 'ajax_save' ) );
 		add_action( 'woocommerce_product_bulk_edit_end', array( $this, 'wc_bulk_fields' ) );
 		add_action( 'woocommerce_product_bulk_edit_save', array( $this, 'wc_bulk_save' ), 25 );
@@ -38,6 +39,20 @@ class WBE_Admin_Bulk {
 			'dec'     => 'کاهش مبلغ',
 			'inc_pct' => 'افزایش درصدی',
 			'dec_pct' => 'کاهش درصدی',
+		);
+	}
+
+	/**
+	 * وضعیت‌های قابل ویرایش محصول.
+	 *
+	 * @return array<string,string>
+	 */
+	public static function status_labels() {
+		return array(
+			'publish' => 'منتشرشده',
+			'draft'   => 'پیش‌نویس',
+			'private' => 'خصوصی',
+			'pending' => 'در انتظار',
 		);
 	}
 
@@ -99,6 +114,13 @@ class WBE_Admin_Bulk {
 			}
 		}
 
+		if ( isset( $src['wbe_set_status'] ) ) {
+			$status = sanitize_key( wp_unslash( $src['wbe_set_status'] ) );
+			if ( in_array( $status, array( 'publish', 'draft', 'private', 'pending' ), true ) ) {
+				$ops['status'] = $status;
+			}
+		}
+
 		$ops = array_merge( $ops, self::dates_from_src( $src, $calendar, 'wbe_sale_from', 'wbe_sale_to' ) );
 		return $ops;
 	}
@@ -148,6 +170,19 @@ class WBE_Admin_Bulk {
 			}
 		}
 
+		if ( isset( $row['name'] ) && '' !== trim( (string) $row['name'] ) ) {
+			$ops['name'] = function_exists( 'sanitize_text_field' ) ? sanitize_text_field( $row['name'] ) : trim( (string) $row['name'] );
+		}
+		if ( array_key_exists( 'sku', $row ) ) {
+			$ops['sku'] = function_exists( 'sanitize_text_field' ) ? sanitize_text_field( $row['sku'] ) : (string) $row['sku'];
+		}
+		if ( isset( $row['status'] ) ) {
+			$status = sanitize_key( (string) $row['status'] );
+			if ( in_array( $status, array( 'publish', 'draft', 'private', 'pending' ), true ) ) {
+				$ops['status'] = $status;
+			}
+		}
+
 		$ops = array_merge( $ops, self::dates_from_src( $row, $calendar, 'from', 'to' ) );
 		return $ops;
 	}
@@ -160,6 +195,9 @@ class WBE_Admin_Bulk {
 	 */
 	public static function ops_meaningful( array $ops ) {
 		if ( WBE_Engine::has_batch_ops( $ops ) ) {
+			return true;
+		}
+		if ( ! empty( $ops['name'] ) || array_key_exists( 'sku', $ops ) || ! empty( $ops['status'] ) ) {
 			return true;
 		}
 		return ( isset( $ops['sale_from'] ) && '' !== $ops['sale_from'] )
@@ -210,7 +248,12 @@ class WBE_Admin_Bulk {
 		$filters = array(
 			'q'        => isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification
 			'category' => isset( $_GET['wbe_cat'] ) ? (int) $_GET['wbe_cat'] : 0, // phpcs:ignore WordPress.Security.NonceVerification
+			'scope'    => isset( $_GET['wbe_scope'] ) ? sanitize_key( wp_unslash( $_GET['wbe_scope'] ) ) : 'all', // phpcs:ignore WordPress.Security.NonceVerification
+			'status'   => isset( $_GET['wbe_status'] ) ? sanitize_key( wp_unslash( $_GET['wbe_status'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification
 		);
+		if ( ! in_array( $filters['scope'], array( 'all', 'batches', 'plain' ), true ) ) {
+			$filters['scope'] = 'all';
+		}
 		$rows     = $this->collect_rows( $filters );
 		$calendar = WBE_Settings::calendar();
 		$updated  = isset( $_GET['updated'] ) ? (int) $_GET['updated'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
@@ -220,7 +263,7 @@ class WBE_Admin_Bulk {
 	}
 
 	/**
-	 * محصولات تنظیم‌شده برای جدول گروهی.
+		 * محصولات ووکامرس برای جدول گروهی (با یا بدون بچ).
 	 *
 	 * @param array $filters
 	 * @return array<int,array>
@@ -231,27 +274,39 @@ class WBE_Admin_Bulk {
 			return array();
 		}
 
-		$q          = isset( $filters['q'] ) ? trim( (string) $filters['q'] ) : '';
-		$cat        = isset( $filters['category'] ) ? (int) $filters['category'] : 0;
-		$today      = WBE_Jalali::today_ymd();
+		$q           = isset( $filters['q'] ) ? trim( (string) $filters['q'] ) : '';
+		$cat         = isset( $filters['category'] ) ? (int) $filters['category'] : 0;
+		$scope       = isset( $filters['scope'] ) ? (string) $filters['scope'] : 'all';
+		$status_f    = isset( $filters['status'] ) ? (string) $filters['status'] : '';
+		$today       = WBE_Jalali::today_ymd();
 		$default_cal = WBE_Settings::calendar();
 
-		$sql = "SELECT p.ID, p.post_title,
+		$sql = "SELECT p.ID, p.post_title, p.post_status,
 				sku.meta_value AS sku,
 				batches.meta_value AS batches_raw,
 				cal.meta_value AS calendar,
 				sf.meta_value AS sale_from,
-				st.meta_value AS sale_to
+				st.meta_value AS sale_to,
+				reg.meta_value AS wc_regular,
+				sale.meta_value AS wc_sale,
+				stock.meta_value AS wc_stock
 			FROM {$wpdb->posts} p
-			INNER JOIN {$wpdb->postmeta} batches ON batches.post_id = p.ID AND batches.meta_key = '_wbe_batches'
+			LEFT JOIN {$wpdb->postmeta} batches ON batches.post_id = p.ID AND batches.meta_key = '_wbe_batches'
 			LEFT JOIN {$wpdb->postmeta} sku ON sku.post_id = p.ID AND sku.meta_key = '_sku'
 			LEFT JOIN {$wpdb->postmeta} cal ON cal.post_id = p.ID AND cal.meta_key = '_wbe_calendar'
 			LEFT JOIN {$wpdb->postmeta} sf ON sf.post_id = p.ID AND sf.meta_key = '_sale_price_dates_from'
 			LEFT JOIN {$wpdb->postmeta} st ON st.post_id = p.ID AND st.meta_key = '_sale_price_dates_to'
+			LEFT JOIN {$wpdb->postmeta} reg ON reg.post_id = p.ID AND reg.meta_key = '_regular_price'
+			LEFT JOIN {$wpdb->postmeta} sale ON sale.post_id = p.ID AND sale.meta_key = '_sale_price'
+			LEFT JOIN {$wpdb->postmeta} stock ON stock.post_id = p.ID AND stock.meta_key = '_stock'
 			WHERE p.post_type = 'product'
-			AND p.post_status IN ('publish','private','draft')";
+			AND p.post_status IN ('publish','private','draft','pending')";
 
 		$args = array();
+		if ( $status_f && in_array( $status_f, array( 'publish', 'draft', 'private', 'pending' ), true ) ) {
+			$sql   .= ' AND p.post_status = %s';
+			$args[] = $status_f;
+		}
 		if ( $cat && function_exists( 'get_term_children' ) ) {
 			$term_ids = array( $cat );
 			$kids     = get_term_children( $cat, 'product_cat' );
@@ -269,8 +324,8 @@ class WBE_Admin_Bulk {
 			}
 		}
 		if ( $q ) {
-			$like  = '%' . $wpdb->esc_like( $q ) . '%';
-			$sql  .= ' AND (p.post_title LIKE %s OR sku.meta_value LIKE %s)';
+			$like   = '%' . $wpdb->esc_like( $q ) . '%';
+			$sql   .= ' AND (p.post_title LIKE %s OR sku.meta_value LIKE %s)';
 			$args[] = $like;
 			$args[] = $like;
 		}
@@ -287,7 +342,14 @@ class WBE_Admin_Bulk {
 		$out = array();
 		foreach ( $records as $rec ) {
 			$batches = maybe_unserialize( $rec->batches_raw );
-			if ( ! is_array( $batches ) || empty( $batches ) ) {
+			if ( ! is_array( $batches ) ) {
+				$batches = array();
+			}
+			$has_batches = ! empty( $batches );
+			if ( 'batches' === $scope && ! $has_batches ) {
+				continue;
+			}
+			if ( 'plain' === $scope && $has_batches ) {
 				continue;
 			}
 			$cal   = ( 'jalali' === $rec->calendar || 'gregorian' === $rec->calendar ) ? $rec->calendar : $default_cal;
@@ -299,7 +361,13 @@ class WBE_Admin_Bulk {
 				$cal,
 				$rec->sale_from,
 				$rec->sale_to,
-				$today
+				$today,
+				array(
+					'regular' => isset( $rec->wc_regular ) ? $rec->wc_regular : '',
+					'sale'    => isset( $rec->wc_sale ) ? $rec->wc_sale : '',
+					'stock'   => isset( $rec->wc_stock ) ? $rec->wc_stock : '',
+					'status'  => isset( $rec->post_status ) ? $rec->post_status : 'publish',
+				)
 			);
 		}
 		return $out;
@@ -442,7 +510,59 @@ class WBE_Admin_Bulk {
 		if ( isset( $_POST['wbe_cat'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$args['wbe_cat'] = (int) $_POST['wbe_cat'];
 		}
+		if ( isset( $_POST['wbe_scope'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$args['wbe_scope'] = sanitize_key( wp_unslash( $_POST['wbe_scope'] ) );
+		}
+		if ( isset( $_POST['wbe_status'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$args['wbe_status'] = sanitize_key( wp_unslash( $_POST['wbe_status'] ) );
+		}
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	public function handle_csv() {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		check_admin_referer( 'wbe_bulk_csv' );
+		if ( ! WBE_Plugin::licensed() ) {
+			wp_die( 'لایسنس نامعتبر است.' );
+		}
+		$filters = array(
+			'q'        => isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '',
+			'category' => isset( $_GET['wbe_cat'] ) ? (int) $_GET['wbe_cat'] : 0,
+			'scope'    => isset( $_GET['wbe_scope'] ) ? sanitize_key( wp_unslash( $_GET['wbe_scope'] ) ) : 'all',
+			'status'   => isset( $_GET['wbe_status'] ) ? sanitize_key( wp_unslash( $_GET['wbe_status'] ) ) : '',
+		);
+		$rows = $this->collect_rows( $filters );
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=wbe-products.csv' );
+		$out = fopen( 'php://output', 'w' );
+		fprintf( $out, chr( 0xEF ) . chr( 0xBB ) . chr( 0xBF ) );
+		fputcsv(
+			$out,
+			array( 'ID', 'نام', 'SKU', 'وضعیت', 'قیمت اصلی', 'تخفیف', 'جشنواره', 'از', 'تا', 'موجودی', 'انقضا' )
+		);
+		foreach ( $rows as $r ) {
+			fputcsv(
+				$out,
+				array(
+					$r['id'],
+					$r['name'],
+					$r['sku'],
+					$r['status'],
+					$r['regular'],
+					$r['discount'],
+					$r['sale'],
+					$r['from_fa'],
+					$r['to_fa'],
+					$r['stock'],
+					$r['expiry_fa'],
+				)
+			);
+		}
+		fclose( $out );
 		exit;
 	}
 

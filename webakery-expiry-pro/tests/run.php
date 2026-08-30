@@ -242,6 +242,38 @@ $row = WBE_Engine::bulk_row_from_record( 7, 'شیر', 'S1', $bulk, 'gregorian', 
 wbe_check( 'ردیف گروهی از بچ فعال ساخته می‌شود', 7 === $row['id'] && '200000' === $row['regular'] && 10 === (int) $row['discount'] && 4 === (int) $row['stock'] );
 wbe_check( 'تاریخ جشنواره در ردیف گروهی', '2026-01-01' === $row['from'] && '2026-01-31' === $row['to'] );
 
+$plain = WBE_Engine::apply_plain_state( 100000, '', 5, array( 'regular_mode' => 'set', 'regular_value' => 120000 ) );
+wbe_check( 'بدون بچ قیمت اصلی تنظیم می‌شود', '120000' === $plain['regular'] && '' === $plain['sale'] && 0 === (int) $plain['discount'] );
+$plain_d = WBE_Engine::apply_plain_state( 100000, '', 5, array( 'discount' => 20 ) );
+wbe_check( 'بدون بچ تخفیف قیمت فروش می‌سازد', '80000' === $plain_d['sale'] && 20 === (int) $plain_d['discount'] );
+$plain_i = WBE_Engine::apply_plain_state( 100000, 80000, 5, array( 'stock_mode' => 'inc', 'stock' => 3 ) );
+wbe_check( 'بدون بچ موجودی افزایش می‌یابد', 8 === (int) $plain_i['stock'] && '80000' === $plain_i['sale'] );
+$plain_row = WBE_Engine::bulk_row_from_record(
+	9,
+	'نان',
+	'N1',
+	array(),
+	'gregorian',
+	'',
+	'',
+	'2026-01-15',
+	array(
+		'regular' => '50000',
+		'sale'    => '40000',
+		'stock'   => '12',
+		'status'  => 'draft',
+	)
+);
+wbe_check(
+	'ردیف گروهی بدون بچ از ووکامرس می‌آید',
+	'50000' === $plain_row['regular']
+	&& 20 === (int) $plain_row['discount']
+	&& 12 === (int) $plain_row['stock']
+	&& 'draft' === $plain_row['status']
+	&& false === $plain_row['has_batches']
+	&& false === $plain_row['has_active']
+);
+
 echo "\n=== بازه فروش فوق‌العاده ===\n";
 wbe_check( 'بدون تاریخ، بازه زنده است', true === WBE_Engine::sale_window_live( '', '', '2026-01-15' ) );
 wbe_check( 'قبل از شروع زنده نیست', false === WBE_Engine::sale_window_live( '2026-02-01', '2026-02-10', '2026-01-15' ) );
@@ -321,7 +353,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.1.0' );
+	define( 'WBE_VERSION', '1.2.0' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

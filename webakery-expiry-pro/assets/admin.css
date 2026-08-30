@@ -198,8 +198,34 @@
 	z-index: 1;
 }
 
+.wbe-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 0 0 14px;
+}
+
 .wbe-bulk-table input.small-text {
 	width: 7em;
+}
+
+.wbe-bulk-table input.wbe-cell-name {
+	width: 100%;
+	min-width: 12em;
+	max-width: 22em;
+}
+
+.wbe-bulk-table input.wbe-cell-sku {
+	width: 8em;
+}
+
+.wbe-bulk-table select.wbe-cell-status {
+	max-width: 9em;
+}
+
+.wbe-row--plain td {
+	background: #f8fafc;
 }
 
 .wbe-bulk-row.is-dirty td {

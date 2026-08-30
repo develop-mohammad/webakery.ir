@@ -411,13 +411,25 @@ class WBE_Product {
 	 * @param int   $product_id شناسه محصول.
 	 * @param array $ops        عملیات موتور + sale_from / sale_to (Y-m-d).
 	 * @param bool  $flush_alerts بعد از هر محصول هشدار را تازه نکن (در ذخیرهٔ تکه‌ای false بگذار).
-	 * @return bool اگر بچ وجود داشت.
+	 * @return bool اگر چیزی اعمال شد.
 	 */
 	public static function apply_bulk( $product_id, array $ops, $flush_alerts = true ) {
 		$product_id = (int) $product_id;
+		$did        = self::apply_identity( $product_id, $ops );
 		$batches    = self::batches( $product_id );
+
 		if ( ! $batches ) {
-			return false;
+			if ( ! empty( $ops['expiry'] ) && self::seed_batch_and_apply( $product_id, $ops, false ) ) {
+				if ( $flush_alerts && class_exists( 'WBE_Alerts' ) ) {
+					WBE_Alerts::flush();
+				}
+				return true;
+			}
+			$plain = self::apply_wc_plain( $product_id, $ops, false );
+			if ( $flush_alerts && class_exists( 'WBE_Alerts' ) && ( $plain || $did ) ) {
+				WBE_Alerts::flush();
+			}
+			return $plain || $did;
 		}
 
 		$today           = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
@@ -444,6 +456,150 @@ class WBE_Product {
 		self::refresh_wc_index( $product_id );
 		self::$syncing = false;
 
+		if ( $flush_alerts && class_exists( 'WBE_Alerts' ) ) {
+			WBE_Alerts::flush();
+		}
+		return true;
+	}
+
+	/**
+	 * نام، SKU و وضعیت نوشته.
+	 *
+	 * @param int   $product_id
+	 * @param array $ops
+	 * @return bool
+	 */
+	public static function apply_identity( $product_id, array $ops ) {
+		$product_id = (int) $product_id;
+		$ok         = false;
+		if ( isset( $ops['name'] ) && '' !== trim( (string) $ops['name'] ) && function_exists( 'wp_update_post' ) ) {
+			$title = function_exists( 'sanitize_text_field' ) ? sanitize_text_field( $ops['name'] ) : trim( (string) $ops['name'] );
+			wp_update_post(
+				array(
+					'ID'         => $product_id,
+					'post_title' => $title,
+				)
+			);
+			$ok = true;
+		}
+		if ( array_key_exists( 'sku', $ops ) ) {
+			$sku = function_exists( 'sanitize_text_field' ) ? sanitize_text_field( $ops['sku'] ) : (string) $ops['sku'];
+			update_post_meta( $product_id, '_sku', $sku );
+			$ok = true;
+		}
+		$allowed = array( 'publish', 'draft', 'private', 'pending' );
+		if ( isset( $ops['status'] ) && in_array( (string) $ops['status'], $allowed, true ) && function_exists( 'wp_update_post' ) ) {
+			wp_update_post(
+				array(
+					'ID'          => $product_id,
+					'post_status' => (string) $ops['status'],
+				)
+			);
+			$ok = true;
+		}
+		return $ok;
+	}
+
+	/**
+	 * محصول بدون بچ: با پر کردن انقضا، اولین بچ ساخته می‌شود.
+	 *
+	 * @param int   $product_id
+	 * @param array $ops
+	 * @param bool  $flush_alerts
+	 * @return bool
+	 */
+	public static function seed_batch_and_apply( $product_id, array $ops, $flush_alerts = true ) {
+		$product_id = (int) $product_id;
+		$state      = self::read_wc_plain( $product_id );
+		$next_state = WBE_Engine::apply_plain_state( $state['regular'], $state['sale'], $state['stock'], $ops );
+		$batches    = WBE_Engine::sanitize_batches(
+			array(
+				array(
+					'price'    => $next_state['regular'],
+					'stock'    => $next_state['stock'],
+					'expiry'   => $ops['expiry'],
+					'discount' => $next_state['discount'],
+				),
+			),
+			'gregorian'
+		);
+		if ( ! $batches ) {
+			return false;
+		}
+		self::$syncing = true;
+		update_post_meta( $product_id, self::META_BATCHES, $batches );
+		self::push_wc_price_meta( $product_id, $batches );
+		$touch_dates = ! empty( $ops['clear_sale'] )
+			|| ( isset( $ops['sale_from'] ) && '' !== $ops['sale_from'] )
+			|| ( isset( $ops['sale_to'] ) && '' !== $ops['sale_to'] );
+		if ( $touch_dates ) {
+			self::push_wc_sale_dates( $product_id, $ops );
+		} else {
+			self::ensure_sale_date_meta( $product_id, $batches );
+		}
+		self::refresh_wc_index( $product_id );
+		self::$syncing = false;
+		if ( $flush_alerts && class_exists( 'WBE_Alerts' ) ) {
+			WBE_Alerts::flush();
+		}
+		return true;
+	}
+
+	/**
+	 * @param int $product_id
+	 * @return array{regular:string,sale:string,stock:string}
+	 */
+	public static function read_wc_plain( $product_id ) {
+		$product_id = (int) $product_id;
+		return array(
+			'regular' => (string) get_post_meta( $product_id, '_regular_price', true ),
+			'sale'    => (string) get_post_meta( $product_id, '_sale_price', true ),
+			'stock'   => (string) get_post_meta( $product_id, '_stock', true ),
+		);
+	}
+
+	/**
+	 * ویرایش قیمت ووکامرس وقتی هنوز بچی نیست.
+	 *
+	 * @param int   $product_id
+	 * @param array $ops
+	 * @param bool  $flush_alerts
+	 * @return bool
+	 */
+	public static function apply_wc_plain( $product_id, array $ops, $flush_alerts = true ) {
+		$product_id  = (int) $product_id;
+		$touch_dates = ! empty( $ops['clear_sale'] )
+			|| ( isset( $ops['sale_from'] ) && '' !== $ops['sale_from'] )
+			|| ( isset( $ops['sale_to'] ) && '' !== $ops['sale_to'] );
+		$touch_price = WBE_Engine::has_price_ops( $ops )
+			|| ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] );
+		if ( ! $touch_price && ! $touch_dates ) {
+			return false;
+		}
+
+		self::$syncing = true;
+		if ( $touch_price ) {
+			$state = self::read_wc_plain( $product_id );
+			$next  = WBE_Engine::apply_plain_state( $state['regular'], $state['sale'], $state['stock'], $ops );
+			update_post_meta( $product_id, '_regular_price', $next['regular'] );
+			if ( '' !== $next['sale'] ) {
+				update_post_meta( $product_id, '_sale_price', $next['sale'] );
+				update_post_meta( $product_id, '_price', $next['sale'] );
+			} else {
+				update_post_meta( $product_id, '_sale_price', '' );
+				update_post_meta( $product_id, '_price', $next['regular'] );
+			}
+			if ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] ) {
+				update_post_meta( $product_id, '_manage_stock', 'yes' );
+				update_post_meta( $product_id, '_stock', $next['stock'] );
+				update_post_meta( $product_id, '_stock_status', $next['stock'] > 0 ? 'instock' : 'outofstock' );
+			}
+		}
+		if ( $touch_dates ) {
+			self::push_wc_sale_dates( $product_id, $ops );
+		}
+		self::refresh_wc_index( $product_id );
+		self::$syncing = false;
 		if ( $flush_alerts && class_exists( 'WBE_Alerts' ) ) {
 			WBE_Alerts::flush();
 		}

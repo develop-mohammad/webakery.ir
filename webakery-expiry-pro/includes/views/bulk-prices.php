@@ -11,18 +11,32 @@ if ( is_wp_error( $cats ) ) {
 	$cats = array();
 }
 
-$modes   = WBE_Admin_Bulk::mode_labels();
-$ph_date = ( 'jalali' === $calendar ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27';
-$action  = admin_url( 'admin-post.php' );
-$count   = is_array( $rows ) ? count( $rows ) : 0;
+$modes     = WBE_Admin_Bulk::mode_labels();
+$statuses  = WBE_Admin_Bulk::status_labels();
+$ph_date   = ( 'jalali' === $calendar ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27';
+$action    = admin_url( 'admin-post.php' );
+$count     = is_array( $rows ) ? count( $rows ) : 0;
+$csv_url   = wp_nonce_url(
+	add_query_arg(
+		array(
+			'action'     => 'wbe_bulk_csv',
+			's'          => $filters['q'],
+			'wbe_cat'    => $filters['category'],
+			'wbe_scope'  => $filters['scope'],
+			'wbe_status' => $filters['status'],
+		),
+		admin_url( 'admin-post.php' )
+	),
+	'wbe_bulk_csv'
+);
 ?>
 <div class="wrap wbe-wrap wbe-bulk-wrap" dir="rtl">
 	<h1>ویرایش گروهی محصول</h1>
-	<p class="wbe-sub">قیمت اصلی، تخفیف، جشنواره، موجودی و انقضا در یک جدول. فقط بچ فعال عوض می‌شود. ذخیره تکه‌تکه است تا سایت سنگین نشود.</p>
+	<p class="wbe-sub">همین صفحه ویرایش گروهی فروشگاه است — افزونهٔ جدا لازم نیست. همهٔ محصولات ووکامرس اینجاست. نام، SKU، وضعیت، قیمت، تخفیف، جشنواره، موجودی و انقضا را عوض کنید. اگر تاریخ انقضا را پر کنید، اولین بچ ساخته می‌شود. ذخیره تکه‌تکه است تا سایت سنگین نشود.</p>
 
 	<div id="wbe-bulk-notice" hidden class="notice is-dismissible"></div>
 	<?php if ( $updated || $skipped ) : ?>
-		<div class="notice notice-success is-dismissible"><p><?php echo esc_html( $updated ); ?> محصول به‌روز شد<?php echo $skipped ? ' — ' . (int) $skipped . ' محصول بدون بچ رد شد' : ''; ?>.</p></div>
+		<div class="notice notice-success is-dismissible"><p><?php echo esc_html( $updated ); ?> محصول به‌روز شد<?php echo $skipped ? ' — ' . (int) $skipped . ' محصول رد شد' : ''; ?>.</p></div>
 	<?php endif; ?>
 	<?php if ( ! empty( $empty ) ) : ?>
 		<div class="notice notice-warning is-dismissible"><p>چیزی برای اعمال نبود. محصول را تیک بزنید یا سلولی را عوض کنید.</p></div>
@@ -31,6 +45,17 @@ $count   = is_array( $rows ) ? count( $rows ) : 0;
 	<form method="get" class="wbe-filters">
 		<input type="hidden" name="page" value="webakery-expiry-bulk" />
 		<input type="search" name="s" value="<?php echo esc_attr( $filters['q'] ); ?>" placeholder="جستجوی سرور: نام یا SKU" />
+		<select name="wbe_scope">
+			<option value="all" <?php selected( $filters['scope'], 'all' ); ?>>همه محصولات</option>
+			<option value="batches" <?php selected( $filters['scope'], 'batches' ); ?>>دارای انقضا</option>
+			<option value="plain" <?php selected( $filters['scope'], 'plain' ); ?>>بدون انقضا</option>
+		</select>
+		<select name="wbe_status">
+			<option value="">همه وضعیت‌ها</option>
+			<?php foreach ( $statuses as $st => $st_label ) : ?>
+				<option value="<?php echo esc_attr( $st ); ?>" <?php selected( $filters['status'], $st ); ?>><?php echo esc_html( $st_label ); ?></option>
+			<?php endforeach; ?>
+		</select>
 		<select name="wbe_cat">
 			<option value="0">همه دسته‌بندی‌ها</option>
 			<?php foreach ( $cats as $c ) : ?>
@@ -38,6 +63,7 @@ $count   = is_array( $rows ) ? count( $rows ) : 0;
 			<?php endforeach; ?>
 		</select>
 		<button type="submit" class="button">اعمال فیلتر</button>
+		<a class="button" href="<?php echo esc_url( $csv_url ); ?>">خروجی CSV</a>
 		<input type="search" id="wbe-bulk-live" placeholder="فیلتر آنی همین صفحه" />
 		<span class="wbe-muted" id="wbe-bulk-count"><?php echo (int) $count; ?> محصول</span>
 	</form>
@@ -46,6 +72,8 @@ $count   = is_array( $rows ) ? count( $rows ) : 0;
 		<input type="hidden" name="action" value="wbe_bulk_apply" />
 		<input type="hidden" name="s" value="<?php echo esc_attr( $filters['q'] ); ?>" />
 		<input type="hidden" name="wbe_cat" value="<?php echo (int) $filters['category']; ?>" />
+		<input type="hidden" name="wbe_scope" value="<?php echo esc_attr( $filters['scope'] ); ?>" />
+		<input type="hidden" name="wbe_status" value="<?php echo esc_attr( $filters['status'] ); ?>" />
 		<?php wp_nonce_field( 'wbe_bulk' ); ?>
 
 		<div class="wbe-bulk-toolbar">
@@ -93,6 +121,15 @@ $count   = is_array( $rows ) ? count( $rows ) : 0;
 				<input type="text" id="wbe_expiry" name="wbe_expiry" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" />
 			</div>
 			<div class="wbe-bulk-field">
+				<label for="wbe_set_status">وضعیت</label>
+				<select id="wbe_set_status" name="wbe_set_status">
+					<option value="">بدون تغییر</option>
+					<?php foreach ( $statuses as $st => $st_label ) : ?>
+						<option value="<?php echo esc_attr( $st ); ?>"><?php echo esc_html( $st_label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+			<div class="wbe-bulk-field">
 				<label for="wbe_round">گرد کردن درصد</label>
 				<select id="wbe_round" name="wbe_round">
 					<option value="">بدون گرد کردن</option>
@@ -121,7 +158,9 @@ $count   = is_array( $rows ) ? count( $rows ) : 0;
 				<thead>
 					<tr>
 						<td class="check-column"><input type="checkbox" id="wbe-bulk-check-all" /></td>
-						<th>محصول</th>
+						<th>نام</th>
+						<th>SKU</th>
+						<th>وضعیت</th>
 						<th>قیمت اصلی</th>
 						<th>تخفیف ٪</th>
 						<th>قیمت جشنواره</th>
@@ -133,17 +172,38 @@ $count   = is_array( $rows ) ? count( $rows ) : 0;
 				</thead>
 				<tbody>
 					<?php if ( empty( $rows ) ) : ?>
-						<tr><td colspan="9">محصول تنظیم‌شده‌ای مطابق فیلتر پیدا نشد.</td></tr>
+						<tr><td colspan="11">محصولی مطابق فیلتر پیدا نشد.</td></tr>
 					<?php else : ?>
 						<?php foreach ( $rows as $r ) : ?>
-							<tr class="wbe-bulk-row<?php echo empty( $r['has_active'] ) ? ' wbe-row--empty' : ''; ?>" data-id="<?php echo (int) $r['id']; ?>" data-name="<?php echo esc_attr( $r['name'] . ' ' . $r['sku'] ); ?>">
+							<?php
+							$row_class = 'wbe-bulk-row';
+							if ( empty( $r['has_batches'] ) ) {
+								$row_class .= ' wbe-row--plain';
+							} elseif ( empty( $r['has_active'] ) ) {
+								$row_class .= ' wbe-row--empty';
+							}
+							$st = isset( $statuses[ $r['status'] ] ) ? $r['status'] : 'publish';
+							?>
+							<tr class="<?php echo esc_attr( $row_class ); ?>" data-id="<?php echo (int) $r['id']; ?>" data-name="<?php echo esc_attr( $r['name'] . ' ' . $r['sku'] ); ?>">
 								<th class="check-column">
 									<input type="checkbox" class="wbe-bulk-id" name="ids[]" value="<?php echo (int) $r['id']; ?>" />
 								</th>
 								<td>
-									<a href="<?php echo esc_url( get_edit_post_link( $r['id'] ) ); ?>"><?php echo esc_html( $r['name'] ); ?></a>
-									<?php if ( $r['sku'] ) : ?><div class="wbe-muted"><?php echo esc_html( $r['sku'] ); ?></div><?php endif; ?>
-									<?php if ( empty( $r['has_active'] ) ) : ?><div class="wbe-muted">بدون بچ فعال</div><?php endif; ?>
+									<input type="text" class="wbe-cell-name" data-field="name" data-orig="<?php echo esc_attr( $r['name'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][name]" value="<?php echo esc_attr( $r['name'] ); ?>" />
+									<div class="wbe-muted"><a href="<?php echo esc_url( get_edit_post_link( $r['id'] ) ); ?>">ویرایش محصول</a></div>
+									<?php if ( empty( $r['has_batches'] ) ) : ?>
+										<div class="wbe-muted">بدون انقضا — تاریخ را پر کنید تا بچ ساخته شود</div>
+									<?php elseif ( empty( $r['has_active'] ) ) : ?>
+										<div class="wbe-muted">بدون بچ فعال</div>
+									<?php endif; ?>
+								</td>
+								<td><input type="text" class="small-text wbe-cell-sku" data-field="sku" data-orig="<?php echo esc_attr( $r['sku'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][sku]" value="<?php echo esc_attr( $r['sku'] ); ?>" dir="ltr" /></td>
+								<td>
+									<select class="wbe-cell-status" data-field="status" data-orig="<?php echo esc_attr( $st ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][status]">
+										<?php foreach ( $statuses as $opt => $opt_label ) : ?>
+											<option value="<?php echo esc_attr( $opt ); ?>" <?php selected( $st, $opt ); ?>><?php echo esc_html( $opt_label ); ?></option>
+										<?php endforeach; ?>
+									</select>
 								</td>
 								<td><input type="text" class="small-text" data-field="regular" data-orig="<?php echo esc_attr( $r['regular'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][regular]" value="<?php echo esc_attr( $r['regular'] ); ?>" dir="ltr" /></td>
 								<td><input type="text" class="small-text" data-field="discount" data-orig="<?php echo esc_attr( (string) $r['discount'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][discount]" value="<?php echo esc_attr( (string) $r['discount'] ); ?>" dir="ltr" /></td>
