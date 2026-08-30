@@ -49,6 +49,7 @@ $export_csv = $export_base . '&format=csv&' . http_build_query( $qs );
 			نزدیک به انقضا
 		</label>
 		<button type="submit" class="button">اعمال فیلتر</button>
+		<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-expiry-bulk' ) ); ?>">ویرایش گروهی قیمت</a>
 		<a class="button button-primary" href="<?php echo esc_url( $export_xls ); ?>">خروجی اکسل</a>
 		<a class="button" href="<?php echo esc_url( $export_csv ); ?>">CSV</a>
 	</form>

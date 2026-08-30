@@ -154,6 +154,71 @@ wbe_check( 'قیمت صفر بچ را عوض نمی‌کند', $priced === WBE_E
 $same = WBE_Engine::apply_wc_price_to_active( $priced, '100000', '', '2026-01-15', false );
 wbe_check( 'اگر قیمت از قبل یکی باشد آرایه دست نمی‌خورد', $priced === $same );
 
+echo "\n=== ویرایش گروهی قیمت ===\n";
+wbe_check( 'تنظیم مبلغ', 150000.0 === WBE_Engine::change_amount( 100000, 'set', 150000 ) );
+wbe_check( 'افزایش مبلغ', 110000.0 === WBE_Engine::change_amount( 100000, 'inc', 10000 ) );
+wbe_check( 'کاهش مبلغ', 90000.0 === WBE_Engine::change_amount( 100000, 'dec', 10000 ) );
+wbe_check( 'افزایش درصدی', 110.0 === WBE_Engine::change_amount( 100, 'inc_pct', 10 ) );
+wbe_check( 'کاهش درصدی', 160.0 === WBE_Engine::change_amount( 200, 'dec_pct', 20 ) );
+wbe_check( 'منفی صفر می‌شود', 0.0 === WBE_Engine::change_amount( 50, 'dec', 80 ) );
+wbe_check( 'حالت ناشناخته مبلغ فعلی را نگه می‌دارد', 12.0 === WBE_Engine::change_amount( 12, 'none', 99 ) );
+wbe_check( 'مبلغ فارسی خوانده می‌شود', 20000.0 === WBE_Engine::parse_amount( '۲۰٬۰۰۰' ) );
+wbe_check( 'مبلغ خالی null است', null === WBE_Engine::parse_amount( '' ) );
+wbe_check( 'صفر معتبر است', 0.0 === WBE_Engine::parse_amount( '0' ) );
+
+$bulk = array(
+	array( 'id' => 'a', 'price' => '200000', 'discount' => 10, 'stock' => 4, 'expiry' => '2026-03-01' ),
+	array( 'id' => 'b', 'price' => '90000', 'discount' => 0, 'stock' => 8, 'expiry' => '2026-10-01' ),
+);
+$only_disc = WBE_Engine::apply_bulk_to_active( $bulk, array( 'discount' => 25 ), '2026-01-15' );
+wbe_check( 'فقط درصد تخفیف بچ فعال', 25 === (int) $only_disc[0]['discount'] && '200000' === $only_disc[0]['price'] );
+wbe_check( 'رزرو در ویرایش گروهی دست نمی‌خورد', '90000' === $only_disc[1]['price'] && 0 === (int) $only_disc[1]['discount'] );
+
+$fest = WBE_Engine::apply_bulk_to_active(
+	$bulk,
+	array(
+		'sale_mode'  => 'set',
+		'sale_value' => 160000,
+		'discount'   => 50,
+	),
+	'2026-01-15'
+);
+wbe_check( 'مبلغ جشنواره درصد را می‌سازد و بر درصد خام اولویت دارد', 20 === (int) $fest[0]['discount'] );
+
+$reg = WBE_Engine::apply_bulk_to_active(
+	$bulk,
+	array(
+		'regular_mode'  => 'inc_pct',
+		'regular_value' => 10,
+		'discount'      => 10,
+	),
+	'2026-01-15'
+);
+wbe_check( 'افزایش درصدی قیمت اصلی', '220000' === $reg[0]['price'] );
+wbe_check( 'بعد از تغییر قیمت اصلی درصد جدا اعمال می‌شود', 10 === (int) $reg[0]['discount'] );
+
+$clear = WBE_Engine::apply_bulk_to_active( $bulk, array( 'clear_sale' => true ), '2026-01-15' );
+wbe_check( 'حذف تخفیف گروهی', 0 === (int) $clear[0]['discount'] );
+
+$eq = WBE_Engine::apply_bulk_to_active(
+	$bulk,
+	array(
+		'sale_mode'  => 'set',
+		'sale_value' => 200000,
+	),
+	'2026-01-15'
+);
+wbe_check( 'مبلغ جشنواره برابر قیمت اصلی تخفیف را صفر می‌کند', 0 === (int) $eq[0]['discount'] );
+
+wbe_check( 'بدون بچ، گروهی چیزی نمی‌سازد', array() === WBE_Engine::apply_bulk_to_active( array(), array( 'discount' => 15 ), '2026-01-15' ) );
+$expired_only = array(
+	array( 'id' => 'old', 'price' => '10', 'discount' => 5, 'stock' => 1, 'expiry' => '2020-01-01' ),
+);
+wbe_check( 'بدون بچ فعال، گروهی دست نمی‌زند', $expired_only === WBE_Engine::apply_bulk_to_active( $expired_only, array( 'discount' => 40 ), '2026-01-15' ) );
+wbe_check( 'بدون عملیات قیمت، آرایه همان است', $bulk === WBE_Engine::apply_bulk_to_active( $bulk, array(), '2026-01-15' ) );
+wbe_check( 'عملیات قیمت تشخیص داده می‌شود', true === WBE_Engine::has_price_ops( array( 'discount' => 10 ) ) );
+wbe_check( 'عملیات خالی تشخیص داده می‌شود', false === WBE_Engine::has_price_ops( array() ) );
+
 echo "\n=== بازه فروش فوق‌العاده ===\n";
 wbe_check( 'بدون تاریخ، بازه زنده است', true === WBE_Engine::sale_window_live( '', '', '2026-01-15' ) );
 wbe_check( 'قبل از شروع زنده نیست', false === WBE_Engine::sale_window_live( '2026-02-01', '2026-02-10', '2026-01-15' ) );
@@ -233,7 +298,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.0.8' );
+	define( 'WBE_VERSION', '1.0.9' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

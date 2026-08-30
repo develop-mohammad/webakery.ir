@@ -404,4 +404,53 @@ class WBE_Product {
 		);
 		return array_map( 'intval', $q->posts );
 	}
+
+	/**
+	 * ویرایش گروهی بچ فعال و بازه جشنواره برای یک محصول.
+	 *
+	 * @param int   $product_id شناسه محصول.
+	 * @param array $ops        عملیات موتور + sale_from / sale_to (Y-m-d).
+	 * @return bool اگر بچ وجود داشت و ذخیره شد.
+	 */
+	public static function apply_bulk( $product_id, array $ops ) {
+		$product_id = (int) $product_id;
+		$batches    = self::batches( $product_id );
+		if ( ! $batches ) {
+			return false;
+		}
+
+		$today = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
+		$next  = WBE_Engine::apply_bulk_to_active( $batches, $ops, $today );
+
+		self::$syncing = true;
+		self::save_batches( $product_id, $next, null, false );
+		self::$syncing = false;
+		self::sync_wc( $product_id );
+
+		$touch_dates = ! empty( $ops['clear_sale'] )
+			|| ( isset( $ops['sale_from'] ) && '' !== $ops['sale_from'] )
+			|| ( isset( $ops['sale_to'] ) && '' !== $ops['sale_to'] );
+
+		if ( $touch_dates && function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $product_id );
+			if ( $product && method_exists( $product, 'set_date_on_sale_from' ) ) {
+				self::$syncing = true;
+				if ( ! empty( $ops['clear_sale'] ) ) {
+					$product->set_date_on_sale_from( '' );
+					$product->set_date_on_sale_to( '' );
+				} else {
+					if ( isset( $ops['sale_from'] ) && '' !== $ops['sale_from'] ) {
+						$product->set_date_on_sale_from( $ops['sale_from'] );
+					}
+					if ( isset( $ops['sale_to'] ) && '' !== $ops['sale_to'] ) {
+						$product->set_date_on_sale_to( $ops['sale_to'] . ' 23:59:59' );
+					}
+				}
+				$product->save();
+				self::$syncing = false;
+			}
+		}
+
+		return true;
+	}
 }

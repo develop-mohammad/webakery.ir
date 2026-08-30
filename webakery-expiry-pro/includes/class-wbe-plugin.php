@@ -68,8 +68,10 @@ class WBE_Plugin {
 		if ( is_admin() ) {
 			require_once WBE_PATH . 'includes/class-wbe-admin.php';
 			require_once WBE_PATH . 'includes/class-wbe-admin-product.php';
+			require_once WBE_PATH . 'includes/class-wbe-admin-bulk.php';
 			WBE_Admin::instance();
 			WBE_Admin_Product::instance();
+			WBE_Admin_Bulk::instance();
 		}
 
 		add_action( 'wbe_daily_sync', array( __CLASS__, 'daily_sync' ) );
@@ -103,6 +105,7 @@ class WBE_Plugin {
 				'features'      => array(
 					'بچ قیمت، موجودی و تاریخ انقضا بدون سقف',
 					'درصد تخفیف روی هر قیمت بچ',
+					'ویرایش گروهی سریع قیمت تخفیف و جشنواره',
 					'تایمر مانده تا پایان کمپین با خاموش‌کردن آسان (تنظیمات یا خود محصول)',
 					'مچ قیمت بچ با تغییر گروهی و محصول تازه‌ساخته ووکامرس',
 					'سوییچ خودکار به رزرو پس از صفر شدن یا گذشتن انقضا',
@@ -156,6 +159,7 @@ class WBE_Plugin {
 	public function action_links( $links ) {
 		$custom = array(
 			'<a href="' . esc_url( admin_url( 'admin.php?page=webakery-expiry' ) ) . '">گزارش</a>',
+			'<a href="' . esc_url( admin_url( 'admin.php?page=webakery-expiry-bulk' ) ) . '">ویرایش گروهی</a>',
 			'<a href="' . esc_url( admin_url( 'admin.php?page=webakery-expiry-settings' ) ) . '">تنظیمات</a>',
 		);
 		if ( defined( 'WBE_EDITION' ) && 'pro' === WBE_EDITION ) {

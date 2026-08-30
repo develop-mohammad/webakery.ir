@@ -28,7 +28,7 @@ $placeholder = ( 'jalali' === $effective ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27'
 			<strong>قیمت رزرو، تخفیف، موجودی و تاریخ انقضا</strong>
 			<button type="button" class="button wbe-add-batch">+ افزودن بچ</button>
 		</div>
-		<p class="description">مشتری فقط قیمت (با تخفیف) و انقضای بچ فعال را می‌بیند. تغییر قیمت گروهی ووکامرس، ویرایش سریع، REST و ساخت محصول (مثلاً از دسته) روی بچ فعال مچ می‌شود. ردیف خالی محصول تازه قیمت ووکامرس را می‌گیرد.</p>
+		<p class="description">مشتری فقط قیمت (با تخفیف) و انقضای بچ فعال را می‌بیند. برای چند محصول یکجا: <a href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-expiry-bulk' ) ); ?>">ویرایش گروهی قیمت تخفیف و جشنواره</a>. تغییر قیمت گروهی ووکامرس، ویرایش سریع، REST و ساخت محصول (مثلاً از دسته) روی بچ فعال مچ می‌شود.</p>
 		<table class="widefat wbe-batches-table">
 			<thead>
 				<tr>

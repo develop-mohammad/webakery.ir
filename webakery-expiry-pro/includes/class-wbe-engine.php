@@ -457,4 +457,131 @@ class WBE_Engine {
 		}
 		return preg_match( '/^09\d{9}$/', $digits ) ? $digits : '';
 	}
+
+	/**
+	 * مبلغ آزاد (ارقام فارسی، جداکننده هزارگان) → float یا null اگر خالی/نامعتبر.
+	 * صفر معتبر است و با خالی فرق دارد.
+	 *
+	 * @param mixed $raw
+	 * @return float|null
+	 */
+	public static function parse_amount( $raw ) {
+		if ( null === $raw ) {
+			return null;
+		}
+		$raw = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::fa_to_en( $raw ) : (string) $raw;
+		$raw = trim( str_replace( array( ',', '٬', '،', ' ' ), '', $raw ) );
+		if ( '' === $raw || ! is_numeric( $raw ) ) {
+			return null;
+		}
+		return (float) $raw;
+	}
+
+	/**
+	 * تغییر مبلغ. حالت‌ها: set, inc, dec, inc_pct, dec_pct.
+	 *
+	 * @param float|string $current مبلغ فعلی.
+	 * @param string       $mode    حالت تغییر.
+	 * @param mixed        $value   مقدار جدید یا اختلاف.
+	 * @return float
+	 */
+	public static function change_amount( $current, $mode, $value ) {
+		$current = (float) $current;
+		$value   = (float) $value;
+		switch ( $mode ) {
+			case 'set':
+				$out = $value;
+				break;
+			case 'inc':
+				$out = $current + $value;
+				break;
+			case 'dec':
+				$out = $current - $value;
+				break;
+			case 'inc_pct':
+				$out = $current * ( 1 + ( $value / 100 ) );
+				break;
+			case 'dec_pct':
+				$out = $current * ( 1 - ( $value / 100 ) );
+				break;
+			default:
+				return max( 0, $current );
+		}
+		if ( $out < 0 ) {
+			$out = 0;
+		}
+		return round( $out, 2 );
+	}
+
+	/**
+	 * آیا $ops تغییری روی قیمت/تخفیف دارد؟
+	 *
+	 * @param array $ops
+	 * @return bool
+	 */
+	public static function has_price_ops( array $ops ) {
+		if ( ! empty( $ops['clear_sale'] ) ) {
+			return true;
+		}
+		if ( ! empty( $ops['regular_mode'] ) && 'none' !== $ops['regular_mode'] && array_key_exists( 'regular_value', $ops ) && null !== $ops['regular_value'] && '' !== $ops['regular_value'] ) {
+			return true;
+		}
+		if ( ! empty( $ops['sale_mode'] ) && 'none' !== $ops['sale_mode'] && array_key_exists( 'sale_value', $ops ) && null !== $ops['sale_value'] && '' !== $ops['sale_value'] ) {
+			return true;
+		}
+		if ( array_key_exists( 'discount', $ops ) && null !== $ops['discount'] && '' !== $ops['discount'] ) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * اعمال عملیات گروهی فقط روی بچ فعال. رزرو دست نمی‌خورد.
+	 *
+	 * کلیدهای $ops:
+	 *   regular_mode / regular_value
+	 *   sale_mode / sale_value   (مبلغ بعد از تخفیف / جشنواره)
+	 *   discount                 (درصد؛ اگر sale_mode خالی باشد)
+	 *   clear_sale               (پاک کردن تخفیف)
+	 * اگر هم مبلغ جشنواره و هم درصد بیاید، مبلغ جشنواره اولویت دارد.
+	 *
+	 * @param array  $batches بچ‌ها.
+	 * @param array  $ops     عملیات.
+	 * @param string $today   Y-m-d.
+	 * @return array
+	 */
+	public static function apply_bulk_to_active( array $batches, array $ops, $today ) {
+		if ( empty( $batches ) || ! self::has_price_ops( $ops ) ) {
+			return $batches;
+		}
+		$i = self::active_index( $batches, $today );
+		if ( null === $i ) {
+			return $batches;
+		}
+
+		$b       = $batches[ $i ];
+		$regular = isset( $b['price'] ) ? (float) $b['price'] : 0;
+
+		if ( ! empty( $ops['regular_mode'] ) && 'none' !== $ops['regular_mode'] && array_key_exists( 'regular_value', $ops ) && null !== $ops['regular_value'] && '' !== $ops['regular_value'] ) {
+			$regular    = self::change_amount( $regular, $ops['regular_mode'], $ops['regular_value'] );
+			$b['price'] = (string) $regular;
+		}
+
+		if ( ! empty( $ops['clear_sale'] ) ) {
+			$b['discount'] = 0;
+		} elseif ( ! empty( $ops['sale_mode'] ) && 'none' !== $ops['sale_mode'] && array_key_exists( 'sale_value', $ops ) && null !== $ops['sale_value'] && '' !== $ops['sale_value'] ) {
+			$current_sale = self::sale_price( $regular, isset( $b['discount'] ) ? $b['discount'] : 0 );
+			$new_sale     = self::change_amount( $current_sale, $ops['sale_mode'], $ops['sale_value'] );
+			if ( $new_sale >= $regular ) {
+				$b['discount'] = 0;
+			} else {
+				$b['discount'] = self::discount_from_prices( $regular, $new_sale );
+			}
+		} elseif ( array_key_exists( 'discount', $ops ) && null !== $ops['discount'] && '' !== $ops['discount'] ) {
+			$b['discount'] = max( 0, min( 100, (int) round( (float) $ops['discount'] ) ) );
+		}
+
+		$batches[ $i ] = $b;
+		return $batches;
+	}
 }

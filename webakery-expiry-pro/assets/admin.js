@@ -95,4 +95,14 @@
 			$('#_regular_price').val($(this).val());
 		}
 	});
+
+	$(document).on('change', '#wbe-bulk-check-all', function () {
+		$('.wbe-bulk-id').prop('checked', this.checked);
+	});
+
+	$(document).on('change', '.wbe-bulk-mode', function () {
+		var $field = $(this).closest('.wbe-bulk-field, .input-text-wrap, label');
+		var off = $(this).val() === 'none';
+		$field.find('.wbe-bulk-value').prop('disabled', off);
+	});
 })(jQuery);
