@@ -2,8 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * بازبینی خودکار صفحه‌های تخفیف؛ برای گرفتن شروع/پایان تخفیف
- * زمان‌بندی‌شده ووکامرس و همگام‌سازی در صورت تغییر قیمت خارج از مسیر ذخیره.
+ * بازبینی پس‌زمینه صفحه‌های تخفیف (دسته‌ای، بدون قفل کردن پیشخوان).
  */
 class WDP_Cron {
 
@@ -35,7 +34,6 @@ class WDP_Cron {
 			return;
 		}
 
-		// مهاجرت از زمان‌بندی ساعتی قدیمی به هر ۱۵ دقیقه.
 		$crons = _get_cron_array();
 		if ( ! is_array( $crons ) || empty( $crons[ $next ][ self::HOOK ] ) ) {
 			return;
@@ -52,18 +50,7 @@ class WDP_Cron {
 		if ( ! WDP_Plugin::woo_available() ) {
 			return;
 		}
-
-		$count = WDP_Assigner::recalculate_all();
-
-		$log = get_option( 'wdp_log', array() );
-		$log = is_array( $log ) ? $log : array();
-		array_unshift(
-			$log,
-			array(
-				'time'  => time(),
-				'count' => $count,
-			)
-		);
-		update_option( 'wdp_log', array_slice( $log, 0, 20 ), false );
+		// فقط صف پس‌زمینه را پر می‌کند؛ پردازش در دسته‌های کوچک انجام می‌شود.
+		WDP_Assigner::schedule_recalculate();
 	}
 }

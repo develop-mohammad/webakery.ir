@@ -110,8 +110,14 @@ class WDP_Admin {
 	public function handle_recalculate() {
 		$this->guard( 'wdp_recalculate' );
 
-		$count = WDP_Assigner::recalculate_all();
-		$this->redirect( array( 'tab' => 'overview' ), $count . ' محصول بررسی و در صورت نیاز جابه‌جا شد.', true );
+		$count = WDP_Assigner::schedule_recalculate();
+		$this->redirect(
+			array( 'tab' => 'overview' ),
+			$count
+				? ( 'بازبینی در پس‌زمینه شروع شد (' . $count . ' محصول در صف). پیشخوان را تازه کنید تا پیشرفت را ببینید.' )
+				: 'محصولی برای بازبینی پیدا نشد.',
+			true
+		);
 	}
 
 	/* ─── اعمال گروهی تخفیف روی یک دسته‌بندی ─────────────────────── */

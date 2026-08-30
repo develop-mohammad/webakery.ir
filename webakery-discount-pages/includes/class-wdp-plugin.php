@@ -34,6 +34,11 @@ class WDP_Plugin {
 		if ( $ts ) {
 			wp_unschedule_event( $ts, 'wdp_recalculate_all' );
 		}
+		$batch = wp_next_scheduled( 'wdp_recalculate_batch' );
+		if ( $batch ) {
+			wp_unschedule_event( $batch, 'wdp_recalculate_batch' );
+		}
+		delete_option( 'wdp_recalc_queue' );
 		flush_rewrite_rules();
 	}
 

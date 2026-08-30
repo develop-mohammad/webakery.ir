@@ -182,6 +182,11 @@ class WDP_Taxonomy {
 	 * @return array<int,array{id:int,name:string,depth:int,count:int}>
 	 */
 	public static function category_tree() {
+		$cached = get_transient( 'wdp_product_cat_tree' );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
 		$terms = get_terms(
 			array(
 				'taxonomy'   => 'product_cat',
@@ -214,6 +219,7 @@ class WDP_Taxonomy {
 		};
 		$walk( 0, 0 );
 
+		set_transient( 'wdp_product_cat_tree', $flat, 5 * MINUTE_IN_SECONDS );
 		return $flat;
 	}
 
@@ -257,9 +263,10 @@ class WDP_Taxonomy {
 		update_term_meta( $term_id, '_wdp_priority', $priority );
 		update_term_meta( $term_id, '_wdp_categories', $categories );
 
-		// بازه یا محدودیت دسته‌بندی تغییر کرده؛ محصولات فعلاً تخفیف‌دار را دوباره بررسی کن.
 		if ( class_exists( 'WDP_Assigner' ) ) {
-			WDP_Assigner::recalculate_all();
+			WDP_Assigner::clear_rules_cache();
+			// بازبینی سراسری در پس‌زمینه تا ذخیره صفحه تخفیف قفل نشود.
+			WDP_Assigner::schedule_recalculate();
 		}
 	}
 

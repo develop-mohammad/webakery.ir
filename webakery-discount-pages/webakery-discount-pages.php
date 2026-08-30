@@ -2,7 +2,7 @@
 /**
  * Plugin Name: صفحه‌های تخفیف هوشمند | Webakery Discount Pages
  * Description: برای هر بازه تخفیف (درصدی یا مبلغ ثابت) یک صفحه با URL اختصاصی بساز؛ محصولات ووکامرس بر اساس تخفیف فعلی‌شان خودکار در همان صفحه نمایش داده می‌شوند و با تغییر تخفیف محصول، خودکار به صفحه درست منتقل می‌شوند.
- * Version:     1.3.1
+ * Version:     1.3.2
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -20,7 +20,7 @@ if ( defined( 'WDP_LOADED' ) ) {
 	return;
 }
 define( 'WDP_LOADED', true );
-define( 'WDP_VERSION', '1.3.1' );
+define( 'WDP_VERSION', '1.3.2' );
 define( 'WDP_FILE', __FILE__ );
 define( 'WDP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WDP_URL', plugin_dir_url( __FILE__ ) );

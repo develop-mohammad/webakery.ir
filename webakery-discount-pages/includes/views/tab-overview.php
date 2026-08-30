@@ -11,6 +11,7 @@ $terms    = is_wp_error( $terms ) ? array() : $terms;
 $add_url  = admin_url( 'edit-tags.php?taxonomy=' . WDP_Taxonomy::TAXONOMY . '&post_type=product' );
 $log      = get_option( 'wdp_log', array() );
 $next_run = wp_next_scheduled( WDP_Cron::HOOK );
+$queue    = WDP_Assigner::queue_status();
 ?>
 
 <div class="wdp-bar">
@@ -18,13 +19,30 @@ $next_run = wp_next_scheduled( WDP_Cron::HOOK );
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline">
 		<?php wp_nonce_field( 'wdp_recalculate' ); ?>
 		<input type="hidden" name="action" value="wdp_recalculate">
-		<button type="submit" class="button">بازبینی همین حالا</button>
+		<button type="submit" class="button" <?php disabled( ! empty( $queue['running'] ) ); ?>>بازبینی در پس‌زمینه</button>
 	</form>
 	<span class="wdp-bar-hint">
 		اجرای خودکار بعدی:
 		<?php echo $next_run ? esc_html( date_i18n( 'Y-m-d H:i', $next_run ) ) : 'زمان‌بندی نشده'; ?>
 	</span>
 </div>
+
+<?php if ( $queue ) : ?>
+	<div class="notice notice-info inline" style="margin:12px 0">
+		<p>
+			بازبینی پس‌زمینه در حال اجراست:
+			<?php
+			echo esc_html(
+				WDP_Util::fa_digits( (string) $queue['done'] )
+				. ' از '
+				. WDP_Util::fa_digits( (string) $queue['total'] )
+			);
+			?>
+			محصول —
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . WDP_MENU . '&tab=overview' ) ); ?>">تازه‌سازی وضعیت</a>
+		</p>
+	</div>
+<?php endif; ?>
 
 <?php if ( ! $terms ) : ?>
 	<div class="wdp-empty">
@@ -90,123 +108,19 @@ $next_run = wp_next_scheduled( WDP_Cron::HOOK );
 			<li>بازه را بگذارید؛ مثلاً از <strong>۲۰</strong> تا <strong>۳۰</strong> برای «۲۰ تا ۳۰ درصد تخفیف».</li>
 			<li>یک نامک (اسلاگ) دلخواه برای URL انتخاب کنید و ذخیره کنید.</li>
 			<li>
-				اختیاری: اگر می‌خواهید این صفحه فقط مخصوص یک یا چند دسته‌بندی محصول باشد
-				(مثلاً «۲۰ تا ۳۰٪ لوازم خانگی» جدا از «۲۰ تا ۳۰٪ پوشاک»)، از بخش «محدود به دسته‌بندی محصول»
-				همان دسته‌ها را تیک بزنید؛ در غیر این صورت صفحه برای همه دسته‌بندی‌ها باز است.
+				اختیاری: برای محدود کردن صفحه به یک یا چند دسته‌بندی محصول، همان دسته‌ها را تیک بزنید.
 			</li>
 			<li>
-				تمام — محصولاتی که الان همان‌قدر تخفیف داشته باشند (و در صورت محدودیت، در همان دسته‌بندی باشند)
-				خودکار در صفحه نشان داده می‌شوند؛ اگر بعداً تخفیف محصول عوض شود (مثلاً از ۲۰٪ به ۵۰٪) یا
-				دسته‌بندی محصول عوض شود، خودکار از این صفحه خارج و به صفحه درست منتقل می‌شود.
+				محصولات با تخفیف منطبق خودکار در صفحه می‌آیند؛ با تغییر تخفیف یا دسته‌بندی، خودکار جابه‌جا می‌شوند.
 			</li>
 		</ol>
 		<p class="wdp-hint-block">
-			شورت‌کد فهرست صفحه‌های تخفیف: <code dir="ltr">[webakery_discount_pages]</code>
-			— یا ویجت المنتور «صفحه‌های تخفیف» را در صفحه بگذارید.
+			شورت‌کد: <code dir="ltr">[webakery_discount_pages]</code>
 		</p>
 	</div>
 
-	<div class="wdp-card-box" style="grid-column:1/-1">
-		<h3>🛒 محصولات در حراج ووکامرس</h3>
-		<?php
-		$show_on_sale = ! empty( $_GET['wdp_show_on_sale'] );
-		$on_sale_page = isset( $_GET['wdp_on_sale_page'] ) ? max( 1, (int) $_GET['wdp_on_sale_page'] ) : 1;
-		$base_args    = array(
-			'page' => WDP_MENU,
-			'tab'  => 'overview',
-		);
-		?>
-		<?php if ( ! $show_on_sale ) : ?>
-			<p class="wdp-muted">
-				برای جلوگیری از کند شدن پیشخوان، این فهرست به‌صورت پیش‌فرض بارگذاری نمی‌شود.
-				در فروشگاه‌های پرتعداد، خواندن همه محصولات حراج می‌تواند چند ثانیه طول بکشد.
-			</p>
-			<p>
-				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?' . http_build_query( array_merge( $base_args, array( 'wdp_show_on_sale' => 1 ) ) ) ) ); ?>">
-					نمایش فهرست محصولات حراج
-				</a>
-			</p>
-		<?php else : ?>
-			<?php
-			$overview = WDP_Assigner::list_on_sale_overview( $on_sale_page, 40 );
-			$on_sale  = $overview['rows'];
-			?>
-			<p class="wdp-hint" style="margin-bottom:10px">
-				<?php
-				echo esc_html(
-					WDP_Util::fa_digits( (string) count( $on_sale ) )
-					. ' از '
-					. WDP_Util::fa_digits( (string) $overview['total'] )
-					. ' محصول حراج (صفحه '
-					. WDP_Util::fa_digits( (string) $overview['page'] )
-					. ' از '
-					. WDP_Util::fa_digits( (string) max( 1, $overview['pages'] ) )
-					. ')'
-				);
-				?>
-				—
-				<a href="<?php echo esc_url( admin_url( 'admin.php?' . http_build_query( $base_args ) ) ); ?>">بستن فهرست</a>
-			</p>
-			<?php if ( ! $on_sale ) : ?>
-				<p class="wdp-muted">هیچ محصولی الان در حراج ووکامرس نیست (فیلد «Sale price» هیچ محصولی پر نشده یا خالی شده است).</p>
-			<?php else : ?>
-				<table class="widefat striped wdp-table">
-					<thead>
-						<tr>
-							<th>محصول</th>
-							<th>دسته‌بندی محصول</th>
-							<th>تخفیف محاسبه‌شده</th>
-							<th>باید در کدام صفحه باشد</th>
-							<th>وضعیت</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $on_sale as $row ) : ?>
-							<tr>
-								<td>
-									#<?php echo (int) $row['product_id']; ?> —
-									<?php if ( $row['edit_link'] ) : ?>
-										<a href="<?php echo esc_url( $row['edit_link'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $row['name'] ); ?></a>
-									<?php else : ?>
-										<?php echo esc_html( $row['name'] ); ?>
-									<?php endif; ?>
-								</td>
-								<td><?php echo $row['category_names'] ? esc_html( implode( '، ', $row['category_names'] ) ) : '<span class="wdp-muted">بدون دسته‌بندی</span>'; ?></td>
-								<td>
-									<?php if ( $row['discount'] ) : ?>
-										<?php echo esc_html( WDP_Util::fa_digits( WDP_Util::trim_zeros( $row['discount']['percent'] ) ) ); ?>٪
-										(<?php echo esc_html( WDP_Util::fa_digits( WDP_Util::trim_zeros( $row['discount']['fixed'] ) ) ); ?> <?php echo esc_html( WDP_Taxonomy::currency() ); ?>)
-									<?php else : ?>
-										<span class="wdp-muted">—</span>
-									<?php endif; ?>
-								</td>
-								<td><?php echo esc_html( $row['matched_name'] ); ?></td>
-								<td><?php echo $row['in_sync'] ? '✅ هماهنگ' : '⚠️ نیاز به بازبینی'; ?></td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-				<?php if ( $overview['pages'] > 1 ) : ?>
-					<p class="wdp-bar" style="margin-top:10px">
-						<?php if ( $overview['page'] > 1 ) : ?>
-							<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?' . http_build_query( array_merge( $base_args, array( 'wdp_show_on_sale' => 1, 'wdp_on_sale_page' => $overview['page'] - 1 ) ) ) ) ); ?>">← قبلی</a>
-						<?php endif; ?>
-						<?php if ( $overview['page'] < $overview['pages'] ) : ?>
-							<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?' . http_build_query( array_merge( $base_args, array( 'wdp_show_on_sale' => 1, 'wdp_on_sale_page' => $overview['page'] + 1 ) ) ) ) ); ?>">بعدی →</a>
-						<?php endif; ?>
-					</p>
-				<?php endif; ?>
-				<p class="wdp-hint" style="margin-top:8px">
-					اگر ستون «باید در کدام صفحه باشد» برای محصولی «—» است، یعنی هیچ صفحه تخفیفی با دسته‌بندی و
-					درصد تخفیف همان محصول تطبیق ندارد؛ به دسته‌بندی دقیق آن محصول در این جدول و دسته‌بندی
-					تیک‌خورده روی صفحه تخفیف نگاه کنید — احتمالاً یکی نیستند (مثلاً دو دسته با نام مشابه).
-				</p>
-			<?php endif; ?>
-		<?php endif; ?>
-	</div>
-
 	<div class="wdp-card-box">
-		<h3>🔍 چرا یک محصول در صفحه‌ای قرار نمی‌گیرد؟</h3>
+		<h3>🔍 بررسی یک محصول</h3>
 		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
 			<input type="hidden" name="page" value="<?php echo esc_attr( WDP_MENU ); ?>">
 			<input type="hidden" name="tab" value="overview">
@@ -218,8 +132,8 @@ $next_run = wp_next_scheduled( WDP_Cron::HOOK );
 			</p>
 		</form>
 		<p class="wdp-hint">
-			شناسه محصول را از صفحه ویرایش محصول (در آدرس مرورگر، بعد از <code dir="ltr">post=</code>)
-			یا از ستون «شناسه» در فهرست محصولات وردپرس پیدا کنید.
+			شناسه را از آدرس ویرایش محصول (بعد از <code dir="ltr">post=</code>) بردارید.
+			فهرست همه محصولات حراج دیگر اینجا لود نمی‌شود تا پیشخوان سبک بماند.
 		</p>
 		<?php
 		if ( ! empty( $_GET['wdp_check_product'] ) ) {

@@ -28,6 +28,8 @@ $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN ('_wdp_discount_p
 
 delete_option( 'wdp_settings' );
 delete_option( 'wdp_log' );
+delete_option( 'wdp_recalc_queue' );
+delete_transient( 'wdp_product_cat_tree' );
 
 foreach ( array( 'key', 'status', 'info', 'install_time', 'last_check', 'ver' ) as $k ) {
 	delete_option( 'wbl_webakery-discount-pages_' . $k );
@@ -36,4 +38,8 @@ foreach ( array( 'key', 'status', 'info', 'install_time', 'last_check', 'ver' ) 
 $timestamp = wp_next_scheduled( 'wdp_recalculate_all' );
 if ( $timestamp ) {
 	wp_unschedule_event( $timestamp, 'wdp_recalculate_all' );
+}
+$batch = wp_next_scheduled( 'wdp_recalculate_batch' );
+if ( $batch ) {
+	wp_unschedule_event( $batch, 'wdp_recalculate_batch' );
 }
