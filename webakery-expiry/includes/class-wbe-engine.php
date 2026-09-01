@@ -12,6 +12,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 class WBE_Engine {
 
 	/**
+	 * طبقه‌بندی‌های رایج برند ووکامرس.
+	 *
+	 * @return array<int,string>
+	 */
+	public static function brand_taxonomy_slugs() {
+		return array( 'product_brand', 'pwb-brand', 'product_brands', 'pa_brand', 'pa_brands' );
+	}
+
+	/**
+	 * آیا متن فیلتر داخل برچسب هست؟
+	 *
+	 * @param string $haystack
+	 * @param string $needle
+	 * @return bool
+	 */
+	public static function text_has( $haystack, $needle ) {
+		$haystack = (string) $haystack;
+		$needle   = (string) $needle;
+		if ( $needle === '' ) {
+			return true;
+		}
+		if ( function_exists( 'mb_stripos' ) ) {
+			return false !== mb_stripos( $haystack, $needle );
+		}
+		return false !== stripos( $haystack, $needle );
+	}
+
+	/**
 	 * @param array  $batches
 	 * @param string $today Y-m-d
 	 * @return int|null
@@ -740,6 +768,7 @@ class WBE_Engine {
 			'expiry_fa'   => $fmt( $expiry ),
 			'has_active'  => (bool) $active,
 			'has_batches' => ! empty( $batches ),
+			'brand'       => isset( $wc['brand'] ) ? (string) $wc['brand'] : '',
 		);
 	}
 }

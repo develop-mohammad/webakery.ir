@@ -13,6 +13,7 @@ if ( is_wp_error( $cats ) ) {
 
 $modes     = WBE_Admin_Bulk::mode_labels();
 $statuses  = WBE_Admin_Bulk::status_labels();
+$brands    = class_exists( 'WBE_Product' ) ? WBE_Product::brand_terms() : array();
 $ph_date   = ( 'jalali' === $calendar ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27';
 $action    = admin_url( 'admin-post.php' );
 $count     = is_array( $rows ) ? count( $rows ) : 0;
@@ -24,6 +25,7 @@ $csv_url   = wp_nonce_url(
 			'wbe_cat'    => $filters['category'],
 			'wbe_scope'  => $filters['scope'],
 			'wbe_status' => $filters['status'],
+			'wbe_brand'  => $filters['brand'],
 		),
 		admin_url( 'admin-post.php' )
 	),
@@ -62,6 +64,16 @@ $csv_url   = wp_nonce_url(
 				<option value="<?php echo (int) $c->term_id; ?>" <?php selected( $filters['category'], (int) $c->term_id ); ?>><?php echo esc_html( $c->name ); ?></option>
 			<?php endforeach; ?>
 		</select>
+		<?php if ( $brands ) : ?>
+			<select name="wbe_brand">
+				<option value="">همه برندها</option>
+				<?php foreach ( $brands as $b ) : ?>
+					<option value="<?php echo (int) $b->term_id; ?>" <?php selected( (string) $filters['brand'], (string) $b->term_id ); ?>><?php echo esc_html( $b->name ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		<?php else : ?>
+			<input type="search" name="wbe_brand" value="<?php echo esc_attr( $filters['brand'] ); ?>" placeholder="برند" />
+		<?php endif; ?>
 		<button type="submit" class="button">اعمال فیلتر</button>
 		<a class="button" href="<?php echo esc_url( $csv_url ); ?>">خروجی CSV</a>
 		<input type="search" id="wbe-bulk-live" placeholder="فیلتر آنی همین صفحه" />
@@ -74,6 +86,7 @@ $csv_url   = wp_nonce_url(
 		<input type="hidden" name="wbe_cat" value="<?php echo (int) $filters['category']; ?>" />
 		<input type="hidden" name="wbe_scope" value="<?php echo esc_attr( $filters['scope'] ); ?>" />
 		<input type="hidden" name="wbe_status" value="<?php echo esc_attr( $filters['status'] ); ?>" />
+		<input type="hidden" name="wbe_brand" value="<?php echo esc_attr( $filters['brand'] ); ?>" />
 		<?php wp_nonce_field( 'wbe_bulk' ); ?>
 
 		<div class="wbe-bulk-toolbar">
@@ -184,13 +197,16 @@ $csv_url   = wp_nonce_url(
 							}
 							$st = isset( $statuses[ $r['status'] ] ) ? $r['status'] : 'publish';
 							?>
-							<tr class="<?php echo esc_attr( $row_class ); ?>" data-id="<?php echo (int) $r['id']; ?>" data-name="<?php echo esc_attr( $r['name'] . ' ' . $r['sku'] ); ?>">
+							<tr class="<?php echo esc_attr( $row_class ); ?>" data-id="<?php echo (int) $r['id']; ?>" data-name="<?php echo esc_attr( $r['name'] . ' ' . $r['sku'] . ' ' . ( isset( $r['brand'] ) ? $r['brand'] : '' ) ); ?>">
 								<th class="check-column">
 									<input type="checkbox" class="wbe-bulk-id" name="ids[]" value="<?php echo (int) $r['id']; ?>" />
 								</th>
 								<td>
 									<input type="text" class="wbe-cell-name" data-field="name" data-orig="<?php echo esc_attr( $r['name'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][name]" value="<?php echo esc_attr( $r['name'] ); ?>" />
 									<div class="wbe-muted"><a href="<?php echo esc_url( get_edit_post_link( $r['id'] ) ); ?>">ویرایش محصول</a></div>
+									<?php if ( ! empty( $r['brand'] ) ) : ?>
+										<div class="wbe-muted"><?php echo esc_html( $r['brand'] ); ?></div>
+									<?php endif; ?>
 									<?php if ( empty( $r['has_batches'] ) ) : ?>
 										<div class="wbe-muted">بدون انقضا — تاریخ را پر کنید تا بچ ساخته شود</div>
 									<?php elseif ( empty( $r['has_active'] ) ) : ?>

@@ -237,6 +237,30 @@ class WBE_Admin_Bulk {
 		return $out;
 	}
 
+	/**
+	 * فیلترهای صفحهٔ گروهی از درخواست.
+	 *
+	 * @param array $src
+	 * @return array{q:string,category:int,scope:string,status:string,brand:string}
+	 */
+	public static function filters_from_request( $src ) {
+		$src     = is_array( $src ) ? $src : array();
+		$filters = array(
+			'q'        => isset( $src['s'] ) ? sanitize_text_field( wp_unslash( $src['s'] ) ) : '',
+			'category' => isset( $src['wbe_cat'] ) ? (int) $src['wbe_cat'] : 0,
+			'scope'    => isset( $src['wbe_scope'] ) ? sanitize_key( wp_unslash( $src['wbe_scope'] ) ) : 'all',
+			'status'   => isset( $src['wbe_status'] ) ? sanitize_key( wp_unslash( $src['wbe_status'] ) ) : '',
+			'brand'    => isset( $src['wbe_brand'] ) ? sanitize_text_field( wp_unslash( $src['wbe_brand'] ) ) : '',
+		);
+		if ( ! in_array( $filters['scope'], array( 'all', 'batches', 'plain' ), true ) ) {
+			$filters['scope'] = 'all';
+		}
+		if ( $filters['status'] && ! in_array( $filters['status'], array( 'publish', 'draft', 'private', 'pending' ), true ) ) {
+			$filters['status'] = '';
+		}
+		return $filters;
+	}
+
 	public function render_page() {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_die( 'دسترسی غیرمجاز' );
@@ -245,15 +269,7 @@ class WBE_Admin_Bulk {
 			echo '<div class="wrap"><div class="notice notice-error"><p>برای ویرایش گروهی، لایسنس را فعال کنید.</p></div></div>';
 			return;
 		}
-		$filters = array(
-			'q'        => isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification
-			'category' => isset( $_GET['wbe_cat'] ) ? (int) $_GET['wbe_cat'] : 0, // phpcs:ignore WordPress.Security.NonceVerification
-			'scope'    => isset( $_GET['wbe_scope'] ) ? sanitize_key( wp_unslash( $_GET['wbe_scope'] ) ) : 'all', // phpcs:ignore WordPress.Security.NonceVerification
-			'status'   => isset( $_GET['wbe_status'] ) ? sanitize_key( wp_unslash( $_GET['wbe_status'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification
-		);
-		if ( ! in_array( $filters['scope'], array( 'all', 'batches', 'plain' ), true ) ) {
-			$filters['scope'] = 'all';
-		}
+		$filters  = self::filters_from_request( $_GET ); // phpcs:ignore WordPress.Security.NonceVerification
 		$rows     = $this->collect_rows( $filters );
 		$calendar = WBE_Settings::calendar();
 		$updated  = isset( $_GET['updated'] ) ? (int) $_GET['updated'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
@@ -278,8 +294,10 @@ class WBE_Admin_Bulk {
 		$cat         = isset( $filters['category'] ) ? (int) $filters['category'] : 0;
 		$scope       = isset( $filters['scope'] ) ? (string) $filters['scope'] : 'all';
 		$status_f    = isset( $filters['status'] ) ? (string) $filters['status'] : '';
+		$brand_f     = isset( $filters['brand'] ) ? trim( (string) $filters['brand'] ) : '';
 		$today       = WBE_Jalali::today_ymd();
 		$default_cal = WBE_Settings::calendar();
+		$brand_ids   = ( $brand_f && class_exists( 'WBE_Product' ) ) ? WBE_Product::brand_term_ids_for_filter( $brand_f ) : array();
 
 		$sql = "SELECT p.ID, p.post_title, p.post_status,
 				sku.meta_value AS sku,
@@ -323,6 +341,14 @@ class WBE_Admin_Bulk {
 				)";
 			}
 		}
+		if ( $brand_ids ) {
+			$in   = implode( ',', array_map( 'intval', $brand_ids ) );
+			$sql .= " AND p.ID IN (
+				SELECT tr.object_id FROM {$wpdb->term_relationships} tr
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id
+				WHERE tt.term_id IN ({$in})
+			)";
+		}
 		if ( $q ) {
 			$like   = '%' . $wpdb->esc_like( $q ) . '%';
 			$sql   .= ' AND (p.post_title LIKE %s OR sku.meta_value LIKE %s)';
@@ -353,6 +379,10 @@ class WBE_Admin_Bulk {
 				continue;
 			}
 			$cal   = ( 'jalali' === $rec->calendar || 'gregorian' === $rec->calendar ) ? $rec->calendar : $default_cal;
+			$brand = class_exists( 'WBE_Product' ) ? WBE_Product::brand_label( $rec->ID ) : '';
+			if ( $brand_f && ! $brand_ids && ! WBE_Engine::text_has( $brand, $brand_f ) ) {
+				continue;
+			}
 			$out[] = WBE_Engine::bulk_row_from_record(
 				$rec->ID,
 				$rec->post_title,
@@ -367,6 +397,7 @@ class WBE_Admin_Bulk {
 					'sale'    => isset( $rec->wc_sale ) ? $rec->wc_sale : '',
 					'stock'   => isset( $rec->wc_stock ) ? $rec->wc_stock : '',
 					'status'  => isset( $rec->post_status ) ? $rec->post_status : 'publish',
+					'brand'   => $brand,
 				)
 			);
 		}
@@ -516,6 +547,9 @@ class WBE_Admin_Bulk {
 		if ( isset( $_POST['wbe_status'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			$args['wbe_status'] = sanitize_key( wp_unslash( $_POST['wbe_status'] ) );
 		}
+		if ( isset( $_POST['wbe_brand'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$args['wbe_brand'] = sanitize_text_field( wp_unslash( $_POST['wbe_brand'] ) );
+		}
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
 		exit;
 	}
@@ -528,12 +562,7 @@ class WBE_Admin_Bulk {
 		if ( ! WBE_Plugin::licensed() ) {
 			wp_die( 'لایسنس نامعتبر است.' );
 		}
-		$filters = array(
-			'q'        => isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '',
-			'category' => isset( $_GET['wbe_cat'] ) ? (int) $_GET['wbe_cat'] : 0,
-			'scope'    => isset( $_GET['wbe_scope'] ) ? sanitize_key( wp_unslash( $_GET['wbe_scope'] ) ) : 'all',
-			'status'   => isset( $_GET['wbe_status'] ) ? sanitize_key( wp_unslash( $_GET['wbe_status'] ) ) : '',
-		);
+		$filters = self::filters_from_request( $_GET ); // phpcs:ignore WordPress.Security.NonceVerification
 		$rows = $this->collect_rows( $filters );
 		nocache_headers();
 		header( 'Content-Type: text/csv; charset=utf-8' );
@@ -542,7 +571,7 @@ class WBE_Admin_Bulk {
 		fprintf( $out, chr( 0xEF ) . chr( 0xBB ) . chr( 0xBF ) );
 		fputcsv(
 			$out,
-			array( 'ID', 'نام', 'SKU', 'وضعیت', 'قیمت اصلی', 'تخفیف', 'جشنواره', 'از', 'تا', 'موجودی', 'انقضا' )
+			array( 'ID', 'نام', 'SKU', 'برند', 'وضعیت', 'قیمت اصلی', 'تخفیف', 'جشنواره', 'از', 'تا', 'موجودی', 'انقضا' )
 		);
 		foreach ( $rows as $r ) {
 			fputcsv(
@@ -551,6 +580,7 @@ class WBE_Admin_Bulk {
 					$r['id'],
 					$r['name'],
 					$r['sku'],
+					isset( $r['brand'] ) ? $r['brand'] : '',
 					$r['status'],
 					$r['regular'],
 					$r['discount'],

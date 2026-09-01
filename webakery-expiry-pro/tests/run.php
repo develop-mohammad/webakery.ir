@@ -248,6 +248,10 @@ $plain_d = WBE_Engine::apply_plain_state( 100000, '', 5, array( 'discount' => 20
 wbe_check( 'بدون بچ تخفیف قیمت فروش می‌سازد', '80000' === $plain_d['sale'] && 20 === (int) $plain_d['discount'] );
 $plain_i = WBE_Engine::apply_plain_state( 100000, 80000, 5, array( 'stock_mode' => 'inc', 'stock' => 3 ) );
 wbe_check( 'بدون بچ موجودی افزایش می‌یابد', 8 === (int) $plain_i['stock'] && '80000' === $plain_i['sale'] );
+wbe_check( 'طبقه‌بندی برند ووکامرس در لیست است', in_array( 'product_brand', WBE_Engine::brand_taxonomy_slugs(), true ) );
+wbe_check( 'برند Perfect WooCommerce Brands در لیست است', in_array( 'pwb-brand', WBE_Engine::brand_taxonomy_slugs(), true ) );
+wbe_check( 'فیلتر برند داخل نام می‌گردد', true === WBE_Engine::text_has( 'شیر نستله', 'نستله' ) );
+wbe_check( 'فیلتر برند نامربوط رد می‌شود', false === WBE_Engine::text_has( 'کامور', 'نستله' ) );
 $plain_row = WBE_Engine::bulk_row_from_record(
 	9,
 	'نان',
@@ -262,6 +266,7 @@ $plain_row = WBE_Engine::bulk_row_from_record(
 		'sale'    => '40000',
 		'stock'   => '12',
 		'status'  => 'draft',
+		'brand'   => 'نستله',
 	)
 );
 wbe_check(
@@ -272,6 +277,7 @@ wbe_check(
 	&& 'draft' === $plain_row['status']
 	&& false === $plain_row['has_batches']
 	&& false === $plain_row['has_active']
+	&& 'نستله' === $plain_row['brand']
 );
 
 echo "\n=== بازه فروش فوق‌العاده ===\n";
@@ -353,7 +359,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.2.0' );
+	define( 'WBE_VERSION', '1.2.1' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

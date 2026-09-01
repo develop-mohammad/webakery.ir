@@ -137,7 +137,12 @@
 
       <section class="card" id="wbe-bulk-preview">
         <strong>پیشخوان — ویرایش گروهی همه محصولات</strong>
-        <p class="muted">انقضای کالا ← ویرایش گروهی. همه محصولات ووکامرس در همین افزونه؛ افزونهٔ جدا لازم نیست. نام، SKU، وضعیت، قیمت، موجودی و انقضا. اگر انقضا را پر کنید بچ ساخته می‌شود.</p>
+        <p class="muted">انقضای کالا ← ویرایش گروهی. همه محصولات ووکامرس در همین افزونه؛ افزونهٔ جدا لازم نیست. نام، SKU، وضعیت، قیمت، موجودی و انقضا. فیلتر دسته و برند. اگر انقضا را پر کنید بچ ساخته می‌شود.</p>
+        <form class="wbe-filters" style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px">
+          <select><option>همه دسته‌بندی‌ها</option><option>نوزاد</option></select>
+          <select><option>همه برندها</option><option selected>نستله</option></select>
+          <button type="button" class="button">اعمال فیلتر</button>
+        </form>
         <div class="wbe-bulk-toolbar">
           <div class="wbe-bulk-field">
             <label>تخفیف ٪</label>
@@ -164,7 +169,7 @@
             <tr><th></th><th>نام</th><th>SKU</th><th>وضعیت</th><th>تخفیف ٪</th><th>جشنواره</th><th>موجودی</th><th>انقضا</th></tr>
           </thead>
           <tbody>
-            <tr><td><input type="checkbox" checked /></td><td>شیر خشک نمونه</td><td>M1</td><td>منتشرشده</td><td>10</td><td>162000</td><td>12</td><td>۱۴۰۵/۰۱/۱۰</td></tr>
+            <tr><td><input type="checkbox" checked /></td><td>شیر خشک نمونه<div class="muted">نستله</div></td><td>M1</td><td>منتشرشده</td><td>10</td><td>162000</td><td>12</td><td>۱۴۰۵/۰۱/۱۰</td></tr>
             <tr><td><input type="checkbox" checked /></td><td>بیسکویت جو</td><td>B2</td><td>منتشرشده</td><td>0</td><td>90000</td><td>80</td><td>—</td></tr>
           </tbody>
         </table>

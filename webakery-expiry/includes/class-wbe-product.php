@@ -350,12 +350,107 @@ class WBE_Product {
 		return (string) $raw !== '';
 	}
 
-	public static function brand_label( $product_id ) {
-		$taxes = array( 'product_brand', 'pwb-brand', 'product_brands' );
-		foreach ( $taxes as $tax ) {
-			if ( ! taxonomy_exists( $tax ) ) {
+	public static function brand_taxonomies() {
+		$out = array();
+		$slugs = class_exists( 'WBE_Engine' ) ? WBE_Engine::brand_taxonomy_slugs() : array( 'product_brand', 'pwb-brand', 'product_brands', 'pa_brand', 'pa_brands' );
+		foreach ( $slugs as $tax ) {
+			if ( function_exists( 'taxonomy_exists' ) && taxonomy_exists( $tax ) ) {
+				$out[] = $tax;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * برندها برای دراپ‌داون فیلتر.
+	 *
+	 * @return array<int,object>
+	 */
+	public static function brand_terms() {
+		$out  = array();
+		$seen = array();
+		if ( ! function_exists( 'get_terms' ) ) {
+			return $out;
+		}
+		foreach ( self::brand_taxonomies() as $tax ) {
+			$list = get_terms(
+				array(
+					'taxonomy'   => $tax,
+					'hide_empty' => false,
+				)
+			);
+			if ( is_wp_error( $list ) || ! $list ) {
 				continue;
 			}
+			foreach ( $list as $term ) {
+				$id = (int) $term->term_id;
+				if ( isset( $seen[ $id ] ) ) {
+					continue;
+				}
+				$seen[ $id ] = true;
+				$out[]       = $term;
+			}
+		}
+		usort(
+			$out,
+			function ( $a, $b ) {
+				return strcasecmp( (string) $a->name, (string) $b->name );
+			}
+		);
+		return $out;
+	}
+
+	/**
+	 * شناسه ترم‌های برند برای فیلتر (خود ترم + فرزندها).
+	 *
+	 * @param string $filter شناسه، نام یا اسلاگ.
+	 * @return array<int,int>
+	 */
+	public static function brand_term_ids_for_filter( $filter ) {
+		$filter = trim( (string) $filter );
+		if ( $filter === '' ) {
+			return array();
+		}
+		$ids = array();
+		if ( ctype_digit( $filter ) ) {
+			$id = (int) $filter;
+			if ( $id > 0 ) {
+				$ids[] = $id;
+				if ( function_exists( 'get_term' ) ) {
+					$term = get_term( $id );
+					if ( $term && ! is_wp_error( $term ) && ! empty( $term->taxonomy ) && function_exists( 'get_term_children' ) ) {
+						$kids = get_term_children( $id, $term->taxonomy );
+						if ( ! is_wp_error( $kids ) && $kids ) {
+							$ids = array_merge( $ids, array_map( 'intval', $kids ) );
+						}
+					}
+				}
+			}
+			return array_values( array_unique( array_filter( $ids ) ) );
+		}
+		if ( ! function_exists( 'get_term_by' ) ) {
+			return array();
+		}
+		foreach ( self::brand_taxonomies() as $tax ) {
+			foreach ( array( 'name', 'slug' ) as $field ) {
+				$term = get_term_by( $field, $filter, $tax );
+				if ( ! $term || is_wp_error( $term ) ) {
+					continue;
+				}
+				$ids[] = (int) $term->term_id;
+				if ( function_exists( 'get_term_children' ) ) {
+					$kids = get_term_children( (int) $term->term_id, $tax );
+					if ( ! is_wp_error( $kids ) && $kids ) {
+						$ids = array_merge( $ids, array_map( 'intval', $kids ) );
+					}
+				}
+			}
+		}
+		return array_values( array_unique( array_filter( $ids ) ) );
+	}
+
+	public static function brand_label( $product_id ) {
+		foreach ( self::brand_taxonomies() as $tax ) {
 			$terms = get_the_terms( $product_id, $tax );
 			if ( $terms && ! is_wp_error( $terms ) ) {
 				return implode( '، ', wp_list_pluck( $terms, 'name' ) );
