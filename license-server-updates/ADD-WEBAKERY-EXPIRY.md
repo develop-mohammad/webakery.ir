@@ -38,12 +38,12 @@
 
 // LS_UPDATES
 'webakery-expiry' => [
-        'version'      => '1.2.1',
+        'version'      => '1.2.2',
         'package'      => 'https://webakery.ir/license-server/updates/webakery-expiry-pro.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۲.۱: فیلتر برند در ویرایش گروهی.',
+        'changelog'    => 'نسخه ۱.۲.۲: برند از ویژگی‌ها بدون تکرار؛ موجودی رزرو اختیاری؛ افزودن بچ رزرو؛ قیمت جشنواره دلخواه.',
 ],
 ```
 
