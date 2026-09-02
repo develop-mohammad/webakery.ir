@@ -122,6 +122,26 @@ class WBE_Admin_Bulk {
 		}
 
 		$ops = array_merge( $ops, self::dates_from_src( $src, $calendar, 'wbe_sale_from', 'wbe_sale_to' ) );
+
+		$add_expiry = isset( $src['wbe_add_expiry'] ) ? WBE_Jalali::parse_to_ymd( wp_unslash( $src['wbe_add_expiry'] ), $calendar ) : '';
+		$add_stock  = array_key_exists( 'wbe_add_stock', $src ) ? WBE_Engine::parse_amount( wp_unslash( $src['wbe_add_stock'] ) ) : null;
+		$add_price  = array_key_exists( 'wbe_add_price', $src ) ? WBE_Engine::parse_amount( wp_unslash( $src['wbe_add_price'] ) ) : null;
+		$add_sale   = array_key_exists( 'wbe_add_sale', $src ) ? WBE_Engine::parse_amount( wp_unslash( $src['wbe_add_sale'] ) ) : null;
+		$add_disc   = array_key_exists( 'wbe_add_discount', $src ) ? WBE_Engine::parse_amount( wp_unslash( $src['wbe_add_discount'] ) ) : null;
+		if ( '' !== $add_expiry && null !== $add_stock ) {
+			$row = array(
+				'expiry'   => $add_expiry,
+				'stock'    => max( 0, (int) $add_stock ),
+				'price'    => null !== $add_price ? $add_price : 0,
+				'discount' => null !== $add_disc ? max( 0, min( 100, $add_disc ) ) : 0,
+			);
+			if ( null !== $add_sale && $add_sale > 0 ) {
+				$row['sale'] = $add_sale;
+			}
+			$ops['add_batch'] = $row;
+			$ops['calendar']  = $calendar;
+		}
+
 		return $ops;
 	}
 
@@ -184,6 +204,24 @@ class WBE_Admin_Bulk {
 		}
 
 		$ops = array_merge( $ops, self::dates_from_src( $row, $calendar, 'from', 'to' ) );
+
+		$add_expiry = isset( $row['add_expiry'] ) ? WBE_Jalali::parse_to_ymd( $row['add_expiry'], $calendar ) : '';
+		$add_stock  = array_key_exists( 'add_stock', $row ) ? WBE_Engine::parse_amount( $row['add_stock'] ) : null;
+		$add_price  = array_key_exists( 'add_price', $row ) ? WBE_Engine::parse_amount( $row['add_price'] ) : null;
+		$add_sale   = array_key_exists( 'add_sale', $row ) ? WBE_Engine::parse_amount( $row['add_sale'] ) : null;
+		if ( '' !== $add_expiry && null !== $add_stock ) {
+			$add = array(
+				'expiry' => $add_expiry,
+				'stock'  => max( 0, (int) $add_stock ),
+				'price'  => null !== $add_price ? $add_price : 0,
+			);
+			if ( null !== $add_sale && $add_sale > 0 ) {
+				$add['sale'] = $add_sale;
+			}
+			$ops['add_batch'] = $add;
+			$ops['calendar']  = $calendar;
+		}
+
 		return $ops;
 	}
 

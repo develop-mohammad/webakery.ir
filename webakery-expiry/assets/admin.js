@@ -219,6 +219,96 @@
 		$tr.toggleClass('is-dirty', dirty);
 	}
 
+	function applyToolbarToSelected() {
+		var regularMode = $('#wbe_regular_mode').val() || 'none';
+		var regularVal = $('input[name="wbe_regular_value"]').val();
+		var saleMode = $('#wbe_sale_mode').val() || 'none';
+		var saleVal = $('input[name="wbe_sale_value"]').val();
+		var disc = $('#wbe_discount').val();
+		var from = $('#wbe_sale_from').val();
+		var to = $('#wbe_sale_to').val();
+		var stockMode = $('#wbe_stock_mode').val() || 'none';
+		var stockVal = $('input[name="wbe_stock_value"]').val();
+		var expiry = $('#wbe_expiry').val();
+		var round = $('#wbe_round').val();
+		var clear = $('input[name="wbe_clear_sale"]').prop('checked');
+		var setStatus = $('#wbe_set_status').val() || '';
+		var addPrice = $('input[name="wbe_add_price"]').val();
+		var addSale = $('input[name="wbe_add_sale"]').val();
+		var addDisc = $('input[name="wbe_add_discount"]').val();
+		var addStock = $('input[name="wbe_add_stock"]').val();
+		var addExpiry = $('input[name="wbe_add_expiry"]').val();
+		var hasAdd = addExpiry !== '' && addStock !== '';
+		var has = (regularMode !== 'none' && regularVal !== '') ||
+			(saleMode !== 'none' && saleVal !== '') ||
+			disc !== '' || from !== '' || to !== '' ||
+			(stockMode !== 'none' && stockVal !== '') ||
+			expiry !== '' || clear || setStatus !== '' || hasAdd;
+		if (!has) {
+			showNotice(false, 'حداقل یک فیلد نوار بالا را پر کنید.');
+			return 0;
+		}
+		var n = 0;
+		$('.wbe-bulk-row:visible').each(function () {
+			var $tr = $(this);
+			if (!$tr.find('.wbe-bulk-id').prop('checked')) {
+				return;
+			}
+			n++;
+			var regular = parseFloat($tr.find('[data-field="regular"]').val()) || 0;
+			var sale = parseFloat($tr.find('[data-field="sale"]').val()) || 0;
+			var stock = parseFloat($tr.find('[data-field="stock"]').val()) || 0;
+			if (regularMode !== 'none' && regularVal !== '') {
+				regular = roundMoney(changeAmount(regular, regularMode, regularVal), round);
+				setField($tr, 'regular', regular);
+			}
+			if (clear) {
+				setField($tr, 'discount', 0);
+				setField($tr, 'sale', regular);
+				$tr.find('[data-field="sale"]').data('manual', false);
+				setField($tr, 'from', '');
+				setField($tr, 'to', '');
+			} else if (saleMode !== 'none' && saleVal !== '') {
+				sale = roundMoney(changeAmount(sale, saleMode, saleVal), round);
+				setField($tr, 'sale', sale);
+				$tr.find('[data-field="sale"]').data('manual', true);
+				var d = regular > 0 && sale < regular ? Math.round(100 - (sale / regular) * 100) : 0;
+				setField($tr, 'discount', d);
+			} else if (disc !== '') {
+				var dv = parseFloat(disc) || 0;
+				setField($tr, 'discount', dv);
+				$tr.find('[data-field="sale"]').data('manual', false);
+				setField($tr, 'sale', Math.round(regular * (100 - Math.max(0, Math.min(100, dv))) / 100));
+			}
+			if (from !== '') {
+				setField($tr, 'from', from);
+			}
+			if (to !== '') {
+				setField($tr, 'to', to);
+			}
+			if (stockMode !== 'none' && stockVal !== '') {
+				setField($tr, 'stock', Math.max(0, Math.round(changeAmount(stock, stockMode, stockVal))));
+			}
+			if (expiry !== '') {
+				setField($tr, 'expiry', expiry);
+			}
+			if (setStatus !== '') {
+				setField($tr, 'status', setStatus);
+			}
+			if (hasAdd) {
+				$tr.addClass('is-dirty');
+				$tr.data('addBatch', {
+					add_price: addPrice,
+					add_sale: addSale,
+					add_discount: addDisc,
+					add_stock: addStock,
+					add_expiry: addExpiry
+				});
+			}
+		});
+		return n;
+	}
+
 	function collectDirty() {
 		var rows = {};
 		$('.wbe-bulk-row.is-dirty:visible').each(function () {
@@ -231,6 +321,14 @@
 					row[$i.data('field')] = $i.val();
 				}
 			});
+			var add = $tr.data('addBatch');
+			if (add) {
+				Object.keys(add).forEach(function (k) {
+					if (add[k] !== '' && add[k] != null) {
+						row[k] = add[k];
+					}
+				});
+			}
 			if (Object.keys(row).length) {
 				rows[id] = row;
 			}
@@ -263,6 +361,7 @@
 			$tr.find('[data-field]').each(function () {
 				$(this).attr('data-orig', $(this).val()).removeData('manual');
 			});
+			$tr.removeData('addBatch');
 			$tr.removeClass('is-dirty');
 		});
 	}
@@ -303,74 +402,6 @@
 			$('#wbe-bulk-progress').prop('hidden', true);
 			showNotice(false, 'ذخیره ناقص ماند. دوباره تلاش کنید.');
 		});
-	}
-
-	function applyToolbarToSelected() {
-		var regularMode = $('#wbe_regular_mode').val() || 'none';
-		var regularVal = $('input[name="wbe_regular_value"]').val();
-		var saleMode = $('#wbe_sale_mode').val() || 'none';
-		var saleVal = $('input[name="wbe_sale_value"]').val();
-		var disc = $('#wbe_discount').val();
-		var from = $('#wbe_sale_from').val();
-		var to = $('#wbe_sale_to').val();
-		var stockMode = $('#wbe_stock_mode').val() || 'none';
-		var stockVal = $('input[name="wbe_stock_value"]').val();
-		var expiry = $('#wbe_expiry').val();
-		var round = $('#wbe_round').val();
-		var clear = $('input[name="wbe_clear_sale"]').prop('checked');
-		var has = (regularMode !== 'none' && regularVal !== '') ||
-			(saleMode !== 'none' && saleVal !== '') ||
-			disc !== '' || from !== '' || to !== '' ||
-			(stockMode !== 'none' && stockVal !== '') ||
-			expiry !== '' || clear;
-		if (!has) {
-			showNotice(false, 'حداقل یک فیلد نوار بالا را پر کنید.');
-			return 0;
-		}
-		var n = 0;
-		$('.wbe-bulk-row:visible').each(function () {
-			var $tr = $(this);
-			if (!$tr.find('.wbe-bulk-id').prop('checked')) {
-				return;
-			}
-			n++;
-			var regular = parseFloat($tr.find('[data-field="regular"]').val()) || 0;
-			var sale = parseFloat($tr.find('[data-field="sale"]').val()) || 0;
-			var stock = parseFloat($tr.find('[data-field="stock"]').val()) || 0;
-			if (regularMode !== 'none' && regularVal !== '') {
-				regular = roundMoney(changeAmount(regular, regularMode, regularVal), round);
-				setField($tr, 'regular', regular);
-			}
-			if (clear) {
-				setField($tr, 'discount', 0);
-				setField($tr, 'sale', regular);
-				setField($tr, 'from', '');
-				setField($tr, 'to', '');
-			} else if (saleMode !== 'none' && saleVal !== '') {
-				sale = roundMoney(changeAmount(sale, saleMode, saleVal), round);
-				setField($tr, 'sale', sale);
-				$tr.find('[data-field="sale"]').data('manual', true);
-				var d = regular > 0 && sale < regular ? Math.round(100 - (sale / regular) * 100) : 0;
-				setField($tr, 'discount', d);
-			} else if (disc !== '') {
-				var dv = parseFloat(disc) || 0;
-				setField($tr, 'discount', dv);
-				setField($tr, 'sale', Math.round(regular * (100 - Math.max(0, Math.min(100, dv))) / 100));
-			}
-			if (from !== '') {
-				setField($tr, 'from', from);
-			}
-			if (to !== '') {
-				setField($tr, 'to', to);
-			}
-			if (stockMode !== 'none' && stockVal !== '') {
-				setField($tr, 'stock', Math.max(0, Math.round(changeAmount(stock, stockMode, stockVal))));
-			}
-			if (expiry !== '') {
-				setField($tr, 'expiry', expiry);
-			}
-		});
-		return n;
 	}
 
 	$(document).on('submit', '#wbe-bulk-form', function (e) {

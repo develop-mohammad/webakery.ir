@@ -146,7 +146,7 @@ class WBE_Product {
 			$discount = WBE_Engine::discount_of( $active );
 			$product->set_regular_price( $regular );
 			if ( $discount > 0 ) {
-				$sale = (string) WBE_Engine::sale_price( $regular, $discount );
+				$sale = (string) WBE_Engine::effective_sale( $active );
 				$product->set_sale_price( $sale );
 				$product->set_price( $sale );
 				self::ensure_sale_dates( $product, $active['expiry'] );
@@ -351,18 +351,50 @@ class WBE_Product {
 	}
 
 	public static function brand_taxonomies() {
-		$out = array();
-		$slugs = class_exists( 'WBE_Engine' ) ? WBE_Engine::brand_taxonomy_slugs() : array( 'product_brand', 'pwb-brand', 'product_brands', 'pa_brand', 'pa_brands' );
-		foreach ( $slugs as $tax ) {
-			if ( function_exists( 'taxonomy_exists' ) && taxonomy_exists( $tax ) ) {
-				$out[] = $tax;
+		$attrs  = array();
+		$others = array();
+
+		if ( function_exists( 'wc_get_attribute_taxonomies' ) ) {
+			$taxes = wc_get_attribute_taxonomies();
+			if ( is_array( $taxes ) ) {
+				foreach ( $taxes as $tax ) {
+					$name  = isset( $tax->attribute_name ) ? (string) $tax->attribute_name : '';
+					$label = isset( $tax->attribute_label ) ? (string) $tax->attribute_label : '';
+					if ( ! $name || ! class_exists( 'WBE_Engine' ) || ! WBE_Engine::looks_like_brand( $name, $label ) ) {
+						continue;
+					}
+					$slug = function_exists( 'wc_attribute_taxonomy_name' ) ? wc_attribute_taxonomy_name( $name ) : ( 'pa_' . $name );
+					if ( function_exists( 'taxonomy_exists' ) && taxonomy_exists( $slug ) ) {
+						$attrs[] = $slug;
+					}
+				}
 			}
 		}
-		return $out;
+
+		$slugs = class_exists( 'WBE_Engine' ) ? WBE_Engine::brand_taxonomy_slugs() : array( 'pa_brand', 'pa_brands', 'product_brand', 'pwb-brand', 'product_brands' );
+		foreach ( $slugs as $tax ) {
+			if ( ! function_exists( 'taxonomy_exists' ) || ! taxonomy_exists( $tax ) ) {
+				continue;
+			}
+			if ( 0 === strpos( $tax, 'pa_' ) ) {
+				$attrs[] = $tax;
+			} else {
+				$others[] = $tax;
+			}
+		}
+
+		$attrs  = array_values( array_unique( $attrs ) );
+		$others = array_values( array_unique( $others ) );
+
+		// اگر برند در ویژگی‌ها تعریف شده، فقط از همان‌جا بخوان تا تکراری نشود.
+		if ( $attrs ) {
+			return $attrs;
+		}
+		return $others;
 	}
 
 	/**
-	 * برندها برای دراپ‌داون فیلتر.
+	 * برندها برای دراپ‌داون فیلتر — بدون تکرار نام.
 	 *
 	 * @return array<int,object>
 	 */
@@ -383,12 +415,12 @@ class WBE_Product {
 				continue;
 			}
 			foreach ( $list as $term ) {
-				$id = (int) $term->term_id;
-				if ( isset( $seen[ $id ] ) ) {
+				$key = function_exists( 'mb_strtolower' ) ? mb_strtolower( trim( (string) $term->name ) ) : strtolower( trim( (string) $term->name ) );
+				if ( $key === '' || isset( $seen[ $key ] ) ) {
 					continue;
 				}
-				$seen[ $id ] = true;
-				$out[]       = $term;
+				$seen[ $key ] = true;
+				$out[]        = $term;
 			}
 		}
 		usort(
@@ -450,10 +482,23 @@ class WBE_Product {
 	}
 
 	public static function brand_label( $product_id ) {
+		$names = array();
+		$seen  = array();
 		foreach ( self::brand_taxonomies() as $tax ) {
 			$terms = get_the_terms( $product_id, $tax );
-			if ( $terms && ! is_wp_error( $terms ) ) {
-				return implode( '، ', wp_list_pluck( $terms, 'name' ) );
+			if ( ! $terms || is_wp_error( $terms ) ) {
+				continue;
+			}
+			foreach ( $terms as $term ) {
+				$key = function_exists( 'mb_strtolower' ) ? mb_strtolower( trim( (string) $term->name ) ) : strtolower( trim( (string) $term->name ) );
+				if ( $key === '' || isset( $seen[ $key ] ) ) {
+					continue;
+				}
+				$seen[ $key ] = true;
+				$names[]      = $term->name;
+			}
+			if ( $names ) {
+				return implode( '، ', $names );
 			}
 		}
 		if ( ! function_exists( 'wc_get_product' ) ) {
@@ -463,7 +508,7 @@ class WBE_Product {
 		if ( ! $product ) {
 			return '';
 		}
-		foreach ( array( 'brand', 'pa_brand', 'brands' ) as $attr ) {
+		foreach ( array( 'brand', 'pa_brand', 'brands', 'برند' ) as $attr ) {
 			$val = $product->get_attribute( $attr );
 			if ( $val ) {
 				return wp_strip_all_tags( $val );
@@ -514,6 +559,22 @@ class WBE_Product {
 		$batches    = self::batches( $product_id );
 
 		if ( ! $batches ) {
+			if ( ! empty( $ops['add_batch'] ) && is_array( $ops['add_batch'] ) ) {
+				$cal     = WBE_Settings::calendar();
+				$batches = WBE_Engine::sanitize_batches( array( $ops['add_batch'] ), $cal );
+				if ( $batches ) {
+					self::$syncing = true;
+					update_post_meta( $product_id, self::META_BATCHES, $batches );
+					self::push_wc_price_meta( $product_id, $batches );
+					self::ensure_sale_date_meta( $product_id, $batches );
+					self::refresh_wc_index( $product_id );
+					self::$syncing = false;
+					if ( $flush_alerts && class_exists( 'WBE_Alerts' ) ) {
+						WBE_Alerts::flush();
+					}
+					return true;
+				}
+			}
 			if ( ! empty( $ops['expiry'] ) && self::seed_batch_and_apply( $product_id, $ops, false ) ) {
 				if ( $flush_alerts && class_exists( 'WBE_Alerts' ) ) {
 					WBE_Alerts::flush();
@@ -528,6 +589,7 @@ class WBE_Product {
 		}
 
 		$today           = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
+		$ops['calendar'] = WBE_Settings::calendar();
 		$next            = WBE_Engine::apply_bulk_to_active( $batches, $ops, $today );
 		$batches_changed = $next !== $batches;
 		$touch_dates     = ! empty( $ops['clear_sale'] )
@@ -607,17 +669,16 @@ class WBE_Product {
 		$product_id = (int) $product_id;
 		$state      = self::read_wc_plain( $product_id );
 		$next_state = WBE_Engine::apply_plain_state( $state['regular'], $state['sale'], $state['stock'], $ops );
-		$batches    = WBE_Engine::sanitize_batches(
-			array(
-				array(
-					'price'    => $next_state['regular'],
-					'stock'    => $next_state['stock'],
-					'expiry'   => $ops['expiry'],
-					'discount' => $next_state['discount'],
-				),
-			),
-			'gregorian'
+		$seed       = array(
+			'price'    => $next_state['regular'],
+			'stock'    => $next_state['stock'],
+			'expiry'   => $ops['expiry'],
+			'discount' => $next_state['discount'],
 		);
+		if ( '' !== $next_state['sale'] ) {
+			$seed['sale'] = $next_state['sale'];
+		}
+		$batches = WBE_Engine::sanitize_batches( array( $seed ), 'gregorian' );
 		if ( ! $batches ) {
 			return false;
 		}
@@ -724,7 +785,7 @@ class WBE_Product {
 		update_post_meta( $product_id, '_backorders', 'no' );
 		update_post_meta( $product_id, '_regular_price', $regular );
 		if ( $discount > 0 ) {
-			$sale = (string) WBE_Engine::sale_price( $regular, $discount );
+			$sale = (string) WBE_Engine::effective_sale( $active );
 			update_post_meta( $product_id, '_sale_price', $sale );
 			update_post_meta( $product_id, '_price', $sale );
 		} else {

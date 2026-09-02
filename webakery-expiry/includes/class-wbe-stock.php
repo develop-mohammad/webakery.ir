@@ -73,7 +73,7 @@ class WBE_Stock {
 		if ( ! self::discount_live( $product, $active ) ) {
 			return '';
 		}
-		return (string) WBE_Engine::sale_price( $active['price'], WBE_Engine::discount_of( $active ) );
+		return (string) WBE_Engine::effective_sale( $active );
 	}
 
 	public static function filter_price( $price, $product ) {
@@ -87,7 +87,7 @@ class WBE_Stock {
 		if ( ! self::discount_live( $product, $active ) ) {
 			return (string) $active['price'];
 		}
-		return (string) WBE_Engine::sale_price( $active['price'], WBE_Engine::discount_of( $active ) );
+		return (string) WBE_Engine::effective_sale( $active );
 	}
 
 	public static function filter_stock( $qty, $product ) {

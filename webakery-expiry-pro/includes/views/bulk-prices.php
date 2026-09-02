@@ -14,9 +14,11 @@ if ( is_wp_error( $cats ) ) {
 $modes     = WBE_Admin_Bulk::mode_labels();
 $statuses  = WBE_Admin_Bulk::status_labels();
 $brands    = class_exists( 'WBE_Product' ) ? WBE_Product::brand_terms() : array();
+$show_res  = ! empty( WBE_Settings::get()['show_reserved_stock'] );
 $ph_date   = ( 'jalali' === $calendar ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27';
 $action    = admin_url( 'admin-post.php' );
 $count     = is_array( $rows ) ? count( $rows ) : 0;
+$colspan   = $show_res ? 12 : 11;
 $csv_url   = wp_nonce_url(
 	add_query_arg(
 		array(
@@ -155,6 +157,15 @@ $csv_url   = wp_nonce_url(
 				<input type="checkbox" name="wbe_clear_sale" value="1" />
 				حذف تخفیف و بازه جشنواره
 			</label>
+			<div class="wbe-bulk-field wbe-bulk-add-batch">
+				<label>افزودن بچ رزرو جدید</label>
+				<input type="text" name="wbe_add_price" class="wbe-bulk-value" placeholder="قیمت اصلی" dir="ltr" />
+				<input type="text" name="wbe_add_sale" class="wbe-bulk-value" placeholder="جشنواره (اختیاری)" dir="ltr" />
+				<input type="text" name="wbe_add_discount" class="wbe-bulk-value" placeholder="تخفیف ٪" dir="ltr" />
+				<input type="text" name="wbe_add_stock" class="wbe-bulk-value" placeholder="موجودی" dir="ltr" />
+				<input type="text" name="wbe_add_expiry" class="wbe-bulk-value" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" />
+				<span class="wbe-muted">تاریخ انقضا + موجودی الزامی است؛ روی انتخاب‌شده‌ها به‌عنوان بچ رزرو اضافه می‌شود.</span>
+			</div>
 			<div class="wbe-bulk-actions">
 				<button type="submit" class="button button-primary" name="wbe_bulk_mode" value="selected" id="wbe-bulk-apply-selected">اعمال روی انتخاب‌شده‌ها</button>
 				<button type="submit" class="button" name="wbe_bulk_mode" value="rows" id="wbe-bulk-save-dirty">ذخیره سلول‌های تغییرکرده</button>
@@ -180,12 +191,15 @@ $csv_url   = wp_nonce_url(
 						<th>از</th>
 						<th>تا</th>
 						<th>موجودی</th>
+						<?php if ( $show_res ) : ?>
+							<th>موجودی رزرو</th>
+						<?php endif; ?>
 						<th>انقضا</th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php if ( empty( $rows ) ) : ?>
-						<tr><td colspan="11">محصولی مطابق فیلتر پیدا نشد.</td></tr>
+						<tr><td colspan="<?php echo (int) $colspan; ?>">محصولی مطابق فیلتر پیدا نشد.</td></tr>
 					<?php else : ?>
 						<?php foreach ( $rows as $r ) : ?>
 							<?php
@@ -227,6 +241,9 @@ $csv_url   = wp_nonce_url(
 								<td><input type="text" class="small-text" data-field="from" data-orig="<?php echo esc_attr( $r['from_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][from]" value="<?php echo esc_attr( $r['from_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
 								<td><input type="text" class="small-text" data-field="to" data-orig="<?php echo esc_attr( $r['to_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][to]" value="<?php echo esc_attr( $r['to_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
 								<td><input type="text" class="small-text" data-field="stock" data-orig="<?php echo esc_attr( (string) $r['stock'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][stock]" value="<?php echo esc_attr( (string) $r['stock'] ); ?>" dir="ltr" /></td>
+								<?php if ( $show_res ) : ?>
+									<td><span class="wbe-muted" dir="ltr"><?php echo esc_html( (string) ( isset( $r['reserved'] ) ? $r['reserved'] : 0 ) ); ?></span></td>
+								<?php endif; ?>
 								<td><input type="text" class="small-text" data-field="expiry" data-orig="<?php echo esc_attr( $r['expiry_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][expiry]" value="<?php echo esc_attr( $r['expiry_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
 							</tr>
 						<?php endforeach; ?>
@@ -234,6 +251,6 @@ $csv_url   = wp_nonce_url(
 				</tbody>
 			</table>
 		</div>
-		<p class="wbe-muted">سلول را مستقیم عوض کنید. Shift+کلیک برای انتخاب بازه. ذخیره فقط ردیف‌های تغییرکرده را تکه‌تکه می‌فرستد.</p>
+		<p class="wbe-muted">سلول را مستقیم عوض کنید. قیمت جشنواره را می‌توانید عدد دلخواه بگذارید (مثلاً ۷۹۹۶۰) — دیگر به درصد رند اجباری نمی‌شود. Shift+کلیک برای انتخاب بازه.</p>
 	</form>
 </div>

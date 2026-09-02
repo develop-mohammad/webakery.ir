@@ -13,11 +13,95 @@ class WBE_Engine {
 
 	/**
 	 * طبقه‌بندی‌های رایج برند ووکامرس.
+	 * اولویت با ویژگی‌های محصول (pa_*) است تا برند تکراری از چند منبع نیاید.
 	 *
 	 * @return array<int,string>
 	 */
 	public static function brand_taxonomy_slugs() {
-		return array( 'product_brand', 'pwb-brand', 'product_brands', 'pa_brand', 'pa_brands' );
+		return array( 'pa_brand', 'pa_brands', 'product_brand', 'pwb-brand', 'product_brands' );
+	}
+
+	/**
+	 * آیا نام/برچسب شبیه «برند» است؟
+	 *
+	 * @param string $name
+	 * @param string $label
+	 * @return bool
+	 */
+	public static function looks_like_brand( $name, $label = '' ) {
+		$hay = strtolower( trim( (string) $name . ' ' . (string) $label ) );
+		if ( $hay === '' ) {
+			return false;
+		}
+		if ( false !== strpos( $hay, 'brand' ) ) {
+			return true;
+		}
+		if ( function_exists( 'mb_stripos' ) ) {
+			return false !== mb_stripos( (string) $name . (string) $label, 'برند' );
+		}
+		return false !== stripos( (string) $name . (string) $label, 'برند' );
+	}
+
+	/**
+	 * موجودی رزرو = جمع موجودی بچ‌هایی که الان فعال نیستند.
+	 *
+	 * @param array  $batches
+	 * @param string $today
+	 * @return int
+	 */
+	public static function reserved_stock( array $batches, $today ) {
+		$active = self::active_index( $batches, $today );
+		$sum    = 0;
+		foreach ( $batches as $i => $batch ) {
+			if ( null !== $active && (int) $i === (int) $active ) {
+				continue;
+			}
+			$sum += isset( $batch['stock'] ) ? max( 0, (int) $batch['stock'] ) : 0;
+		}
+		return $sum;
+	}
+
+	/**
+	 * قیمت جشنوارهٔ واقعی بچ: اگر مبلغ دستی ذخیره شده باشد همان، وگرنه از درصد.
+	 *
+	 * @param array $batch
+	 * @return float
+	 */
+	public static function effective_sale( $batch ) {
+		if ( ! is_array( $batch ) ) {
+			return 0.0;
+		}
+		$regular = isset( $batch['price'] ) ? (float) $batch['price'] : 0.0;
+		if ( $regular <= 0 ) {
+			return 0.0;
+		}
+		if ( isset( $batch['sale'] ) && '' !== $batch['sale'] && is_numeric( $batch['sale'] ) ) {
+			$sale = (float) $batch['sale'];
+			if ( $sale > 0 && $sale < $regular ) {
+				return $sale;
+			}
+		}
+		$disc = self::discount_of( $batch );
+		if ( $disc <= 0 ) {
+			return $regular;
+		}
+		return self::sale_price( $regular, $disc );
+	}
+
+	/**
+	 * افزودن یک بچ رزرو جدید به انتهای فهرست.
+	 *
+	 * @param array  $batches
+	 * @param array  $row      price/stock/expiry/discount/sale
+	 * @param string $calendar
+	 * @return array
+	 */
+	public static function append_batch( array $batches, array $row, $calendar = 'gregorian' ) {
+		$san = self::sanitize_batches( array( $row ), $calendar );
+		if ( ! $san ) {
+			return $batches;
+		}
+		return array_merge( $batches, $san );
 	}
 
 	/**
@@ -169,13 +253,24 @@ class WBE_Engine {
 			if ( $id === '' ) {
 				$id = 'b' . sprintf( '%04d', $n ) . substr( md5( $expiry . '|' . $price . '|' . $n ), 0, 8 );
 			}
-			$out[] = array(
+			$item = array(
 				'id'       => $id,
 				'price'    => (string) $price,
 				'discount' => $discount,
 				'stock'    => max( 0, $stock ),
 				'expiry'   => $expiry,
 			);
+			// مبلغ جشنوارهٔ دستی (اختیاری) — تا با رند درصد از بین نرود.
+			if ( isset( $row['sale'] ) && '' !== $row['sale'] && null !== $row['sale'] ) {
+				$sale = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::number( $row['sale'] ) : (float) $row['sale'];
+				if ( $sale > 0 && $sale < $price ) {
+					$item['sale'] = (string) $sale;
+					if ( $discount <= 0 ) {
+						$item['discount'] = self::discount_from_prices( $price, $sale );
+					}
+				}
+			}
+			$out[] = $item;
 			$n++;
 		}
 		return $out;
@@ -369,9 +464,18 @@ class WBE_Engine {
 		if ( $update_discount ) {
 			$discount = self::discount_from_prices( $regular, $sale );
 			if ( $same_price && (int) self::discount_of( $batches[ $idx ] ) === $discount ) {
-				return $batches;
+				$has_manual = isset( $batches[ $idx ]['sale'] ) && '' !== $batches[ $idx ]['sale'];
+				$want_manual = ( $sale !== null && $sale !== '' && is_numeric( $sale ) && (float) $sale > 0 && (float) $sale < (float) $regular );
+				if ( $has_manual === $want_manual && ( ! $want_manual || (string) (float) $batches[ $idx ]['sale'] === (string) (float) $sale ) ) {
+					return $batches;
+				}
 			}
 			$batches[ $idx ]['discount'] = $discount;
+			if ( $sale !== null && $sale !== '' && is_numeric( $sale ) && (float) $sale > 0 && (float) $sale < (float) $regular ) {
+				$batches[ $idx ]['sale'] = (string) (float) $sale;
+			} else {
+				unset( $batches[ $idx ]['sale'] );
+			}
 		} elseif ( $same_price ) {
 			return $batches;
 		}
@@ -597,7 +701,10 @@ class WBE_Engine {
 		if ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] ) {
 			return true;
 		}
-		return ! empty( $ops['expiry'] );
+		if ( ! empty( $ops['expiry'] ) ) {
+			return true;
+		}
+		return ! empty( $ops['add_batch'] );
 	}
 
 	/**
@@ -608,7 +715,8 @@ class WBE_Engine {
 	 *   sale_mode / sale_value   (مبلغ بعد از تخفیف / جشنواره)
 	 *   discount                 (درصد؛ اگر sale_mode خالی باشد)
 	 *   clear_sale               (پاک کردن تخفیف)
-	 * اگر هم مبلغ جشنواره و هم درصد بیاید، مبلغ جشنواره اولویت دارد.
+	 *   add_batch                (افزودن بچ رزرو: price/stock/expiry/discount/sale)
+	 * اگر هم مبلغ جشنواره و هم درصد بیاید، مبلغ جشنواره اولویت دارد و مبلغ دقیق ذخیره می‌شود.
 	 *
 	 * @param array  $batches بچ‌ها.
 	 * @param array  $ops     عملیات.
@@ -616,9 +724,21 @@ class WBE_Engine {
 	 * @return array
 	 */
 	public static function apply_bulk_to_active( array $batches, array $ops, $today ) {
+		if ( ! empty( $ops['add_batch'] ) && is_array( $ops['add_batch'] ) ) {
+			$cal     = isset( $ops['calendar'] ) ? (string) $ops['calendar'] : 'gregorian';
+			$batches = self::append_batch( $batches, $ops['add_batch'], $cal );
+		}
+
 		if ( empty( $batches ) || ! self::has_batch_ops( $ops ) ) {
 			return $batches;
 		}
+		// فقط افزودن بچ، بدون تغییر بچ فعال.
+		if ( ! empty( $ops['add_batch'] ) && ! self::has_price_ops( $ops )
+			&& ! ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] )
+			&& empty( $ops['expiry'] ) ) {
+			return $batches;
+		}
+
 		$i = self::active_index( $batches, $today );
 		if ( null === $i ) {
 			return $batches;
@@ -636,16 +756,20 @@ class WBE_Engine {
 
 		if ( ! empty( $ops['clear_sale'] ) ) {
 			$b['discount'] = 0;
+			unset( $b['sale'] );
 		} elseif ( ! empty( $ops['sale_mode'] ) && 'none' !== $ops['sale_mode'] && array_key_exists( 'sale_value', $ops ) && null !== $ops['sale_value'] && '' !== $ops['sale_value'] ) {
-			$current_sale = self::sale_price( $regular, isset( $b['discount'] ) ? $b['discount'] : 0 );
+			$current_sale = self::effective_sale( $b );
 			$new_sale     = self::round_money( self::change_amount( $current_sale, $ops['sale_mode'], $ops['sale_value'] ), $round );
 			if ( $new_sale >= $regular ) {
 				$b['discount'] = 0;
+				unset( $b['sale'] );
 			} else {
+				$b['sale']     = (string) $new_sale;
 				$b['discount'] = self::discount_from_prices( $regular, $new_sale );
 			}
 		} elseif ( array_key_exists( 'discount', $ops ) && null !== $ops['discount'] && '' !== $ops['discount'] ) {
 			$b['discount'] = max( 0, min( 100, (int) round( (float) $ops['discount'] ) ) );
+			unset( $b['sale'] ); // درصد، مبلغ جشنواره را از نو حساب می‌کند.
 		}
 
 		if ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] ) {
@@ -733,8 +857,9 @@ class WBE_Engine {
 		$active   = ( null !== $idx && isset( $batches[ $idx ] ) ) ? $batches[ $idx ] : null;
 		$regular  = $active && isset( $active['price'] ) ? (string) $active['price'] : '';
 		$discount = $active ? self::discount_of( $active ) : 0;
-		$sale     = ( '' !== $regular ) ? (string) self::sale_price( $regular, $discount ) : '';
+		$sale     = $active ? (string) self::effective_sale( $active ) : '';
 		$stock    = $active ? (int) $active['stock'] : '';
+		$reserved = self::reserved_stock( $batches, $today );
 		$expiry   = ( $active && ! empty( $active['expiry'] ) ) ? (string) $active['expiry'] : '';
 		if ( ! $active ) {
 			$regular  = isset( $wc['regular'] ) ? (string) $wc['regular'] : '';
@@ -742,6 +867,7 @@ class WBE_Engine {
 			$discount = self::discount_from_prices( $regular, $wc_sale );
 			$sale     = ( '' !== $wc_sale && null !== $wc_sale ) ? (string) $wc_sale : $regular;
 			$stock    = isset( $wc['stock'] ) && '' !== $wc['stock'] && null !== $wc['stock'] ? (int) $wc['stock'] : '';
+			$reserved = 0;
 		}
 		$from = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_from ) : '';
 		$to   = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_to ) : '';
@@ -760,6 +886,7 @@ class WBE_Engine {
 			'discount'    => $discount,
 			'sale'        => $sale,
 			'stock'       => $stock,
+			'reserved'    => $reserved,
 			'from'        => $from,
 			'to'          => $to,
 			'from_fa'     => $fmt( $from ),

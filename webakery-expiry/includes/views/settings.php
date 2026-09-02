@@ -43,6 +43,13 @@ $sms_msg = isset( $_GET['wbe_sms'] ) ? sanitize_key( wp_unslash( $_GET['wbe_sms'
 					<p class="description">اگر تیک را بردارید، تایمر روی <strong>همه محصولات</strong> خاموش می‌شود. برای یک محصول جدا: ویرایش همان محصول ← «تایمر را نشان نده».</p>
 				</td>
 			</tr>
+			<tr>
+				<th scope="row">موجودی رزرو در ویرایش گروهی</th>
+				<td>
+					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_reserved_stock]" value="1" <?php checked( ! empty( $s['show_reserved_stock'] ), 1 ); ?> /> ستون «موجودی رزرو» را در ویرایش گروهی نشان بده</label>
+					<p class="description">پیش‌فرض خاموش است تا جدول سبک بماند. فقط وقتی لازم دارید روشن کنید.</p>
+				</td>
+			</tr>
 		</table>
 
 		<h2>هشدار انقضای نزدیک</h2>

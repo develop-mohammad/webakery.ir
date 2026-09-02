@@ -184,6 +184,40 @@ $fest = WBE_Engine::apply_bulk_to_active(
 	'2026-01-15'
 );
 wbe_check( 'مبلغ جشنواره درصد را می‌سازد و بر درصد خام اولویت دارد', 20 === (int) $fest[0]['discount'] );
+wbe_check( 'مبلغ جشنواره دقیق ذخیره می‌شود', isset( $fest[0]['sale'] ) && 160000.0 === (float) $fest[0]['sale'] );
+wbe_check( 'effective_sale مبلغ دستی را برمی‌گرداند', 160000.0 === WBE_Engine::effective_sale( $fest[0] ) );
+
+$precise = WBE_Engine::apply_bulk_to_active(
+	array( array( 'id' => 'p', 'price' => '100000', 'discount' => 0, 'stock' => 2, 'expiry' => '2026-06-01' ) ),
+	array(
+		'sale_mode'  => 'set',
+		'sale_value' => 79960,
+	),
+	'2026-01-15'
+);
+wbe_check( 'جشنواره ۷۹۹۶۰ بدون رند اجباری به ۸۰۰۰۰', 79960.0 === (float) $precise[0]['sale'] && 79960.0 === WBE_Engine::effective_sale( $precise[0] ) );
+wbe_check( 'درصد تقریبی از مبلغ دقیق ساخته می‌شود', 20 === (int) $precise[0]['discount'] );
+
+$res_sum = WBE_Engine::reserved_stock( $bulk, '2026-01-15' );
+wbe_check( 'موجودی رزرو = بچ‌های غیر فعال', 8 === $res_sum );
+
+$added = WBE_Engine::apply_bulk_to_active(
+	$bulk,
+	array(
+		'add_batch' => array(
+			'price'  => 70000,
+			'stock'  => 3,
+			'expiry' => '2026-11-01',
+		),
+		'calendar'  => 'gregorian',
+	),
+	'2026-01-15'
+);
+wbe_check( 'افزودن بچ رزرو در گروهی', 3 === count( $added ) && 3 === (int) $added[2]['stock'] );
+wbe_check( 'افزودن بچ عملیات بچ است', true === WBE_Engine::has_batch_ops( array( 'add_batch' => array( 'expiry' => '2026-01-01' ) ) ) );
+wbe_check( 'تشخیص نام ویژگی برند', true === WBE_Engine::looks_like_brand( 'brand', 'Brand' ) );
+wbe_check( 'ویژگی رنگ برند نیست', false === WBE_Engine::looks_like_brand( 'color', 'رنگ' ) );
+wbe_check( 'ویژگی pa_brand در لیست است', in_array( 'pa_brand', WBE_Engine::brand_taxonomy_slugs(), true ) );
 
 $reg = WBE_Engine::apply_bulk_to_active(
 	$bulk,
