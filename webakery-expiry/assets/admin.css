@@ -1,0 +1,288 @@
+/* انقضای کالا — پیشخوان RTL، بدون گرادیان بنفش */
+
+.wbe-wrap {
+	direction: rtl;
+}
+
+.wbe-ver {
+	font-size: 12px;
+	font-weight: 600;
+	color: #64748b;
+	background: #f1f5f9;
+	border-radius: 99px;
+	padding: 2px 10px;
+}
+
+.wbe-sub {
+	color: #64748b;
+	margin: 0 0 16px;
+	font-size: 13px;
+}
+
+.wbe-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 12px 0 16px;
+}
+
+.wbe-check {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.wbe-muted {
+	color: #94a3b8;
+	font-size: 12px;
+}
+
+.wbe-report td,
+.wbe-report th {
+	text-align: right;
+}
+
+.wbe-row--near td {
+	background: #fffbeb;
+}
+
+.wbe-row--empty td {
+	background: #fef2f2;
+}
+
+.wbe-inline-check {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 400;
+}
+
+.wbe-countdown-field .description {
+	display: block;
+	margin-top: 4px;
+}
+
+.wbe-product-panel {
+	margin: 12px 0 8px;
+	padding: 12px 12px 4px;
+	border: 1px solid #dcdcde;
+	background: #fff;
+	max-width: 760px;
+}
+
+.wbe-batches__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 6px;
+}
+
+.wbe-batches-table input.short {
+	width: 100%;
+	max-width: 160px;
+}
+
+.wbe-batches-table input.wbe-disc {
+	max-width: 72px;
+}
+
+.column-wbe_expiry {
+	width: 9em;
+}
+
+.wbe-batches-table [hidden],
+.wbe-product-panel [hidden] {
+	display: none !important;
+}
+
+.wbe-remove-batch,
+.wbe-remove-point {
+	color: #b91c1c;
+}
+
+.wbe-point-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0 0 8px;
+}
+
+.wbe-point-row input.small-text {
+	width: 5em;
+}
+
+.wbe-alarm-list {
+	margin: 6px 0 8px 0;
+	padding-right: 18px;
+}
+
+.wbe-widget-h {
+	font-weight: 700;
+	margin: 10px 0 4px;
+}
+
+.wbe-widget-h--soon {
+	color: #b45309;
+}
+
+.wbe-widget-h--month {
+	color: #a16207;
+}
+
+.wbe-widget-h--two_months {
+	color: #334155;
+}
+
+.wbe-widget-h--expired {
+	color: #b91c1c;
+}
+
+#wpadminbar .wbe-ab-alert .ab-item {
+	background: #b45309 !important;
+	color: #fff !important;
+}
+
+.wbe-row--soon td {
+	background: #fff7ed;
+}
+
+.wbe-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 0 0 16px;
+}
+
+.wbe-filters select[name="wbe_brand"],
+.wbe-filters input[name="wbe_brand"] {
+	min-width: 200px;
+	font-weight: 600;
+}
+
+.wbe-reserved-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	padding: 4px 10px;
+	border: 1px solid #c3c4c7;
+	background: #f6f7f7;
+	border-radius: 2px;
+	white-space: nowrap;
+}
+
+.wbe-bulk-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px 16px;
+	align-items: flex-end;
+	margin: 0 0 16px;
+	padding: 12px;
+	border: 1px solid #dcdcde;
+	background: #fff;
+}
+
+.wbe-bulk-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 140px;
+}
+
+.wbe-bulk-field label {
+	font-weight: 600;
+	font-size: 12px;
+}
+
+.wbe-bulk-field input,
+.wbe-bulk-field select {
+	max-width: 180px;
+}
+
+.wbe-bulk-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.wbe-bulk-scroll {
+	max-height: 70vh;
+	overflow: auto;
+	border: 1px solid #dcdcde;
+	background: #fff;
+}
+
+.wbe-bulk-scroll thead th,
+.wbe-bulk-scroll thead td {
+	position: sticky;
+	top: 0;
+	background: #f6f7f7;
+	z-index: 1;
+}
+
+.wbe-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 0 0 14px;
+}
+
+.wbe-bulk-table input.small-text {
+	width: 7em;
+}
+
+.wbe-bulk-table input.wbe-cell-name {
+	width: 100%;
+	min-width: 12em;
+	max-width: 22em;
+}
+
+.wbe-bulk-table input.wbe-cell-sku {
+	width: 8em;
+}
+
+.wbe-bulk-table select.wbe-cell-status {
+	max-width: 9em;
+}
+
+.wbe-row--plain td {
+	background: #f8fafc;
+}
+
+.wbe-bulk-row.is-dirty td {
+	background: #fffbeb;
+}
+
+.wbe-bulk-progress {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0 0 12px;
+}
+
+.wbe-bulk-progress[hidden] {
+	display: none !important;
+}
+
+.wbe-bulk-progress__track {
+	flex: 1;
+	height: 8px;
+	background: #dcdcde;
+	border-radius: 99px;
+	overflow: hidden;
+}
+
+.wbe-bulk-progress__bar {
+	height: 8px;
+	width: 0;
+	background: #2271b1;
+}
+
+.wbe-wc-bulk .title {
+	min-width: 7em;
+}
