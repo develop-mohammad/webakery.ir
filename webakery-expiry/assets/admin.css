@@ -149,6 +149,32 @@
 	background: #fff7ed;
 }
 
+.wbe-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 0 0 16px;
+}
+
+.wbe-filters select[name="wbe_brand"],
+.wbe-filters input[name="wbe_brand"] {
+	min-width: 200px;
+	font-weight: 600;
+}
+
+.wbe-reserved-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	padding: 4px 10px;
+	border: 1px solid #c3c4c7;
+	background: #f6f7f7;
+	border-radius: 2px;
+	white-space: nowrap;
+}
+
 .wbe-bulk-toolbar {
 	display: flex;
 	flex-wrap: wrap;

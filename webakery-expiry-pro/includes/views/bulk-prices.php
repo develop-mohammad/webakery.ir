@@ -11,15 +11,16 @@ if ( is_wp_error( $cats ) ) {
 	$cats = array();
 }
 
-$modes     = WBE_Admin_Bulk::mode_labels();
-$statuses  = WBE_Admin_Bulk::status_labels();
-$brands    = class_exists( 'WBE_Product' ) ? WBE_Product::brand_terms() : array();
-$show_res  = ! empty( WBE_Settings::get()['show_reserved_stock'] );
-$ph_date   = ( 'jalali' === $calendar ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27';
-$action    = admin_url( 'admin-post.php' );
-$count     = is_array( $rows ) ? count( $rows ) : 0;
-$colspan   = $show_res ? 12 : 11;
-$csv_url   = wp_nonce_url(
+$modes       = WBE_Admin_Bulk::mode_labels();
+$statuses    = WBE_Admin_Bulk::status_labels();
+$brands      = class_exists( 'WBE_Product' ) ? WBE_Product::brand_terms() : array();
+$show_res    = class_exists( 'WBE_Settings' ) ? WBE_Settings::show_reserved_stock() : false;
+$needs_brand = empty( $needs_brand ) ? ! WBE_Admin_Bulk::has_brand_filter( $filters ) : (bool) $needs_brand;
+$ph_date     = ( 'jalali' === $calendar ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27';
+$action      = admin_url( 'admin-post.php' );
+$count       = is_array( $rows ) ? count( $rows ) : 0;
+$colspan     = $show_res ? 12 : 11;
+$csv_url     = wp_nonce_url(
 	add_query_arg(
 		array(
 			'action'     => 'wbe_bulk_csv',
@@ -36,7 +37,7 @@ $csv_url   = wp_nonce_url(
 ?>
 <div class="wrap wbe-wrap wbe-bulk-wrap" dir="rtl">
 	<h1>ویرایش گروهی محصول</h1>
-	<p class="wbe-sub">همین صفحه ویرایش گروهی فروشگاه است — افزونهٔ جدا لازم نیست. همهٔ محصولات ووکامرس اینجاست. نام، SKU، وضعیت، قیمت، تخفیف، جشنواره، موجودی و انقضا را عوض کنید. اگر تاریخ انقضا را پر کنید، اولین بچ ساخته می‌شود. ذخیره تکه‌تکه است تا سایت سنگین نشود.</p>
+	<p class="wbe-sub">برای جلوگیری از کندی، ابتدا <strong>برند</strong> را انتخاب کنید؛ بعد محصولات همان برند لود می‌شوند. نام، SKU، وضعیت، قیمت، تخفیف، جشنواره، موجودی و انقضا را عوض کنید. ذخیره تکه‌تکه است.</p>
 
 	<div id="wbe-bulk-notice" hidden class="notice is-dismissible"></div>
 	<?php if ( $updated || $skipped ) : ?>
@@ -45,9 +46,22 @@ $csv_url   = wp_nonce_url(
 	<?php if ( ! empty( $empty ) ) : ?>
 		<div class="notice notice-warning is-dismissible"><p>چیزی برای اعمال نبود. محصول را تیک بزنید یا سلولی را عوض کنید.</p></div>
 	<?php endif; ?>
+	<?php if ( $needs_brand ) : ?>
+		<div class="notice notice-info"><p>هنوز محصولی لود نشده. از فیلتر زیر یک <strong>برند</strong> انتخاب کنید و «اعمال فیلتر» را بزنید.</p></div>
+	<?php endif; ?>
 
 	<form method="get" class="wbe-filters">
 		<input type="hidden" name="page" value="webakery-expiry-bulk" />
+		<?php if ( $brands ) : ?>
+			<select name="wbe_brand" class="wbe-brand-required" required>
+				<option value="">— انتخاب برند (الزامی) —</option>
+				<?php foreach ( $brands as $b ) : ?>
+					<option value="<?php echo (int) $b->term_id; ?>" <?php selected( (string) $filters['brand'], (string) $b->term_id ); ?>><?php echo esc_html( $b->name ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		<?php else : ?>
+			<input type="search" name="wbe_brand" value="<?php echo esc_attr( $filters['brand'] ); ?>" placeholder="برند (الزامی)" required />
+		<?php endif; ?>
 		<input type="search" name="s" value="<?php echo esc_attr( $filters['q'] ); ?>" placeholder="جستجوی سرور: نام یا SKU" />
 		<select name="wbe_scope">
 			<option value="all" <?php selected( $filters['scope'], 'all' ); ?>>همه محصولات</option>
@@ -66,20 +80,17 @@ $csv_url   = wp_nonce_url(
 				<option value="<?php echo (int) $c->term_id; ?>" <?php selected( $filters['category'], (int) $c->term_id ); ?>><?php echo esc_html( $c->name ); ?></option>
 			<?php endforeach; ?>
 		</select>
-		<?php if ( $brands ) : ?>
-			<select name="wbe_brand">
-				<option value="">همه برندها</option>
-				<?php foreach ( $brands as $b ) : ?>
-					<option value="<?php echo (int) $b->term_id; ?>" <?php selected( (string) $filters['brand'], (string) $b->term_id ); ?>><?php echo esc_html( $b->name ); ?></option>
-				<?php endforeach; ?>
-			</select>
-		<?php else : ?>
-			<input type="search" name="wbe_brand" value="<?php echo esc_attr( $filters['brand'] ); ?>" placeholder="برند" />
+		<label class="wbe-check wbe-reserved-toggle">
+			<input type="hidden" name="wbe_show_reserved" value="0" />
+			<input type="checkbox" name="wbe_show_reserved" value="1" <?php checked( $show_res, true ); ?> />
+			نمایش ستون موجودی رزرو
+		</label>
+		<button type="submit" class="button button-primary">اعمال فیلتر</button>
+		<?php if ( ! $needs_brand ) : ?>
+			<a class="button" href="<?php echo esc_url( $csv_url ); ?>">خروجی CSV</a>
+			<input type="search" id="wbe-bulk-live" placeholder="فیلتر آنی همین صفحه" />
+			<span class="wbe-muted" id="wbe-bulk-count"><?php echo (int) $count; ?> محصول</span>
 		<?php endif; ?>
-		<button type="submit" class="button">اعمال فیلتر</button>
-		<a class="button" href="<?php echo esc_url( $csv_url ); ?>">خروجی CSV</a>
-		<input type="search" id="wbe-bulk-live" placeholder="فیلتر آنی همین صفحه" />
-		<span class="wbe-muted" id="wbe-bulk-count"><?php echo (int) $count; ?> محصول</span>
 	</form>
 
 	<form method="post" action="<?php echo esc_url( $action ); ?>" class="wbe-bulk-form" id="wbe-bulk-form">
@@ -198,7 +209,9 @@ $csv_url   = wp_nonce_url(
 					</tr>
 				</thead>
 				<tbody>
-					<?php if ( empty( $rows ) ) : ?>
+					<?php if ( $needs_brand ) : ?>
+						<tr><td colspan="<?php echo (int) $colspan; ?>">برای لود محصولات ابتدا برند را انتخاب کنید.</td></tr>
+					<?php elseif ( empty( $rows ) ) : ?>
 						<tr><td colspan="<?php echo (int) $colspan; ?>">محصولی مطابق فیلتر پیدا نشد.</td></tr>
 					<?php else : ?>
 						<?php foreach ( $rows as $r ) : ?>

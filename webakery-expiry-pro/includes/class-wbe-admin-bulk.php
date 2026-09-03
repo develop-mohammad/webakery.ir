@@ -299,6 +299,16 @@ class WBE_Admin_Bulk {
 		return $filters;
 	}
 
+	/**
+	 * آیا فیلتر برند برای لود جدول پر شده؟
+	 *
+	 * @param array $filters
+	 * @return bool
+	 */
+	public static function has_brand_filter( array $filters ) {
+		return isset( $filters['brand'] ) && '' !== trim( (string) $filters['brand'] );
+	}
+
 	public function render_page() {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_die( 'دسترسی غیرمجاز' );
@@ -307,12 +317,17 @@ class WBE_Admin_Bulk {
 			echo '<div class="wrap"><div class="notice notice-error"><p>برای ویرایش گروهی، لایسنس را فعال کنید.</p></div></div>';
 			return;
 		}
-		$filters  = self::filters_from_request( $_GET ); // phpcs:ignore WordPress.Security.NonceVerification
-		$rows     = $this->collect_rows( $filters );
-		$calendar = WBE_Settings::calendar();
-		$updated  = isset( $_GET['updated'] ) ? (int) $_GET['updated'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
-		$skipped  = isset( $_GET['skipped'] ) ? (int) $_GET['skipped'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
-		$empty    = isset( $_GET['wbe_empty'] ) ? 1 : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$filters = self::filters_from_request( $_GET ); // phpcs:ignore WordPress.Security.NonceVerification
+		// سوییچ موجودی رزرو از خود صفحهٔ گروهی (بدون رفتن به تنظیمات).
+		if ( array_key_exists( 'wbe_show_reserved', $_GET ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			WBE_Settings::set_show_reserved_stock( ! empty( $_GET['wbe_show_reserved'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		}
+		$needs_brand = ! self::has_brand_filter( $filters );
+		$rows        = $needs_brand ? array() : $this->collect_rows( $filters );
+		$calendar    = WBE_Settings::calendar();
+		$updated     = isset( $_GET['updated'] ) ? (int) $_GET['updated'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$skipped     = isset( $_GET['skipped'] ) ? (int) $_GET['skipped'] : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$empty       = isset( $_GET['wbe_empty'] ) ? 1 : 0; // phpcs:ignore WordPress.Security.NonceVerification
 		include WBE_PATH . 'includes/views/bulk-prices.php';
 	}
 
@@ -333,9 +348,13 @@ class WBE_Admin_Bulk {
 		$scope       = isset( $filters['scope'] ) ? (string) $filters['scope'] : 'all';
 		$status_f    = isset( $filters['status'] ) ? (string) $filters['status'] : '';
 		$brand_f     = isset( $filters['brand'] ) ? trim( (string) $filters['brand'] ) : '';
+		// برای جلوگیری از کندی، بدون برند هیچ محصولی لود نمی‌شود.
+		if ( '' === $brand_f ) {
+			return array();
+		}
 		$today       = WBE_Jalali::today_ymd();
 		$default_cal = WBE_Settings::calendar();
-		$brand_ids   = ( $brand_f && class_exists( 'WBE_Product' ) ) ? WBE_Product::brand_term_ids_for_filter( $brand_f ) : array();
+		$brand_ids   = class_exists( 'WBE_Product' ) ? WBE_Product::brand_term_ids_for_filter( $brand_f ) : array();
 
 		$sql = "SELECT p.ID, p.post_title, p.post_status,
 				sku.meta_value AS sku,
@@ -601,6 +620,9 @@ class WBE_Admin_Bulk {
 			wp_die( 'لایسنس نامعتبر است.' );
 		}
 		$filters = self::filters_from_request( $_GET ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! self::has_brand_filter( $filters ) ) {
+			wp_die( 'برای خروجی CSV ابتدا یک برند انتخاب کنید.' );
+		}
 		$rows = $this->collect_rows( $filters );
 		nocache_headers();
 		header( 'Content-Type: text/csv; charset=utf-8' );

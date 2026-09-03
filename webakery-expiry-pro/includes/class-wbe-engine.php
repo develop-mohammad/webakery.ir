@@ -867,7 +867,7 @@ class WBE_Engine {
 			$discount = self::discount_from_prices( $regular, $wc_sale );
 			$sale     = ( '' !== $wc_sale && null !== $wc_sale ) ? (string) $wc_sale : $regular;
 			$stock    = isset( $wc['stock'] ) && '' !== $wc['stock'] && null !== $wc['stock'] ? (int) $wc['stock'] : '';
-			$reserved = 0;
+			// reserved از بالا می‌ماند: بدون بچ فعال، همهٔ موجودی بچ‌ها رزرو است.
 		}
 		$from = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_from ) : '';
 		$to   = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_to ) : '';

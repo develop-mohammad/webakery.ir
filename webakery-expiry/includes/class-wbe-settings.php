@@ -52,6 +52,28 @@ class WBE_Settings {
 		return ( 'gregorian' === $s['calendar'] ) ? 'gregorian' : 'jalali';
 	}
 
+	/**
+	 * نمایش ستون موجودی رزرو در ویرایش گروهی (قابل خاموش‌کردن برای سبکی).
+	 *
+	 * @return bool
+	 */
+	public static function show_reserved_stock() {
+		return ! empty( self::get()['show_reserved_stock'] );
+	}
+
+	/**
+	 * ذخیرهٔ سریع سوییچ موجودی رزرو (از صفحهٔ گروهی یا تنظیمات).
+	 *
+	 * @param bool $on
+	 */
+	public static function set_show_reserved_stock( $on ) {
+		$s                         = self::get();
+		$s['show_reserved_stock']  = $on ? 1 : 0;
+		if ( function_exists( 'update_option' ) ) {
+			update_option( self::OPTION, $s );
+		}
+	}
+
 	public static function alert_points() {
 		$s = self::get();
 		$points = isset( $s['alert_points'] ) ? $s['alert_points'] : array();

@@ -201,6 +201,13 @@ wbe_check( 'درصد تقریبی از مبلغ دقیق ساخته می‌شو�
 $res_sum = WBE_Engine::reserved_stock( $bulk, '2026-01-15' );
 wbe_check( 'موجودی رزرو = بچ‌های غیر فعال', 8 === $res_sum );
 
+$expired_only = array(
+	array( 'id' => 'old', 'price' => '10', 'stock' => 7, 'expiry' => '2025-12-01' ),
+);
+$row_expired = WBE_Engine::bulk_row_from_record( 3, 'منقضی', 'E1', $expired_only, 'gregorian', '', '', '2026-01-15' );
+wbe_check( 'بدون بچ فعال، موجودی رزرو در ردیف می‌ماند', 7 === (int) $row_expired['reserved'] );
+wbe_check( 'ردیف با بچ فعال، رزرو را از بچ بعدی می‌گیرد', 8 === (int) WBE_Engine::bulk_row_from_record( 7, 'شیر', 'S1', $bulk, 'gregorian', '', '', '2026-01-15' )['reserved'] );
+
 $added = WBE_Engine::apply_bulk_to_active(
 	$bulk,
 	array(
@@ -384,6 +391,17 @@ wbe_check( '۹۰ روز خارج از بازه است', null === WBE_Engine::mat
 wbe_check( 'ادمین می‌تواند آستانه ۹۰ بگذارد', 90 === WBE_Engine::match_point( 80, array( 3, 90 ) ) );
 wbe_check( 'همان روز روی کوچک‌ترین آستانه می‌افتد', 3 === WBE_Engine::match_point( 0, array( 3, 14 ) ) );
 wbe_check( 'آستانه صفر همان روز انقضا است', 0 === WBE_Engine::match_point( 0, array( 0, 7 ) ) );
+
+echo "\n=== فیلتر برند ویرایش گروهی ===\n";
+if ( ! function_exists( 'add_action' ) ) {
+	function add_action( $hook = '', $cb = null, $pri = 10, $args = 1 ) {
+		return true;
+	}
+}
+require_once dirname( __DIR__ ) . '/includes/class-wbe-admin-bulk.php';
+wbe_check( 'بدون برند، فیلتر آماده نیست', false === WBE_Admin_Bulk::has_brand_filter( array( 'brand' => '' ) ) );
+wbe_check( 'برند خالی فاصله هم آماده نیست', false === WBE_Admin_Bulk::has_brand_filter( array( 'brand' => '  ' ) ) );
+wbe_check( 'با شناسه برند، فیلتر آماده است', true === WBE_Admin_Bulk::has_brand_filter( array( 'brand' => '42' ) ) );
 
 echo "\n=== فعال‌سازی وردپرس ===\n";
 if ( ! defined( 'WBE_PATH' ) ) {
