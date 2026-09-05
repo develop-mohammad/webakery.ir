@@ -255,7 +255,7 @@ $csv_url     = wp_nonce_url(
 								<td><input type="text" class="small-text" data-field="to" data-orig="<?php echo esc_attr( $r['to_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][to]" value="<?php echo esc_attr( $r['to_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
 								<td><input type="text" class="small-text" data-field="stock" data-orig="<?php echo esc_attr( (string) $r['stock'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][stock]" value="<?php echo esc_attr( (string) $r['stock'] ); ?>" dir="ltr" /></td>
 								<?php if ( $show_res ) : ?>
-									<td><span class="wbe-muted" dir="ltr"><?php echo esc_html( (string) ( isset( $r['reserved'] ) ? $r['reserved'] : 0 ) ); ?></span></td>
+									<td><input type="text" class="small-text" data-field="reserved" data-orig="<?php echo esc_attr( (string) ( isset( $r['reserved'] ) ? $r['reserved'] : 0 ) ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][reserved]" value="<?php echo esc_attr( (string) ( isset( $r['reserved'] ) ? $r['reserved'] : 0 ) ); ?>" dir="ltr" title="موجودی رزرو (قابل ویرایش)" /></td>
 								<?php endif; ?>
 								<td><input type="text" class="small-text" data-field="expiry" data-orig="<?php echo esc_attr( $r['expiry_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][expiry]" value="<?php echo esc_attr( $r['expiry_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
 							</tr>
@@ -264,6 +264,6 @@ $csv_url     = wp_nonce_url(
 				</tbody>
 			</table>
 		</div>
-		<p class="wbe-muted">سلول را مستقیم عوض کنید. قیمت جشنواره را می‌توانید عدد دلخواه بگذارید (مثلاً ۷۹۹۶۰) — دیگر به درصد رند اجباری نمی‌شود. Shift+کلیک برای انتخاب بازه.</p>
+		<p class="wbe-muted">سلول را مستقیم عوض کنید. قیمت جشنواره، تخفیف، موجودی فعال و (در صورت روشن بودن) موجودی رزرو قابل ویرایش‌اند. مبلغ جشنواره را می‌توانید عدد دلخواه بگذارید (مثلاً ۷۹۹۶۰). Shift+کلیک برای انتخاب بازه.</p>
 	</form>
 </div>

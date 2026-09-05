@@ -183,6 +183,11 @@ class WBE_Admin_Bulk {
 			$ops['stock']      = $stock;
 		}
 
+		$reserved = array_key_exists( 'reserved', $row ) ? WBE_Engine::parse_amount( $row['reserved'] ) : null;
+		if ( null !== $reserved ) {
+			$ops['reserved'] = max( 0, (int) $reserved );
+		}
+
 		if ( isset( $row['expiry'] ) && '' !== trim( (string) $row['expiry'] ) ) {
 			$exp = WBE_Jalali::parse_to_ymd( $row['expiry'], $calendar );
 			if ( '' !== $exp ) {

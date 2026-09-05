@@ -201,6 +201,12 @@ wbe_check( 'درصد تقریبی از مبلغ دقیق ساخته می‌شو�
 $res_sum = WBE_Engine::reserved_stock( $bulk, '2026-01-15' );
 wbe_check( 'موجودی رزرو = بچ‌های غیر فعال', 8 === $res_sum );
 
+$set_res = WBE_Engine::set_reserved_stock( $bulk, 15, '2026-01-15' );
+wbe_check( 'تنظیم موجودی رزرو روی بچ غیر فعال', 15 === (int) $set_res[1]['stock'] && 4 === (int) $set_res[0]['stock'] );
+$via_ops = WBE_Engine::apply_bulk_to_active( $bulk, array( 'reserved' => 11 ), '2026-01-15' );
+wbe_check( 'عملیات reserved در گروهی', 11 === (int) $via_ops[1]['stock'] && 11 === WBE_Engine::reserved_stock( $via_ops, '2026-01-15' ) );
+wbe_check( 'reserved عملیات بچ است', true === WBE_Engine::has_batch_ops( array( 'reserved' => 3 ) ) );
+
 $expired_only = array(
 	array( 'id' => 'old', 'price' => '10', 'stock' => 7, 'expiry' => '2025-12-01' ),
 );

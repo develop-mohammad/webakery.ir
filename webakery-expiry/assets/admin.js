@@ -94,7 +94,83 @@
 		if ($('#wbe-batches-body tr').length === 1) {
 			$('#_regular_price').val($(this).val());
 		}
+		syncSaleFromDisc($(this).closest('tr'));
 	});
+
+	function parseNum(v) {
+		if (v == null) {
+			return NaN;
+		}
+		v = String(v)
+			.replace(/[۰-۹]/g, function (d) {
+				return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d);
+			})
+			.replace(/[٠-٩]/g, function (d) {
+				return '٠١٢٣٤٥٦٧٨٩'.indexOf(d);
+			})
+			.replace(/[,%٬،\s]/g, '');
+		var n = parseFloat(v);
+		return isNaN(n) ? NaN : n;
+	}
+
+	function syncSaleFromDisc($tr) {
+		var price = parseNum($tr.find('.wbe-batch-price, input[name*="[price]"]').val());
+		var disc = parseNum($tr.find('.wbe-disc').val());
+		if (!(price > 0) || !(disc > 0) || disc >= 100) {
+			return;
+		}
+		var sale = Math.round(price * (100 - disc) / 100);
+		$tr.find('.wbe-batch-sale, input[name*="[sale]"]').val(sale);
+	}
+
+	function syncDiscFromSale($tr) {
+		var price = parseNum($tr.find('.wbe-batch-price, input[name*="[price]"]').val());
+		var sale = parseNum($tr.find('.wbe-batch-sale, input[name*="[sale]"]').val());
+		if (!(price > 0) || !(sale > 0) || sale >= price) {
+			return;
+		}
+		var disc = Math.round((1 - sale / price) * 100);
+		disc = Math.max(0, Math.min(100, disc));
+		$tr.find('.wbe-disc').val(disc);
+	}
+
+	$(document).on('change input', '#wbe-batches-body .wbe-disc', function () {
+		syncSaleFromDisc($(this).closest('tr'));
+	});
+
+	$(document).on('change input', '#wbe-batches-body .wbe-batch-sale', function () {
+		syncDiscFromSale($(this).closest('tr'));
+	});
+
+	function refreshReservedTotal() {
+		var $tot = $('#wbe-reserved-total');
+		if (!$tot.length) {
+			return;
+		}
+		var sum = 0;
+		$('#wbe-batches-body tr.is-reserve .wbe-batch-stock, #wbe-batches-body tr.is-reserve input[name*="[stock]"]').each(function () {
+			var n = parseNum($(this).val());
+			if (n > 0) {
+				sum += Math.floor(n);
+			}
+		});
+		// اگر کلاس is-reserve نبود، همه به‌جز اولین ردیف فعال فرضی
+		if (!$('#wbe-batches-body tr.is-reserve').length) {
+			sum = 0;
+			$('#wbe-batches-body tr').each(function (i) {
+				if (i === 0) {
+					return;
+				}
+				var n = parseNum($(this).find('input[name*="[stock]"]').val());
+				if (n > 0) {
+					sum += Math.floor(n);
+				}
+			});
+		}
+		$tot.text(String(sum));
+	}
+
+	$(document).on('change input', '#wbe-batches-body .wbe-batch-stock, #wbe-batches-body input[name*="[stock]"]', refreshReservedTotal);
 
 	$(document).on('change', '#wbe-bulk-check-all', function () {
 		$('.wbe-bulk-id').prop('checked', this.checked);

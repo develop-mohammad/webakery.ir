@@ -62,6 +62,36 @@ class WBE_Engine {
 	}
 
 	/**
+	 * تنظیم جمع موجودی رزرو روی بچ‌های غیر فعال.
+	 * اگر چند بچ رزرو باشد، کل مقدار روی اولین رزرو می‌نشیند و بقیه صفر می‌شوند.
+	 *
+	 * @param array  $batches
+	 * @param int    $qty
+	 * @param string $today
+	 * @return array
+	 */
+	public static function set_reserved_stock( array $batches, $qty, $today ) {
+		$qty         = max( 0, (int) $qty );
+		$active      = self::active_index( $batches, $today );
+		$reserve_idx = array();
+		foreach ( $batches as $i => $_b ) {
+			if ( null !== $active && (int) $i === (int) $active ) {
+				continue;
+			}
+			$reserve_idx[] = (int) $i;
+		}
+		if ( ! $reserve_idx ) {
+			return $batches;
+		}
+		$first = true;
+		foreach ( $reserve_idx as $i ) {
+			$batches[ $i ]['stock'] = $first ? $qty : 0;
+			$first                  = false;
+		}
+		return $batches;
+	}
+
+	/**
 	 * قیمت جشنوارهٔ واقعی بچ: اگر مبلغ دستی ذخیره شده باشد همان، وگرنه از درصد.
 	 *
 	 * @param array $batch
@@ -701,6 +731,9 @@ class WBE_Engine {
 		if ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] ) {
 			return true;
 		}
+		if ( array_key_exists( 'reserved', $ops ) && null !== $ops['reserved'] && '' !== $ops['reserved'] ) {
+			return true;
+		}
 		if ( ! empty( $ops['expiry'] ) ) {
 			return true;
 		}
@@ -708,13 +741,14 @@ class WBE_Engine {
 	}
 
 	/**
-	 * اعمال عملیات گروهی فقط روی بچ فعال. رزرو دست نمی‌خورد.
+	 * اعمال عملیات گروهی فقط روی بچ فعال. رزرو دست نمی‌خورد مگر reserved ست شود.
 	 *
 	 * کلیدهای $ops:
 	 *   regular_mode / regular_value
 	 *   sale_mode / sale_value   (مبلغ بعد از تخفیف / جشنواره)
 	 *   discount                 (درصد؛ اگر sale_mode خالی باشد)
 	 *   clear_sale               (پاک کردن تخفیف)
+	 *   reserved                 (جمع موجودی رزرو روی بچ‌های غیر فعال)
 	 *   add_batch                (افزودن بچ رزرو: price/stock/expiry/discount/sale)
 	 * اگر هم مبلغ جشنواره و هم درصد بیاید، مبلغ جشنواره اولویت دارد و مبلغ دقیق ذخیره می‌شود.
 	 *
@@ -724,6 +758,10 @@ class WBE_Engine {
 	 * @return array
 	 */
 	public static function apply_bulk_to_active( array $batches, array $ops, $today ) {
+		if ( array_key_exists( 'reserved', $ops ) && null !== $ops['reserved'] && '' !== $ops['reserved'] ) {
+			$batches = self::set_reserved_stock( $batches, (int) $ops['reserved'], $today );
+		}
+
 		if ( ! empty( $ops['add_batch'] ) && is_array( $ops['add_batch'] ) ) {
 			$cal     = isset( $ops['calendar'] ) ? (string) $ops['calendar'] : 'gregorian';
 			$batches = self::append_batch( $batches, $ops['add_batch'], $cal );
@@ -732,8 +770,9 @@ class WBE_Engine {
 		if ( empty( $batches ) || ! self::has_batch_ops( $ops ) ) {
 			return $batches;
 		}
-		// فقط افزودن بچ، بدون تغییر بچ فعال.
-		if ( ! empty( $ops['add_batch'] ) && ! self::has_price_ops( $ops )
+		// فقط افزودن بچ / تنظیم رزرو، بدون تغییر بچ فعال.
+		$only_extra = ! empty( $ops['add_batch'] ) || ( array_key_exists( 'reserved', $ops ) && null !== $ops['reserved'] && '' !== $ops['reserved'] );
+		if ( $only_extra && ! self::has_price_ops( $ops )
 			&& ! ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] )
 			&& empty( $ops['expiry'] ) ) {
 			return $batches;
