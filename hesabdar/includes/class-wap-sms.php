@@ -19,6 +19,11 @@ class WAP_SMS {
 			'recipients'       => '',
 			'message'          => "پرداخت موفق زرین‌پال\nسفارش #{order_id}\nمبلغ: {total} تومان\nخریدار: {customer}\nروش: {payment}",
 			'merchant_note'    => '',
+			// تسویه شاپرک → حساب
+			'settle_enabled'   => 0,
+			'zp_terminal_id'   => '',
+			'zp_access_token'  => '',
+			'settle_message'   => "واریز شاپرک به حساب انجام شد\nمبلغ: {amount} تومان\nشناسه ارجاع: {reference_id}\nزمان: {reconciled_at}",
 		);
 	}
 
@@ -48,7 +53,15 @@ class WAP_SMS {
 		$out['recipients']    = sanitize_textarea_field( $input['recipients'] ?? '' );
 		$out['message']       = sanitize_textarea_field( $input['message'] ?? $out['message'] );
 		$out['merchant_note'] = sanitize_text_field( $input['merchant_note'] ?? '' );
+		$out['settle_enabled'] = ! empty( $input['settle_enabled'] ) ? 1 : 0;
+		$out['zp_terminal_id'] = sanitize_text_field( $input['zp_terminal_id'] ?? '' );
+		$token = (string) ( $input['zp_access_token'] ?? '' );
+		$out['zp_access_token'] = ( $token !== '' ) ? $token : (string) ( $cur['zp_access_token'] ?? '' );
+		$out['settle_message']  = sanitize_textarea_field( $input['settle_message'] ?? $out['settle_message'] );
 		update_option( self::OPTION, $out, false );
+		if ( class_exists( 'WAP_Zarinpal_Reconcile' ) ) {
+			WAP_Zarinpal_Reconcile::maybe_schedule();
+		}
 		return $out;
 	}
 

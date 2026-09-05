@@ -198,14 +198,14 @@ class WAP_Admin {
 
         $s = WAP_SMS::get();
         $flash = isset( $_GET['wap_sms_msg'] ) ? sanitize_text_field( wp_unslash( $_GET['wap_sms_msg'] ) ) : '';
+        $settle_flash = isset( $_GET['wap_settle_msg'] ) ? sanitize_text_field( wp_unslash( $_GET['wap_settle_msg'] ) ) : '';
         ?>
         <div class="wrap">
-            <h1>اطلاع‌رسانی پیامک پرداخت</h1>
-            <p style="max-width:720px;line-height:1.8">
-                وقتی پرداخت سفارش در ووکامرس با موفقیت تأیید شود (مثلاً درگاه زرین‌پال)،
-                برای شماره‌هایی که مشخص می‌کنید (حسابدار و …) پیامک ارسال می‌شود.
-                <br><strong>نکته:</strong> واریز بانکی شاپرک به حساب، رویداد مستقیمی در وردپرس ندارد؛
-                این پیامک در لحظهٔ <em>تأیید پرداخت مشتری</em> می‌رود.
+            <h1>اطلاع‌رسانی پیامک</h1>
+            <p style="max-width:760px;line-height:1.8">
+                دو حالت جداگانه دارید:
+                <br>۱) <strong>پرداخت مشتری</strong> — لحظهٔ تأیید سفارش در ووکامرس
+                <br>۲) <strong>واریز شاپرک به حساب</strong> — با پایش API تسویهٔ زرین‌پال (وضعیت PAID)
             </p>
 
             <?php if ( $notice ) : ?>
@@ -218,28 +218,14 @@ class WAP_Admin {
             <?php elseif ( $flash !== '' ) : ?>
                 <div class="notice notice-error is-dismissible"><p><?php echo esc_html( $flash ); ?></p></div>
             <?php endif; ?>
+            <?php if ( $settle_flash !== '' ) : ?>
+                <div class="notice notice-info is-dismissible"><p><?php echo esc_html( $settle_flash ); ?></p></div>
+            <?php endif; ?>
 
-            <form method="post" style="background:#fff;border:1px solid #ccd0d4;border-radius:6px;padding:16px 20px;max-width:720px">
+            <form method="post" style="background:#fff;border:1px solid #ccd0d4;border-radius:6px;padding:16px 20px;max-width:760px">
                 <?php wp_nonce_field( 'wap_payment_sms' ); ?>
+                <h2 style="margin-top:0">ملی‌پیامک و گیرنده‌ها (مشترک)</h2>
                 <table class="form-table" role="presentation">
-                    <tr>
-                        <th>فعال‌سازی</th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="wap_sms[enabled]" value="1" <?php checked( (int) $s['enabled'], 1 ); ?>>
-                                ارسال پیامک پس از پرداخت موفق
-                            </label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>فقط زرین‌پال</th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="wap_sms[only_zarinpal]" value="1" <?php checked( (int) $s['only_zarinpal'], 1 ); ?>>
-                                فقط وقتی روش پرداخت زرین‌پال باشد
-                            </label>
-                        </td>
-                    </tr>
                     <tr>
                         <th><label for="wap_sms_user">نام کاربری ملی‌پیامک</label></th>
                         <td><input id="wap_sms_user" type="text" class="regular-text" dir="ltr" name="wap_sms[username]" value="<?php echo esc_attr( $s['username'] ); ?>" autocomplete="off"></td>
@@ -248,7 +234,7 @@ class WAP_Admin {
                         <th><label for="wap_sms_pass">رمز عبور ملی‌پیامک</label></th>
                         <td>
                             <input id="wap_sms_pass" type="password" class="regular-text" dir="ltr" name="wap_sms[password]" value="" autocomplete="new-password" placeholder="<?php echo $s['password'] !== '' ? '•••••••• (برای تغییر پر کنید)' : ''; ?>">
-                            <p class="description">برای امنیت، رمز ذخیره‌شده نمایش داده نمی‌شود. خالی بگذارید تا رمز قبلی حفظ شود.</p>
+                            <p class="description">خالی = حفظ رمز قبلی.</p>
                         </td>
                     </tr>
                     <tr>
@@ -257,41 +243,106 @@ class WAP_Admin {
                     </tr>
                     <tr>
                         <th><label for="wap_sms_pattern">کد پترن (اختیاری)</label></th>
-                        <td>
-                            <input id="wap_sms_pattern" type="text" class="regular-text" dir="ltr" name="wap_sms[pattern]" value="<?php echo esc_attr( $s['pattern'] ); ?>">
-                            <p class="description">اگر خط خدماتی با پترن دارید bodyId را بگذارید؛ در غیر این صورت خالی بگذارید تا پیام متنی با Sender ارسال شود.</p>
-                        </td>
+                        <td><input id="wap_sms_pattern" type="text" class="regular-text" dir="ltr" name="wap_sms[pattern]" value="<?php echo esc_attr( $s['pattern'] ); ?>"></td>
                     </tr>
                     <tr>
                         <th><label for="wap_sms_to">شماره‌های دریافت‌کننده</label></th>
                         <td>
                             <textarea id="wap_sms_to" name="wap_sms[recipients]" class="large-text" rows="3" dir="ltr" placeholder="0912xxxxxxx"><?php echo esc_textarea( $s['recipients'] ); ?></textarea>
-                            <p class="description">هر شماره در یک خط یا با ویرگول — مثلاً موبایل حسابدار.</p>
+                            <p class="description">مثلاً موبایل حسابدار — هر شماره در یک خط یا با ویرگول.</p>
                         </td>
-                    </tr>
-                    <tr>
-                        <th><label for="wap_sms_msg">متن پیامک</label></th>
-                        <td>
-                            <textarea id="wap_sms_msg" name="wap_sms[message]" class="large-text" rows="5"><?php echo esc_textarea( $s['message'] ); ?></textarea>
-                            <p class="description">متغیرها: <code>{order_id}</code> <code>{total}</code> <code>{customer}</code> <code>{phone}</code> <code>{payment}</code> <code>{status}</code></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><label for="wap_sms_merchant">یادداشت مرچنت (اختیاری)</label></th>
-                        <td><input id="wap_sms_merchant" type="text" class="large-text" dir="ltr" name="wap_sms[merchant_note]" value="<?php echo esc_attr( $s['merchant_note'] ); ?>" placeholder="شناسه درگاه / توضیح داخلی"></td>
                     </tr>
                 </table>
+
+                <h2>۱) پیامک بعد از پرداخت مشتری</h2>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th>فعال‌سازی</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wap_sms[enabled]" value="1" <?php checked( (int) $s['enabled'], 1 ); ?>>
+                                ارسال پس از پرداخت موفق سفارش
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>فقط زرین‌پال</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wap_sms[only_zarinpal]" value="1" <?php checked( (int) $s['only_zarinpal'], 1 ); ?>>
+                                فقط روش پرداخت زرین‌پال
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="wap_sms_msg">متن پیامک پرداخت</label></th>
+                        <td>
+                            <textarea id="wap_sms_msg" name="wap_sms[message]" class="large-text" rows="4"><?php echo esc_textarea( $s['message'] ); ?></textarea>
+                            <p class="description"><code>{order_id}</code> <code>{total}</code> <code>{customer}</code> <code>{phone}</code> <code>{payment}</code> <code>{status}</code></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <h2>۲) پیامک واریز شاپرک به حساب (تسویه زرین‌پال)</h2>
+                <p class="description" style="max-width:680px">
+                    زرین‌پال وب‌هوک لحظه‌ای برای تسویه ندارد. افزونه هر ساعت لیست تسویه‌های وضعیت
+                    <code>PAID</code> را از API می‌گیرد و برای موارد جدید پیامک می‌فرستد.
+                    <br><strong>مرچنت‌کد UUID کافی نیست</strong> — به <code>terminal_id</code> عددی و
+                    <code>Access Token</code> (OAuth پنل API زرین‌پال) نیاز دارید. از پشتیبانی زرین‌پال
+                    <code>client_id/client_secret</code> بگیرید و Access Token بسازید.
+                </p>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th>فعال‌سازی تسویه</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wap_sms[settle_enabled]" value="1" <?php checked( (int) $s['settle_enabled'], 1 ); ?>>
+                                پایش تسویه و ارسال پیامک هنگام واریز (PAID)
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="wap_zp_terminal">Terminal ID</label></th>
+                        <td>
+                            <input id="wap_zp_terminal" type="text" class="regular-text" dir="ltr" name="wap_sms[zp_terminal_id]" value="<?php echo esc_attr( $s['zp_terminal_id'] ); ?>" placeholder="مثلاً 1915487">
+                            <p class="description">شماره ترمینال درگاه در پنل زرین‌پال (عددی) — نه مرچنت‌کد UUID.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="wap_zp_token">Access Token</label></th>
+                        <td>
+                            <textarea id="wap_zp_token" name="wap_sms[zp_access_token]" class="large-text" rows="3" dir="ltr" placeholder="<?php echo esc_attr( $s['zp_access_token'] !== '' ? 'توکن ذخیره شده — برای تغییر پر کنید' : 'Bearer token' ); ?>"></textarea>
+                            <p class="description">توکن ذخیره‌شده نمایش داده نمی‌شود. خالی = حفظ توکن قبلی.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="wap_settle_msg">متن پیامک واریز</label></th>
+                        <td>
+                            <textarea id="wap_settle_msg" name="wap_sms[settle_message]" class="large-text" rows="4"><?php echo esc_textarea( $s['settle_message'] ); ?></textarea>
+                            <p class="description"><code>{amount}</code> <code>{amount_rial}</code> <code>{reference_id}</code> <code>{reconcile_id}</code> <code>{reconciled_at}</code> <code>{status}</code></p>
+                        </td>
+                    </tr>
+                </table>
+
                 <p>
                     <button type="submit" name="wap_save_payment_sms" class="button button-primary">ذخیره تنظیمات</button>
                 </p>
             </form>
 
-            <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:16px;background:#fff;border:1px solid #ccd0d4;border-radius:6px;padding:16px 20px;max-width:720px">
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:16px;background:#fff;border:1px solid #ccd0d4;border-radius:6px;padding:16px 20px;max-width:760px">
+                <input type="hidden" name="action" value="wap_poll_reconciles_now">
+                <?php wp_nonce_field( 'wap_poll_reconciles_now' ); ?>
+                <h2 style="margin-top:0">بررسی فوری تسویه‌ها</h2>
+                <p>الان API زرین‌پال را چک می‌کند و برای تسویه‌های جدید <code>PAID</code> پیامک می‌فرستد.</p>
+                <p><button type="submit" class="button button-primary">بررسی الان</button></p>
+            </form>
+
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:16px;background:#fff;border:1px solid #ccd0d4;border-radius:6px;padding:16px 20px;max-width:760px">
                 <input type="hidden" name="action" value="wap_test_payment_sms">
                 <?php wp_nonce_field( 'wap_test_payment_sms' ); ?>
-                <h2 style="margin-top:0">ارسال پیامک تست</h2>
+                <h2 style="margin-top:0">ارسال پیامک تست (متن پرداخت)</h2>
                 <p>
-                    <label>شماره تست (اختیاری — پیش‌فرض اولین گیرنده):</label><br>
+                    <label>شماره تست (اختیاری):</label><br>
                     <input type="text" name="wap_test_phone" class="regular-text" dir="ltr" placeholder="09xxxxxxxxx">
                 </p>
                 <p><button type="submit" class="button">ارسال تست</button></p>

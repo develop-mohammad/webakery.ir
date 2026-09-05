@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.10.0',
+        'version'      => '1.10.1',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۱۰.۰: اطلاع‌رسانی پیامکی به حسابدار پس از پرداخت موفق زرین‌پال (ملی‌پیامک).',
+        'changelog'    => 'نسخه ۱.۱۰.۱: پیامک واریز شاپرک با پایش API تسویه زرین‌پال (وضعیت PAID) + پیامک پرداخت سفارش.',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',
