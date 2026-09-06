@@ -1578,6 +1578,102 @@ function wci_export_report_csv() {
     exit;
 }
 
+// ─── گزارش شاپرک / ووکامرس / کارمزد زرین‌پال ─────────────────────────────────
+function wci_shaparak_report_page() {
+    if ( ! hesabdar_user_can_wci() ) {
+        wp_die( 'Unauthorized' );
+    }
+    if ( ! class_exists( 'WAP_Zarinpal_Report' ) ) {
+        echo '<div class="wrap"><div class="notice notice-error"><p>ماژول گزارش شاپرک بارگذاری نشده است.</p></div></div>';
+        return;
+    }
+    $report = WAP_Zarinpal_Report::build();
+    $f = $report['filters'];
+    $s = $report['summary'];
+    $is_jalali = function_exists( 'wci_is_jalali' ) ? wci_is_jalali() : true;
+
+    echo '<div class="wrap wci-wrap">';
+    echo '<h1>شاپرک، خرید ووکامرس و کارمزد زرین‌پال</h1>';
+    echo '<p style="max-width:820px;line-height:1.8">' . esc_html( WAP_Zarinpal_Fee::tariff_note() ) . ' واریز شاپرک معمولاً با یک روز تأخیر نسبت به خرید است.</p>';
+
+    echo '<form method="get" class="wci-filter-bar">';
+    echo '<input type="hidden" name="page" value="wci-shaparak">';
+    $date_ph_from = $is_jalali ? '۱۴۰۴/۰۱/۰۱' : 'YYYY-MM-DD';
+    $date_ph_to   = $is_jalali ? '۱۴۰۴/۱۲/۲۹' : 'YYYY-MM-DD';
+    echo '<span class="wci-filter-label">📅 بازه:</span>';
+    if ( $is_jalali ) {
+        echo '<input type="text" name="date_from" id="wci_date_from" value="' . esc_attr( $f['date_from'] ) . '" placeholder="' . $date_ph_from . '" class="wci-date-input" style="width:110px;direction:ltr" autocomplete="off">';
+        echo '<span style="margin:0 4px">تا</span>';
+        echo '<input type="text" name="date_to" id="wci_date_to" value="' . esc_attr( $f['date_to'] ) . '" placeholder="' . $date_ph_to . '" class="wci-date-input" style="width:110px;direction:ltr" autocomplete="off">';
+    } else {
+        echo '<input type="date" name="date_from" value="' . esc_attr( $f['date_from'] ) . '">';
+        echo '<span style="margin:0 4px">تا</span>';
+        echo '<input type="date" name="date_to" value="' . esc_attr( $f['date_to'] ) . '">';
+    }
+    echo '<label style="margin-right:12px"><input type="hidden" name="only_paid" value="0"><input type="checkbox" name="only_paid" value="1" ' . checked( ! empty( $f['only_paid'] ), true, false ) . '> فقط سفارش موفق</label>';
+    echo '<button type="submit" class="button button-primary">اعمال فیلتر</button>';
+    echo '</form>';
+    if ( $is_jalali && function_exists( 'wci_print_jalali_picker_script' ) ) {
+        wci_print_jalali_picker_script();
+    }
+
+    $csv_url = esc_url( add_query_arg( array_merge( array_filter( $f ), array(
+        'action'   => 'wci_export_shaparak_csv',
+        '_wpnonce' => wp_create_nonce( 'wci_shaparak_export' ),
+    ) ), admin_url( 'admin-post.php' ) ) );
+    echo '<div class="wci-export-bar"><a class="button wci-btn-excel" href="' . $csv_url . '">📊 خروجی Excel/CSV</a></div>';
+
+    if ( $report['error'] !== '' ) {
+        echo '<div class="notice notice-warning"><p>' . esc_html( $report['error'] ) . '</p></div>';
+    }
+
+    echo '<div class="wci-export-bar" style="display:flex;flex-wrap:wrap;gap:18px">';
+    echo '<span>🛒 خرید ووکامرس: <strong>' . esc_html( number_format( $s['wc_gross'] ) ) . '</strong> (' . esc_html( number_format( $s['wc_count'] ) ) . ')</span>';
+    echo '<span>💳 کارمزد: <strong>' . esc_html( number_format( $s['wc_fee'] ) ) . '</strong></span>';
+    echo '<span>✅ خالص: <strong>' . esc_html( number_format( $s['wc_net'] ) ) . '</strong></span>';
+    echo '<span>🏦 واریز شاپرک: <strong>' . esc_html( number_format( $s['settle_total'] ) ) . '</strong> (' . esc_html( number_format( $s['settle_count'] ) ) . ')</span>';
+    echo '<span>Δ اختلاف: <strong>' . esc_html( number_format( $s['diff_net_settle'] ) ) . '</strong></span>';
+    echo '</div>';
+
+    echo '<h2>خریدهای ووکامرس (زرین‌پال)</h2>';
+    echo '<table class="widefat striped"><thead><tr><th>سفارش</th><th>تاریخ</th><th>خریدار</th><th>وضعیت</th><th>مبلغ</th><th>کارمزد</th><th>خالص</th></tr></thead><tbody>';
+    if ( empty( $report['orders'] ) ) {
+        echo '<tr><td colspan="7">موردی نیست.</td></tr>';
+    } else {
+        foreach ( $report['orders'] as $o ) {
+            printf(
+                '<tr><td>#%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><strong>%s</strong></td></tr>',
+                esc_html( $o['order_number'] ),
+                esc_html( $o['date_jalali'] ),
+                esc_html( $o['customer'] ),
+                esc_html( $o['status_label'] ),
+                esc_html( number_format( $o['gross'] ) ),
+                esc_html( number_format( $o['fee'] ) ),
+                esc_html( number_format( $o['net'] ) )
+            );
+        }
+    }
+    echo '</tbody></table>';
+
+    echo '<h2>واریزهای شاپرک (PAID)</h2>';
+    echo '<table class="widefat striped"><thead><tr><th>شناسه</th><th>تاریخ</th><th>مبلغ تومان</th><th>ارجاع</th><th>وضعیت</th></tr></thead><tbody>';
+    if ( empty( $report['settles'] ) ) {
+        echo '<tr><td colspan="5">موردی نیست.</td></tr>';
+    } else {
+        foreach ( $report['settles'] as $r ) {
+            printf(
+                '<tr><td>%s</td><td>%s</td><td><strong>%s</strong></td><td style="direction:ltr">%s</td><td>%s</td></tr>',
+                esc_html( $r['id'] ),
+                esc_html( $r['date_jalali'] ?: $r['reconciled_at'] ),
+                esc_html( number_format( $r['amount'] ) ),
+                esc_html( $r['reference_id'] ),
+                esc_html( $r['status'] )
+            );
+        }
+    }
+    echo '</tbody></table></div>';
+}
+
 // ─── Shortcode [wci_my_info] ──────────────────────────────────────────────────
 add_shortcode( 'wci_my_info', function() {
     if ( ! class_exists( 'WooCommerce' ) ) {

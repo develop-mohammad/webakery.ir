@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.9.11',
+        'version'      => '1.10.2',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۹.۱۱: رفع قطعی صفحه سفید دانلود bulk + باگ dropdown پایین.',
+        'changelog'    => 'نسخه ۱.۱۰.۲: گزارش تطبیق واریز شاپرک + خرید ووکامرس + کارمزد رسمی زرین‌پال (۰٫۵٪ تا سقف ۱۶هزار + ۵۰۰ تومان).',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',
