@@ -304,8 +304,15 @@ class WAP_Admin {
                     <tr>
                         <th><label for="wap_zp_terminal">Terminal ID</label></th>
                         <td>
-                            <input id="wap_zp_terminal" type="text" class="regular-text" dir="ltr" name="wap_sms[zp_terminal_id]" value="<?php echo esc_attr( $s['zp_terminal_id'] ); ?>" placeholder="مثلاً 1915487">
+                            <input id="wap_zp_terminal" type="text" class="regular-text" dir="ltr" name="wap_sms[zp_terminal_id]" value="<?php echo esc_attr( $s['zp_terminal_id'] ); ?>" placeholder="مثلاً 545232">
                             <p class="description">شماره ترمینال درگاه در پنل زرین‌پال (عددی) — نه مرچنت‌کد UUID.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="wap_zp_merchant">مرچنت‌کد (UUID)</label></th>
+                        <td>
+                            <input id="wap_zp_merchant" type="text" class="regular-text" dir="ltr" name="wap_sms[zp_merchant_id]" value="<?php echo esc_attr( $s['zp_merchant_id'] ); ?>" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+                            <p class="description">برای محاسبه کارمزد با API رسمی <code>feeCalculation</code> و گزارش تطبیق شاپرک.</p>
                         </td>
                     </tr>
                     <tr>

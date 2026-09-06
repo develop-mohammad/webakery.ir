@@ -22,6 +22,7 @@ class WAP_SMS {
 			// تسویه شاپرک → حساب
 			'settle_enabled'   => 0,
 			'zp_terminal_id'   => '',
+			'zp_merchant_id'   => '',
 			'zp_access_token'  => '',
 			'settle_message'   => "واریز شاپرک به حساب انجام شد\nمبلغ: {amount} تومان\nشناسه ارجاع: {reference_id}\nزمان: {reconciled_at}",
 		);
@@ -55,6 +56,7 @@ class WAP_SMS {
 		$out['merchant_note'] = sanitize_text_field( $input['merchant_note'] ?? '' );
 		$out['settle_enabled'] = ! empty( $input['settle_enabled'] ) ? 1 : 0;
 		$out['zp_terminal_id'] = sanitize_text_field( $input['zp_terminal_id'] ?? '' );
+		$out['zp_merchant_id'] = sanitize_text_field( $input['zp_merchant_id'] ?? '' );
 		$token = (string) ( $input['zp_access_token'] ?? '' );
 		$out['zp_access_token'] = ( $token !== '' ) ? $token : (string) ( $cur['zp_access_token'] ?? '' );
 		$out['settle_message']  = sanitize_textarea_field( $input['settle_message'] ?? $out['settle_message'] );

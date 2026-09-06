@@ -247,6 +247,12 @@ class WAP_Portal {
             return;
         }
 
+        if ( $type === 'shaparak_csv' ) {
+            $report = WAP_Zarinpal_Report::build();
+            WAP_Export::zarinpal_reconcile_csv( $report );
+            return;
+        }
+
         if ( $type === 'products_csv' || $type === 'product_orders_csv' ) {
             $f          = WAP_Data::get_filters();
             $orders     = WAP_Data::get_orders( $f );
@@ -369,7 +375,7 @@ class WAP_Portal {
             $raw = wp_unslash( $_GET['wap_view'] );
         }
         $view = sanitize_text_field( $raw ?: 'sales' );
-        return in_array( $view, array( 'sales', 'orders', 'products' ), true ) ? $view : 'sales';
+        return in_array( $view, array( 'sales', 'orders', 'products', 'shaparak' ), true ) ? $view : 'sales';
     }
 
     private static function render_dashboard( $panel_type = self::PANEL_ACCOUNTANT ) {
@@ -384,7 +390,15 @@ class WAP_Portal {
                 <div class="wap-brand-wrap">
                     <div class="wap-brand"><?php echo esc_html( $brand ); ?></div>
                     <div class="wap-brand-sub"><?php
-                        echo $view === 'orders' ? 'لیست و جزئیات سفارش‌های پرداخت‌شده' : ( $view === 'products' ? 'تحلیل فروش به تفکیک محصول' : 'خلاصه فروش و خروجی‌های حسابداری' );
+                        if ( $view === 'orders' ) {
+                            echo 'لیست و جزئیات سفارش‌های پرداخت‌شده';
+                        } elseif ( $view === 'products' ) {
+                            echo 'تحلیل فروش به تفکیک محصول';
+                        } elseif ( $view === 'shaparak' ) {
+                            echo 'تطبیق واریز شاپرک، خرید ووکامرس و کارمزد زرین‌پال';
+                        } else {
+                            echo 'خلاصه فروش و خروجی‌های حسابداری';
+                        }
                     ?></div>
                 </div>
                 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wap-logout-form">
@@ -424,6 +438,7 @@ class WAP_Portal {
                 <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'sales', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'sales' ? ' wap-tab-active' : ''; ?>">📈 گزارش مالی</a>
                 <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'orders', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'orders' ? ' wap-tab-active' : ''; ?>">🧾 لیست سفارش‌ها</a>
                 <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'products', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'products' ? ' wap-tab-active' : ''; ?>">📦 فروش محصولات</a>
+                <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'shaparak', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'shaparak' ? ' wap-tab-active' : ''; ?>">🏦 شاپرک / کارمزد</a>
             </nav>
 
             <?php
@@ -432,6 +447,8 @@ class WAP_Portal {
                     self::render_orders_tab();
                 } elseif ( $view === 'products' ) {
                     self::render_products_tab();
+                } elseif ( $view === 'shaparak' ) {
+                    self::render_shaparak_tab();
                 } else {
                     self::render_sales_tab();
                 }
@@ -1014,5 +1031,142 @@ class WAP_Portal {
                 </table>
             </div>
         <?php endif;
+    }
+
+    private static function render_shaparak_tab() {
+        if ( ! class_exists( 'WAP_Zarinpal_Report' ) ) {
+            echo '<div class="wap-alert">ماژول گزارش شاپرک بارگذاری نشده است.</div>';
+            return;
+        }
+        $report  = WAP_Zarinpal_Report::build();
+        $f       = $report['filters'];
+        $s       = $report['summary'];
+        $presets = WAP_Data::quick_presets();
+        $currency = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : 'تومان';
+        $csv_url = self::export_url( array_merge( $f, array( 'wap_view' => 'shaparak' ) ), 'shaparak_csv' );
+        ?>
+        <form method="get" class="wap-filters" action="<?php echo esc_url( self::panel_url() ); ?>">
+            <input type="hidden" name="wap_view" value="shaparak">
+            <div class="wap-field wap-field-date">
+                <label>از تاریخ (شمسی)</label>
+                <input type="text" id="wap_date_from" name="date_from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="۱۴۰۴/۰۱/۰۱" autocomplete="off">
+            </div>
+            <div class="wap-field wap-field-date">
+                <label>تا تاریخ (شمسی)</label>
+                <input type="text" id="wap_date_to" name="date_to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="۱۴۰۴/۱۲/۲۹" autocomplete="off">
+            </div>
+            <div class="wap-field">
+                <label class="wap-check" style="display:flex;align-items:center;gap:6px;margin-top:22px">
+                    <input type="hidden" name="only_paid" value="0">
+                    <input type="checkbox" name="only_paid" value="1" <?php checked( ! empty( $f['only_paid'] ) ); ?>>
+                    فقط سفارش‌های موفق
+                </label>
+            </div>
+            <div class="wap-field wap-field-actions">
+                <button type="submit" class="wap-btn wap-btn-primary">اعمال فیلتر</button>
+                <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'shaparak', self::panel_url() ) ); ?>" class="wap-btn wap-btn-ghost">پاک کردن</a>
+            </div>
+        </form>
+
+        <div class="wap-presets" id="wap_presets">
+            <?php foreach ( $presets as $label => $range ) : ?>
+                <button type="button" class="wap-chip" data-from="<?php echo esc_attr( $range[0] ); ?>" data-to="<?php echo esc_attr( $range[1] ); ?>"><?php echo esc_html( $label ); ?></button>
+            <?php endforeach; ?>
+        </div>
+
+        <p class="wap-hint" style="margin:8px 0 16px;line-height:1.8;color:#475569">
+            <?php echo esc_html( WAP_Zarinpal_Fee::tariff_note() ); ?>
+            واریز شاپرک معمولاً یک روز کاری بعد از خرید است؛ اختلاف بازهٔ سفارش و واریز طبیعی است.
+        </p>
+
+        <?php if ( $report['error'] !== '' ) : ?>
+            <div class="wap-alert"><?php echo esc_html( $report['error'] ); ?></div>
+        <?php endif; ?>
+
+        <div class="wap-cards">
+            <div class="wap-card">
+                <div class="wap-card-label">خرید ووکامرس (زرین‌پال)</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $s['wc_gross'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
+                <div class="wap-card-accent"><?php echo esc_html( number_format( $s['wc_count'] ) ); ?> سفارش</div>
+            </div>
+            <div class="wap-card">
+                <div class="wap-card-label">کارمزد زرین‌پال</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $s['wc_fee'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
+                <div class="wap-card-accent">تعرفه رسمی ۰٫۵٪+۵۰۰</div>
+            </div>
+            <div class="wap-card wap-card-net">
+                <div class="wap-card-label">خالص مورد انتظار</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $s['wc_net'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
+                <div class="wap-card-accent">خرید − کارمزد</div>
+            </div>
+            <div class="wap-card">
+                <div class="wap-card-label">واریز شاپرک (PAID)</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $s['settle_total'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
+                <div class="wap-card-accent"><?php echo esc_html( number_format( $s['settle_count'] ) ); ?> تسویه — اختلاف: <?php echo esc_html( number_format( $s['diff_net_settle'] ) ); ?></div>
+            </div>
+        </div>
+
+        <?php self::render_export_bar( $csv_url, false ); ?>
+
+        <div class="wap-table-wrap" style="margin-bottom:24px">
+            <h3 style="margin:0 0 10px">خریدهای ووکامرس (درگاه زرین‌پال)</h3>
+            <table class="wap-table">
+                <thead>
+                    <tr>
+                        <th>سفارش</th>
+                        <th>تاریخ</th>
+                        <th>خریدار</th>
+                        <th>وضعیت</th>
+                        <th>مبلغ</th>
+                        <th>کارمزد</th>
+                        <th>خالص</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if ( empty( $report['orders'] ) ) : ?>
+                    <tr><td colspan="7" class="wap-empty">سفارش زرین‌پالی در این بازه نیست.</td></tr>
+                <?php else : foreach ( $report['orders'] as $o ) : ?>
+                    <tr>
+                        <td><strong>#<?php echo esc_html( $o['order_number'] ); ?></strong></td>
+                        <td dir="ltr"><?php echo esc_html( $o['date_jalali'] ); ?></td>
+                        <td><?php echo esc_html( $o['customer'] ); ?></td>
+                        <td><?php echo esc_html( $o['status_label'] ); ?></td>
+                        <td><?php echo esc_html( number_format( $o['gross'] ) ); ?></td>
+                        <td><?php echo esc_html( number_format( $o['fee'] ) ); ?></td>
+                        <td><strong><?php echo esc_html( number_format( $o['net'] ) ); ?></strong></td>
+                    </tr>
+                <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="wap-table-wrap">
+            <h3 style="margin:0 0 10px">واریزهای شاپرک به حساب (وضعیت PAID)</h3>
+            <table class="wap-table">
+                <thead>
+                    <tr>
+                        <th>شناسه</th>
+                        <th>تاریخ واریز</th>
+                        <th>مبلغ (تومان)</th>
+                        <th>شناسه ارجاع</th>
+                        <th>وضعیت</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if ( empty( $report['settles'] ) ) : ?>
+                    <tr><td colspan="5" class="wap-empty">واریز PAID در این بازه یافت نشد یا API تنظیم نشده است.</td></tr>
+                <?php else : foreach ( $report['settles'] as $r ) : ?>
+                    <tr>
+                        <td dir="ltr"><?php echo esc_html( $r['id'] ); ?></td>
+                        <td dir="ltr"><?php echo esc_html( $r['date_jalali'] ?: $r['reconciled_at'] ); ?></td>
+                        <td><strong><?php echo esc_html( number_format( $r['amount'] ) ); ?></strong></td>
+                        <td dir="ltr" style="font-size:12px"><?php echo esc_html( $r['reference_id'] ); ?></td>
+                        <td><?php echo esc_html( $r['status'] ); ?></td>
+                    </tr>
+                <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
     }
 }
