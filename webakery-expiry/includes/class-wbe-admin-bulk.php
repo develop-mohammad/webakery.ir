@@ -207,6 +207,39 @@ class WBE_Admin_Bulk {
 			}
 		}
 
+		if ( ! empty( $row['reserves'] ) && is_array( $row['reserves'] ) ) {
+			$list = array();
+			foreach ( $row['reserves'] as $rr ) {
+				if ( ! is_array( $rr ) ) {
+					continue;
+				}
+				$item = array();
+				if ( isset( $rr['id'] ) ) {
+					$item['id'] = $rr['id'];
+				}
+				if ( array_key_exists( 'price', $rr ) ) {
+					$item['price'] = WBE_Engine::parse_amount( $rr['price'] );
+				}
+				if ( array_key_exists( 'discount', $rr ) ) {
+					$d = WBE_Engine::parse_amount( $rr['discount'] );
+					$item['discount'] = null !== $d ? max( 0, min( 100, $d ) ) : 0;
+				}
+				if ( array_key_exists( 'stock', $rr ) ) {
+					$s = WBE_Engine::parse_amount( $rr['stock'] );
+					$item['stock'] = null !== $s ? max( 0, (int) $s ) : 0;
+				}
+				if ( isset( $rr['expiry'] ) && '' !== trim( (string) $rr['expiry'] ) ) {
+					$item['expiry'] = WBE_Jalali::parse_to_ymd( $rr['expiry'], $calendar );
+				}
+				if ( empty( $item['expiry'] ) ) {
+					continue;
+				}
+				$list[] = $item;
+			}
+			$ops['reserves'] = $list;
+			$ops['calendar'] = $calendar;
+		}
+
 		if ( isset( $row['expiry'] ) && '' !== trim( (string) $row['expiry'] ) ) {
 			$exp = WBE_Jalali::parse_to_ymd( $row['expiry'], $calendar );
 			if ( '' !== $exp ) {

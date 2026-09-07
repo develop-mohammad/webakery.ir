@@ -225,6 +225,27 @@ $res_row = WBE_Engine::bulk_row_from_record( 1, 'x', 'S', $bulk, 'gregorian', ''
 wbe_check( 'ردیف گروهی فیلد رزرو دارد', '90000' === $res_row['res_price'] && 8 === (int) $res_row['res_stock'] );
 wbe_check( 'res_price عملیات بچ است', true === WBE_Engine::has_batch_ops( array( 'res_price' => 1 ) ) );
 
+$three = array(
+	array( 'id' => 'a', 'price' => '100', 'discount' => 0, 'stock' => 10, 'expiry' => '2026-06-01' ),
+	array( 'id' => 'b', 'price' => '120', 'discount' => 0, 'stock' => 20, 'expiry' => '2027-01-01' ),
+	array( 'id' => 'c', 'price' => '150', 'discount' => 0, 'stock' => 15, 'expiry' => '2029-01-01' ),
+);
+$rb = WBE_Engine::reserve_batches( $three, '2026-01-15' );
+wbe_check( 'دو بچ رزرو از سه بچ', 2 === count( $rb ) );
+$replaced = WBE_Engine::replace_reserve_batches(
+	$three,
+	array(
+		array( 'price' => 120, 'stock' => 20, 'expiry' => '2027-01-01', 'discount' => 0 ),
+		array( 'price' => 150, 'stock' => 15, 'expiry' => '2029-01-01', 'discount' => 0 ),
+		array( 'price' => 180, 'stock' => 5, 'expiry' => '2030-01-01', 'discount' => 0 ),
+	),
+	'2026-01-15',
+	'gregorian'
+);
+wbe_check( 'جایگزینی رزروها تعداد را عوض می‌کند', 4 === count( $replaced ) && '100' === (string) $replaced[0]['price'] );
+$multi_row = WBE_Engine::bulk_row_from_record( 1, 'x', 'S', $three, 'gregorian', '', '', '2026-01-15' );
+wbe_check( 'ردیف گروهی همه رزروها را دارد', 2 === count( $multi_row['reserves'] ) && 20 === (int) $multi_row['reserves'][0]['stock'] );
+
 $expired_only = array(
 	array( 'id' => 'old', 'price' => '10', 'stock' => 7, 'expiry' => '2025-12-01' ),
 );

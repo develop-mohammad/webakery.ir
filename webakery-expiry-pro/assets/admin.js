@@ -209,11 +209,14 @@
 		lastCheck = this;
 	});
 
-	$(document).on('input change', '.wbe-bulk-row [data-field]', function () {
+	$(document).on('input change', '.wbe-bulk-row [data-field], .wbe-bulk-reserves-row [data-field]', function () {
 		var $i = $(this);
-		var $tr = $i.closest('.wbe-bulk-row');
-		if (String($i.val()) !== String($i.attr('data-orig'))) {
-			$tr.addClass('is-dirty');
+		var $resRow = $i.closest('.wbe-bulk-reserves-row');
+		var $tr = $resRow.length
+			? $('.wbe-bulk-row[data-id="' + $resRow.data('parent-id') + '"]')
+			: $i.closest('.wbe-bulk-row');
+		if (!$tr.length) {
+			return;
 		}
 		var dirty = false;
 		$tr.find('[data-field]').each(function () {
@@ -222,6 +225,16 @@
 				return false;
 			}
 		});
+		if (!dirty) {
+			$('.wbe-bulk-reserves-row[data-parent-id="' + $tr.data('id') + '"]')
+				.find('[data-field]')
+				.each(function () {
+					if (String($(this).val()) !== String($(this).attr('data-orig'))) {
+						dirty = true;
+						return false;
+					}
+				});
+		}
 		$tr.toggleClass('is-dirty', dirty);
 		if ($i.data('field') === 'sale') {
 			$i.data('manual', true);
@@ -232,7 +245,7 @@
 				var regular = parseFloat($tr.find('[data-field="regular"]').val()) || 0;
 				var disc = parseFloat($tr.find('[data-field="discount"]').val()) || 0;
 				disc = Math.max(0, Math.min(100, disc));
-				var sale = disc > 0 ? Math.round(regular * (100 - disc) / 100) : regular;
+				var sale = disc > 0 ? Math.round((regular * (100 - disc)) / 100) : regular;
 				$sale.val(sale);
 			}
 		}
@@ -247,12 +260,90 @@
 			hay += ' ' + String($tr.find('[data-field="name"]').val() || '').toLowerCase();
 			hay += ' ' + String($tr.find('[data-field="sku"]').val() || '').toLowerCase();
 			var show = !q || hay.indexOf(q) !== -1;
-			$(this).toggle(show);
+			$tr.toggle(show);
+			$('.wbe-bulk-reserves-row[data-parent-id="' + $tr.data('id') + '"]').toggle(show);
 			if (show) {
 				n++;
 			}
 		});
 		$('#wbe-bulk-count').text(n + ' محصول');
+	});
+
+	function reserveTpl(pid, idx, ph) {
+		return (
+			'<tr class="wbe-reserve-mini-row"><td>' +
+			(idx + 1) +
+			'</td><td><input type="hidden" name="wbe_row[' +
+			pid +
+			'][reserves][' +
+			idx +
+			'][id]" value="" /><input type="text" class="small-text" data-field="reserves.' +
+			idx +
+			'.price" data-orig="" name="wbe_row[' +
+			pid +
+			'][reserves][' +
+			idx +
+			'][price]" value="" dir="ltr" /></td><td><input type="text" class="small-text" data-field="reserves.' +
+			idx +
+			'.discount" data-orig="" name="wbe_row[' +
+			pid +
+			'][reserves][' +
+			idx +
+			'][discount]" value="" dir="ltr" /></td><td><input type="text" class="small-text" data-field="reserves.' +
+			idx +
+			'.stock" data-orig="" name="wbe_row[' +
+			pid +
+			'][reserves][' +
+			idx +
+			'][stock]" value="" dir="ltr" /></td><td><input type="text" class="small-text" data-field="reserves.' +
+			idx +
+			'.expiry" data-orig="" name="wbe_row[' +
+			pid +
+			'][reserves][' +
+			idx +
+			'][expiry]" value="" placeholder="' +
+			(ph || '') +
+			'" dir="ltr" /></td><td><button type="button" class="button-link wbe-bulk-remove-reserve">حذف</button></td></tr>'
+		);
+	}
+
+	function renumberReserves($body) {
+		$body.find('tr.wbe-reserve-mini-row').each(function (i) {
+			var $row = $(this);
+			$row.find('td:first').text(i + 1);
+			$row.find('input[name]').each(function () {
+				this.name = this.name.replace(/\[reserves\]\[\d+\]/, '[reserves][' + i + ']');
+			});
+			$row.find('[data-field]').each(function () {
+				var f = String($(this).attr('data-field') || '');
+				$(this).attr('data-field', f.replace(/^reserves\.\d+\./, 'reserves.' + i + '.'));
+			});
+		});
+	}
+
+	$(document).on('click', '.wbe-bulk-add-reserve', function (e) {
+		e.preventDefault();
+		var pid = $(this).data('id');
+		var $body = $('.wbe-reserves-body[data-id="' + pid + '"]');
+		$body.find('.wbe-reserve-empty-hint').remove();
+		var idx = $body.find('tr.wbe-reserve-mini-row').length;
+		var ph = $('#wbe_expiry').attr('placeholder') || '';
+		$body.append(reserveTpl(pid, idx, ph));
+		$('.wbe-bulk-row[data-id="' + pid + '"]').addClass('is-dirty');
+	});
+
+	$(document).on('click', '.wbe-bulk-remove-reserve', function (e) {
+		e.preventDefault();
+		var $body = $(this).closest('.wbe-reserves-body');
+		var pid = $body.data('id');
+		$(this).closest('tr').remove();
+		renumberReserves($body);
+		if (!$body.find('tr.wbe-reserve-mini-row').length) {
+			$body.html(
+				'<tr class="wbe-reserve-empty-hint"><td colspan="6" class="wbe-muted">رزروی نیست — «افزودن رزرو» را بزنید.</td></tr>'
+			);
+		}
+		$('.wbe-bulk-row[data-id="' + pid + '"]').addClass('is-dirty').data('reservesCleared', true);
 	});
 
 	function changeAmount(current, mode, value) {
@@ -416,6 +507,30 @@
 					}
 				});
 			}
+			var $resBody = $('.wbe-reserves-body[data-id="' + id + '"]');
+			var reservesDirty = !!$tr.data('reservesCleared');
+			if (!reservesDirty && $resBody.length) {
+				$resBody.find('[data-field]').each(function () {
+					if (String($(this).val()) !== String($(this).attr('data-orig'))) {
+						reservesDirty = true;
+						return false;
+					}
+				});
+			}
+			if (reservesDirty && $resBody.length) {
+				var list = [];
+				$resBody.find('tr.wbe-reserve-mini-row').each(function () {
+					var $rr = $(this);
+					list.push({
+						id: $rr.find('input[name*="[id]"]').val() || '',
+						price: $rr.find('input[name*="[price]"]').val() || '',
+						discount: $rr.find('input[name*="[discount]"]').val() || '',
+						stock: $rr.find('input[name*="[stock]"]').val() || '',
+						expiry: $rr.find('input[name*="[expiry]"]').val() || ''
+					});
+				});
+				row.reserves = list;
+			}
 			if (Object.keys(row).length) {
 				rows[id] = row;
 			}
@@ -448,7 +563,12 @@
 			$tr.find('[data-field]').each(function () {
 				$(this).attr('data-orig', $(this).val()).removeData('manual');
 			});
-			$tr.removeData('addBatch');
+			$('.wbe-bulk-reserves-row[data-parent-id="' + id + '"]')
+				.find('[data-field]')
+				.each(function () {
+					$(this).attr('data-orig', $(this).val());
+				});
+			$tr.removeData('addBatch').removeData('reservesCleared');
 			$tr.removeClass('is-dirty');
 		});
 	}

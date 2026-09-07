@@ -50,6 +50,47 @@ class WBE_Engine {
 	 * @return int
 	 */
 	/**
+	 * فهرست بچ‌های رزرو (غیر فعال) به‌ترتیب.
+	 *
+	 * @param array  $batches
+	 * @param string $today
+	 * @return array<int,array>
+	 */
+	public static function reserve_batches( array $batches, $today ) {
+		$active = self::active_index( $batches, $today );
+		$out    = array();
+		foreach ( $batches as $i => $batch ) {
+			if ( null !== $active && (int) $i === (int) $active ) {
+				continue;
+			}
+			$out[] = $batch;
+		}
+		return $out;
+	}
+
+	/**
+	 * جایگزینی همهٔ بچ‌های رزرو با فهرست جدید؛ بچ فعال حفظ می‌شود.
+	 *
+	 * @param array  $batches
+	 * @param array  $reserve_rows ردیف‌های خام رزرو
+	 * @param string $today
+	 * @param string $calendar
+	 * @return array
+	 */
+	public static function replace_reserve_batches( array $batches, array $reserve_rows, $today, $calendar = 'gregorian' ) {
+		$active_idx = self::active_index( $batches, $today );
+		$out        = array();
+		if ( null !== $active_idx && isset( $batches[ $active_idx ] ) ) {
+			$out[] = $batches[ $active_idx ];
+		}
+		$san = self::sanitize_batches( $reserve_rows, $calendar );
+		foreach ( $san as $row ) {
+			$out[] = $row;
+		}
+		return $out;
+	}
+
+	/**
 	 * ایندکس اولین بچ رزرو (غیر فعال).
 	 *
 	 * @param array  $batches
@@ -813,6 +854,9 @@ class WBE_Engine {
 			|| array_key_exists( 'res_stock', $ops ) || ! empty( $ops['res_expiry'] ) ) {
 			return true;
 		}
+		if ( array_key_exists( 'reserves', $ops ) && is_array( $ops['reserves'] ) ) {
+			return true;
+		}
 		if ( ! empty( $ops['expiry'] ) ) {
 			return true;
 		}
@@ -841,7 +885,12 @@ class WBE_Engine {
 			$batches = self::set_reserved_stock( $batches, (int) $ops['reserved'], $today );
 		}
 
-		$batches = self::apply_bulk_to_reserve( $batches, $ops, $today );
+		if ( array_key_exists( 'reserves', $ops ) && is_array( $ops['reserves'] ) ) {
+			$cal     = isset( $ops['calendar'] ) ? (string) $ops['calendar'] : 'gregorian';
+			$batches = self::replace_reserve_batches( $batches, $ops['reserves'], $today, $cal );
+		} else {
+			$batches = self::apply_bulk_to_reserve( $batches, $ops, $today );
+		}
 
 		if ( ! empty( $ops['add_batch'] ) && is_array( $ops['add_batch'] ) ) {
 			$cal     = isset( $ops['calendar'] ) ? (string) $ops['calendar'] : 'gregorian';
@@ -853,6 +902,7 @@ class WBE_Engine {
 		}
 		$has_res_ops = array_key_exists( 'res_price', $ops ) || array_key_exists( 'res_discount', $ops )
 			|| array_key_exists( 'res_stock', $ops ) || ! empty( $ops['res_expiry'] )
+			|| ( array_key_exists( 'reserves', $ops ) && is_array( $ops['reserves'] ) )
 			|| ( array_key_exists( 'reserved', $ops ) && null !== $ops['reserved'] && '' !== $ops['reserved'] );
 		// فقط افزودن بچ / تنظیم رزرو، بدون تغییر بچ فعال.
 		$only_extra = ! empty( $ops['add_batch'] ) || $has_res_ops;
@@ -992,6 +1042,27 @@ class WBE_Engine {
 		$res_stock = $reserve ? (int) $reserve['stock'] : '';
 		$res_exp   = ( $reserve && ! empty( $reserve['expiry'] ) ) ? (string) $reserve['expiry'] : '';
 
+		$fmt = function ( $ymd ) use ( $calendar ) {
+			if ( ! $ymd || ! class_exists( 'WBE_Jalali' ) ) {
+				return '';
+			}
+			return WBE_Jalali::format_ymd( $ymd, $calendar, false );
+		};
+
+		$reserves_out = array();
+		foreach ( self::reserve_batches( $batches, $today ) as $rb ) {
+			$disc = self::discount_of( $rb );
+			$exp  = isset( $rb['expiry'] ) ? (string) $rb['expiry'] : '';
+			$reserves_out[] = array(
+				'id'        => isset( $rb['id'] ) ? (string) $rb['id'] : '',
+				'price'     => isset( $rb['price'] ) ? (string) $rb['price'] : '',
+				'discount'  => $disc > 0 ? (int) $disc : '',
+				'stock'     => isset( $rb['stock'] ) ? (int) $rb['stock'] : 0,
+				'expiry'    => $exp,
+				'expiry_fa' => $fmt( $exp ),
+			);
+		}
+
 		if ( ! $active ) {
 			$regular  = isset( $wc['regular'] ) ? (string) $wc['regular'] : '';
 			$wc_sale  = isset( $wc['sale'] ) ? $wc['sale'] : '';
@@ -1001,12 +1072,6 @@ class WBE_Engine {
 		}
 		$from = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_from ) : '';
 		$to   = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_to ) : '';
-		$fmt  = function ( $ymd ) use ( $calendar ) {
-			if ( ! $ymd || ! class_exists( 'WBE_Jalali' ) ) {
-				return '';
-			}
-			return WBE_Jalali::format_ymd( $ymd, $calendar, false );
-		};
 		return array(
 			'id'             => (int) $id,
 			'name'           => (string) $title,
@@ -1022,6 +1087,7 @@ class WBE_Engine {
 			'res_stock'      => $res_stock,
 			'res_expiry'     => $res_exp,
 			'res_expiry_fa'  => $fmt( $res_exp ),
+			'reserves'       => $reserves_out,
 			'from'           => $from,
 			'to'             => $to,
 			'from_fa'        => $fmt( $from ),
@@ -1029,7 +1095,7 @@ class WBE_Engine {
 			'expiry'         => $expiry,
 			'expiry_fa'      => $fmt( $expiry ),
 			'has_active'     => (bool) $active,
-			'has_reserve'    => (bool) $reserve,
+			'has_reserve'    => ! empty( $reserves_out ),
 			'has_batches'    => ! empty( $batches ),
 			'brand'          => isset( $wc['brand'] ) ? (string) $wc['brand'] : '',
 		);
