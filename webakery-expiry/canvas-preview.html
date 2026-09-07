@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>انقضای کالا — پیش‌نمایش</title>
+<link rel="stylesheet" href="assets/admin.css" />
+<link rel="stylesheet" href="assets/frontend.css" />
+<style>
+  body { margin: 0; font-family: Tahoma, sans-serif; background: #f0f0f1; color: #1d2327; }
+  .page { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; }
+  .note { color: #646970; font-size: 13px; margin: 0 0 18px; }
+  .grid { display: grid; gap: 18px; }
+  .card { background: #fff; border: 1px solid #c3c4c7; padding: 16px; }
+  .price { font-size: 22px; margin: 0; }
+  .muted { color: #646970; font-size: 13px; }
+  .shop { font-family: Georgia, "Times New Roman", serif; color: #111; background: #fff; }
+  .button { background:#2271b1; color:#fff; border:0; padding:6px 12px; cursor:pointer; font:inherit; }
+  .wbe-remove-batch { background:none; border:0; cursor:pointer; color:#b91c1c; font:inherit; }
+  .wbe-batches-table th, .wbe-batches-table td, .wbe-report th, .wbe-report td { border-bottom: 1px solid #dcdcde; padding: 8px; text-align: right; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1>انقضای کالا — پیش‌نمایش رابط</h1>
+    <p class="note">سازنده webakery.ir — محمد حاجی مهدیخانی. مشتری دکمه + نمی‌بیند؛ فقط تاریخ انقضای بچ فعال نمایش داده می‌شود.</p>
+
+    <div class="grid">
+      <section class="card">
+        <strong>پیشخوان — کنار قیمت محصول</strong>
+        <p class="muted">دکمه + فقط اینجا است. تقویم این محصول: شمسی (override).</p>
+        <div class="wbe-product-panel" id="wbe-product-panel">
+          <p class="form-field wbe-countdown-field">
+            <label class="wbe-inline-check"><input type="checkbox" /> تایمر «مانده تا پایان کمپین» را برای این محصول نشان نده</label>
+          </p>
+          <div class="wbe-batches">
+            <div class="wbe-batches__head">
+              <strong>قیمت رزرو، موجودی و تاریخ انقضا</strong>
+              <button type="button" class="button wbe-add-batch" id="demo-add">+ افزودن بچ</button>
+            </div>
+            <table class="widefat wbe-batches-table" style="width:100%;border-collapse:collapse">
+              <thead>
+                <tr><th>قیمت</th><th>تخفیف ٪</th><th>موجودی</th><th>تاریخ انقضا</th><th></th></tr>
+              </thead>
+              <tbody id="wbe-batches-body">
+                <tr>
+                  <td><input class="short" value="180000" dir="ltr" /></td>
+                  <td><input class="short wbe-disc" value="10" dir="ltr" /></td>
+                  <td><input class="short" value="12" /></td>
+                  <td><input class="short" value="1405/01/10" dir="ltr" /></td>
+                  <td><button type="button" class="wbe-remove-batch">حذف</button></td>
+                </tr>
+                <tr>
+                  <td><input class="short" value="165000" dir="ltr" /></td>
+                  <td><input class="short wbe-disc" value="" placeholder="۰" dir="ltr" /></td>
+                  <td><input class="short" value="40" /></td>
+                  <td><input class="short" value="1405/06/01" dir="ltr" /></td>
+                  <td><button type="button" class="wbe-remove-batch">حذف</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <table hidden>
+              <tbody>
+                <tr id="wbe-batch-tpl">
+                  <td><input class="short" data-name="price" placeholder="قیمت" dir="ltr" /></td>
+                  <td><input class="short wbe-disc" data-name="discount" placeholder="۰" dir="ltr" /></td>
+                  <td><input class="short" data-name="stock" placeholder="موجودی" /></td>
+                  <td><input class="short wbe-date" data-name="expiry" placeholder="۱۴۰۵/۰۶/۰۵" dir="ltr" /></td>
+                  <td><button type="button" class="wbe-remove-batch">حذف</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card shop">
+        <h2>شیر خشک نمونه</h2>
+        <div class="wbe-expiry wbe-expiry--block">
+          <p class="wbe-expiry__row"><span class="wbe-expiry__label">تاریخ انقضا</span> <span class="wbe-expiry__value">۱۴۰۵/۰۱/۱۰</span></p>
+          <div class="wbe-countdown" data-end="1893455999">
+            <span class="wbe-countdown__title">مانده تا پایان کمپین</span>
+            <span class="wbe-countdown__units">
+              <span class="wbe-countdown__unit" data-unit="d"><span class="wbe-countdown__num">۰۲</span><span class="wbe-countdown__lbl">روز</span></span>
+              <span class="wbe-countdown__unit" data-unit="h"><span class="wbe-countdown__num">۰۵</span><span class="wbe-countdown__lbl">ساعت</span></span>
+              <span class="wbe-countdown__unit" data-unit="m"><span class="wbe-countdown__num">۱۲</span><span class="wbe-countdown__lbl">دقیقه</span></span>
+              <span class="wbe-countdown__unit" data-unit="s"><span class="wbe-countdown__num">۴۴</span><span class="wbe-countdown__lbl">ثانیه</span></span>
+            </span>
+          </div>
+        </div>
+        <p class="muted">توضیحات کوتاه محصول از اینجا شروع می‌شود. تاریخ انقضا بالای متن است؛ تاریخ فروش فوق‌العاده نشان داده نمی‌شود.</p>
+        <p class="price wbe-sale"><del>۱۸۰٬۰۰۰</del> ۱۶۲٬۰۰۰ تومان</p>
+      </section>
+
+      <section class="card shop">
+        <strong>فروشگاه — لیست محصولات</strong>
+        <p class="muted">مرتب‌سازی:
+          <select>
+            <option>تاریخ انقضا: نزدیک‌ترین</option>
+            <option>تاریخ انقضا: دورترین</option>
+          </select>
+        </p>
+        <div class="wbe-expiry wbe-expiry--loop">
+          <span class="wbe-expiry__label">تاریخ انقضا</span>
+          <span class="wbe-expiry__value">۱۴۰۵/۰۱/۱۰</span>
+        </div>
+      </section>
+
+      <section class="card" id="wbe-settings-preview">
+        <strong>تنظیمات — زمان تا پایان کمپین</strong>
+        <p class="muted"><label><input type="checkbox" checked /> تایمر معکوس «مانده تا پایان کمپین» را نشان بده</label></p>
+        <p class="muted">تیک را بردارید تا روی همه محصولات خاموش شود.</p>
+        <strong>آستانه نوتیف ادمین</strong>
+        <p class="muted">خودتان مشخص کنید چند روز مانده به انقضا نوتیف بیاید. با + هر آستانه‌ای که لازم دارید اضافه کنید.</p>
+        <div id="wbe-alert-points">
+          <p class="wbe-point-row">وقتی <input type="number" min="0" max="3650" class="small-text" name="wbe_settings[alert_points][]" value="7" /> روز تا انقضا مانده <button type="button" class="button-link wbe-remove-point">حذف</button></p>
+          <p class="wbe-point-row">وقتی <input type="number" min="0" max="3650" class="small-text" name="wbe_settings[alert_points][]" value="30" /> روز تا انقضا مانده <button type="button" class="button-link wbe-remove-point">حذف</button></p>
+          <p class="wbe-point-row">وقتی <input type="number" min="0" max="3650" class="small-text" name="wbe_settings[alert_points][]" value="60" /> روز تا انقضا مانده <button type="button" class="button-link wbe-remove-point">حذف</button></p>
+        </div>
+        <button type="button" class="button wbe-add-point">+ افزودن آستانه</button>
+        <p class="muted" style="margin-top:12px">زمان ارسال ایمیل / پیامک</p>
+        <label><input type="radio" name="notify_mode" value="on_point" checked /> فقط وقتی محصول تازه به یکی از آستانه‌ها رسید</label><br>
+        <label><input type="radio" name="notify_mode" value="daily" /> هر روز، تا وقتی داخل بازه هستند</label>
+      </section>
+
+      <section class="card">
+        <strong>آلارم پیشخوان</strong>
+        <div class="notice notice-warning wbe-alarm" style="border-right:4px solid #dba617;background:#fff8e5;padding:8px 12px">
+          <p><strong>هشدار انقضای کالا:</strong> ۱ مورد تا ۷ روز، ۱ مورد تا ۳۰ روز</p>
+          <ul class="wbe-alarm-list">
+            <li>شیر خشک نمونه — ۱۴۰۵/۰۱/۱۰ (۱۲ روز)</li>
+            <li>بیسکویت جو — ۱۴۰۵/۰۲/۲۰ (۴۵ روز)</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="card" id="wbe-bulk-preview">
+        <strong>پیشخوان — ویرایش گروهی همه محصولات</strong>
+        <p class="muted">انقضای کالا ← ویرایش گروهی. همه محصولات ووکامرس در همین افزونه؛ افزونهٔ جدا لازم نیست. نام، SKU، وضعیت، قیمت، موجودی و انقضا. فیلتر دسته و برند. اگر انقضا را پر کنید بچ ساخته می‌شود.</p>
+        <form class="wbe-filters" style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px">
+          <select><option>همه دسته‌بندی‌ها</option><option>نوزاد</option></select>
+          <select><option>همه برندها</option><option selected>نستله</option></select>
+          <button type="button" class="button">اعمال فیلتر</button>
+        </form>
+        <div class="wbe-bulk-toolbar">
+          <div class="wbe-bulk-field">
+            <label>تخفیف ٪</label>
+            <input type="text" value="20" dir="ltr" />
+          </div>
+          <div class="wbe-bulk-field">
+            <label>قیمت جشنواره</label>
+            <select><option>تنظیم روی</option></select>
+            <input class="wbe-bulk-value" type="text" value="162000" dir="ltr" />
+          </div>
+          <div class="wbe-bulk-field">
+            <label>موجودی</label>
+            <select><option>افزایش مبلغ</option></select>
+            <input class="wbe-bulk-value" type="text" value="10" dir="ltr" />
+          </div>
+          <div class="wbe-bulk-field">
+            <label>وضعیت</label>
+            <select><option>بدون تغییر</option><option>پیش‌نویس</option></select>
+          </div>
+          <button type="button" class="button">اعمال روی انتخاب‌شده‌ها</button>
+        </div>
+        <table class="widefat wbe-report wbe-bulk-table" style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr><th></th><th>نام</th><th>SKU</th><th>وضعیت</th><th>تخفیف ٪</th><th>جشنواره</th><th>موجودی</th><th>انقضا</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><input type="checkbox" checked /></td><td>شیر خشک نمونه<div class="muted">نستله</div></td><td>M1</td><td>منتشرشده</td><td>10</td><td>162000</td><td>12</td><td>۱۴۰۵/۰۱/۱۰</td></tr>
+            <tr><td><input type="checkbox" checked /></td><td>بیسکویت جو</td><td>B2</td><td>منتشرشده</td><td>0</td><td>90000</td><td>80</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <table class="widefat wbe-report" style="width:100%;margin-top:10px;border-collapse:collapse">
+          <thead>
+            <tr><th>محصول</th><th>برند</th><th>انقضا</th><th>قیمت قبل تخفیف</th><th>موجودی</th></tr>
+          </thead>
+          <tbody>
+            <tr class="wbe-row--near"><td>شیر خشک نمونه</td><td>نستله</td><td>۱۴۰۵/۰۱/۱۰</td><td>180000</td><td>12</td></tr>
+            <tr><td>بیسکویت جو</td><td>کامور</td><td>۱۴۰۵/۰۹/۲۰</td><td>90000</td><td>80</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+  <script>
+    document.querySelector('.wbe-add-batch').addEventListener('click', function (e) {
+      e.preventDefault();
+      var tpl = document.getElementById('wbe-batch-tpl');
+      var body = document.getElementById('wbe-batches-body');
+      var row = tpl.cloneNode(true);
+      row.removeAttribute('id');
+      body.appendChild(row);
+    });
+    document.addEventListener('click', function (e) {
+      if (e.target.classList.contains('wbe-remove-batch')) {
+        e.preventDefault();
+        var tr = e.target.closest('tr');
+        var body = document.getElementById('wbe-batches-body');
+        if (body.querySelectorAll('tr').length <= 1) return;
+        if (tr && tr.id !== 'wbe-batch-tpl') tr.remove();
+        return;
+      }
+      if (e.target.classList.contains('wbe-add-point')) {
+        e.preventDefault();
+        var box = document.getElementById('wbe-alert-points');
+        var p = document.createElement('p');
+        p.className = 'wbe-point-row';
+        p.innerHTML = 'وقتی <input type="number" min="0" max="3650" class="small-text" name="wbe_settings[alert_points][]" value="14" /> روز تا انقضا مانده <button type="button" class="button-link wbe-remove-point">حذف</button>';
+        box.appendChild(p);
+        return;
+      }
+      if (e.target.classList.contains('wbe-remove-point')) {
+        e.preventDefault();
+        var box = document.getElementById('wbe-alert-points');
+        if (box.querySelectorAll('.wbe-point-row').length <= 1) {
+          var input = box.querySelector('input');
+          if (input) input.value = '7';
+          return;
+        }
+        e.target.closest('.wbe-point-row').remove();
+      }
+    });
+  </script>
+  <script src="assets/frontend.js"></script>
+  <script>
+    var el = document.querySelector('.wbe-countdown[data-end]');
+    if (el) {
+      el.setAttribute('data-end', String(Math.floor(Date.now() / 1000) + (2 * 86400) + (5 * 3600) + (12 * 60) + 44));
+    }
+  </script>
+</body>
+</html>
