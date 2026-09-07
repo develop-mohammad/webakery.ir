@@ -71,6 +71,51 @@
 	max-width: 980px;
 }
 
+.wbe-active-box {
+	margin: 12px 0;
+	padding: 12px;
+	border: 1px solid #bbf7d0;
+	background: #f0fdf4;
+	border-radius: 4px;
+}
+
+.wbe-active-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px 16px;
+}
+
+.wbe-active-grid .form-field {
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+.wbe-active-grid label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.wbe-active-grid input,
+.wbe-active-grid select {
+	width: 100%;
+	max-width: 100%;
+}
+
+.wbe-reserve-box {
+	margin: 12px 0;
+	padding: 12px;
+	border: 1px solid #fed7aa;
+	background: #fffbeb;
+	border-radius: 4px;
+}
+
+@media (max-width: 782px) {
+	.wbe-active-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
 .wbe-batches__head {
 	display: flex;
 	align-items: center;

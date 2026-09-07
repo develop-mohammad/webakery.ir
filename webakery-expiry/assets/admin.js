@@ -5,7 +5,10 @@
 		var max = -1;
 		$('#wbe-batches-body tr').each(function () {
 			$(this).find('input[name]').each(function () {
-				var m = (this.name || '').match(/wbe_batches\[(\d+)\]/);
+				var m = (this.name || '').match(/wbe_reserve\[(\d+)\]/);
+				if (!m) {
+					m = (this.name || '').match(/wbe_batches\[(\d+)\]/);
+				}
 				if (m) {
 					max = Math.max(max, parseInt(m[1], 10));
 				}
@@ -20,13 +23,15 @@
 		if (!$tpl.length) {
 			return;
 		}
+		$('#wbe-batches-body tr.wbe-reserve-empty').remove();
 		var i = nextIndex();
 		var $row = $tpl.clone().removeAttr('id');
+		var prefix = $('#wbe-batches-body').closest('.wbe-reserve-box').length ? 'wbe_reserve' : 'wbe_batches';
 		$row.find('[data-name]').each(function () {
 			var name = $(this).attr('data-name');
-			$(this).attr('name', 'wbe_batches[' + i + '][' + name + ']').removeAttr('data-name');
+			$(this).attr('name', prefix + '[' + i + '][' + name + ']').removeAttr('data-name');
 		});
-		var wcPrice = $('#_regular_price').val() || $('#wbe-product-panel').attr('data-wc-price') || '';
+		var wcPrice = $('#_regular_price').val() || $('#wbe-product-panel').attr('data-wc-price') || $('#wbe_active_price').val() || '';
 		if (wcPrice && !$row.find('input[name$="[price]"]').val()) {
 			$row.find('input[name$="[price]"]').val(wcPrice);
 		}
@@ -36,11 +41,10 @@
 	$(document).on('click', '.wbe-remove-batch', function (e) {
 		e.preventDefault();
 		var $body = $('#wbe-batches-body');
-		if ($body.find('tr').length <= 1) {
-			$(this).closest('tr').find('input').val('');
-			return;
-		}
 		$(this).closest('tr').remove();
+		if (!$body.find('tr.wbe-batch-row').not('.wbe-reserve-empty').length) {
+			$body.html('<tr class="wbe-batch-row is-reserve wbe-reserve-empty"><td colspan="5" class="wbe-muted">هنوز بچ رزرو ندارید — «افزودن بچ رزرو» را بزنید.</td></tr>');
+		}
 	});
 
 	$(document).on('click', '.wbe-add-point', function (e) {
@@ -71,6 +75,11 @@
 	$(document).on('change', '#_regular_price', function () {
 		var val = $(this).val();
 		var prev = $(this).data('wbePrev');
+		var $active = $('#wbe_active_price');
+		if ($active.length && (String($active.val()) === String(prev) || !$active.val())) {
+			$active.val(val);
+			return;
+		}
 		var $rows = $('#wbe-batches-body tr');
 		if (!$rows.length) {
 			return;
@@ -90,8 +99,13 @@
 		}
 	});
 
+	$(document).on('change', '#wbe_active_price', function () {
+		$('#_regular_price').val($(this).val());
+		syncSaleFromDisc($('#wbe-product-panel .wbe-active-box'));
+	});
+
 	$(document).on('change', '#wbe-batches-body input[name*="[price]"]', function () {
-		if ($('#wbe-batches-body tr').length === 1) {
+		if ($('#wbe-batches-body tr').length === 1 && !$('#wbe_active_price').length) {
 			$('#_regular_price').val($(this).val());
 		}
 		syncSaleFromDisc($(this).closest('tr'));
@@ -113,33 +127,43 @@
 		return isNaN(n) ? NaN : n;
 	}
 
-	function syncSaleFromDisc($tr) {
-		var price = parseNum($tr.find('.wbe-batch-price, input[name*="[price]"]').val());
-		var disc = parseNum($tr.find('.wbe-disc').val());
+	function syncSaleFromDisc($ctx) {
+		var $price = $ctx.find('.wbe-batch-price, #wbe_active_price, input[name*="[price]"]').first();
+		var $disc = $ctx.find('.wbe-disc, #wbe_active_discount').first();
+		var $sale = $ctx.find('.wbe-batch-sale, #wbe_active_sale').first();
+		if (!$sale.length) {
+			return;
+		}
+		var price = parseNum($price.val());
+		var disc = parseNum($disc.val());
 		if (!(price > 0) || !(disc > 0) || disc >= 100) {
 			return;
 		}
-		var sale = Math.round(price * (100 - disc) / 100);
-		$tr.find('.wbe-batch-sale, input[name*="[sale]"]').val(sale);
+		$sale.val(Math.round((price * (100 - disc)) / 100));
 	}
 
-	function syncDiscFromSale($tr) {
-		var price = parseNum($tr.find('.wbe-batch-price, input[name*="[price]"]').val());
-		var sale = parseNum($tr.find('.wbe-batch-sale, input[name*="[sale]"]').val());
+	function syncDiscFromSale($ctx) {
+		var $price = $ctx.find('.wbe-batch-price, #wbe_active_price, input[name*="[price]"]').first();
+		var $disc = $ctx.find('.wbe-disc, #wbe_active_discount').first();
+		var $sale = $ctx.find('.wbe-batch-sale, #wbe_active_sale').first();
+		if (!$disc.length) {
+			return;
+		}
+		var price = parseNum($price.val());
+		var sale = parseNum($sale.val());
 		if (!(price > 0) || !(sale > 0) || sale >= price) {
 			return;
 		}
 		var disc = Math.round((1 - sale / price) * 100);
-		disc = Math.max(0, Math.min(100, disc));
-		$tr.find('.wbe-disc').val(disc);
+		$disc.val(Math.max(0, Math.min(100, disc)));
 	}
 
-	$(document).on('change input', '#wbe-batches-body .wbe-disc', function () {
-		syncSaleFromDisc($(this).closest('tr'));
+	$(document).on('change input', '#wbe_active_discount, #wbe-batches-body .wbe-disc', function () {
+		syncSaleFromDisc($(this).closest('.wbe-active-box, tr'));
 	});
 
-	$(document).on('change input', '#wbe-batches-body .wbe-batch-sale', function () {
-		syncDiscFromSale($(this).closest('tr'));
+	$(document).on('change input', '#wbe_active_sale, #wbe-batches-body .wbe-batch-sale', function () {
+		syncDiscFromSale($(this).closest('.wbe-active-box, tr'));
 	});
 
 	function refreshReservedTotal() {
@@ -154,19 +178,6 @@
 				sum += Math.floor(n);
 			}
 		});
-		// اگر کلاس is-reserve نبود، همه به‌جز اولین ردیف فعال فرضی
-		if (!$('#wbe-batches-body tr.is-reserve').length) {
-			sum = 0;
-			$('#wbe-batches-body tr').each(function (i) {
-				if (i === 0) {
-					return;
-				}
-				var n = parseNum($(this).find('input[name*="[stock]"]').val());
-				if (n > 0) {
-					sum += Math.floor(n);
-				}
-			});
-		}
 		$tot.text(String(sum));
 	}
 
