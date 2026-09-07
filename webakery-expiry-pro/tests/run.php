@@ -207,6 +207,24 @@ $via_ops = WBE_Engine::apply_bulk_to_active( $bulk, array( 'reserved' => 11 ), '
 wbe_check( 'عملیات reserved در گروهی', 11 === (int) $via_ops[1]['stock'] && 11 === WBE_Engine::reserved_stock( $via_ops, '2026-01-15' ) );
 wbe_check( 'reserved عملیات بچ است', true === WBE_Engine::has_batch_ops( array( 'reserved' => 3 ) ) );
 
+$res_edit = WBE_Engine::apply_bulk_to_reserve(
+	$bulk,
+	array(
+		'res_price'    => 88000,
+		'res_discount' => 10,
+		'res_stock'    => 20,
+		'res_expiry'   => '2026-11-15',
+	),
+	'2026-01-15'
+);
+wbe_check( 'ویرایش قیمت رزرو', '88000' === (string) $res_edit[1]['price'] );
+wbe_check( 'ویرایش تخفیف رزرو', 10 === (int) $res_edit[1]['discount'] );
+wbe_check( 'ویرایش موجودی رزرو', 20 === (int) $res_edit[1]['stock'] );
+wbe_check( 'ویرایش انقضای رزرو', '2026-11-15' === $res_edit[1]['expiry'] );
+$res_row = WBE_Engine::bulk_row_from_record( 1, 'x', 'S', $bulk, 'gregorian', '', '', '2026-01-15' );
+wbe_check( 'ردیف گروهی فیلد رزرو دارد', '90000' === $res_row['res_price'] && 8 === (int) $res_row['res_stock'] );
+wbe_check( 'res_price عملیات بچ است', true === WBE_Engine::has_batch_ops( array( 'res_price' => 1 ) ) );
+
 $expired_only = array(
 	array( 'id' => 'old', 'price' => '10', 'stock' => 7, 'expiry' => '2025-12-01' ),
 );

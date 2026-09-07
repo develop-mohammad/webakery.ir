@@ -14,12 +14,12 @@ if ( is_wp_error( $cats ) ) {
 $modes       = WBE_Admin_Bulk::mode_labels();
 $statuses    = WBE_Admin_Bulk::status_labels();
 $brands      = class_exists( 'WBE_Product' ) ? WBE_Product::brand_terms() : array();
-$show_res    = class_exists( 'WBE_Settings' ) ? WBE_Settings::show_reserved_stock() : false;
+$show_res    = class_exists( 'WBE_Settings' ) ? WBE_Settings::show_reserved_stock() : true;
 $needs_brand = empty( $needs_brand ) ? ! WBE_Admin_Bulk::has_brand_filter( $filters ) : (bool) $needs_brand;
 $ph_date     = ( 'jalali' === $calendar ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27';
 $action      = admin_url( 'admin-post.php' );
 $count       = is_array( $rows ) ? count( $rows ) : 0;
-$colspan     = $show_res ? 12 : 11;
+$colspan     = $show_res ? 15 : 11;
 $csv_url     = wp_nonce_url(
 	add_query_arg(
 		array(
@@ -37,7 +37,7 @@ $csv_url     = wp_nonce_url(
 ?>
 <div class="wrap wbe-wrap wbe-bulk-wrap" dir="rtl">
 	<h1>ویرایش گروهی محصول</h1>
-	<p class="wbe-sub">برای جلوگیری از کندی، ابتدا <strong>برند</strong> را انتخاب کنید؛ بعد محصولات همان برند لود می‌شوند. نام، SKU، وضعیت، قیمت، تخفیف، جشنواره، موجودی و انقضا را عوض کنید. ذخیره تکه‌تکه است.</p>
+	<p class="wbe-sub">ابتدا <strong>برند</strong> را انتخاب کنید. ستون‌های <strong>موجودی فعال</strong> همیشه هستند؛ ستون‌های <strong>موجودی رزرو</strong> با سوییچ پایین روشن/خاموش می‌شوند و تماماً قابل ویرایش‌اند.</p>
 
 	<div id="wbe-bulk-notice" hidden class="notice is-dismissible"></div>
 	<?php if ( $updated || $skipped ) : ?>
@@ -83,7 +83,7 @@ $csv_url     = wp_nonce_url(
 		<label class="wbe-check wbe-reserved-toggle">
 			<input type="hidden" name="wbe_show_reserved" value="0" />
 			<input type="checkbox" name="wbe_show_reserved" value="1" <?php checked( $show_res, true ); ?> />
-			نمایش ستون موجودی رزرو
+			نمایش و ویرایش موجودی رزرو
 		</label>
 		<button type="submit" class="button button-primary">اعمال فیلتر</button>
 		<?php if ( ! $needs_brand ) : ?>
@@ -104,7 +104,7 @@ $csv_url     = wp_nonce_url(
 
 		<div class="wbe-bulk-toolbar">
 			<div class="wbe-bulk-field">
-				<label for="wbe_regular_mode">قیمت اصلی</label>
+				<label for="wbe_regular_mode">قیمت اصلی (فعال)</label>
 				<select id="wbe_regular_mode" name="wbe_regular_mode" class="wbe-bulk-mode">
 					<?php foreach ( $modes as $key => $label ) : ?>
 						<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
@@ -113,7 +113,7 @@ $csv_url     = wp_nonce_url(
 				<input type="text" name="wbe_regular_value" class="wbe-bulk-value" placeholder="مبلغ یا درصد" dir="ltr" />
 			</div>
 			<div class="wbe-bulk-field">
-				<label for="wbe_discount">تخفیف ٪</label>
+				<label for="wbe_discount">تخفیف ٪ (فعال)</label>
 				<input type="text" id="wbe_discount" name="wbe_discount" placeholder="مثلاً ۲۰" dir="ltr" />
 			</div>
 			<div class="wbe-bulk-field">
@@ -126,15 +126,15 @@ $csv_url     = wp_nonce_url(
 				<input type="text" name="wbe_sale_value" class="wbe-bulk-value" placeholder="مبلغ فروش" dir="ltr" />
 			</div>
 			<div class="wbe-bulk-field">
-				<label for="wbe_sale_from">جشنواره از</label>
+				<label for="wbe_sale_from">شروع جشنواره</label>
 				<input type="text" id="wbe_sale_from" name="wbe_sale_from" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" />
 			</div>
 			<div class="wbe-bulk-field">
-				<label for="wbe_sale_to">جشنواره تا</label>
+				<label for="wbe_sale_to">پایان جشنواره</label>
 				<input type="text" id="wbe_sale_to" name="wbe_sale_to" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" />
 			</div>
 			<div class="wbe-bulk-field">
-				<label for="wbe_stock_mode">موجودی</label>
+				<label for="wbe_stock_mode">موجودی فعال</label>
 				<select id="wbe_stock_mode" name="wbe_stock_mode" class="wbe-bulk-mode">
 					<?php foreach ( $modes as $key => $label ) : ?>
 						<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
@@ -143,7 +143,7 @@ $csv_url     = wp_nonce_url(
 				<input type="text" name="wbe_stock_value" class="wbe-bulk-value" placeholder="تعداد" dir="ltr" />
 			</div>
 			<div class="wbe-bulk-field">
-				<label for="wbe_expiry">تاریخ انقضا</label>
+				<label for="wbe_expiry">انقضای فعال</label>
 				<input type="text" id="wbe_expiry" name="wbe_expiry" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" />
 			</div>
 			<div class="wbe-bulk-field">
@@ -171,11 +171,10 @@ $csv_url     = wp_nonce_url(
 			<div class="wbe-bulk-field wbe-bulk-add-batch">
 				<label>افزودن بچ رزرو جدید</label>
 				<input type="text" name="wbe_add_price" class="wbe-bulk-value" placeholder="قیمت اصلی" dir="ltr" />
-				<input type="text" name="wbe_add_sale" class="wbe-bulk-value" placeholder="جشنواره (اختیاری)" dir="ltr" />
 				<input type="text" name="wbe_add_discount" class="wbe-bulk-value" placeholder="تخفیف ٪" dir="ltr" />
 				<input type="text" name="wbe_add_stock" class="wbe-bulk-value" placeholder="موجودی" dir="ltr" />
 				<input type="text" name="wbe_add_expiry" class="wbe-bulk-value" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" />
-				<span class="wbe-muted">تاریخ انقضا + موجودی الزامی است؛ روی انتخاب‌شده‌ها به‌عنوان بچ رزرو اضافه می‌شود.</span>
+				<span class="wbe-muted">تاریخ انقضا + موجودی الزامی است.</span>
 			</div>
 			<div class="wbe-bulk-actions">
 				<button type="submit" class="button button-primary" name="wbe_bulk_mode" value="selected" id="wbe-bulk-apply-selected">اعمال روی انتخاب‌شده‌ها</button>
@@ -189,23 +188,32 @@ $csv_url     = wp_nonce_url(
 		</div>
 
 		<div class="wbe-bulk-scroll">
-			<table class="widefat striped wbe-report wbe-bulk-table">
+			<table class="widefat striped wbe-report wbe-bulk-table<?php echo $show_res ? ' wbe-bulk-table--with-reserve' : ''; ?>">
 				<thead>
+					<tr class="wbe-bulk-group-head">
+						<td class="check-column" rowspan="2"><input type="checkbox" id="wbe-bulk-check-all" /></td>
+						<th colspan="10" class="wbe-th-active">موجودی فعال</th>
+						<?php if ( $show_res ) : ?>
+							<th colspan="4" class="wbe-th-reserve">موجودی رزرو (قابل ویرایش)</th>
+						<?php endif; ?>
+					</tr>
 					<tr>
-						<td class="check-column"><input type="checkbox" id="wbe-bulk-check-all" /></td>
-						<th>نام</th>
+						<th>نام محصول</th>
 						<th>SKU</th>
 						<th>وضعیت</th>
 						<th>قیمت اصلی</th>
 						<th>تخفیف ٪</th>
 						<th>قیمت جشنواره</th>
-						<th>از</th>
-						<th>تا</th>
+						<th>شروع جشنواره</th>
+						<th>پایان جشنواره</th>
 						<th>موجودی</th>
+						<th>تاریخ انقضا</th>
 						<?php if ( $show_res ) : ?>
-							<th>موجودی رزرو</th>
+							<th>قیمت اصلی</th>
+							<th>تخفیف ٪</th>
+							<th>موجودی</th>
+							<th>تاریخ انقضا</th>
 						<?php endif; ?>
-						<th>انقضا</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -254,16 +262,19 @@ $csv_url     = wp_nonce_url(
 								<td><input type="text" class="small-text" data-field="from" data-orig="<?php echo esc_attr( $r['from_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][from]" value="<?php echo esc_attr( $r['from_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
 								<td><input type="text" class="small-text" data-field="to" data-orig="<?php echo esc_attr( $r['to_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][to]" value="<?php echo esc_attr( $r['to_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
 								<td><input type="text" class="small-text" data-field="stock" data-orig="<?php echo esc_attr( (string) $r['stock'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][stock]" value="<?php echo esc_attr( (string) $r['stock'] ); ?>" dir="ltr" /></td>
-								<?php if ( $show_res ) : ?>
-									<td><input type="text" class="small-text" data-field="reserved" data-orig="<?php echo esc_attr( (string) ( isset( $r['reserved'] ) ? $r['reserved'] : 0 ) ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][reserved]" value="<?php echo esc_attr( (string) ( isset( $r['reserved'] ) ? $r['reserved'] : 0 ) ); ?>" dir="ltr" title="موجودی رزرو (قابل ویرایش)" /></td>
-								<?php endif; ?>
 								<td><input type="text" class="small-text" data-field="expiry" data-orig="<?php echo esc_attr( $r['expiry_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][expiry]" value="<?php echo esc_attr( $r['expiry_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
+								<?php if ( $show_res ) : ?>
+									<td class="wbe-cell-reserve"><input type="text" class="small-text" data-field="res_price" data-orig="<?php echo esc_attr( isset( $r['res_price'] ) ? $r['res_price'] : '' ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][res_price]" value="<?php echo esc_attr( isset( $r['res_price'] ) ? $r['res_price'] : '' ); ?>" placeholder="—" dir="ltr" /></td>
+									<td class="wbe-cell-reserve"><input type="text" class="small-text" data-field="res_discount" data-orig="<?php echo esc_attr( (string) ( isset( $r['res_discount'] ) ? $r['res_discount'] : '' ) ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][res_discount]" value="<?php echo esc_attr( (string) ( isset( $r['res_discount'] ) ? $r['res_discount'] : '' ) ); ?>" placeholder="—" dir="ltr" /></td>
+									<td class="wbe-cell-reserve"><input type="text" class="small-text" data-field="res_stock" data-orig="<?php echo esc_attr( (string) ( isset( $r['res_stock'] ) ? $r['res_stock'] : '' ) ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][res_stock]" value="<?php echo esc_attr( (string) ( isset( $r['res_stock'] ) ? $r['res_stock'] : '' ) ); ?>" placeholder="—" dir="ltr" /></td>
+									<td class="wbe-cell-reserve"><input type="text" class="small-text" data-field="res_expiry" data-orig="<?php echo esc_attr( isset( $r['res_expiry_fa'] ) ? $r['res_expiry_fa'] : '' ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][res_expiry]" value="<?php echo esc_attr( isset( $r['res_expiry_fa'] ) ? $r['res_expiry_fa'] : '' ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
+								<?php endif; ?>
 							</tr>
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</tbody>
 			</table>
 		</div>
-		<p class="wbe-muted">سلول را مستقیم عوض کنید. قیمت جشنواره، تخفیف، موجودی فعال و (در صورت روشن بودن) موجودی رزرو قابل ویرایش‌اند. مبلغ جشنواره را می‌توانید عدد دلخواه بگذارید (مثلاً ۷۹۹۶۰). Shift+کلیک برای انتخاب بازه.</p>
+		<p class="wbe-muted">موجودی فعال: نام، SKU، وضعیت، قیمت، تخفیف، جشنواره، شروع/پایان جشنواره، موجودی، انقضا. موجودی رزرو: قیمت اصلی، تخفیف ٪، موجودی، تاریخ انقضا — همه قابل ویرایش. اگر رزرو نباشد، با پر کردن انقضا+موجودی رزرو ساخته می‌شود.</p>
 	</form>
 </div>

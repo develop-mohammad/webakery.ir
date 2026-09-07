@@ -265,6 +265,36 @@
 	z-index: 1;
 }
 
+.wbe-bulk-group-head th,
+.wbe-bulk-group-head td {
+	text-align: center;
+	font-size: 12px;
+}
+
+.wbe-bulk-table thead tr:nth-child(2) th {
+	top: 28px;
+	font-size: 11px;
+	white-space: nowrap;
+}
+
+.wbe-th-active {
+	background: #dcfce7 !important;
+	color: #166534;
+}
+
+.wbe-th-reserve {
+	background: #ffedd5 !important;
+	color: #9a3412;
+}
+
+.wbe-cell-reserve {
+	background: #fffbeb;
+}
+
+.wbe-bulk-table--with-reserve {
+	min-width: 1400px;
+}
+
 .wbe-filters {
 	display: flex;
 	flex-wrap: wrap;

@@ -49,6 +49,81 @@ class WBE_Engine {
 	 * @param string $today
 	 * @return int
 	 */
+	/**
+	 * ایندکس اولین بچ رزرو (غیر فعال).
+	 *
+	 * @param array  $batches
+	 * @param string $today
+	 * @return int|null
+	 */
+	public static function primary_reserve_index( array $batches, $today ) {
+		$active = self::active_index( $batches, $today );
+		foreach ( $batches as $i => $_b ) {
+			if ( null !== $active && (int) $i === (int) $active ) {
+				continue;
+			}
+			return (int) $i;
+		}
+		return null;
+	}
+
+	/**
+	 * اعمال ویرایش روی بچ رزرو اصلی (قیمت / تخفیف / موجودی / انقضا).
+	 * اگر رزرو نباشد و انقضا+موجودی آمده باشد، بچ رزرو جدید ساخته می‌شود.
+	 *
+	 * @param array  $batches
+	 * @param array  $ops      res_price, res_discount, res_stock, res_expiry, calendar
+	 * @param string $today
+	 * @return array
+	 */
+	public static function apply_bulk_to_reserve( array $batches, array $ops, $today ) {
+		$has = array_key_exists( 'res_price', $ops )
+			|| array_key_exists( 'res_discount', $ops )
+			|| array_key_exists( 'res_stock', $ops )
+			|| ! empty( $ops['res_expiry'] );
+		if ( ! $has ) {
+			return $batches;
+		}
+
+		$idx = self::primary_reserve_index( $batches, $today );
+		if ( null === $idx ) {
+			$cal   = isset( $ops['calendar'] ) ? (string) $ops['calendar'] : 'gregorian';
+			$row   = array(
+				'price'    => array_key_exists( 'res_price', $ops ) ? $ops['res_price'] : 0,
+				'discount' => array_key_exists( 'res_discount', $ops ) ? $ops['res_discount'] : 0,
+				'stock'    => array_key_exists( 'res_stock', $ops ) ? $ops['res_stock'] : 0,
+				'expiry'   => ! empty( $ops['res_expiry'] ) ? $ops['res_expiry'] : '',
+			);
+			if ( '' === (string) $row['expiry'] ) {
+				return $batches;
+			}
+			return self::append_batch( $batches, $row, $cal );
+		}
+
+		$b = $batches[ $idx ];
+		if ( array_key_exists( 'res_price', $ops ) && null !== $ops['res_price'] && '' !== $ops['res_price'] ) {
+			$b['price'] = (string) max( 0, (float) $ops['res_price'] );
+		}
+		if ( array_key_exists( 'res_discount', $ops ) && null !== $ops['res_discount'] && '' !== $ops['res_discount'] ) {
+			$disc           = max( 0, min( 100, (float) $ops['res_discount'] ) );
+			$b['discount']  = (int) round( $disc );
+			$price          = isset( $b['price'] ) ? (float) $b['price'] : 0;
+			if ( $price > 0 && $disc > 0 ) {
+				$b['sale'] = (string) self::sale_price( $price, $disc );
+			} else {
+				unset( $b['sale'] );
+			}
+		}
+		if ( array_key_exists( 'res_stock', $ops ) && null !== $ops['res_stock'] && '' !== $ops['res_stock'] ) {
+			$b['stock'] = max( 0, (int) $ops['res_stock'] );
+		}
+		if ( ! empty( $ops['res_expiry'] ) ) {
+			$b['expiry'] = (string) $ops['res_expiry'];
+		}
+		$batches[ $idx ] = $b;
+		return $batches;
+	}
+
 	public static function reserved_stock( array $batches, $today ) {
 		$active = self::active_index( $batches, $today );
 		$sum    = 0;
@@ -734,6 +809,10 @@ class WBE_Engine {
 		if ( array_key_exists( 'reserved', $ops ) && null !== $ops['reserved'] && '' !== $ops['reserved'] ) {
 			return true;
 		}
+		if ( array_key_exists( 'res_price', $ops ) || array_key_exists( 'res_discount', $ops )
+			|| array_key_exists( 'res_stock', $ops ) || ! empty( $ops['res_expiry'] ) ) {
+			return true;
+		}
 		if ( ! empty( $ops['expiry'] ) ) {
 			return true;
 		}
@@ -762,6 +841,8 @@ class WBE_Engine {
 			$batches = self::set_reserved_stock( $batches, (int) $ops['reserved'], $today );
 		}
 
+		$batches = self::apply_bulk_to_reserve( $batches, $ops, $today );
+
 		if ( ! empty( $ops['add_batch'] ) && is_array( $ops['add_batch'] ) ) {
 			$cal     = isset( $ops['calendar'] ) ? (string) $ops['calendar'] : 'gregorian';
 			$batches = self::append_batch( $batches, $ops['add_batch'], $cal );
@@ -770,8 +851,11 @@ class WBE_Engine {
 		if ( empty( $batches ) || ! self::has_batch_ops( $ops ) ) {
 			return $batches;
 		}
+		$has_res_ops = array_key_exists( 'res_price', $ops ) || array_key_exists( 'res_discount', $ops )
+			|| array_key_exists( 'res_stock', $ops ) || ! empty( $ops['res_expiry'] )
+			|| ( array_key_exists( 'reserved', $ops ) && null !== $ops['reserved'] && '' !== $ops['reserved'] );
 		// فقط افزودن بچ / تنظیم رزرو، بدون تغییر بچ فعال.
-		$only_extra = ! empty( $ops['add_batch'] ) || ( array_key_exists( 'reserved', $ops ) && null !== $ops['reserved'] && '' !== $ops['reserved'] );
+		$only_extra = ! empty( $ops['add_batch'] ) || $has_res_ops;
 		if ( $only_extra && ! self::has_price_ops( $ops )
 			&& ! ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] )
 			&& empty( $ops['expiry'] ) ) {
@@ -900,13 +984,20 @@ class WBE_Engine {
 		$stock    = $active ? (int) $active['stock'] : '';
 		$reserved = self::reserved_stock( $batches, $today );
 		$expiry   = ( $active && ! empty( $active['expiry'] ) ) ? (string) $active['expiry'] : '';
+
+		$ridx      = self::primary_reserve_index( $batches, $today );
+		$reserve   = ( null !== $ridx && isset( $batches[ $ridx ] ) ) ? $batches[ $ridx ] : null;
+		$res_price = $reserve && isset( $reserve['price'] ) ? (string) $reserve['price'] : '';
+		$res_disc  = $reserve ? self::discount_of( $reserve ) : '';
+		$res_stock = $reserve ? (int) $reserve['stock'] : '';
+		$res_exp   = ( $reserve && ! empty( $reserve['expiry'] ) ) ? (string) $reserve['expiry'] : '';
+
 		if ( ! $active ) {
 			$regular  = isset( $wc['regular'] ) ? (string) $wc['regular'] : '';
 			$wc_sale  = isset( $wc['sale'] ) ? $wc['sale'] : '';
 			$discount = self::discount_from_prices( $regular, $wc_sale );
 			$sale     = ( '' !== $wc_sale && null !== $wc_sale ) ? (string) $wc_sale : $regular;
 			$stock    = isset( $wc['stock'] ) && '' !== $wc['stock'] && null !== $wc['stock'] ? (int) $wc['stock'] : '';
-			// reserved از بالا می‌ماند: بدون بچ فعال، همهٔ موجودی بچ‌ها رزرو است.
 		}
 		$from = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_from ) : '';
 		$to   = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_to ) : '';
@@ -917,24 +1008,30 @@ class WBE_Engine {
 			return WBE_Jalali::format_ymd( $ymd, $calendar, false );
 		};
 		return array(
-			'id'          => (int) $id,
-			'name'        => (string) $title,
-			'sku'         => (string) $sku,
-			'status'      => isset( $wc['status'] ) ? (string) $wc['status'] : 'publish',
-			'regular'     => $regular,
-			'discount'    => $discount,
-			'sale'        => $sale,
-			'stock'       => $stock,
-			'reserved'    => $reserved,
-			'from'        => $from,
-			'to'          => $to,
-			'from_fa'     => $fmt( $from ),
-			'to_fa'       => $fmt( $to ),
-			'expiry'      => $expiry,
-			'expiry_fa'   => $fmt( $expiry ),
-			'has_active'  => (bool) $active,
-			'has_batches' => ! empty( $batches ),
-			'brand'       => isset( $wc['brand'] ) ? (string) $wc['brand'] : '',
+			'id'             => (int) $id,
+			'name'           => (string) $title,
+			'sku'            => (string) $sku,
+			'status'         => isset( $wc['status'] ) ? (string) $wc['status'] : 'publish',
+			'regular'        => $regular,
+			'discount'       => $discount,
+			'sale'           => $sale,
+			'stock'          => $stock,
+			'reserved'       => $reserved,
+			'res_price'      => $res_price,
+			'res_discount'   => ( '' === $res_disc || null === $res_disc ) ? '' : (int) $res_disc,
+			'res_stock'      => $res_stock,
+			'res_expiry'     => $res_exp,
+			'res_expiry_fa'  => $fmt( $res_exp ),
+			'from'           => $from,
+			'to'             => $to,
+			'from_fa'        => $fmt( $from ),
+			'to_fa'          => $fmt( $to ),
+			'expiry'         => $expiry,
+			'expiry_fa'      => $fmt( $expiry ),
+			'has_active'     => (bool) $active,
+			'has_reserve'    => (bool) $reserve,
+			'has_batches'    => ! empty( $batches ),
+			'brand'          => isset( $wc['brand'] ) ? (string) $wc['brand'] : '',
 		);
 	}
 }

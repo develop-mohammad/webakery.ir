@@ -46,8 +46,8 @@ $sms_msg = isset( $_GET['wbe_sms'] ) ? sanitize_key( wp_unslash( $_GET['wbe_sms'
 			<tr>
 				<th scope="row">موجودی رزرو در ویرایش گروهی</th>
 				<td>
-					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_reserved_stock]" value="1" <?php checked( ! empty( $s['show_reserved_stock'] ), 1 ); ?> /> ستون «موجودی رزرو» را در ویرایش گروهی نشان بده (قابل ویرایش)</label>
-					<p class="description">پیش‌فرض خاموش است. همین سوییچ داخل صفحهٔ «ویرایش گروهی» هم هست. با روشن کردن، موجودی رزرو را می‌توانید مستقیم در جدول عوض کنید.</p>
+					<label><input type="checkbox" name="<?php echo esc_attr( $opt ); ?>[show_reserved_stock]" value="1" <?php checked( ! empty( $s['show_reserved_stock'] ), 1 ); ?> /> ستون‌های «موجودی رزرو» را در ویرایش گروهی نشان بده (قیمت، تخفیف، موجودی، انقضا — قابل ویرایش)</label>
+					<p class="description">پیش‌فرض روشن است. همین سوییچ داخل صفحهٔ «ویرایش گروهی» هم هست.</p>
 				</td>
 			</tr>
 		</table>

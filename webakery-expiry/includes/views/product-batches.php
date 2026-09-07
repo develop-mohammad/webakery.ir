@@ -32,8 +32,9 @@ $reserved_n  = ( ! empty( $batches ) && class_exists( 'WBE_Engine' ) ) ? WBE_Eng
 			<button type="button" class="button wbe-add-batch">+ افزودن بچ رزرو</button>
 		</div>
 		<p class="description">
-			بچ <strong>فعال</strong> همان چیزی است که مشتری می‌بیند. بچ‌های بعدی <strong>رزرو</strong> هستند — موجودی، قیمت اصلی، قیمت جشنواره و درصد تخفیفشان را اینجا عوض کنید.
-			جمع موجودی رزرو الان: <strong dir="ltr" id="wbe-reserved-total"><?php echo esc_html( (string) (int) $reserved_n ); ?></strong>.
+			بچ <strong>فعال</strong>: قیمت اصلی، جشنواره، تخفیف، موجودی، انقضا (همان چیزی که مشتری می‌بیند).
+			بچ <strong>رزرو</strong>: قیمت اصلی، تخفیف ٪، موجودی، تاریخ انقضا — همه قابل ویرایش.
+			جمع موجودی رزرو: <strong dir="ltr" id="wbe-reserved-total"><?php echo esc_html( (string) (int) $reserved_n ); ?></strong>.
 			ویرایش چندتایی: <a href="<?php echo esc_url( admin_url( 'admin.php?page=webakery-expiry-bulk' ) ); ?>">ویرایش گروهی</a>.
 		</p>
 		<table class="widefat wbe-batches-table">

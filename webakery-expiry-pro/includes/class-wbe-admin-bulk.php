@@ -188,6 +188,25 @@ class WBE_Admin_Bulk {
 			$ops['reserved'] = max( 0, (int) $reserved );
 		}
 
+		$res_price = array_key_exists( 'res_price', $row ) ? WBE_Engine::parse_amount( $row['res_price'] ) : null;
+		if ( null !== $res_price ) {
+			$ops['res_price'] = $res_price;
+		}
+		$res_disc = array_key_exists( 'res_discount', $row ) ? WBE_Engine::parse_amount( $row['res_discount'] ) : null;
+		if ( null !== $res_disc ) {
+			$ops['res_discount'] = max( 0, min( 100, $res_disc ) );
+		}
+		$res_stock = array_key_exists( 'res_stock', $row ) ? WBE_Engine::parse_amount( $row['res_stock'] ) : null;
+		if ( null !== $res_stock ) {
+			$ops['res_stock'] = max( 0, (int) $res_stock );
+		}
+		if ( isset( $row['res_expiry'] ) && '' !== trim( (string) $row['res_expiry'] ) ) {
+			$rexp = WBE_Jalali::parse_to_ymd( $row['res_expiry'], $calendar );
+			if ( '' !== $rexp ) {
+				$ops['res_expiry'] = $rexp;
+			}
+		}
+
 		if ( isset( $row['expiry'] ) && '' !== trim( (string) $row['expiry'] ) ) {
 			$exp = WBE_Jalali::parse_to_ymd( $row['expiry'], $calendar );
 			if ( '' !== $exp ) {

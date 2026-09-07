@@ -19,7 +19,7 @@ class WBE_Settings {
 			'show_on_loop'         => 1,
 			'catalog_sort'         => 1,
 			'show_sale_countdown'  => 1,
-			'show_reserved_stock'  => 0,
+			'show_reserved_stock'  => 1,
 			'alert_soon_days'      => 7,
 			'alert_month_days'     => 30,
 			'alert_two_month_days' => 60,
