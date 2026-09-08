@@ -390,6 +390,7 @@ class WBE_Admin_Bulk {
 
 	/**
 		 * محصولات ووکامرس برای جدول گروهی (با یا بدون بچ).
+		 * محصول متغیر به ردیف‌های تنوع شکسته می‌شود.
 	 *
 	 * @param array $filters
 	 * @return array<int,array>
@@ -421,7 +422,8 @@ class WBE_Admin_Bulk {
 				st.meta_value AS sale_to,
 				reg.meta_value AS wc_regular,
 				sale.meta_value AS wc_sale,
-				stock.meta_value AS wc_stock
+				stock.meta_value AS wc_stock,
+				ptype.slug AS product_type
 			FROM {$wpdb->posts} p
 			LEFT JOIN {$wpdb->postmeta} batches ON batches.post_id = p.ID AND batches.meta_key = '_wbe_batches'
 			LEFT JOIN {$wpdb->postmeta} sku ON sku.post_id = p.ID AND sku.meta_key = '_sku'
@@ -431,6 +433,9 @@ class WBE_Admin_Bulk {
 			LEFT JOIN {$wpdb->postmeta} reg ON reg.post_id = p.ID AND reg.meta_key = '_regular_price'
 			LEFT JOIN {$wpdb->postmeta} sale ON sale.post_id = p.ID AND sale.meta_key = '_sale_price'
 			LEFT JOIN {$wpdb->postmeta} stock ON stock.post_id = p.ID AND stock.meta_key = '_stock'
+			LEFT JOIN {$wpdb->term_relationships} ptr ON ptr.object_id = p.ID
+			LEFT JOIN {$wpdb->term_taxonomy} ptt ON ptt.term_taxonomy_id = ptr.term_taxonomy_id AND ptt.taxonomy = 'product_type'
+			LEFT JOIN {$wpdb->terms} ptype ON ptype.term_id = ptt.term_id
 			WHERE p.post_type = 'product'
 			AND p.post_status IN ('publish','private','draft','pending')";
 
@@ -463,12 +468,6 @@ class WBE_Admin_Bulk {
 				WHERE tt.term_id IN ({$in})
 			)";
 		}
-		if ( $q ) {
-			$like   = '%' . $wpdb->esc_like( $q ) . '%';
-			$sql   .= ' AND (p.post_title LIKE %s OR sku.meta_value LIKE %s)';
-			$args[] = $like;
-			$args[] = $like;
-		}
 		$sql .= ' ORDER BY p.post_title ASC LIMIT 2500';
 		if ( $args ) {
 			$sql = $wpdb->prepare( $sql, $args ); // phpcs:ignore WordPress.DB.PreparedSQL
@@ -479,43 +478,185 @@ class WBE_Admin_Bulk {
 			return array();
 		}
 
-		$out = array();
+		$out            = array();
+		$variable_ids   = array();
+		$parent_by_id   = array();
 		foreach ( $records as $rec ) {
-			$batches = maybe_unserialize( $rec->batches_raw );
-			if ( ! is_array( $batches ) ) {
-				$batches = array();
-			}
-			$has_batches = ! empty( $batches );
-			if ( 'batches' === $scope && ! $has_batches ) {
+			$parent_by_id[ (int) $rec->ID ] = $rec;
+			$type = isset( $rec->product_type ) ? (string) $rec->product_type : '';
+			if ( 'variable' === $type ) {
+				$variable_ids[] = (int) $rec->ID;
 				continue;
 			}
-			if ( 'plain' === $scope && $has_batches ) {
-				continue;
+			$row = $this->row_from_parent_record( $rec, $scope, $brand_f, $brand_ids, $q, $today, $default_cal );
+			if ( $row ) {
+				$out[] = $row;
 			}
-			$cal   = ( 'jalali' === $rec->calendar || 'gregorian' === $rec->calendar ) ? $rec->calendar : $default_cal;
-			$brand = class_exists( 'WBE_Product' ) ? WBE_Product::brand_label( $rec->ID ) : '';
-			if ( $brand_f && ! $brand_ids && ! WBE_Engine::text_has( $brand, $brand_f ) ) {
-				continue;
-			}
-			$out[] = WBE_Engine::bulk_row_from_record(
-				$rec->ID,
-				$rec->post_title,
-				isset( $rec->sku ) ? $rec->sku : '',
-				$batches,
-				$cal,
-				$rec->sale_from,
-				$rec->sale_to,
-				$today,
-				array(
-					'regular' => isset( $rec->wc_regular ) ? $rec->wc_regular : '',
-					'sale'    => isset( $rec->wc_sale ) ? $rec->wc_sale : '',
-					'stock'   => isset( $rec->wc_stock ) ? $rec->wc_stock : '',
-					'status'  => isset( $rec->post_status ) ? $rec->post_status : 'publish',
-					'brand'   => $brand,
-				)
-			);
 		}
+
+		if ( $variable_ids ) {
+			$in       = implode( ',', array_map( 'intval', $variable_ids ) );
+			$var_sql  = "SELECT v.ID, v.post_parent, v.post_title, v.post_status,
+					sku.meta_value AS sku,
+					batches.meta_value AS batches_raw,
+					cal.meta_value AS calendar,
+					sf.meta_value AS sale_from,
+					st.meta_value AS sale_to,
+					reg.meta_value AS wc_regular,
+					sale.meta_value AS wc_sale,
+					stock.meta_value AS wc_stock
+				FROM {$wpdb->posts} v
+				LEFT JOIN {$wpdb->postmeta} batches ON batches.post_id = v.ID AND batches.meta_key = '_wbe_batches'
+				LEFT JOIN {$wpdb->postmeta} sku ON sku.post_id = v.ID AND sku.meta_key = '_sku'
+				LEFT JOIN {$wpdb->postmeta} cal ON cal.post_id = v.ID AND cal.meta_key = '_wbe_calendar'
+				LEFT JOIN {$wpdb->postmeta} sf ON sf.post_id = v.ID AND sf.meta_key = '_sale_price_dates_from'
+				LEFT JOIN {$wpdb->postmeta} st ON st.post_id = v.ID AND st.meta_key = '_sale_price_dates_to'
+				LEFT JOIN {$wpdb->postmeta} reg ON reg.post_id = v.ID AND reg.meta_key = '_regular_price'
+				LEFT JOIN {$wpdb->postmeta} sale ON sale.post_id = v.ID AND sale.meta_key = '_sale_price'
+				LEFT JOIN {$wpdb->postmeta} stock ON stock.post_id = v.ID AND stock.meta_key = '_stock'
+				WHERE v.post_type = 'product_variation'
+				AND v.post_status IN ('publish','private')
+				AND v.post_parent IN ({$in})
+				ORDER BY v.menu_order ASC, v.ID ASC";
+			$variations = $wpdb->get_results( $var_sql ); // phpcs:ignore WordPress.DB.PreparedSQL
+			if ( $variations ) {
+				foreach ( $variations as $var ) {
+					$parent_id = (int) $var->post_parent;
+					$parent    = isset( $parent_by_id[ $parent_id ] ) ? $parent_by_id[ $parent_id ] : null;
+					if ( ! $parent ) {
+						continue;
+					}
+					$row = $this->row_from_variation_record( $var, $parent, $scope, $brand_f, $brand_ids, $q, $today, $default_cal );
+					if ( $row ) {
+						$out[] = $row;
+					}
+				}
+			}
+		}
+
+		usort(
+			$out,
+			function ( $a, $b ) {
+				return strcmp( (string) $a['name'], (string) $b['name'] );
+			}
+		);
 		return $out;
+	}
+
+	/**
+	 * @param object $rec
+	 * @param string $scope
+	 * @param string $brand_f
+	 * @param array  $brand_ids
+	 * @param string $q
+	 * @param string $today
+	 * @param string $default_cal
+	 * @return array|null
+	 */
+	private function row_from_parent_record( $rec, $scope, $brand_f, $brand_ids, $q, $today, $default_cal ) {
+		$batches = maybe_unserialize( $rec->batches_raw );
+		if ( ! is_array( $batches ) ) {
+			$batches = array();
+		}
+		$has_batches = ! empty( $batches );
+		if ( 'batches' === $scope && ! $has_batches ) {
+			return null;
+		}
+		if ( 'plain' === $scope && $has_batches ) {
+			return null;
+		}
+		$cal   = ( 'jalali' === $rec->calendar || 'gregorian' === $rec->calendar ) ? $rec->calendar : $default_cal;
+		$brand = class_exists( 'WBE_Product' ) ? WBE_Product::brand_label( $rec->ID ) : '';
+		if ( $brand_f && ! $brand_ids && ! WBE_Engine::text_has( $brand, $brand_f ) ) {
+			return null;
+		}
+		$title = (string) $rec->post_title;
+		$sku   = isset( $rec->sku ) ? (string) $rec->sku : '';
+		if ( $q && ! WBE_Engine::text_has( $title, $q ) && ! WBE_Engine::text_has( $sku, $q ) && ! WBE_Engine::text_has( $brand, $q ) ) {
+			return null;
+		}
+		return WBE_Engine::bulk_row_from_record(
+			$rec->ID,
+			$title,
+			$sku,
+			$batches,
+			$cal,
+			$rec->sale_from,
+			$rec->sale_to,
+			$today,
+			array(
+				'regular' => isset( $rec->wc_regular ) ? $rec->wc_regular : '',
+				'sale'    => isset( $rec->wc_sale ) ? $rec->wc_sale : '',
+				'stock'   => isset( $rec->wc_stock ) ? $rec->wc_stock : '',
+				'status'  => isset( $rec->post_status ) ? $rec->post_status : 'publish',
+				'brand'   => $brand,
+			)
+		);
+	}
+
+	/**
+	 * @param object $var
+	 * @param object $parent
+	 * @param string $scope
+	 * @param string $brand_f
+	 * @param array  $brand_ids
+	 * @param string $q
+	 * @param string $today
+	 * @param string $default_cal
+	 * @return array|null
+	 */
+	private function row_from_variation_record( $var, $parent, $scope, $brand_f, $brand_ids, $q, $today, $default_cal ) {
+		$batches = maybe_unserialize( $var->batches_raw );
+		if ( ! is_array( $batches ) ) {
+			$batches = array();
+		}
+		$has_batches = ! empty( $batches );
+		if ( 'batches' === $scope && ! $has_batches ) {
+			return null;
+		}
+		if ( 'plain' === $scope && $has_batches ) {
+			return null;
+		}
+		$cal_raw = isset( $var->calendar ) ? $var->calendar : '';
+		if ( 'jalali' !== $cal_raw && 'gregorian' !== $cal_raw ) {
+			$cal_raw = isset( $parent->calendar ) ? $parent->calendar : '';
+		}
+		$cal   = ( 'jalali' === $cal_raw || 'gregorian' === $cal_raw ) ? $cal_raw : $default_cal;
+		$brand = class_exists( 'WBE_Product' ) ? WBE_Product::brand_label( (int) $parent->ID ) : '';
+		if ( $brand_f && ! $brand_ids && ! WBE_Engine::text_has( $brand, $brand_f ) ) {
+			return null;
+		}
+		$attr  = class_exists( 'WBE_Product' ) ? WBE_Product::variation_attributes_label( (int) $var->ID ) : '';
+		$title = WBE_Engine::variation_row_title( (string) $parent->post_title, $attr );
+		$sku   = isset( $var->sku ) ? (string) $var->sku : '';
+		if ( $q
+			&& ! WBE_Engine::text_has( $title, $q )
+			&& ! WBE_Engine::text_has( (string) $parent->post_title, $q )
+			&& ! WBE_Engine::text_has( $sku, $q )
+			&& ! WBE_Engine::text_has( $attr, $q )
+			&& ! WBE_Engine::text_has( $brand, $q )
+		) {
+			return null;
+		}
+		return WBE_Engine::bulk_row_from_record(
+			$var->ID,
+			$title,
+			$sku,
+			$batches,
+			$cal,
+			$var->sale_from,
+			$var->sale_to,
+			$today,
+			array(
+				'regular'      => isset( $var->wc_regular ) ? $var->wc_regular : '',
+				'sale'         => isset( $var->wc_sale ) ? $var->wc_sale : '',
+				'stock'        => isset( $var->wc_stock ) ? $var->wc_stock : '',
+				'status'       => isset( $var->post_status ) ? $var->post_status : 'publish',
+				'brand'        => $brand,
+				'is_variation' => true,
+				'parent_id'    => (int) $parent->ID,
+			)
+		);
 	}
 
 	/**

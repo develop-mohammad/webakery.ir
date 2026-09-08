@@ -124,7 +124,7 @@ $st       = isset( $statuses[ $product_status ] ) ? $product_status : 'publish';
 					<th></th>
 				</tr>
 			</thead>
-			<tbody id="wbe-batches-body">
+			<tbody id="wbe-batches-body" class="wbe-batches-body">
 				<?php if ( empty( $reserves ) ) : ?>
 					<tr class="wbe-batch-row is-reserve wbe-reserve-empty">
 						<td colspan="5" class="wbe-muted">هنوز بچ رزرو ندارید — «افزودن بچ رزرو» را بزنید.</td>
@@ -158,7 +158,7 @@ $st       = isset( $statuses[ $product_status ] ) ? $product_status : 'publish';
 		</table>
 		<table hidden>
 			<tbody>
-				<tr id="wbe-batch-tpl" class="wbe-batch-row is-reserve">
+				<tr id="wbe-batch-tpl" class="wbe-batch-tpl wbe-batch-row is-reserve">
 					<td>
 						<input type="hidden" data-name="id" value="" />
 						<input type="text" class="short wbe-batch-price" data-name="price" value="" placeholder="قیمت اصلی" dir="ltr" />

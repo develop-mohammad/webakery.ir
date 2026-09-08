@@ -44,10 +44,18 @@ class WBE_Product {
 
 	/**
 	 * آیا تایمر تا پایان کمپین برای این محصول مجاز است؟
+	 * پنهان‌سازی تنوع یا والد کافی است.
 	 */
 	public static function countdown_enabled( $product_id ) {
-		$global = ! empty( WBE_Settings::get()['show_sale_countdown'] );
-		$hidden = (string) get_post_meta( (int) $product_id, self::META_HIDE_COUNTDOWN, true ) === '1';
+		$global     = ! empty( WBE_Settings::get()['show_sale_countdown'] );
+		$product_id = (int) $product_id;
+		$hidden     = (string) get_post_meta( $product_id, self::META_HIDE_COUNTDOWN, true ) === '1';
+		if ( ! $hidden ) {
+			$parent = self::parent_id( $product_id );
+			if ( $parent && $parent !== $product_id ) {
+				$hidden = (string) get_post_meta( $parent, self::META_HIDE_COUNTDOWN, true ) === '1';
+			}
+		}
 		return WBE_Engine::countdown_allowed( $global, $hidden );
 	}
 
@@ -62,11 +70,20 @@ class WBE_Product {
 
 	/**
 	 * تقویم این محصول: jalali|gregorian
+	 * برای تنوع، در صورت خالی بودن از والد ارث می‌برد.
 	 */
 	public static function calendar( $product_id ) {
-		$override = get_post_meta( (int) $product_id, self::META_CALENDAR, true );
+		$product_id = (int) $product_id;
+		$override   = get_post_meta( $product_id, self::META_CALENDAR, true );
 		if ( 'jalali' === $override || 'gregorian' === $override ) {
 			return $override;
+		}
+		$parent = self::parent_id( $product_id );
+		if ( $parent && $parent !== $product_id ) {
+			$p_override = get_post_meta( $parent, self::META_CALENDAR, true );
+			if ( 'jalali' === $p_override || 'gregorian' === $p_override ) {
+				return $p_override;
+			}
 		}
 		return WBE_Settings::calendar();
 	}
@@ -122,6 +139,89 @@ class WBE_Product {
 	}
 
 	/**
+	 * آیا این شناسه خودش قیمت/موجودی نگه می‌دارد؟ (والد متغیر نه)
+	 *
+	 * @param int|WC_Product $product
+	 * @return bool
+	 */
+	public static function owns_price_stock( $product ) {
+		if ( is_numeric( $product ) ) {
+			if ( ! function_exists( 'wc_get_product' ) ) {
+				return true;
+			}
+			$product = wc_get_product( (int) $product );
+		}
+		if ( ! is_object( $product ) || ! method_exists( $product, 'get_type' ) ) {
+			return true;
+		}
+		return WBE_Engine::type_owns_stock( $product->get_type() );
+	}
+
+	/**
+	 * والد محصول برای تنوع؛ برای ساده همان شناسه.
+	 *
+	 * @param int $product_id
+	 * @return int
+	 */
+	public static function parent_id( $product_id ) {
+		$product_id = (int) $product_id;
+		if ( $product_id <= 0 ) {
+			return 0;
+		}
+		if ( function_exists( 'wp_get_post_parent_id' ) ) {
+			$parent = (int) wp_get_post_parent_id( $product_id );
+			if ( $parent > 0 ) {
+				return $parent;
+			}
+		}
+		if ( function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $product_id );
+			if ( $product && method_exists( $product, 'get_parent_id' ) ) {
+				$parent = (int) $product->get_parent_id();
+				if ( $parent > 0 ) {
+					return $parent;
+				}
+			}
+		}
+		return $product_id;
+	}
+
+	/**
+	 * برچسب ویژگی‌های تنوع برای نمایش.
+	 *
+	 * @param int $variation_id
+	 * @return string
+	 */
+	public static function variation_attributes_label( $variation_id ) {
+		$variation_id = (int) $variation_id;
+		if ( ! function_exists( 'wc_get_product' ) ) {
+			return '';
+		}
+		$product = wc_get_product( $variation_id );
+		if ( ! $product || ! method_exists( $product, 'get_attributes' ) ) {
+			return '';
+		}
+		$attrs = $product->get_attributes();
+		if ( ! is_array( $attrs ) || ! $attrs ) {
+			return '';
+		}
+		$parts = array();
+		foreach ( $attrs as $key => $val ) {
+			$val = is_array( $val ) ? implode( ', ', $val ) : (string) $val;
+			$val = trim( wp_strip_all_tags( $val ) );
+			if ( '' === $val ) {
+				continue;
+			}
+			$label = $key;
+			if ( function_exists( 'wc_attribute_label' ) ) {
+				$label = wc_attribute_label( $key, $product );
+			}
+			$parts[] = $label . ': ' . $val;
+		}
+		return implode( ' / ', $parts );
+	}
+
+	/**
 	 * قیمت و موجودی ووکامرس = بچ فعال. رزرو دیده نمی‌شود.
 	 */
 	public static function sync_wc( $product_id ) {
@@ -135,6 +235,10 @@ class WBE_Product {
 		}
 		$product = wc_get_product( $product_id );
 		if ( ! $product ) {
+			return;
+		}
+		// والد متغیر موجودی ندارد — بچ روی تنوع‌هاست.
+		if ( ! self::owns_price_stock( $product ) ) {
 			return;
 		}
 		self::$syncing = true;
@@ -309,8 +413,11 @@ class WBE_Product {
 		if ( $object_id <= 0 ) {
 			return;
 		}
-		if ( function_exists( 'get_post_type' ) && 'product' !== get_post_type( $object_id ) ) {
-			return;
+		if ( function_exists( 'get_post_type' ) ) {
+			$ptype = get_post_type( $object_id );
+			if ( 'product' !== $ptype && 'product_variation' !== $ptype ) {
+				return;
+			}
 		}
 		if ( ! isset( self::$queued[ $object_id ] ) ) {
 			self::$queued[ $object_id ] = false;
@@ -482,10 +589,12 @@ class WBE_Product {
 	}
 
 	public static function brand_label( $product_id ) {
-		$names = array();
-		$seen  = array();
+		$product_id = (int) $product_id;
+		$parent     = self::parent_id( $product_id );
+		$names      = array();
+		$seen       = array();
 		foreach ( self::brand_taxonomies() as $tax ) {
-			$terms = get_the_terms( $product_id, $tax );
+			$terms = get_the_terms( $parent, $tax );
 			if ( ! $terms || is_wp_error( $terms ) ) {
 				continue;
 			}
@@ -504,7 +613,7 @@ class WBE_Product {
 		if ( ! function_exists( 'wc_get_product' ) ) {
 			return '';
 		}
-		$product = wc_get_product( $product_id );
+		$product = wc_get_product( $parent );
 		if ( ! $product ) {
 			return '';
 		}
@@ -518,7 +627,8 @@ class WBE_Product {
 	}
 
 	public static function category_label( $product_id ) {
-		$terms = get_the_terms( $product_id, 'product_cat' );
+		$product_id = self::parent_id( (int) $product_id );
+		$terms      = get_the_terms( $product_id, 'product_cat' );
 		if ( ! $terms || is_wp_error( $terms ) ) {
 			return '';
 		}
@@ -528,7 +638,7 @@ class WBE_Product {
 	public static function configured_ids() {
 		$q = new WP_Query(
 			array(
-				'post_type'              => 'product',
+				'post_type'              => array( 'product', 'product_variation' ),
 				'post_status'            => array( 'publish', 'private', 'draft' ),
 				'posts_per_page'         => -1,
 				'fields'                 => 'ids',
@@ -542,7 +652,15 @@ class WBE_Product {
 				),
 			)
 		);
-		return array_map( 'intval', $q->posts );
+		$ids = array_map( 'intval', $q->posts );
+		// والد متغیر را حذف کن — بچ باید روی تنوع باشد.
+		$out = array();
+		foreach ( $ids as $id ) {
+			if ( self::owns_price_stock( $id ) && self::configured( $id ) ) {
+				$out[] = $id;
+			}
+		}
+		return $out;
 	}
 
 	/**
@@ -555,6 +673,9 @@ class WBE_Product {
 	 */
 	public static function apply_bulk( $product_id, array $ops, $flush_alerts = true ) {
 		$product_id = (int) $product_id;
+		if ( ! self::owns_price_stock( $product_id ) ) {
+			return false;
+		}
 		$did        = self::apply_identity( $product_id, $ops );
 		$batches    = self::batches( $product_id );
 
@@ -882,6 +1003,15 @@ class WBE_Product {
 		}
 		if ( function_exists( 'wc_delete_product_transients' ) ) {
 			wc_delete_product_transients( $product_id );
+		}
+		$parent = self::parent_id( $product_id );
+		if ( $parent && $parent !== $product_id ) {
+			if ( function_exists( 'clean_post_cache' ) ) {
+				clean_post_cache( $parent );
+			}
+			if ( function_exists( 'wc_delete_product_transients' ) ) {
+				wc_delete_product_transients( $parent );
+			}
 		}
 		if ( ! class_exists( 'WC_Data_Store' ) ) {
 			return;

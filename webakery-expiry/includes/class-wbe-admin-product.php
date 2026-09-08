@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * فیلدهای بچ کنار قیمت محصول در پیشخوان.
+ * فیلدهای بچ کنار قیمت محصول / تنوع در پیشخوان.
  */
 class WBE_Admin_Product {
 
@@ -22,6 +22,8 @@ class WBE_Admin_Product {
 		add_action( 'woocommerce_product_options_pricing', array( $this, 'render' ) );
 		add_action( 'woocommerce_admin_process_product_object', array( $this, 'save' ) );
 		add_action( 'woocommerce_process_product_meta', array( $this, 'sync_after_save' ), 40 );
+		add_action( 'woocommerce_variation_options_pricing', array( $this, 'render_variation' ), 10, 3 );
+		add_action( 'woocommerce_save_product_variation', array( $this, 'save_variation' ), 20, 2 );
 		add_filter( 'manage_edit-product_columns', array( $this, 'columns' ) );
 		add_action( 'manage_product_posts_custom_column', array( $this, 'column' ), 10, 2 );
 		add_filter( 'manage_edit-product_sortable_columns', array( $this, 'sortable' ) );
@@ -32,7 +34,14 @@ class WBE_Admin_Product {
 		if ( ! $post ) {
 			return;
 		}
-		$pid            = (int) $post->ID;
+		$pid = (int) $post->ID;
+		if ( function_exists( 'wc_get_product' ) ) {
+			$wc_check = wc_get_product( $pid );
+			// پنل ساده فقط برای محصول غیرمتغیر؛ متغیرها روی هر تنوع فیلد دارند.
+			if ( $wc_check && method_exists( $wc_check, 'is_type' ) && $wc_check->is_type( 'variable' ) ) {
+				return;
+			}
+		}
 		$batches        = WBE_Product::batches( $pid );
 		$override       = get_post_meta( $pid, WBE_Product::META_CALENDAR, true );
 		$effective      = WBE_Product::calendar( $pid );
@@ -66,8 +75,57 @@ class WBE_Admin_Product {
 		include WBE_PATH . 'includes/views/product-batches.php';
 	}
 
+	/**
+	 * فیلدهای بچ داخل هر ردیف تنوع.
+	 *
+	 * @param int     $loop
+	 * @param array   $variation_data
+	 * @param WP_Post $variation
+	 */
+	public function render_variation( $loop, $variation_data, $variation ) {
+		unset( $variation_data );
+		$loop = (int) $loop;
+		$pid  = is_object( $variation ) && isset( $variation->ID ) ? (int) $variation->ID : 0;
+		if ( ! $pid ) {
+			return;
+		}
+		$batches      = WBE_Product::batches( $pid );
+		$override     = get_post_meta( $pid, WBE_Product::META_CALENDAR, true );
+		$effective    = WBE_Product::calendar( $pid );
+		$global       = WBE_Settings::calendar();
+		$hide_cd      = (string) get_post_meta( $pid, WBE_Product::META_HIDE_COUNTDOWN, true ) === '1';
+		$product_sku  = '';
+		$wc_price     = '';
+		$wc_sale      = '';
+		$wc_disc      = '';
+		$wc_stock     = '';
+		$sale_from_fa = '';
+		$sale_to_fa   = '';
+		$attr_label   = WBE_Product::variation_attributes_label( $pid );
+		if ( function_exists( 'wc_get_product' ) ) {
+			$wc_product = wc_get_product( $pid );
+			if ( $wc_product ) {
+				$product_sku = (string) $wc_product->get_sku( 'edit' );
+				$wc_price    = $wc_product->get_regular_price( 'edit' );
+				$wc_sale     = $wc_product->get_sale_price( 'edit' );
+				$wc_stock    = $wc_product->get_stock_quantity( 'edit' );
+				$wc_disc     = (string) WBE_Engine::discount_from_prices( $wc_price, $wc_sale );
+				if ( '0' === $wc_disc ) {
+					$wc_disc = '';
+				}
+				$pair         = WBE_Product::sale_ymd_pair( $wc_product );
+				$sale_from_fa = $pair[0] ? WBE_Jalali::format_ymd( $pair[0], $effective, false ) : '';
+				$sale_to_fa   = $pair[1] ? WBE_Jalali::format_ymd( $pair[1], $effective, false ) : '';
+			}
+		}
+		include WBE_PATH . 'includes/views/product-variation-batches.php';
+	}
+
 	public function save( $product ) {
 		if ( ! $product || ! current_user_can( 'edit_products' ) ) {
+			return;
+		}
+		if ( method_exists( $product, 'is_type' ) && $product->is_type( 'variable' ) ) {
 			return;
 		}
 		if ( ! isset( $_POST['wbe_batches_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wbe_batches_nonce'] ) ), 'wbe_save_batches' ) ) {
@@ -134,8 +192,81 @@ class WBE_Admin_Product {
 		}
 	}
 
+	/**
+	 * ذخیره بچ‌های یک تنوع.
+	 *
+	 * @param int $variation_id
+	 * @param int $loop
+	 */
+	public function save_variation( $variation_id, $loop ) {
+		$variation_id = (int) $variation_id;
+		$loop         = (int) $loop;
+		if ( ! $variation_id || ! current_user_can( 'edit_products' ) ) {
+			return;
+		}
+		if ( ! isset( $_POST['wbe_batches_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wbe_batches_nonce'] ) ), 'wbe_save_batches' ) ) {
+			return;
+		}
+		$all = isset( $_POST['wbe_var'] ) && is_array( $_POST['wbe_var'] ) ? wp_unslash( $_POST['wbe_var'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		if ( ! isset( $all[ $loop ] ) || ! is_array( $all[ $loop ] ) ) {
+			return;
+		}
+		$data     = $all[ $loop ];
+		$override = isset( $data['calendar'] ) ? sanitize_key( $data['calendar'] ) : '';
+		$cal      = in_array( $override, array( 'jalali', 'gregorian' ), true ) ? $override : WBE_Product::calendar( $variation_id );
+
+		if ( array_key_exists( 'sku', $data ) ) {
+			WBE_Product::apply_identity(
+				$variation_id,
+				array(
+					'sku' => sanitize_text_field( $data['sku'] ),
+				)
+			);
+		}
+
+		$rows = array();
+		if ( ! empty( $data['active'] ) && is_array( $data['active'] ) ) {
+			$rows[] = $data['active'];
+		}
+		if ( ! empty( $data['reserve'] ) && is_array( $data['reserve'] ) ) {
+			foreach ( $data['reserve'] as $row ) {
+				if ( is_array( $row ) ) {
+					$rows[] = $row;
+				}
+			}
+		}
+		$batches = WBE_Engine::sanitize_batches( $rows, $cal );
+		WBE_Product::save_batches( $variation_id, $batches, $override, false );
+		WBE_Product::save_hide_countdown( $variation_id, ! empty( $data['hide_countdown'] ) );
+
+		$date_ops = array();
+		if ( isset( $data['sale_from'] ) && '' !== trim( (string) $data['sale_from'] ) ) {
+			$from = WBE_Jalali::parse_to_ymd( $data['sale_from'], $cal );
+			if ( '' !== $from ) {
+				$date_ops['sale_from'] = $from;
+			}
+		}
+		if ( isset( $data['sale_to'] ) && '' !== trim( (string) $data['sale_to'] ) ) {
+			$to = WBE_Jalali::parse_to_ymd( $data['sale_to'], $cal );
+			if ( '' !== $to ) {
+				$date_ops['sale_to'] = $to;
+			}
+		}
+		if ( $date_ops ) {
+			WBE_Product::push_wc_sale_dates( $variation_id, $date_ops );
+		}
+		WBE_Product::sync_wc( $variation_id );
+	}
+
 	public function sync_after_save( $product_id ) {
-		WBE_Product::sync_wc( (int) $product_id );
+		$product_id = (int) $product_id;
+		if ( function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $product_id );
+			if ( $product && method_exists( $product, 'is_type' ) && $product->is_type( 'variable' ) ) {
+				return;
+			}
+		}
+		WBE_Product::sync_wc( $product_id );
 	}
 
 	public function columns( $cols ) {
@@ -158,6 +289,19 @@ class WBE_Admin_Product {
 		}
 		$post_id = (int) $post_id;
 		$exp     = get_post_meta( $post_id, WBE_Product::META_ACTIVE_EXPIRY, true );
+		if ( ! $exp && function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $post_id );
+			if ( $product && method_exists( $product, 'is_type' ) && $product->is_type( 'variable' ) && method_exists( $product, 'get_children' ) ) {
+				$nearest = '';
+				foreach ( $product->get_children() as $vid ) {
+					$a = WBE_Product::active( (int) $vid );
+					if ( $a && ! empty( $a['expiry'] ) && ( '' === $nearest || $a['expiry'] < $nearest ) ) {
+						$nearest = $a['expiry'];
+					}
+				}
+				$exp = $nearest;
+			}
+		}
 		if ( ! $exp ) {
 			$active = WBE_Product::active( $post_id );
 			$exp    = $active ? $active['expiry'] : '';

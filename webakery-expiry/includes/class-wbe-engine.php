@@ -1098,6 +1098,51 @@ class WBE_Engine {
 			'has_reserve'    => ! empty( $reserves_out ),
 			'has_batches'    => ! empty( $batches ),
 			'brand'          => isset( $wc['brand'] ) ? (string) $wc['brand'] : '',
+			'is_variation'   => ! empty( $wc['is_variation'] ),
+			'parent_id'      => isset( $wc['parent_id'] ) ? (int) $wc['parent_id'] : 0,
 		);
+	}
+
+	/**
+	 * شناسه‌ای که موجودی/بچ سفارش روی آن کم می‌شود.
+	 *
+	 * @param int $product_id
+	 * @param int $variation_id
+	 * @return int
+	 */
+	public static function order_item_stock_id( $product_id, $variation_id = 0 ) {
+		$variation_id = (int) $variation_id;
+		$product_id   = (int) $product_id;
+		return $variation_id > 0 ? $variation_id : $product_id;
+	}
+
+	/**
+	 * عنوان ردیف گروهی برای تنوع.
+	 *
+	 * @param string $parent_title
+	 * @param string $attributes_label
+	 * @return string
+	 */
+	public static function variation_row_title( $parent_title, $attributes_label = '' ) {
+		$parent_title      = trim( (string) $parent_title );
+		$attributes_label  = trim( (string) $attributes_label );
+		if ( '' === $attributes_label ) {
+			return $parent_title;
+		}
+		if ( '' === $parent_title ) {
+			return $attributes_label;
+		}
+		return $parent_title . ' — ' . $attributes_label;
+	}
+
+	/**
+	 * آیا این نوع محصول خودش قیمت/موجودی دارد؟ (نه والد متغیر)
+	 *
+	 * @param string $type
+	 * @return bool
+	 */
+	public static function type_owns_stock( $type ) {
+		$type = (string) $type;
+		return 'variable' !== $type;
 	}
 }

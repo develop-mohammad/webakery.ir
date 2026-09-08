@@ -1,4 +1,4 @@
-(function () {
+(function ($) {
 	'use strict';
 
 	var FA = '۰۱۲۳۴۵۶۷۸۹';
@@ -47,14 +47,22 @@
 		return true;
 	}
 
-	function run() {
-		var nodes = document.querySelectorAll('.wbe-countdown[data-end]');
-		var live = [];
+	var live = [];
+
+	function scanCountdowns(root) {
+		root = root || document;
+		var nodes = root.querySelectorAll
+			? root.querySelectorAll('.wbe-countdown[data-end]')
+			: [];
 		for (var i = 0; i < nodes.length; i++) {
-			if (tick(nodes[i])) {
+			if (tick(nodes[i]) && live.indexOf(nodes[i]) === -1) {
 				live.push(nodes[i]);
 			}
 		}
+	}
+
+	function run() {
+		scanCountdowns(document);
 		if (!live.length) {
 			return;
 		}
@@ -69,9 +77,32 @@
 		}, 1000);
 	}
 
+	function fillVariationSlot(variationId) {
+		var slot = document.getElementById('wbe-expiry-slot');
+		if (!slot) {
+			return;
+		}
+		var map = (window.wbeFront && wbeFront.variations) || {};
+		var html = variationId && map[String(variationId)] ? map[String(variationId)] : '';
+		slot.innerHTML = html || '';
+		if (html) {
+			scanCountdowns(slot);
+		}
+	}
+
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', run);
 	} else {
 		run();
 	}
-})();
+
+	if ($ && $.fn) {
+		$(document.body).on('found_variation', 'form.variations_form', function (e, variation) {
+			var id = variation && variation.variation_id ? variation.variation_id : 0;
+			fillVariationSlot(id);
+		});
+		$(document.body).on('reset_data hide_variation', 'form.variations_form', function () {
+			fillVariationSlot(0);
+		});
+	}
+})(window.jQuery);

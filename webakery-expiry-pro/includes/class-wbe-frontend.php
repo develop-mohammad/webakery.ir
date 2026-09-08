@@ -38,15 +38,51 @@ class WBE_Frontend {
 			array(),
 			WBE_VERSION
 		);
-		if ( ! empty( WBE_Settings::get()['show_sale_countdown'] ) ) {
+		$need_js = ! empty( WBE_Settings::get()['show_sale_countdown'] );
+		$variations = array();
+		if ( function_exists( 'is_product' ) && is_product() && self::want_product_page() ) {
+			$product = function_exists( 'wc_get_product' ) ? wc_get_product( get_the_ID() ) : null;
+			if ( $product && method_exists( $product, 'is_type' ) && $product->is_type( 'variable' ) ) {
+				$need_js    = true;
+				$variations = self::variation_html_map( $product );
+			}
+		}
+		if ( $need_js ) {
 			wp_enqueue_script(
 				'wbe-countdown',
 				WBE_URL . 'assets/frontend.js',
-				array(),
+				array( 'jquery' ),
 				WBE_VERSION,
 				true
 			);
+			if ( $variations ) {
+				wp_localize_script(
+					'wbe-countdown',
+					'wbeFront',
+					array(
+						'variations' => $variations,
+					)
+				);
+			}
 		}
+	}
+
+	/**
+	 * @param WC_Product $product
+	 * @return array<string,string>
+	 */
+	public static function variation_html_map( $product ) {
+		$map = array();
+		if ( ! $product || ! method_exists( $product, 'get_children' ) ) {
+			return $map;
+		}
+		foreach ( $product->get_children() as $vid ) {
+			$html = self::field_html( (int) $vid, 'block' );
+			if ( $html ) {
+				$map[ (string) (int) $vid ] = $html;
+			}
+		}
+		return $map;
 	}
 
 	public static function want_product_page() {
@@ -61,7 +97,7 @@ class WBE_Frontend {
 		if ( ! function_exists( 'is_product' ) || ! is_product() || ! self::want_product_page() ) {
 			return $content;
 		}
-		$html = self::field_html( get_the_ID(), 'block' );
+		$html = self::product_page_html( get_the_ID() );
 		if ( ! $html ) {
 			return $content;
 		}
@@ -79,7 +115,24 @@ class WBE_Frontend {
 		if ( $post && trim( (string) $post->post_excerpt ) !== '' ) {
 			return;
 		}
-		echo self::field_html( get_the_ID(), 'block' ); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo self::product_page_html( get_the_ID() ); // phpcs:ignore WordPress.Security.EscapeOutput
+	}
+
+	/**
+	 * برای متغیر: جایگاه خالی که با انتخاب تنوع پر می‌شود.
+	 *
+	 * @param int $product_id
+	 * @return string
+	 */
+	public static function product_page_html( $product_id ) {
+		$product_id = (int) $product_id;
+		if ( function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $product_id );
+			if ( $product && method_exists( $product, 'is_type' ) && $product->is_type( 'variable' ) ) {
+				return '<div class="wbe-expiry-slot" id="wbe-expiry-slot" dir="rtl"></div>';
+			}
+		}
+		return self::field_html( $product_id, 'block' );
 	}
 
 	public static function on_loop() {
@@ -87,7 +140,40 @@ class WBE_Frontend {
 		if ( empty( $s['show_on_loop'] ) ) {
 			return;
 		}
-		echo self::field_html( get_the_ID(), 'loop' ); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo self::loop_html( get_the_ID() ); // phpcs:ignore WordPress.Security.EscapeOutput
+	}
+
+	/**
+	 * در حلقه برای متغیر نزدیک‌ترین انقضای تنوع‌ها را نشان بده.
+	 *
+	 * @param int $product_id
+	 * @return string
+	 */
+	public static function loop_html( $product_id ) {
+		$product_id = (int) $product_id;
+		if ( function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $product_id );
+			if ( $product && method_exists( $product, 'is_type' ) && $product->is_type( 'variable' ) && method_exists( $product, 'get_children' ) ) {
+				$best_id = 0;
+				$best_exp = '';
+				foreach ( $product->get_children() as $vid ) {
+					$vid = (int) $vid;
+					if ( ! WBE_Product::configured( $vid ) ) {
+						continue;
+					}
+					$active = WBE_Product::active( $vid );
+					if ( ! $active || empty( $active['expiry'] ) ) {
+						continue;
+					}
+					if ( '' === $best_exp || $active['expiry'] < $best_exp ) {
+						$best_exp = $active['expiry'];
+						$best_id  = $vid;
+					}
+				}
+				return $best_id ? self::field_html( $best_id, 'loop' ) : '';
+			}
+		}
+		return self::field_html( $product_id, 'loop' );
 	}
 
 	public static function block_grid_html( $html, $data, $product ) {
@@ -96,7 +182,7 @@ class WBE_Frontend {
 		if ( empty( $s['show_on_loop'] ) || ! is_object( $product ) || ! method_exists( $product, 'get_id' ) ) {
 			return $html;
 		}
-		$field = self::field_html( $product->get_id(), 'loop' );
+		$field = self::loop_html( $product->get_id() );
 		if ( ! $field ) {
 			return $html;
 		}
@@ -119,9 +205,16 @@ class WBE_Frontend {
 		);
 		wp_enqueue_style( 'wbe-frontend', WBE_URL . 'assets/frontend.css', array(), WBE_VERSION );
 		if ( ! empty( WBE_Settings::get()['show_sale_countdown'] ) ) {
-			wp_enqueue_script( 'wbe-countdown', WBE_URL . 'assets/frontend.js', array(), WBE_VERSION, true );
+			wp_enqueue_script( 'wbe-countdown', WBE_URL . 'assets/frontend.js', array( 'jquery' ), WBE_VERSION, true );
 		}
-		return self::field_html( (int) $atts['id'], 'compact' );
+		$id = (int) $atts['id'];
+		if ( function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $id );
+			if ( $product && method_exists( $product, 'is_type' ) && $product->is_type( 'variable' ) ) {
+				return self::product_page_html( $id );
+			}
+		}
+		return self::field_html( $id, 'compact' );
 	}
 
 	/**
@@ -151,7 +244,7 @@ class WBE_Frontend {
 			'block'   => 'wbe-expiry wbe-expiry--block',
 		);
 		$class = isset( $map[ $variant ] ) ? $map[ $variant ] : $map['block'];
-		$html  = '<div class="' . esc_attr( $class ) . '" dir="rtl">';
+		$html  = '<div class="' . esc_attr( $class ) . '" dir="rtl" data-product-id="' . esc_attr( (string) $product_id ) . '">';
 		$html .= '<p class="wbe-expiry__row"><span class="wbe-expiry__label">تاریخ انقضا</span> ';
 		$html .= '<span class="wbe-expiry__value">' . esc_html( $date ) . '</span></p>';
 		$timer = self::sale_countdown_html( $product_id, $active, $variant );

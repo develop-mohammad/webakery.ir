@@ -71,6 +71,12 @@
 	max-width: 980px;
 }
 
+.wbe-variation-panel {
+	margin-top: 8px;
+	max-width: none;
+	clear: both;
+}
+
 .wbe-active-box {
 	margin: 12px 0;
 	padding: 12px;
@@ -181,6 +187,14 @@
 .wbe-batches-table [hidden],
 .wbe-product-panel [hidden] {
 	display: none !important;
+}
+
+.wbe-var-attrs {
+	margin: 0 0 10px;
+}
+
+.woocommerce_variation .wbe-variation-panel .form-field {
+	padding: 0 !important;
 }
 
 .wbe-remove-batch,

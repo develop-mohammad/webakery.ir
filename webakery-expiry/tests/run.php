@@ -415,6 +415,34 @@ wbe_check( 'ستون قیمت قبل تخفیف در اکسل هست', false !==
 wbe_check( 'ردیف نزدیک به انقضا رنگ جدا دارد', false !== strpos( $xml, 'ss:StyleID="near"' ) );
 wbe_check( 'نام محصول در خروجی است', false !== strpos( $xml, 'شیر خشک' ) );
 
+echo "\n=== محصول متغیر / تنوع ===\n";
+wbe_check( 'شناسه موجودی سفارش = تنوع', 55 === WBE_Engine::order_item_stock_id( 10, 55 ) );
+wbe_check( 'بدون تنوع = محصول', 10 === WBE_Engine::order_item_stock_id( 10, 0 ) );
+wbe_check( 'عنوان ردیف تنوع', 'شیر — سایز: بزرگ' === WBE_Engine::variation_row_title( 'شیر', 'سایز: بزرگ' ) );
+wbe_check( 'عنوان بدون ویژگی', 'شیر' === WBE_Engine::variation_row_title( 'شیر', '' ) );
+wbe_check( 'والد متغیر موجودی ندارد', false === WBE_Engine::type_owns_stock( 'variable' ) );
+wbe_check( 'تنوع موجودی دارد', true === WBE_Engine::type_owns_stock( 'variation' ) );
+wbe_check( 'ساده موجودی دارد', true === WBE_Engine::type_owns_stock( 'simple' ) );
+$row_var = WBE_Engine::bulk_row_from_record(
+	99,
+	'شیر — رنگ: قرمز',
+	'SKU-R',
+	array(
+		array( 'id' => 'a', 'price' => '100', 'stock' => 3, 'expiry' => '2026-06-01', 'discount' => 0 ),
+	),
+	'jalali',
+	'',
+	'',
+	'2026-01-15',
+	array(
+		'is_variation' => true,
+		'parent_id'    => 50,
+		'brand'        => 'پگاه',
+		'status'       => 'publish',
+	)
+);
+wbe_check( 'ردیف گروهی پرچم تنوع دارد', ! empty( $row_var['is_variation'] ) && 50 === (int) $row_var['parent_id'] );
+
 echo "\n=== هشدار انقضا ===\n";
 wbe_check( '۵ روز = فوری', 'soon' === WBE_Engine::urgency( 5, 7, 30, 60 ) );
 wbe_check( '۲۰ روز = یک ماه', 'month' === WBE_Engine::urgency( 20, 7, 30, 60 ) );
