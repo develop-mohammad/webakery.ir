@@ -655,4 +655,188 @@
 		var size = (wbeBulk.chunk || 40);
 		saveChunks(chunkKeys(dirty, size), keys.length, 0, 0);
 	});
+
+	var bugShot = null;
+
+	function bugCfg() {
+		return window.wbeSupport || { telegram: 'HAJITODAY', chat: 'https://t.me/HAJITODAY', version: '', page: '' };
+	}
+
+	function setBugShot(dataUrl) {
+		bugShot = dataUrl || null;
+		var $wrap = $('#wbe-bug-shot-wrap');
+		var $img = $('#wbe-bug-shot');
+		if (bugShot) {
+			$img.attr('src', bugShot);
+			$wrap.prop('hidden', false);
+		} else {
+			$img.attr('src', '');
+			$wrap.prop('hidden', true);
+		}
+	}
+
+	function bugText() {
+		var cfg = bugCfg();
+		var desc = $.trim($('#wbe-bug-desc').val() || '');
+		var lines = [
+			'گزارش باگ — انقضای کالا',
+			'نسخه: ' + (cfg.version || ''),
+			'صفحه: ' + (cfg.page || ''),
+			'آدرس: ' + (window.location ? window.location.href : ''),
+			'',
+			'توضیح:',
+			desc || '(بدون توضیح)'
+		];
+		if (bugShot) {
+			lines.push('');
+			lines.push('اسکرین‌شات پیوست می‌شود.');
+		}
+		return lines.join('\n');
+	}
+
+	function dataUrlToFile(dataUrl, name) {
+		var parts = String(dataUrl).split(',');
+		var mime = (parts[0].match(/:(.*?);/) || [])[1] || 'image/png';
+		var bin = atob(parts[1] || '');
+		var arr = new Uint8Array(bin.length);
+		for (var i = 0; i < bin.length; i++) {
+			arr[i] = bin.charCodeAt(i);
+		}
+		return new File([arr], name, { type: mime });
+	}
+
+	function downloadShot() {
+		if (!bugShot) {
+			return;
+		}
+		var a = document.createElement('a');
+		a.href = bugShot;
+		a.download = 'wbe-bug.png';
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
+	}
+
+	$(document).on('click', '.wbe-bug-open', function (e) {
+		e.preventDefault();
+		$('#wbe-bug-modal').prop('hidden', false);
+		$('#wbe-bug-status').text('');
+	});
+
+	$(document).on('click', '[data-wbe-bug-close]', function (e) {
+		e.preventDefault();
+		$('#wbe-bug-modal').prop('hidden', true);
+	});
+
+	$(document).on('click', '#wbe-bug-shot-clear', function (e) {
+		e.preventDefault();
+		setBugShot(null);
+		$('#wbe-bug-file').val('');
+	});
+
+	$(document).on('change', '#wbe-bug-file', function () {
+		var file = this.files && this.files[0];
+		if (!file) {
+			return;
+		}
+		var reader = new FileReader();
+		reader.onload = function () {
+			setBugShot(reader.result);
+		};
+		reader.readAsDataURL(file);
+	});
+
+	$(document).on('paste', '#wbe-bug-desc', function (e) {
+		var items = e.originalEvent && e.originalEvent.clipboardData && e.originalEvent.clipboardData.items;
+		if (!items) {
+			return;
+		}
+		for (var i = 0; i < items.length; i++) {
+			if (items[i].type && items[i].type.indexOf('image') === 0) {
+				var file = items[i].getAsFile();
+				if (!file) {
+					continue;
+				}
+				var reader = new FileReader();
+				reader.onload = function () {
+					setBugShot(reader.result);
+				};
+				reader.readAsDataURL(file);
+				break;
+			}
+		}
+	});
+
+	$(document).on('click', '#wbe-bug-capture', function (e) {
+		e.preventDefault();
+		var $st = $('#wbe-bug-status');
+		if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+			$st.text('مرورگر گرفتن اسکرین را پشتیبانی نمی‌کند. تصویر را انتخاب یا در توضیح بچسبانید.');
+			return;
+		}
+		$st.text('پنجره یا این تب را انتخاب کنید…');
+		navigator.mediaDevices
+			.getDisplayMedia({ video: true, audio: false })
+			.then(function (stream) {
+				var track = stream.getVideoTracks()[0];
+				var video = document.createElement('video');
+				video.srcObject = stream;
+				video.muted = true;
+				return video.play().then(function () {
+					var canvas = document.createElement('canvas');
+					canvas.width = video.videoWidth || 1280;
+					canvas.height = video.videoHeight || 720;
+					canvas.getContext('2d').drawImage(video, 0, 0);
+					track.stop();
+					stream.getTracks().forEach(function (t) {
+						t.stop();
+					});
+					setBugShot(canvas.toDataURL('image/png'));
+					$st.text('اسکرین گرفته شد.');
+				});
+			})
+			.catch(function () {
+				$st.text('گرفتن اسکرین لغو شد. می‌توانید فایل تصویر انتخاب کنید.');
+			});
+	});
+
+	$(document).on('click', '#wbe-bug-send', function (e) {
+		e.preventDefault();
+		var cfg = bugCfg();
+		var text = bugText();
+		var desc = $.trim($('#wbe-bug-desc').val() || '');
+		if (!desc && !bugShot) {
+			$('#wbe-bug-status').text('حداقل توضیح یا اسکرین لازم است.');
+			return;
+		}
+		var chat = cfg.chat || 'https://t.me/HAJITODAY';
+		var url = chat + (chat.indexOf('?') === -1 ? '?text=' : '&text=') + encodeURIComponent(text);
+		var finish = function () {
+			downloadShot();
+			window.open(url, '_blank', 'noopener');
+			$('#wbe-bug-status').text(
+				bugShot
+					? 'تلگرام باز شد. تصویر دانلود شد — همان را در چت @' + (cfg.telegram || 'HAJITODAY') + ' پیوست کنید.'
+					: 'تلگرام باز شد.'
+			);
+		};
+		if (bugShot && navigator.canShare) {
+			try {
+				var file = dataUrlToFile(bugShot, 'wbe-bug.png');
+				if (navigator.canShare({ files: [file] })) {
+					navigator
+						.share({ text: text, files: [file] })
+						.then(function () {
+							$('#wbe-bug-status').text('گزارش برای ارسال آماده شد.');
+						})
+						.catch(finish);
+					return;
+				}
+			} catch (err) {
+				finish();
+				return;
+			}
+		}
+		finish();
+	});
 })(jQuery);

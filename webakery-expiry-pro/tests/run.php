@@ -672,6 +672,31 @@ wbe_check( 'ویرایش تکی فیلد وضعیت ندارد', false === strpo
 wbe_check( 'ویرایش گروهی ستون SKU دارد', false !== strpos( $bulk_view, '>SKU<' ) );
 wbe_check( 'ویرایش گروهی ستون وضعیت دارد', false !== strpos( $bulk_view, '>وضعیت<' ) );
 
+echo "\n=== کندی گروهی و گزارش باگ ===\n";
+require_once dirname( __DIR__ ) . '/includes/class-wbe-support.php';
+wbe_check( 'بدون برند لود گروهی باید رد شود', true === WBE_Support::bulk_should_skip_load( array( 'brand' => '' ) ) );
+wbe_check( 'با برند لود گروهی مجاز است', false === WBE_Support::bulk_should_skip_load( array( 'brand' => 'نستله' ) ) );
+wbe_check( 'ذخیره گروهی تکه‌تکه است', 40 === WBE_Admin_Bulk::chunk_size() );
+wbe_check( 'آیدی تلگرام گزارش باگ', 'HAJITODAY' === WBE_Support::telegram_handle() );
+wbe_check( 'لینک چت تلگرام درست است', 'https://t.me/HAJITODAY' === WBE_Support::telegram_chat_url() );
+$rep = WBE_Support::report_text(
+	'جدول گروهی کند شد',
+	array(
+		'version'        => '1.2.12',
+		'page'           => 'webakery-expiry-bulk',
+		'url'            => 'https://example.test/wp-admin',
+		'has_screenshot' => true,
+	)
+);
+$tg  = WBE_Support::telegram_chat_url( $rep );
+wbe_check( 'متن گزارش نسخه و توضیح دارد', false !== strpos( $rep, '1.2.12' ) && false !== strpos( $rep, 'جدول گروهی کند شد' ) );
+wbe_check( 'متن گزارش اسکرین را ذکر می‌کند', false !== strpos( $rep, 'اسکرین‌شات' ) );
+wbe_check( 'لینک تلگرام متن را دارد', 0 === strpos( $tg, 'https://t.me/HAJITODAY?text=' ) && false !== strpos( $tg, rawurlencode( 'جدول گروهی کند شد' ) ) );
+$help = file_get_contents( dirname( __DIR__ ) . '/includes/views/help.php' );
+$bug  = file_get_contents( dirname( __DIR__ ) . '/includes/views/bug-report.php' );
+wbe_check( 'راهنما صفحه دارد', false !== strpos( $help, 'رفع کندی' ) && false !== strpos( $help, 'موجودی رزرو' ) );
+wbe_check( 'فرم گزارش باگ تلگرام دارد', false !== strpos( $bug, 't.me' ) && false !== strpos( $bug, 'wbe-bug-capture' ) && false !== strpos( $bug, 'wbe-bug-desc' ) );
+
 echo "\n=== فعال‌سازی وردپرس ===\n";
 if ( ! defined( 'WBE_PATH' ) ) {
 	define( 'WBE_PATH', dirname( __DIR__ ) . '/' );

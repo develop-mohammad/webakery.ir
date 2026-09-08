@@ -34,6 +34,7 @@ class WBE_Plugin {
 		require_once WBE_PATH . 'includes/class-wbe-export.php';
 		require_once WBE_PATH . 'includes/class-wbe-sms.php';
 		require_once WBE_PATH . 'includes/class-wbe-alerts.php';
+		require_once WBE_PATH . 'includes/class-wbe-support.php';
 	}
 
 	public static function activate() {
@@ -161,6 +162,7 @@ class WBE_Plugin {
 			'<a href="' . esc_url( admin_url( 'admin.php?page=webakery-expiry' ) ) . '">گزارش</a>',
 			'<a href="' . esc_url( admin_url( 'admin.php?page=webakery-expiry-bulk' ) ) . '">ویرایش گروهی</a>',
 			'<a href="' . esc_url( admin_url( 'admin.php?page=webakery-expiry-settings' ) ) . '">تنظیمات</a>',
+			'<a href="' . esc_url( admin_url( 'admin.php?page=webakery-expiry-help' ) ) . '">راهنما</a>',
 		);
 		if ( defined( 'WBE_EDITION' ) && 'pro' === WBE_EDITION ) {
 			$custom[] = '<a href="' . esc_url( admin_url( 'admin.php?page=webakery-expiry-license' ) ) . '">لایسنس</a>';

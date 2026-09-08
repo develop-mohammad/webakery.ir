@@ -19,6 +19,7 @@ class WBE_Admin {
 		add_action( 'admin_menu', array( $this, 'menu' ), 58 );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
+		add_action( 'admin_footer', array( $this, 'bug_report_ui' ) );
 		add_action( 'admin_post_wbe_export', array( $this, 'handle_export' ) );
 	}
 
@@ -38,6 +39,7 @@ class WBE_Admin {
 		add_submenu_page( 'webakery-expiry', 'گزارش انقضا', 'گزارش', $cap, 'webakery-expiry', array( $this, 'render_reports' ) );
 		add_submenu_page( 'webakery-expiry', 'ویرایش گروهی محصول', 'ویرایش گروهی', $cap, 'webakery-expiry-bulk', array( WBE_Admin_Bulk::instance(), 'render_page' ) );
 		add_submenu_page( 'webakery-expiry', 'تنظیمات انقضای کالا', 'تنظیمات', $cap, 'webakery-expiry-settings', array( $this, 'render_settings' ) );
+		add_submenu_page( 'webakery-expiry', 'راهنمای انقضای کالا', 'راهنمای استفاده', $cap, 'webakery-expiry-help', array( $this, 'render_help' ) );
 		if ( defined( 'WBE_EDITION' ) && 'pro' === WBE_EDITION ) {
 			add_submenu_page( 'webakery-expiry', 'لایسنس انقضای کالا', 'لایسنس', 'manage_options', 'webakery-expiry-license', array( $this, 'render_license' ) );
 		}
@@ -66,6 +68,16 @@ class WBE_Admin {
 			return;
 		}
 		wp_enqueue_script( 'wbe-admin', WBE_URL . 'assets/admin.js', array( 'jquery' ), WBE_VERSION, true );
+		wp_localize_script(
+			'wbe-admin',
+			'wbeSupport',
+			array(
+				'telegram' => class_exists( 'WBE_Support' ) ? WBE_Support::telegram_handle() : 'HAJITODAY',
+				'chat'     => class_exists( 'WBE_Support' ) ? WBE_Support::telegram_chat_url() : 'https://t.me/HAJITODAY',
+				'version'  => defined( 'WBE_VERSION' ) ? WBE_VERSION : '',
+				'page'     => (string) $hook,
+			)
+		);
 		if ( false !== strpos( (string) $hook, 'webakery-expiry-bulk' ) ) {
 			wp_localize_script(
 				'wbe-admin',
@@ -94,6 +106,29 @@ class WBE_Admin {
 	public function render_settings() {
 		$s = WBE_Settings::get();
 		include WBE_PATH . 'includes/views/settings.php';
+	}
+
+	public function render_help() {
+		include WBE_PATH . 'includes/views/help.php';
+	}
+
+	/**
+	 * دکمه و مودال گزارش باگ روی صفحات افزونه و ویرایش محصول.
+	 */
+	public function bug_report_ui() {
+		if ( ! current_user_can( 'edit_products' ) && ! current_user_can( 'manage_woocommerce' ) ) {
+			return;
+		}
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		$hook   = isset( $GLOBALS['hook_suffix'] ) ? (string) $GLOBALS['hook_suffix'] : '';
+		$ok     = ( false !== strpos( $hook, 'webakery-expiry' ) );
+		if ( $screen && in_array( $screen->id, array( 'product', 'edit-product' ), true ) ) {
+			$ok = true;
+		}
+		if ( ! $ok ) {
+			return;
+		}
+		include WBE_PATH . 'includes/views/bug-report.php';
 	}
 
 	public function render_license() {
