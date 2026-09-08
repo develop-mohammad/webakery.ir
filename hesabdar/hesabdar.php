@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hesabdar
  * Description: مدیریت کامل مشتریان و فروش ووکامرس (سفارش‌ها، ایجاد/ویرایش سفارش، محصولات، گزارش مالی، فاکتور) از داخل پیشخوان + پرتال مستقل و مینیمال ورود حسابدار بدون دسترسی به پیشخوان.
- * Version:     1.10.2
+ * Version:     1.10.3
  * Plugin URI:  https://webakery.ir
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,7 +22,7 @@ if ( defined( 'HESABDAR_LOADED' ) ) {
 }
 define( 'HESABDAR_LOADED', true );
 
-define( 'WAP_VERSION', '1.10.2' );
+define( 'WAP_VERSION', '1.10.3' );
 define( 'WAP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WAP_URL', plugin_dir_url( __FILE__ ) );
 
@@ -85,6 +85,7 @@ function hesabdar_bootstrap_core() {
 		'class-wap-zarinpal-reconcile.php',
 		'class-wap-zarinpal-fee.php',
 		'class-wap-zarinpal-report.php',
+		'class-wap-excel.php',
 	);
 	foreach ( $required as $file ) {
 		if ( ! hesabdar_require_include( $file ) ) {
@@ -425,6 +426,15 @@ function hesabdar_register_wci_hooks() {
 		check_admin_referer( 'wci_shaparak_export' );
 		$report = WAP_Zarinpal_Report::build( wp_unslash( $_GET ) );
 		WAP_Export::zarinpal_reconcile_csv( $report );
+	} );
+
+	add_action( 'admin_post_wci_export_shaparak_xlsx', function() {
+		if ( ! hesabdar_user_can_wci() || ! wap_is_active() ) {
+			wp_die( 'Unauthorized' );
+		}
+		check_admin_referer( 'wci_shaparak_export' );
+		$report = WAP_Zarinpal_Report::build( wp_unslash( $_GET ) );
+		WAP_Export::zarinpal_reconcile_xlsx( $report );
 	} );
 
 	add_action( 'admin_init', function() {

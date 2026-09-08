@@ -3,6 +3,9 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * گزارش تطبیق: خریدهای ووکامرس (زرین‌پال) + واریز شاپرک + کارمزد.
+ *
+ * واریز شاپرک دقیقاً از API Reconciliation زرین‌پال خوانده می‌شود
+ * (همان فیلدهای پنل: id, amount ریال, reference_id, reconciled_at, status).
  */
 class WAP_Zarinpal_Report {
 
@@ -20,14 +23,15 @@ class WAP_Zarinpal_Report {
 		$out = array(
 			'filters' => $f,
 			'summary' => array(
-				'wc_count'        => 0,
-				'wc_gross'        => 0.0,
-				'wc_fee'          => 0.0,
-				'wc_net'          => 0.0,
-				'settle_count'    => 0,
-				'settle_total'    => 0.0,
-				'diff_net_settle' => 0.0,
-				'fee_source'      => 'formula',
+				'wc_count'          => 0,
+				'wc_gross'          => 0.0,
+				'wc_fee'            => 0.0,
+				'wc_net'            => 0.0,
+				'settle_count'      => 0,
+				'settle_total'      => 0.0,
+				'settle_total_rial' => 0.0,
+				'diff_net_settle'   => 0.0,
+				'fee_source'        => 'formula',
 			),
 			'orders'  => array(),
 			'settles' => array(),
@@ -77,14 +81,16 @@ class WAP_Zarinpal_Report {
 
 		$settles = array();
 		$settle_total = 0.0;
+		$settle_rial  = 0.0;
 		$settle_err = '';
 		$fetched = self::fetch_settles( $f );
 		if ( is_wp_error( $fetched ) ) {
 			$settle_err = $fetched->get_error_message();
 		} else {
 			foreach ( $fetched as $row ) {
+				// مبلغ API زرین‌پال دقیقاً ریال است (مثل پنل)
 				$amount_rial = (float) ( $row['amount'] ?? 0 );
-				$amount_toman = $amount_rial >= 10 ? $amount_rial / 10 : $amount_rial;
+				$amount_toman = $amount_rial / 10;
 				$settles[] = array(
 					'id'            => (string) ( $row['id'] ?? '' ),
 					'status'        => (string) ( $row['status'] ?? '' ),
@@ -94,23 +100,30 @@ class WAP_Zarinpal_Report {
 					'reconciled_at' => (string) ( $row['reconciled_at'] ?? '' ),
 					'payable_at'    => (string) ( $row['payable_at'] ?? '' ),
 					'date_jalali'   => self::format_iso_jalali( (string) ( $row['reconciled_at'] ?? '' ) ),
+					'payable_jalali'=> self::format_iso_jalali( (string) ( $row['payable_at'] ?? '' ) ),
 				);
 				$settle_total += $amount_toman;
+				$settle_rial  += $amount_rial;
 			}
+			// مرتب‌سازی مثل پنل: جدیدترین واریز اول
+			usort( $settles, function( $a, $b ) {
+				return strcmp( (string) $b['reconciled_at'], (string) $a['reconciled_at'] );
+			} );
 		}
 
 		$out['orders']  = $order_rows;
 		$out['settles'] = $settles;
 		$out['error']   = $settle_err;
 		$out['summary'] = array(
-			'wc_count'        => count( $order_rows ),
-			'wc_gross'        => $gross,
-			'wc_fee'          => $fee_sum,
-			'wc_net'          => $net_sum,
-			'settle_count'    => count( $settles ),
-			'settle_total'    => $settle_total,
-			'diff_net_settle' => $settle_total - $net_sum,
-			'fee_source'      => $fee_source,
+			'wc_count'          => count( $order_rows ),
+			'wc_gross'          => $gross,
+			'wc_fee'            => $fee_sum,
+			'wc_net'            => $net_sum,
+			'settle_count'      => count( $settles ),
+			'settle_total'      => $settle_total,
+			'settle_total_rial' => $settle_rial,
+			'diff_net_settle'   => $settle_total - $net_sum,
+			'fee_source'        => $fee_source,
 		);
 		return $out;
 	}
@@ -153,6 +166,29 @@ class WAP_Zarinpal_Report {
 	}
 
 	/**
+	 * تبدیل بازه شمسی فیلتر به Y-m-d میلادی برای API زرین‌پال.
+	 *
+	 * @return array{0:string,1:string} [from, to]
+	 */
+	public static function gregorian_range( array $f ): array {
+		$from = '';
+		$to   = '';
+		if ( ! empty( $f['date_from'] ) ) {
+			$ts = WAP_Jalali::str_to_timestamp( $f['date_from'], false );
+			if ( $ts ) {
+				$from = gmdate( 'Y-m-d', $ts );
+			}
+		}
+		if ( ! empty( $f['date_to'] ) ) {
+			$ts = WAP_Jalali::str_to_timestamp( $f['date_to'], false );
+			if ( $ts ) {
+				$to = gmdate( 'Y-m-d', $ts );
+			}
+		}
+		return array( $from, $to );
+	}
+
+	/**
 	 * @return array<int,array>|WP_Error
 	 */
 	public static function fetch_settles( array $f ) {
@@ -164,13 +200,27 @@ class WAP_Zarinpal_Report {
 		if ( $token === '' || $tid === '' ) {
 			return new WP_Error( 'wap_zp_cfg', 'Access Token و Terminal ID را در «اطلاع‌رسانی پیامک» وارد کنید.' );
 		}
-		$items = WAP_Zarinpal_Reconcile::fetch_reconciles( $token, $tid );
+
+		list( $from, $to ) = self::gregorian_range( $f );
+		$opts = array( 'filter' => 'PAID' );
+		if ( $from !== '' ) {
+			$opts['created_from_date'] = $from;
+		}
+		if ( $to !== '' ) {
+			$opts['created_to_date'] = $to;
+		}
+
+		$items = WAP_Zarinpal_Reconcile::fetch_reconciles( $token, $tid, $opts );
 		if ( is_wp_error( $items ) ) {
 			return $items;
 		}
 
+		// اگر API تاریخ را اعمال نکرده باشد، فیلتر محلی روی reconciled_at / payable_at
 		$ts_from = ! empty( $f['date_from'] ) ? WAP_Jalali::str_to_timestamp( $f['date_from'], false ) : 0;
 		$ts_to   = ! empty( $f['date_to'] ) ? WAP_Jalali::str_to_timestamp( $f['date_to'], true ) : 0;
+		if ( ! $ts_from && ! $ts_to ) {
+			return $items;
+		}
 
 		$out = array();
 		foreach ( $items as $row ) {

@@ -165,22 +165,40 @@ class WAP_Zarinpal_Reconcile {
 	}
 
 	/**
+	 * واکشی تسویه‌ها از GraphQL زرین‌پال (همان داده‌ای که در پنل دیده می‌شود).
+	 *
+	 * @param array{filter?:string,created_from_date?:string,created_to_date?:string} $opts
 	 * @return array<int,array<string,mixed>>|WP_Error
 	 */
-	public static function fetch_reconciles( string $token, string $terminal_id ) {
-		$query = 'query getReconciles($terminal_id: ID, $filter: ReconciliationStatusEnum) { resource: Reconciliation(terminal_id: $terminal_id, filter: $filter) { id status amount payable_at reference_id reconciled_at } }';
-		$body  = wp_json_encode( array(
+	public static function fetch_reconciles( string $token, string $terminal_id, array $opts = array() ) {
+		$filter = strtoupper( (string) ( $opts['filter'] ?? 'PAID' ) );
+		if ( ! in_array( $filter, array( 'ALL', 'PAID', 'IN_PROGRESS', 'REVERSED' ), true ) ) {
+			$filter = 'PAID';
+		}
+		$from = isset( $opts['created_from_date'] ) ? trim( (string) $opts['created_from_date'] ) : '';
+		$to   = isset( $opts['created_to_date'] ) ? trim( (string) $opts['created_to_date'] ) : '';
+
+		$query = 'query getReconciles($terminal_id: ID, $filter: ReconciliationStatusEnum, $created_from_date: DateTime, $created_to_date: DateTime) { resource: Reconciliation(terminal_id: $terminal_id, filter: $filter, created_from_date: $created_from_date, created_to_date: $created_to_date) { id status amount payable_at reference_id reconciled_at } }';
+		$vars  = array(
+			'terminal_id' => $terminal_id,
+			'filter'      => $filter,
+		);
+		if ( $from !== '' ) {
+			$vars['created_from_date'] = $from;
+		}
+		if ( $to !== '' ) {
+			$vars['created_to_date'] = $to;
+		}
+
+		$body = wp_json_encode( array(
 			'query'     => $query,
-			'variables' => array(
-				'terminal_id' => $terminal_id,
-				'filter'      => 'PAID',
-			),
+			'variables' => $vars,
 		) );
 
 		$resp = wp_remote_post(
 			self::GRAPHQL_URL,
 			array(
-				'timeout' => 25,
+				'timeout' => 40,
 				'headers' => array(
 					'Accept'        => 'application/json',
 					'Content-Type'  => 'application/json',
@@ -203,13 +221,17 @@ class WAP_Zarinpal_Reconcile {
 			return new WP_Error( 'wap_zp_bad', 'پاسخ نامعتبر از زرین‌پال.' );
 		}
 		if ( ! empty( $data['errors'] ) ) {
+			// اگر فیلتر تاریخ پشتیبانی نشد، بدون تاریخ دوباره امتحان کن
 			$msg = isset( $data['errors'][0]['message'] ) ? (string) $data['errors'][0]['message'] : 'خطای GraphQL';
+			if ( ( $from !== '' || $to !== '' ) && stripos( $msg, 'created_' ) !== false ) {
+				return self::fetch_reconciles( $token, $terminal_id, array( 'filter' => $filter ) );
+			}
 			return new WP_Error( 'wap_zp_gql', 'زرین‌پال: ' . $msg );
 		}
 		$resource = $data['data']['resource'] ?? array();
 		if ( ! is_array( $resource ) ) {
 			return array();
 		}
-		return $resource;
+		return array_values( $resource );
 	}
 }

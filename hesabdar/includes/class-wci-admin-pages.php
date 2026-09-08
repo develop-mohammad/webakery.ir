@@ -1621,7 +1621,14 @@ function wci_shaparak_report_page() {
         'action'   => 'wci_export_shaparak_csv',
         '_wpnonce' => wp_create_nonce( 'wci_shaparak_export' ),
     ) ), admin_url( 'admin-post.php' ) ) );
-    echo '<div class="wci-export-bar"><a class="button wci-btn-excel" href="' . $csv_url . '">📊 خروجی Excel/CSV</a></div>';
+    $xlsx_url = esc_url( add_query_arg( array_merge( array_filter( $f ), array(
+        'action'   => 'wci_export_shaparak_xlsx',
+        '_wpnonce' => wp_create_nonce( 'wci_shaparak_export' ),
+    ) ), admin_url( 'admin-post.php' ) ) );
+    echo '<div class="wci-export-bar">';
+    echo '<a class="button button-primary wci-btn-excel" href="' . $xlsx_url . '">📊 خروجی اکسل (.xlsx)</a> ';
+    echo '<a class="button" href="' . $csv_url . '">📥 CSV</a>';
+    echo '</div>';
 
     if ( $report['error'] !== '' ) {
         echo '<div class="notice notice-warning"><p>' . esc_html( $report['error'] ) . '</p></div>';
@@ -1631,7 +1638,7 @@ function wci_shaparak_report_page() {
     echo '<span>🛒 خرید ووکامرس: <strong>' . esc_html( number_format( $s['wc_gross'] ) ) . '</strong> (' . esc_html( number_format( $s['wc_count'] ) ) . ')</span>';
     echo '<span>💳 کارمزد: <strong>' . esc_html( number_format( $s['wc_fee'] ) ) . '</strong></span>';
     echo '<span>✅ خالص: <strong>' . esc_html( number_format( $s['wc_net'] ) ) . '</strong></span>';
-    echo '<span>🏦 واریز شاپرک: <strong>' . esc_html( number_format( $s['settle_total'] ) ) . '</strong> (' . esc_html( number_format( $s['settle_count'] ) ) . ')</span>';
+    echo '<span>🏦 واریز شاپرک: <strong>' . esc_html( number_format( $s['settle_total_rial'] ?? 0 ) ) . '</strong> ریال / ' . esc_html( number_format( $s['settle_total'] ) ) . ' تومان (' . esc_html( number_format( $s['settle_count'] ) ) . ')</span>';
     echo '<span>Δ اختلاف: <strong>' . esc_html( number_format( $s['diff_net_settle'] ) ) . '</strong></span>';
     echo '</div>';
 
@@ -1655,16 +1662,17 @@ function wci_shaparak_report_page() {
     }
     echo '</tbody></table>';
 
-    echo '<h2>واریزهای شاپرک (PAID)</h2>';
-    echo '<table class="widefat striped"><thead><tr><th>شناسه</th><th>تاریخ</th><th>مبلغ تومان</th><th>ارجاع</th><th>وضعیت</th></tr></thead><tbody>';
+    echo '<h2>واریزهای شاپرک (دقیقاً از API زرین‌پال — PAID)</h2>';
+    echo '<table class="widefat striped"><thead><tr><th>شناسه</th><th>تاریخ واریز</th><th>مبلغ ریال</th><th>تومان</th><th>ارجاع بانکی</th><th>وضعیت</th></tr></thead><tbody>';
     if ( empty( $report['settles'] ) ) {
-        echo '<tr><td colspan="5">موردی نیست.</td></tr>';
+        echo '<tr><td colspan="6">موردی نیست.</td></tr>';
     } else {
         foreach ( $report['settles'] as $r ) {
             printf(
-                '<tr><td>%s</td><td>%s</td><td><strong>%s</strong></td><td style="direction:ltr">%s</td><td>%s</td></tr>',
+                '<tr><td>%s</td><td>%s</td><td><strong>%s</strong></td><td>%s</td><td style="direction:ltr">%s</td><td>%s</td></tr>',
                 esc_html( $r['id'] ),
                 esc_html( $r['date_jalali'] ?: $r['reconciled_at'] ),
+                esc_html( number_format( $r['amount_rial'] ) ),
                 esc_html( number_format( $r['amount'] ) ),
                 esc_html( $r['reference_id'] ),
                 esc_html( $r['status'] )

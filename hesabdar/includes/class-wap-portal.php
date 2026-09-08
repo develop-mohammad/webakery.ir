@@ -253,6 +253,12 @@ class WAP_Portal {
             return;
         }
 
+        if ( $type === 'shaparak_xlsx' ) {
+            $report = WAP_Zarinpal_Report::build();
+            WAP_Export::zarinpal_reconcile_xlsx( $report );
+            return;
+        }
+
         if ( $type === 'products_csv' || $type === 'product_orders_csv' ) {
             $f          = WAP_Data::get_filters();
             $orders     = WAP_Data::get_orders( $f );
@@ -1044,6 +1050,7 @@ class WAP_Portal {
         $presets = WAP_Data::quick_presets();
         $currency = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : 'تومان';
         $csv_url = self::export_url( array_merge( $f, array( 'wap_view' => 'shaparak' ) ), 'shaparak_csv' );
+        $xlsx_url = self::export_url( array_merge( $f, array( 'wap_view' => 'shaparak' ) ), 'shaparak_xlsx' );
         ?>
         <form method="get" class="wap-filters" action="<?php echo esc_url( self::panel_url() ); ?>">
             <input type="hidden" name="wap_view" value="shaparak">
@@ -1100,13 +1107,17 @@ class WAP_Portal {
                 <div class="wap-card-accent">خرید − کارمزد</div>
             </div>
             <div class="wap-card">
-                <div class="wap-card-label">واریز شاپرک (PAID)</div>
-                <div class="wap-card-value"><?php echo esc_html( number_format( $s['settle_total'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
-                <div class="wap-card-accent"><?php echo esc_html( number_format( $s['settle_count'] ) ); ?> تسویه — اختلاف: <?php echo esc_html( number_format( $s['diff_net_settle'] ) ); ?></div>
+                <div class="wap-card-label">واریز شاپرک (عین پنل زرین‌پال)</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $s['settle_total_rial'] ?? ( $s['settle_total'] * 10 ) ) ); ?> <small>ریال</small></div>
+                <div class="wap-card-accent"><?php echo esc_html( number_format( $s['settle_count'] ) ); ?> تسویه — معادل <?php echo esc_html( number_format( $s['settle_total'] ) ); ?> تومان — Δ خالص: <?php echo esc_html( number_format( $s['diff_net_settle'] ) ); ?></div>
             </div>
         </div>
 
-        <?php self::render_export_bar( $csv_url, false ); ?>
+        <div class="wap-export-bar">
+            <span class="wap-export-label">خروجی گزارش:</span>
+            <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $xlsx_url ); ?>">📊 اکسل (.xlsx)</a>
+            <a class="wap-btn wap-btn-ghost" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
+        </div>
 
         <div class="wap-table-wrap" style="margin-bottom:24px">
             <h3 style="margin:0 0 10px">خریدهای ووکامرس (درگاه زرین‌پال)</h3>
@@ -1141,25 +1152,27 @@ class WAP_Portal {
         </div>
 
         <div class="wap-table-wrap">
-            <h3 style="margin:0 0 10px">واریزهای شاپرک به حساب (وضعیت PAID)</h3>
+            <h3 style="margin:0 0 10px">واریزهای شاپرک به حساب (دقیقاً از API زرین‌پال — وضعیت PAID)</h3>
             <table class="wap-table">
                 <thead>
                     <tr>
-                        <th>شناسه</th>
+                        <th>شناسه تسویه</th>
                         <th>تاریخ واریز</th>
-                        <th>مبلغ (تومان)</th>
-                        <th>شناسه ارجاع</th>
+                        <th>مبلغ ریال (عین پنل)</th>
+                        <th>معادل تومان</th>
+                        <th>شناسه ارجاع بانکی</th>
                         <th>وضعیت</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if ( empty( $report['settles'] ) ) : ?>
-                    <tr><td colspan="5" class="wap-empty">واریز PAID در این بازه یافت نشد یا API تنظیم نشده است.</td></tr>
+                    <tr><td colspan="6" class="wap-empty">واریز PAID در این بازه یافت نشد یا API تنظیم نشده است.</td></tr>
                 <?php else : foreach ( $report['settles'] as $r ) : ?>
                     <tr>
                         <td dir="ltr"><?php echo esc_html( $r['id'] ); ?></td>
                         <td dir="ltr"><?php echo esc_html( $r['date_jalali'] ?: $r['reconciled_at'] ); ?></td>
-                        <td><strong><?php echo esc_html( number_format( $r['amount'] ) ); ?></strong></td>
+                        <td dir="ltr"><strong><?php echo esc_html( number_format( $r['amount_rial'] ) ); ?></strong></td>
+                        <td><?php echo esc_html( number_format( $r['amount'] ) ); ?></td>
                         <td dir="ltr" style="font-size:12px"><?php echo esc_html( $r['reference_id'] ); ?></td>
                         <td><?php echo esc_html( $r['status'] ); ?></td>
                     </tr>
