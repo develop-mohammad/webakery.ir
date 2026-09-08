@@ -67,7 +67,8 @@ class WBE_Admin {
 		if ( ! $ok ) {
 			return;
 		}
-		wp_enqueue_script( 'wbe-admin', WBE_URL . 'assets/admin.js', array( 'jquery' ), WBE_VERSION, true );
+		wp_enqueue_script( 'wbe-datepicker', WBE_URL . 'assets/datepicker.js', array( 'jquery' ), WBE_VERSION, true );
+		wp_enqueue_script( 'wbe-admin', WBE_URL . 'assets/admin.js', array( 'jquery', 'wbe-datepicker' ), WBE_VERSION, true );
 		wp_localize_script(
 			'wbe-admin',
 			'wbeSupport',
@@ -76,6 +77,16 @@ class WBE_Admin {
 				'chat'     => class_exists( 'WBE_Support' ) ? WBE_Support::telegram_chat_url() : 'https://t.me/HAJITODAY',
 				'version'  => defined( 'WBE_VERSION' ) ? WBE_VERSION : '',
 				'page'     => (string) $hook,
+			)
+		);
+		wp_localize_script(
+			'wbe-datepicker',
+			'wbeAdmin',
+			array(
+				'ajax'     => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'wbe_admin' ),
+				'calendar' => class_exists( 'WBE_Settings' ) ? WBE_Settings::calendar() : 'jalali',
+				'today'    => class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' ),
 			)
 		);
 		if ( false !== strpos( (string) $hook, 'webakery-expiry-bulk' ) ) {

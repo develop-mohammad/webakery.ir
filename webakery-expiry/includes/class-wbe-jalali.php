@@ -80,6 +80,30 @@ class WBE_Jalali {
 		return array( $jy, $i + 1, $days + 1 );
 	}
 
+	/**
+	 * تعداد روز ماه شمسی.
+	 *
+	 * @param int $jy
+	 * @param int $jm
+	 * @return int
+	 */
+	public static function jalali_month_length( $jy, $jm ) {
+		$jy = (int) $jy;
+		$jm = (int) $jm;
+		if ( $jm < 1 || $jm > 12 ) {
+			return 0;
+		}
+		if ( $jm <= 6 ) {
+			return 31;
+		}
+		if ( $jm <= 11 ) {
+			return 30;
+		}
+		$g = self::to_gregorian( $jy, 12, 30 );
+		$j = self::to_jalali( $g[0], $g[1], $g[2] );
+		return ( 12 === (int) $j[1] && 30 === (int) $j[2] ) ? 30 : 29;
+	}
+
 	public static function today_ymd() {
 		if ( function_exists( 'current_time' ) ) {
 			return current_time( 'Y-m-d' );

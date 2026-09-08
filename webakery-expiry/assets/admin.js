@@ -319,7 +319,7 @@
 			pid +
 			'][reserves][' +
 			idx +
-			'][stock]" value="" dir="ltr" /></td><td><input type="text" class="small-text" data-field="reserves.' +
+			'][stock]" value="" dir="ltr" /></td><td><input type="text" class="small-text wbe-date" data-field="reserves.' +
 			idx +
 			'.expiry" data-orig="" name="wbe_row[' +
 			pid +
@@ -846,5 +846,67 @@
 			}
 		}
 		finish();
+	});
+
+	$(document).on('click', '.wbe-copy-variations', function (e) {
+		e.preventDefault();
+		var $btn = $(this);
+		var $panel = $btn.closest('.wbe-product-panel');
+		var from = $panel.attr('data-variation-id');
+		if (!from || from === '0') {
+			window.alert('شناسه تنوع پیدا نشد.');
+			return;
+		}
+		if (!window.confirm('بچ‌های همین تنوع روی همه تنوع‌های دیگر این محصول کپی شود؟')) {
+			return;
+		}
+		var active = {
+			id: $panel.find('input[name$="[active][id]"]').val() || '',
+			price: $panel.find('input[name$="[active][price]"]').val() || '',
+			discount: $panel.find('input[name$="[active][discount]"]').val() || '',
+			sale: $panel.find('input[name$="[active][sale]"]').val() || '',
+			stock: $panel.find('input[name$="[active][stock]"]').val() || '',
+			expiry: $panel.find('input[name$="[active][expiry]"]').val() || ''
+		};
+		var reserve = [];
+		$panel.find('.wbe-reserve-box tr.wbe-batch-row').not('.wbe-reserve-empty, .wbe-batch-tpl').each(function () {
+			var $tr = $(this);
+			reserve.push({
+				id: $tr.find('input[name$="[id]"]').val() || '',
+				price: $tr.find('input[name$="[price]"]').val() || '',
+				discount: $tr.find('input[name$="[discount]"]').val() || '',
+				stock: $tr.find('input[name$="[stock]"]').val() || '',
+				expiry: $tr.find('input[name$="[expiry]"]').val() || ''
+			});
+		});
+		var cfg = window.wbeAdmin || {};
+		$btn.prop('disabled', true);
+		$.ajax({
+			url: cfg.ajax || (window.ajaxurl || ''),
+			method: 'POST',
+			data: {
+				action: 'wbe_copy_variation_batches',
+				nonce: cfg.nonce || '',
+				from: from,
+				calendar: $panel.find('select[name$="[calendar]"]').val() || '',
+				hide_countdown: $panel.find('input[name$="[hide_countdown]"]').is(':checked') ? 1 : 0,
+				active: active,
+				reserve: reserve
+			}
+		})
+			.done(function (res) {
+				var msg = res && res.data && res.data.message ? res.data.message : 'کپی شد.';
+				window.alert(msg);
+			})
+			.fail(function (xhr) {
+				var msg = 'کپی نشد.';
+				if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+					msg = xhr.responseJSON.data.message;
+				}
+				window.alert(msg);
+			})
+			.always(function () {
+				$btn.prop('disabled', false);
+			});
 	});
 })(jQuery);

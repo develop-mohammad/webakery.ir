@@ -534,3 +534,85 @@
 	display: block;
 	margin-bottom: 6px;
 }
+
+input.wbe-date {
+	cursor: pointer;
+}
+
+.wbe-datepicker {
+	position: absolute;
+	z-index: 100100;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 10px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+	min-width: 240px;
+}
+
+.wbe-datepicker[hidden] {
+	display: none !important;
+}
+
+.wbe-datepicker__nav {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 4px;
+}
+
+.wbe-datepicker__title {
+	font-weight: 600;
+	flex: 1;
+	text-align: center;
+}
+
+.wbe-datepicker__week,
+.wbe-datepicker__days {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 2px;
+	text-align: center;
+}
+
+.wbe-datepicker__week span {
+	font-size: 11px;
+	color: #646970;
+	padding: 2px 0;
+}
+
+.wbe-datepicker__day {
+	border: 0;
+	background: #f6f7f7;
+	padding: 6px 0;
+	cursor: pointer;
+	border-radius: 2px;
+}
+
+.wbe-datepicker__day:hover {
+	background: #dcdcde;
+}
+
+.wbe-datepicker__day.is-today {
+	outline: 1px solid #2271b1;
+}
+
+.wbe-datepicker__day.is-selected {
+	background: #2271b1;
+	color: #fff;
+}
+
+.wbe-datepicker__days .is-empty {
+	visibility: hidden;
+}
+
+.wbe-datepicker__foot {
+	display: flex;
+	justify-content: space-between;
+}
+
+.wbe-copy-variations {
+	margin-right: auto;
+}

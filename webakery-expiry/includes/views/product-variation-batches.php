@@ -33,7 +33,7 @@ $a_id     = $active && isset( $active['id'] ) ? $active['id'] : '';
 $a_disc_v = $a_disc > 0 ? (string) $a_disc : '';
 $attr_lbl = isset( $attr_label ) ? (string) $attr_label : '';
 ?>
-<div class="wbe-product-panel wbe-variation-panel" dir="rtl" data-loop="<?php echo (int) $loop; ?>" data-variation-id="<?php echo (int) $vid; ?>" data-wc-price="<?php echo esc_attr( isset( $wc_price ) ? $wc_price : '' ); ?>">
+<div class="wbe-product-panel wbe-variation-panel" dir="rtl" data-loop="<?php echo (int) $loop; ?>" data-variation-id="<?php echo (int) $vid; ?>" data-calendar="<?php echo esc_attr( $effective ); ?>" data-wc-price="<?php echo esc_attr( isset( $wc_price ) ? $wc_price : '' ); ?>">
 	<?php if ( 0 === $loop ) : ?>
 		<?php wp_nonce_field( 'wbe_save_batches', 'wbe_batches_nonce' ); ?>
 	<?php endif; ?>
@@ -60,6 +60,7 @@ $attr_lbl = isset( $attr_label ) ? (string) $attr_label : '';
 	<div class="wbe-active-box">
 		<div class="wbe-batches__head">
 			<strong>موجودی فعال این تنوع</strong>
+			<button type="button" class="button wbe-copy-variations">کپی بچ‌ها به همه تنوع‌ها</button>
 		</div>
 		<p class="description">قیمت، موجودی و انقضای همین تنوع روی فروشگاه دیده می‌شود.</p>
 		<div class="wbe-active-grid wbe-active-grid--variation">
@@ -78,11 +79,11 @@ $attr_lbl = isset( $attr_label ) ? (string) $attr_label : '';
 			</p>
 			<p class="form-field">
 				<label>شروع جشنواره</label>
-				<input type="text" class="wbe-date" name="<?php echo esc_attr( $prefix ); ?>[sale_from]" value="<?php echo esc_attr( $sale_from_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
+				<input type="text" class="wbe-date" name="<?php echo esc_attr( $prefix ); ?>[sale_from]" value="<?php echo esc_attr( $sale_from_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 			</p>
 			<p class="form-field">
 				<label>پایان جشنواره</label>
-				<input type="text" class="wbe-date" name="<?php echo esc_attr( $prefix ); ?>[sale_to]" value="<?php echo esc_attr( $sale_to_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
+				<input type="text" class="wbe-date" name="<?php echo esc_attr( $prefix ); ?>[sale_to]" value="<?php echo esc_attr( $sale_to_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 			</p>
 			<p class="form-field">
 				<label>موجودی</label>
@@ -90,7 +91,7 @@ $attr_lbl = isset( $attr_label ) ? (string) $attr_label : '';
 			</p>
 			<p class="form-field">
 				<label>تاریخ انقضا</label>
-				<input type="text" class="wbe-date" name="<?php echo esc_attr( $prefix ); ?>[active][expiry]" value="<?php echo esc_attr( $a_expiry ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
+				<input type="text" class="wbe-date" name="<?php echo esc_attr( $prefix ); ?>[active][expiry]" value="<?php echo esc_attr( $a_expiry ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 			</p>
 		</div>
 	</div>
@@ -133,7 +134,7 @@ $attr_lbl = isset( $attr_label ) ? (string) $attr_label : '';
 								<input type="number" class="short wbe-batch-stock" min="0" step="1" name="<?php echo esc_attr( $prefix ); ?>[reserve][<?php echo (int) $i; ?>][stock]" value="<?php echo esc_attr( isset( $b['stock'] ) ? $b['stock'] : '' ); ?>" placeholder="موجودی رزرو" />
 							</td>
 							<td>
-								<input type="text" class="short wbe-date" name="<?php echo esc_attr( $prefix ); ?>[reserve][<?php echo (int) $i; ?>][expiry]" value="<?php echo esc_attr( $disp ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
+								<input type="text" class="short wbe-date" name="<?php echo esc_attr( $prefix ); ?>[reserve][<?php echo (int) $i; ?>][expiry]" value="<?php echo esc_attr( $disp ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 							</td>
 							<td>
 								<button type="button" class="button-link wbe-remove-batch">حذف</button>
@@ -157,7 +158,7 @@ $attr_lbl = isset( $attr_label ) ? (string) $attr_label : '';
 						<input type="number" class="short wbe-batch-stock" min="0" step="1" data-name="stock" value="" placeholder="موجودی رزرو" />
 					</td>
 					<td>
-						<input type="text" class="short wbe-date" data-name="expiry" value="" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
+						<input type="text" class="short wbe-date" data-name="expiry" value="" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 					</td>
 					<td>
 						<button type="button" class="button-link wbe-remove-batch">حذف</button>

@@ -35,7 +35,7 @@ $csv_url     = wp_nonce_url(
 	'wbe_bulk_csv'
 );
 ?>
-<div class="wrap wbe-wrap wbe-bulk-wrap" dir="rtl">
+<div class="wrap wbe-wrap wbe-bulk-wrap" dir="rtl" data-calendar="<?php echo esc_attr( $calendar ); ?>">
 	<h1>ویرایش گروهی محصول</h1>
 	<p class="wbe-sub">ابتدا <strong>برند</strong> را انتخاب کنید. ستون‌های <strong>موجودی فعال</strong> همیشه هستند؛ ستون‌های <strong>موجودی رزرو</strong> با سوییچ پایین روشن/خاموش می‌شوند و تماماً قابل ویرایش‌اند.</p>
 
@@ -127,11 +127,11 @@ $csv_url     = wp_nonce_url(
 			</div>
 			<div class="wbe-bulk-field">
 				<label for="wbe_sale_from">شروع جشنواره</label>
-				<input type="text" id="wbe_sale_from" name="wbe_sale_from" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" />
+				<input type="text" class="wbe-date" id="wbe_sale_from" name="wbe_sale_from" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" />
 			</div>
 			<div class="wbe-bulk-field">
 				<label for="wbe_sale_to">پایان جشنواره</label>
-				<input type="text" id="wbe_sale_to" name="wbe_sale_to" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" />
+				<input type="text" class="wbe-date" id="wbe_sale_to" name="wbe_sale_to" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" />
 			</div>
 			<div class="wbe-bulk-field">
 				<label for="wbe_stock_mode">موجودی فعال</label>
@@ -144,7 +144,7 @@ $csv_url     = wp_nonce_url(
 			</div>
 			<div class="wbe-bulk-field">
 				<label for="wbe_expiry">انقضای فعال</label>
-				<input type="text" id="wbe_expiry" name="wbe_expiry" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" />
+				<input type="text" class="wbe-date" id="wbe_expiry" name="wbe_expiry" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" />
 			</div>
 			<div class="wbe-bulk-field">
 				<label for="wbe_set_status">وضعیت</label>
@@ -173,7 +173,7 @@ $csv_url     = wp_nonce_url(
 				<input type="text" name="wbe_add_price" class="wbe-bulk-value" placeholder="قیمت اصلی" dir="ltr" />
 				<input type="text" name="wbe_add_discount" class="wbe-bulk-value" placeholder="تخفیف ٪" dir="ltr" />
 				<input type="text" name="wbe_add_stock" class="wbe-bulk-value" placeholder="موجودی" dir="ltr" />
-				<input type="text" name="wbe_add_expiry" class="wbe-bulk-value" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" />
+				<input type="text" name="wbe_add_expiry" class="wbe-bulk-value wbe-date" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" />
 				<span class="wbe-muted">تاریخ انقضا + موجودی الزامی است.</span>
 			</div>
 			<div class="wbe-bulk-actions">
@@ -255,10 +255,10 @@ $csv_url     = wp_nonce_url(
 								<td><input type="text" class="small-text" data-field="regular" data-orig="<?php echo esc_attr( $r['regular'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][regular]" value="<?php echo esc_attr( $r['regular'] ); ?>" dir="ltr" /></td>
 								<td><input type="text" class="small-text" data-field="discount" data-orig="<?php echo esc_attr( (string) $r['discount'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][discount]" value="<?php echo esc_attr( (string) $r['discount'] ); ?>" dir="ltr" /></td>
 								<td><input type="text" class="small-text" data-field="sale" data-orig="<?php echo esc_attr( $r['sale'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][sale]" value="<?php echo esc_attr( $r['sale'] ); ?>" dir="ltr" /></td>
-								<td><input type="text" class="small-text" data-field="from" data-orig="<?php echo esc_attr( $r['from_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][from]" value="<?php echo esc_attr( $r['from_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
-								<td><input type="text" class="small-text" data-field="to" data-orig="<?php echo esc_attr( $r['to_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][to]" value="<?php echo esc_attr( $r['to_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
+								<td><input type="text" class="small-text wbe-date" data-field="from" data-orig="<?php echo esc_attr( $r['from_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][from]" value="<?php echo esc_attr( $r['from_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" /></td>
+								<td><input type="text" class="small-text wbe-date" data-field="to" data-orig="<?php echo esc_attr( $r['to_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][to]" value="<?php echo esc_attr( $r['to_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" /></td>
 								<td><input type="text" class="small-text" data-field="stock" data-orig="<?php echo esc_attr( (string) $r['stock'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][stock]" value="<?php echo esc_attr( (string) $r['stock'] ); ?>" dir="ltr" /></td>
-								<td><input type="text" class="small-text" data-field="expiry" data-orig="<?php echo esc_attr( $r['expiry_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][expiry]" value="<?php echo esc_attr( $r['expiry_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" /></td>
+								<td><input type="text" class="small-text wbe-date" data-field="expiry" data-orig="<?php echo esc_attr( $r['expiry_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][expiry]" value="<?php echo esc_attr( $r['expiry_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" /></td>
 							</tr>
 							<?php if ( $show_res ) : ?>
 								<tr class="wbe-bulk-reserves-row" data-parent-id="<?php echo (int) $r['id']; ?>">
@@ -298,7 +298,7 @@ $csv_url     = wp_nonce_url(
 																	<input type="text" class="small-text" data-field="reserves.<?php echo (int) $ri; ?>.stock" data-orig="<?php echo esc_attr( (string) ( isset( $rb['stock'] ) ? $rb['stock'] : '' ) ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][reserves][<?php echo (int) $ri; ?>][stock]" value="<?php echo esc_attr( (string) ( isset( $rb['stock'] ) ? $rb['stock'] : '' ) ); ?>" dir="ltr" />
 																</td>
 																<td>
-																	<input type="text" class="small-text" data-field="reserves.<?php echo (int) $ri; ?>.expiry" data-orig="<?php echo esc_attr( isset( $rb['expiry_fa'] ) ? $rb['expiry_fa'] : '' ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][reserves][<?php echo (int) $ri; ?>][expiry]" value="<?php echo esc_attr( isset( $rb['expiry_fa'] ) ? $rb['expiry_fa'] : '' ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" />
+																	<input type="text" class="small-text wbe-date" data-field="reserves.<?php echo (int) $ri; ?>.expiry" data-orig="<?php echo esc_attr( isset( $rb['expiry_fa'] ) ? $rb['expiry_fa'] : '' ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][reserves][<?php echo (int) $ri; ?>][expiry]" value="<?php echo esc_attr( isset( $rb['expiry_fa'] ) ? $rb['expiry_fa'] : '' ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" />
 																</td>
 																<td><button type="button" class="button-link wbe-bulk-remove-reserve">حذف</button></td>
 															</tr>

@@ -35,6 +35,10 @@ wbe_check( 'برگشت به شمسی ۱۴۰۵/۰۶/۰۵', '1405/06/05' === $back
 $g2 = WBE_Jalali::parse_to_ymd( '2026-08-27', 'gregorian' );
 wbe_check( 'میلادی با خط تیره', '2026-08-27' === $g2, $g2 );
 wbe_check( 'عدد فارسی', 150000.0 === WBE_Jalali::number( '۱۵۰٬۰۰۰' ) );
+wbe_check( 'فروردین ۳۱ روز است', 31 === WBE_Jalali::jalali_month_length( 1403, 1 ) );
+wbe_check( 'مهر ۳۰ روز است', 30 === WBE_Jalali::jalali_month_length( 1403, 7 ) );
+wbe_check( 'اسفند ۱۴۰۳ کبیسه است', 30 === WBE_Jalali::jalali_month_length( 1403, 12 ) );
+wbe_check( 'اسفند ۱۴۰۲ ۲۹ روز است', 29 === WBE_Jalali::jalali_month_length( 1402, 12 ) );
 
 echo "\n=== انتخاب بچ فعال ===\n";
 $today = '2026-01-15';
@@ -454,6 +458,8 @@ $ok_post = WBE_Engine::decide_posted_batches(
 	'gregorian'
 );
 wbe_check( 'فرم معتبر بچ ذخیره می‌شود', is_array( $ok_post ) && 1 === count( $ok_post ) );
+wbe_check( 'هم‌والد بدون مبدأ', array( 12, 13 ) === WBE_Engine::sibling_ids( 11, array( 11, 12, 13, 11, 0 ) ) );
+wbe_check( 'اعلان ذخیره ناقص تقویم را می‌گوید', false !== strpos( WBE_Engine::incomplete_batches_notice(), 'تقویم' ) );
 wbe_check( 'عنوان ردیف تنوع', 'شیر — سایز: بزرگ' === WBE_Engine::variation_row_title( 'شیر', 'سایز: بزرگ' ) );
 wbe_check( 'عنوان بدون ویژگی', 'شیر' === WBE_Engine::variation_row_title( 'شیر', '' ) );
 wbe_check( 'والد متغیر موجودی ندارد', false === WBE_Engine::type_owns_stock( 'variable' ) );
@@ -707,6 +713,10 @@ wbe_check( 'ویرایش تکی فیلد SKU ندارد', false === strpos( $sin
 wbe_check( 'ویرایش تکی فیلد وضعیت ندارد', false === strpos( $single_view, 'name="wbe_status"' ) );
 wbe_check( 'ویرایش گروهی ستون SKU دارد', false !== strpos( $bulk_view, '>SKU<' ) );
 wbe_check( 'ویرایش گروهی ستون وضعیت دارد', false !== strpos( $bulk_view, '>وضعیت<' ) );
+wbe_check( 'تکی فیلد جشنواره تقویم دارد', false !== strpos( $single_view, 'class="wbe-date"' ) );
+wbe_check( 'تنوع دکمه کپی به همه دارد', false !== strpos( $var_view, 'wbe-copy-variations' ) );
+wbe_check( 'گروهی فیلد تاریخ تقویم دارد', false !== strpos( $bulk_view, 'wbe-date' ) );
+wbe_check( 'اسکریپت تقویم شمسی هست', is_file( dirname( __DIR__ ) . '/assets/datepicker.js' ) );
 
 echo "\n=== کندی گروهی و گزارش باگ ===\n";
 require_once dirname( __DIR__ ) . '/includes/class-wbe-support.php';
@@ -731,6 +741,7 @@ wbe_check( 'لینک تلگرام متن را دارد', 0 === strpos( $tg, 'htt
 $help = file_get_contents( dirname( __DIR__ ) . '/includes/views/help.php' );
 $bug  = file_get_contents( dirname( __DIR__ ) . '/includes/views/bug-report.php' );
 wbe_check( 'راهنما صفحه دارد', false !== strpos( $help, 'رفع کندی' ) && false !== strpos( $help, 'موجودی رزرو' ) );
+wbe_check( 'راهنما تقویم و کپی تنوع دارد', false !== strpos( $help, 'کپی بچ‌ها به همه تنوع‌ها' ) );
 wbe_check( 'فرم گزارش باگ تلگرام دارد', false !== strpos( $bug, 't.me' ) && false !== strpos( $bug, 'wbe-bug-capture' ) && false !== strpos( $bug, 'wbe-bug-desc' ) );
 
 echo "\n=== پشتیبانی / تلگرام ===\n";
@@ -748,7 +759,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.2.13' );
+	define( 'WBE_VERSION', '1.2.14' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

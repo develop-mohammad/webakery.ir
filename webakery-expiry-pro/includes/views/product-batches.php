@@ -29,7 +29,7 @@ $a_expiry = ( $active && ! empty( $active['expiry'] ) ) ? WBE_Jalali::format_ymd
 $a_id     = $active && isset( $active['id'] ) ? $active['id'] : '';
 $a_disc_v = $a_disc > 0 ? (string) $a_disc : '';
 ?>
-<div class="wbe-product-panel" id="wbe-product-panel" dir="rtl" data-wc-price="<?php echo esc_attr( isset( $wc_price ) ? $wc_price : '' ); ?>">
+<div class="wbe-product-panel" id="wbe-product-panel" dir="rtl" data-calendar="<?php echo esc_attr( $effective ); ?>" data-wc-price="<?php echo esc_attr( isset( $wc_price ) ? $wc_price : '' ); ?>">
 	<?php wp_nonce_field( 'wbe_save_batches', 'wbe_batches_nonce' ); ?>
 
 	<p class="form-field wbe-calendar-field">
@@ -72,11 +72,11 @@ $a_disc_v = $a_disc > 0 ? (string) $a_disc : '';
 			</p>
 			<p class="form-field">
 				<label for="wbe_sale_from">۵. زمان شروع جشنواره</label>
-				<input type="text" id="wbe_sale_from" name="wbe_sale_from" value="<?php echo esc_attr( $sale_from_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
+				<input type="text" class="wbe-date" id="wbe_sale_from" name="wbe_sale_from" value="<?php echo esc_attr( $sale_from_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 			</p>
 			<p class="form-field">
 				<label for="wbe_sale_to">۶. زمان پایان جشنواره</label>
-				<input type="text" id="wbe_sale_to" name="wbe_sale_to" value="<?php echo esc_attr( $sale_to_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
+				<input type="text" class="wbe-date" id="wbe_sale_to" name="wbe_sale_to" value="<?php echo esc_attr( $sale_to_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 			</p>
 			<p class="form-field">
 				<label for="wbe_active_stock">۷. موجودی</label>
@@ -84,7 +84,7 @@ $a_disc_v = $a_disc > 0 ? (string) $a_disc : '';
 			</p>
 			<p class="form-field">
 				<label for="wbe_active_expiry">۸. تاریخ انقضا</label>
-				<input type="text" class="wbe-date" id="wbe_active_expiry" name="wbe_active[expiry]" value="<?php echo esc_attr( $a_expiry ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
+				<input type="text" class="wbe-date" id="wbe_active_expiry" name="wbe_active[expiry]" value="<?php echo esc_attr( $a_expiry ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 			</p>
 		</div>
 	</div>
@@ -127,7 +127,7 @@ $a_disc_v = $a_disc > 0 ? (string) $a_disc : '';
 								<input type="number" class="short wbe-batch-stock" min="0" step="1" name="wbe_reserve[<?php echo (int) $i; ?>][stock]" value="<?php echo esc_attr( isset( $b['stock'] ) ? $b['stock'] : '' ); ?>" placeholder="موجودی رزرو" />
 							</td>
 							<td>
-								<input type="text" class="short wbe-date" name="wbe_reserve[<?php echo (int) $i; ?>][expiry]" value="<?php echo esc_attr( $disp ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
+								<input type="text" class="short wbe-date" name="wbe_reserve[<?php echo (int) $i; ?>][expiry]" value="<?php echo esc_attr( $disp ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 							</td>
 							<td>
 								<button type="button" class="button-link wbe-remove-batch">حذف</button>
@@ -151,7 +151,7 @@ $a_disc_v = $a_disc > 0 ? (string) $a_disc : '';
 						<input type="number" class="short wbe-batch-stock" min="0" step="1" data-name="stock" value="" placeholder="موجودی رزرو" />
 					</td>
 					<td>
-						<input type="text" class="short wbe-date" data-name="expiry" value="" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
+						<input type="text" class="short wbe-date" data-name="expiry" value="" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 					</td>
 					<td>
 						<button type="button" class="button-link wbe-remove-batch">حذف</button>

@@ -1272,6 +1272,38 @@ class WBE_Engine {
 		return array();
 	}
 
+	/**
+	 * شناسه تنوع‌های هم‌والد، بدون مبدأ.
+	 *
+	 * @param int   $from_id
+	 * @param array $ids
+	 * @return array<int,int>
+	 */
+	public static function sibling_ids( $from_id, $ids ) {
+		$from_id = (int) $from_id;
+		$out     = array();
+		if ( ! is_array( $ids ) ) {
+			return $out;
+		}
+		foreach ( $ids as $id ) {
+			$id = (int) $id;
+			if ( $id <= 0 || $id === $from_id || isset( $out[ $id ] ) ) {
+				continue;
+			}
+			$out[ $id ] = $id;
+		}
+		return array_values( $out );
+	}
+
+	/**
+	 * متن اعلان وقتی فرم انقضا نامعتبر است و بچ قبلی نگه داشته می‌شود.
+	 *
+	 * @return string
+	 */
+	public static function incomplete_batches_notice() {
+		return 'تاریخ انقضا نامعتبر بود و ذخیره نشد. بچ قبلی همین‌طور ماند. تاریخ را از تقویم کنار فیلد انتخاب کنید.';
+	}
+
 	public static function unique_bulk_rows( array $rows ) {
 		$out = array();
 		foreach ( $rows as $row ) {

@@ -27,6 +27,82 @@ class WBE_Admin_Product {
 		add_filter( 'manage_edit-product_columns', array( $this, 'columns' ) );
 		add_action( 'manage_product_posts_custom_column', array( $this, 'column' ), 10, 2 );
 		add_filter( 'manage_edit-product_sortable_columns', array( $this, 'sortable' ) );
+		add_action( 'admin_notices', array( $this, 'incomplete_notice' ) );
+		add_action( 'wp_ajax_wbe_copy_variation_batches', array( $this, 'ajax_copy_variation' ) );
+	}
+
+	/**
+	 * @param int $product_id
+	 */
+	public static function flag_incomplete_save( $product_id ) {
+		$product_id = (int) $product_id;
+		if ( $product_id <= 0 || ! function_exists( 'get_current_user_id' ) ) {
+			return;
+		}
+		$key  = 'wbe_incomplete_batches_' . (int) get_current_user_id();
+		$ids  = get_transient( $key );
+		$ids  = is_array( $ids ) ? $ids : array();
+		$ids[] = $product_id;
+		set_transient( $key, array_values( array_unique( array_map( 'intval', $ids ) ) ), 10 * MINUTE_IN_SECONDS );
+	}
+
+	public function incomplete_notice() {
+		if ( ! function_exists( 'get_current_user_id' ) || ! current_user_can( 'edit_products' ) ) {
+			return;
+		}
+		$key = 'wbe_incomplete_batches_' . (int) get_current_user_id();
+		$ids = get_transient( $key );
+		if ( ! is_array( $ids ) || ! $ids ) {
+			return;
+		}
+		delete_transient( $key );
+		$msg = class_exists( 'WBE_Engine' ) ? WBE_Engine::incomplete_batches_notice() : 'تاریخ انقضا ذخیره نشد.';
+		echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html( $msg ) . '</p></div>';
+	}
+
+	public function ajax_copy_variation() {
+		if ( ! current_user_can( 'edit_products' ) ) {
+			wp_send_json_error( array( 'message' => 'دسترسی غیرمجاز' ), 403 );
+		}
+		check_ajax_referer( 'wbe_admin', 'nonce' );
+		$from = isset( $_POST['from'] ) ? (int) $_POST['from'] : 0;
+		if ( $from <= 0 ) {
+			wp_send_json_error( array( 'message' => 'تنوع مبدأ مشخص نیست.' ) );
+		}
+		$override = isset( $_POST['calendar'] ) ? sanitize_key( wp_unslash( $_POST['calendar'] ) ) : '';
+		$cal      = in_array( $override, array( 'jalali', 'gregorian' ), true ) ? $override : WBE_Product::calendar( $from );
+		$active   = isset( $_POST['active'] ) && is_array( $_POST['active'] ) ? wp_unslash( $_POST['active'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$reserve  = isset( $_POST['reserve'] ) && is_array( $_POST['reserve'] ) ? wp_unslash( $_POST['reserve'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$rows     = WBE_Engine::merge_active_and_reserve_rows( $active, $reserve );
+		$batches  = WBE_Engine::decide_posted_batches( $rows, $cal );
+		if ( ! is_array( $batches ) || ! $batches ) {
+			wp_send_json_error( array( 'message' => 'اول تاریخ انقضا را از تقویم انتخاب کنید، بعد کپی کنید.' ) );
+		}
+		$parent = WBE_Product::parent_id( $from );
+		$ids    = array();
+		if ( function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $parent );
+			if ( $product && method_exists( $product, 'get_children' ) ) {
+				$ids = WBE_Engine::sibling_ids( $from, $product->get_children() );
+			}
+		}
+		if ( ! $ids ) {
+			wp_send_json_error( array( 'message' => 'تنوع دیگری برای کپی نیست.' ) );
+		}
+		$hide = ! empty( $_POST['hide_countdown'] ); // phpcs:ignore WordPress.Security.NonceVerification
+		foreach ( $ids as $id ) {
+			if ( ! current_user_can( 'edit_post', $id ) && ! current_user_can( 'edit_products' ) ) {
+				continue;
+			}
+			WBE_Product::save_batches( $id, $batches, $override, true );
+			WBE_Product::save_hide_countdown( $id, $hide );
+		}
+		wp_send_json_success(
+			array(
+				'copied'  => count( $ids ),
+				'message' => count( $ids ) . ' تنوع با همین بچ‌ها به‌روز شد. این تنوع را هم ذخیره کنید.',
+			)
+		);
 	}
 
 	public function render() {
@@ -150,6 +226,7 @@ class WBE_Admin_Product {
 
 		$batches = WBE_Engine::decide_posted_batches( $rows, $cal );
 		if ( null === $batches ) {
+			self::flag_incomplete_save( $pid );
 			$batches = WBE_Product::batches( $pid );
 		}
 		WBE_Product::save_batches( $pid, $batches, $override, false );
@@ -201,6 +278,7 @@ class WBE_Admin_Product {
 		$rows    = WBE_Engine::merge_active_and_reserve_rows( $active, $reserve );
 		$batches = WBE_Engine::decide_posted_batches( $rows, $cal );
 		if ( null === $batches ) {
+			self::flag_incomplete_save( $variation_id );
 			$batches = WBE_Product::batches( $variation_id );
 		}
 		WBE_Product::save_batches( $variation_id, $batches, $override, false );
