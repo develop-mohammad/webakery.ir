@@ -15,12 +15,13 @@ class WBE_Support {
 	}
 
 	public static function telegram_chat_url( $text = '' ) {
-		$url = 'https://t.me/' . self::TELEGRAM;
+		$url  = 'https://t.me/' . self::TELEGRAM;
 		$text = trim( (string) $text );
 		if ( '' === $text ) {
 			return $url;
 		}
-		return $url . '?text=' . rawurlencode( $text );
+		$sep = ( false === strpos( $url, '?' ) ) ? '?' : '&';
+		return $url . $sep . 'text=' . rawurlencode( $text );
 	}
 
 	/**

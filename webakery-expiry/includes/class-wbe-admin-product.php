@@ -148,7 +148,10 @@ class WBE_Admin_Product {
 			$rows = wp_unslash( $_POST['wbe_batches'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 		}
 
-		$batches = WBE_Engine::sanitize_batches( $rows, $cal );
+		$batches = WBE_Engine::decide_posted_batches( $rows, $cal );
+		if ( null === $batches ) {
+			$batches = WBE_Product::batches( $pid );
+		}
 		WBE_Product::save_batches( $pid, $batches, $override, false );
 		WBE_Product::save_hide_countdown( $pid, ! empty( $_POST['wbe_hide_countdown'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
@@ -185,18 +188,21 @@ class WBE_Admin_Product {
 		if ( ! isset( $_POST['wbe_batches_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wbe_batches_nonce'] ) ), 'wbe_save_batches' ) ) {
 			return;
 		}
-		$all = isset( $_POST['wbe_var'] ) && is_array( $_POST['wbe_var'] ) ? wp_unslash( $_POST['wbe_var'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		if ( ! isset( $all[ $loop ] ) || ! is_array( $all[ $loop ] ) ) {
+		$all  = isset( $_POST['wbe_var'] ) && is_array( $_POST['wbe_var'] ) ? wp_unslash( $_POST['wbe_var'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$data = WBE_Engine::posted_variation_data( $all, $variation_id, $loop );
+		if ( ! is_array( $data ) ) {
 			return;
 		}
-		$data     = $all[ $loop ];
 		$override = isset( $data['calendar'] ) ? sanitize_key( $data['calendar'] ) : '';
 		$cal      = in_array( $override, array( 'jalali', 'gregorian' ), true ) ? $override : WBE_Product::calendar( $variation_id );
 
 		$active  = ( ! empty( $data['active'] ) && is_array( $data['active'] ) ) ? $data['active'] : array();
 		$reserve = ( ! empty( $data['reserve'] ) && is_array( $data['reserve'] ) ) ? $data['reserve'] : array();
 		$rows    = WBE_Engine::merge_active_and_reserve_rows( $active, $reserve );
-		$batches = WBE_Engine::sanitize_batches( $rows, $cal );
+		$batches = WBE_Engine::decide_posted_batches( $rows, $cal );
+		if ( null === $batches ) {
+			$batches = WBE_Product::batches( $variation_id );
+		}
 		WBE_Product::save_batches( $variation_id, $batches, $override, false );
 		WBE_Product::save_hide_countdown( $variation_id, ! empty( $data['hide_countdown'] ) );
 

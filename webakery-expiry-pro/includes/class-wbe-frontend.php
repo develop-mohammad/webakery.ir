@@ -48,23 +48,30 @@ class WBE_Frontend {
 			}
 		}
 		if ( $need_js ) {
-			wp_enqueue_script(
-				'wbe-countdown',
-				WBE_URL . 'assets/frontend.js',
-				array( 'jquery' ),
-				WBE_VERSION,
-				true
-			);
-			if ( $variations ) {
-				wp_localize_script(
-					'wbe-countdown',
-					'wbeFront',
-					array(
-						'variations' => $variations,
-					)
-				);
-			}
+			self::enqueue_front_script( $variations );
 		}
+	}
+
+	/**
+	 * اسکریپت صفحه محصول / شورت‌کد + نقشه HTML تنوع‌ها.
+	 *
+	 * @param array<string,string> $variations
+	 */
+	public static function enqueue_front_script( $variations = array() ) {
+		wp_enqueue_script(
+			'wbe-countdown',
+			WBE_URL . 'assets/frontend.js',
+			array( 'jquery' ),
+			WBE_VERSION,
+			true
+		);
+		wp_localize_script(
+			'wbe-countdown',
+			'wbeFront',
+			array(
+				'variations' => is_array( $variations ) ? $variations : array(),
+			)
+		);
 	}
 
 	/**
@@ -204,15 +211,20 @@ class WBE_Frontend {
 			'webakery_expiry'
 		);
 		wp_enqueue_style( 'wbe-frontend', WBE_URL . 'assets/frontend.css', array(), WBE_VERSION );
-		if ( ! empty( WBE_Settings::get()['show_sale_countdown'] ) ) {
-			wp_enqueue_script( 'wbe-countdown', WBE_URL . 'assets/frontend.js', array( 'jquery' ), WBE_VERSION, true );
-		}
 		$id = (int) $atts['id'];
 		if ( function_exists( 'wc_get_product' ) ) {
 			$product = wc_get_product( $id );
 			if ( $product && method_exists( $product, 'is_type' ) && $product->is_type( 'variable' ) ) {
-				return self::product_page_html( $id );
+				$on_own_page = function_exists( 'is_product' ) && is_product() && (int) get_the_ID() === $id;
+				if ( $on_own_page ) {
+					self::enqueue_front_script( self::variation_html_map( $product ) );
+					return self::product_page_html( $id );
+				}
+				return self::loop_html( $id );
 			}
+		}
+		if ( ! empty( WBE_Settings::get()['show_sale_countdown'] ) ) {
+			self::enqueue_front_script();
 		}
 		return self::field_html( $id, 'compact' );
 	}

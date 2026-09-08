@@ -130,7 +130,8 @@ wbe_check( 'تخفیف بالای ۱۰۰ بریده می‌شود', 100 === (int
 
 list( $join_sql, $order_sql ) = WBE_Engine::expiry_order_clauses( '', 'post_date DESC', 'wp_posts', 'wp_postmeta', 'ASC' );
 wbe_check( 'سورت به متای انقضا وصل می‌شود', false !== strpos( $join_sql, '_wbe_active_expiry' ) );
-wbe_check( 'نزدیک‌ترین انقضا اول می‌آید', false !== strpos( $order_sql, 'wbe_exp.meta_value ASC' ) );
+wbe_check( 'نزدیک‌ترین انقضا اول می‌آید', false !== strpos( $order_sql, 'ASC' ) && false !== strpos( $order_sql, 'wbe_exp.meta_value' ) );
+wbe_check( 'سورت انقضای تنوع متغیر را هم می‌بیند', false !== strpos( $order_sql, 'product_variation' ) );
 
 wbe_check( 'تخفیف از قیمت فروش ووکامرس', 20 === WBE_Engine::discount_from_prices( 200000, 160000 ) );
 wbe_check( 'بدون قیمت فروش تخفیف صفر است', 0 === WBE_Engine::discount_from_prices( 200000, '' ) );
@@ -418,6 +419,41 @@ wbe_check( 'نام محصول در خروجی است', false !== strpos( $xml, '
 echo "\n=== محصول متغیر / تنوع ===\n";
 wbe_check( 'شناسه موجودی سفارش = تنوع', 55 === WBE_Engine::order_item_stock_id( 10, 55 ) );
 wbe_check( 'بدون تنوع = محصول', 10 === WBE_Engine::order_item_stock_id( 10, 0 ) );
+$posted_var = WBE_Engine::posted_variation_data(
+	array(
+		55 => array( 'active' => array( 'price' => '10' ) ),
+		0  => array( 'active' => array( 'price' => '99' ) ),
+	),
+	55,
+	0
+);
+wbe_check( 'POST تنوع با شناسه تنوع خوانده می‌شود', is_array( $posted_var ) && '10' === $posted_var['active']['price'] );
+$posted_loop = WBE_Engine::posted_variation_data(
+	array(
+		2 => array( 'active' => array( 'price' => '77' ) ),
+	),
+	88,
+	2
+);
+wbe_check( 'POST تنوع قدیمی با ایندکس حلقه خوانده می‌شود', is_array( $posted_loop ) && '77' === $posted_loop['active']['price'] );
+wbe_check( 'POST تنوع ناموجود خالی است', null === WBE_Engine::posted_variation_data( array(), 9, 3 ) );
+
+$keep = WBE_Engine::decide_posted_batches(
+	array(
+		array( 'price' => '150000', 'stock' => '4', 'expiry' => '' ),
+	),
+	'gregorian'
+);
+wbe_check( 'فرم ناقص بچ موجود را پاک نمی‌کند', null === $keep );
+$clear = WBE_Engine::decide_posted_batches( array(), 'gregorian' );
+wbe_check( 'فرم خالی یعنی پاک کردن بچ', array() === $clear );
+$ok_post = WBE_Engine::decide_posted_batches(
+	array(
+		array( 'price' => '100', 'stock' => '2', 'expiry' => '2026-12-01' ),
+	),
+	'gregorian'
+);
+wbe_check( 'فرم معتبر بچ ذخیره می‌شود', is_array( $ok_post ) && 1 === count( $ok_post ) );
 wbe_check( 'عنوان ردیف تنوع', 'شیر — سایز: بزرگ' === WBE_Engine::variation_row_title( 'شیر', 'سایز: بزرگ' ) );
 wbe_check( 'عنوان بدون ویژگی', 'شیر' === WBE_Engine::variation_row_title( 'شیر', '' ) );
 wbe_check( 'والد متغیر موجودی ندارد', false === WBE_Engine::type_owns_stock( 'variable' ) );
@@ -697,6 +733,13 @@ $bug  = file_get_contents( dirname( __DIR__ ) . '/includes/views/bug-report.php'
 wbe_check( 'راهنما صفحه دارد', false !== strpos( $help, 'رفع کندی' ) && false !== strpos( $help, 'موجودی رزرو' ) );
 wbe_check( 'فرم گزارش باگ تلگرام دارد', false !== strpos( $bug, 't.me' ) && false !== strpos( $bug, 'wbe-bug-capture' ) && false !== strpos( $bug, 'wbe-bug-desc' ) );
 
+echo "\n=== پشتیبانی / تلگرام ===\n";
+require_once dirname( __DIR__ ) . '/includes/class-wbe-support.php';
+wbe_check( 'آدرس چت تلگرام بدون متن', 'https://t.me/HAJITODAY' === WBE_Support::telegram_chat_url() );
+$tg = WBE_Support::telegram_chat_url( 'سلام' );
+wbe_check( 'آدرس چت با متن از ? استفاده می‌کند', 0 === strpos( $tg, 'https://t.me/HAJITODAY?text=' ) );
+wbe_check( 'لود گروهی بدون برند باید رد شود', true === WBE_Support::bulk_should_skip_load( array() ) );
+
 echo "\n=== فعال‌سازی وردپرس ===\n";
 if ( ! defined( 'WBE_PATH' ) ) {
 	define( 'WBE_PATH', dirname( __DIR__ ) . '/' );
@@ -705,7 +748,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.2.1' );
+	define( 'WBE_VERSION', '1.2.13' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

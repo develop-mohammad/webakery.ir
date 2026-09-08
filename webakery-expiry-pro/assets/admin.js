@@ -35,9 +35,12 @@
 		$body.find('tr.wbe-reserve-empty').remove();
 		var i = nextIndex($body);
 		var $row = $tpl.clone().removeAttr('id').removeClass('wbe-batch-tpl');
+		var vid = $panel.attr('data-variation-id') || $panel.data('variationId');
 		var loop = $panel.data('loop');
 		var prefix;
-		if (loop !== undefined && loop !== null && String(loop) !== '') {
+		if (vid !== undefined && vid !== null && String(vid) !== '' && String(vid) !== '0') {
+			prefix = 'wbe_var[' + vid + '][reserve]';
+		} else if (loop !== undefined && loop !== null && String(loop) !== '') {
 			prefix = 'wbe_var[' + loop + '][reserve]';
 		} else if ($box.closest('.wbe-reserve-box').length) {
 			prefix = 'wbe_reserve';
@@ -553,6 +556,7 @@
 				row.reserves = list;
 			}
 			if (Object.keys(row).length) {
+				row.dirty = 1;
 				rows[id] = row;
 			}
 		});
@@ -624,7 +628,11 @@
 			var d = (res && res.data) ? res.data : {};
 			doneUpd += d.updated ? parseInt(d.updated, 10) : 0;
 			doneSkip += d.skipped ? parseInt(d.skipped, 10) : 0;
-			markSaved(Object.keys(chunk));
+			if (d.processed && d.processed.length) {
+				markSaved(d.processed);
+			} else {
+				markSaved(Object.keys(chunk));
+			}
 			return saveChunks(chunks, total, doneUpd, doneSkip);
 		}, function () {
 			$('#wbe-bulk-progress').prop('hidden', true);

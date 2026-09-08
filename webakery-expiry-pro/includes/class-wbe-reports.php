@@ -44,7 +44,8 @@ class WBE_Reports {
 				continue;
 			}
 			if ( $filters['category'] ) {
-				if ( ! has_term( $filters['category'], 'product_cat', $id ) ) {
+				$term_owner = class_exists( 'WBE_Product' ) ? WBE_Product::parent_id( $id ) : $id;
+				if ( ! has_term( $filters['category'], 'product_cat', $term_owner ) ) {
 					continue;
 				}
 			}
@@ -138,6 +139,8 @@ class WBE_Reports {
 					continue;
 				}
 				$pid = (int) $item->get_product_id();
+				$vid = method_exists( $item, 'get_variation_id' ) ? (int) $item->get_variation_id() : 0;
+				$pid = class_exists( 'WBE_Engine' ) ? (int) WBE_Engine::order_item_stock_id( $pid, $vid ) : ( $vid > 0 ? $vid : $pid );
 				if ( $pid <= 0 ) {
 					continue;
 				}

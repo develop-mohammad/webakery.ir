@@ -648,7 +648,10 @@ class WBE_Engine {
 		}
 		$order = ( 'DESC' === strtoupper( (string) $order ) ) ? 'DESC' : 'ASC';
 		$join .= " LEFT JOIN {$postmeta_table} AS wbe_exp ON (wbe_exp.post_id = {$posts_table}.ID AND wbe_exp.meta_key = '_wbe_active_expiry') ";
-		$sql   = " CASE WHEN wbe_exp.meta_value IS NULL OR wbe_exp.meta_value = '' THEN 1 ELSE 0 END ASC, wbe_exp.meta_value {$order}, {$posts_table}.ID ASC ";
+		// والد متغیر متای انقضا ندارد — نزدیک‌ترین انقضای تنوع‌ها را هم ببین.
+		$child_min = "(SELECT MIN(wbe_cpm.meta_value) FROM {$postmeta_table} wbe_cpm INNER JOIN {$posts_table} wbe_cvar ON wbe_cvar.ID = wbe_cpm.post_id WHERE wbe_cvar.post_parent = {$posts_table}.ID AND wbe_cvar.post_type = 'product_variation' AND wbe_cpm.meta_key = '_wbe_active_expiry' AND wbe_cpm.meta_value <> '')";
+		$exp_val   = "COALESCE(NULLIF(wbe_exp.meta_value, ''), {$child_min})";
+		$sql       = " CASE WHEN {$exp_val} IS NULL THEN 1 ELSE 0 END ASC, {$exp_val} {$order}, {$posts_table}.ID ASC ";
 		return array( $join, $sql );
 	}
 
@@ -1201,6 +1204,72 @@ class WBE_Engine {
 			}
 		}
 		return $rows;
+	}
+
+	/**
+	 * دادهٔ POST تنوع: اول با شناسهٔ تنوع، بعد با ایندکس حلقه (فرم قدیمی).
+	 *
+	 * @param array $all
+	 * @param int   $variation_id
+	 * @param int   $loop
+	 * @return array|null
+	 */
+	public static function posted_variation_data( $all, $variation_id, $loop = 0 ) {
+		if ( ! is_array( $all ) ) {
+			return null;
+		}
+		$variation_id = (int) $variation_id;
+		$loop         = (int) $loop;
+		$keys         = array();
+		if ( $variation_id > 0 ) {
+			$keys[] = $variation_id;
+			$keys[] = (string) $variation_id;
+		}
+		$keys[] = $loop;
+		$keys[] = (string) $loop;
+		foreach ( $keys as $key ) {
+			if ( isset( $all[ $key ] ) && is_array( $all[ $key ] ) ) {
+				return $all[ $key ];
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * آیا ردیف فرم شبیه تلاش برای ثبت بچ است؟ (حتی اگر تاریخ نامعتبر باشد)
+	 *
+	 * @param array $row
+	 * @return bool
+	 */
+	public static function row_looks_like_batch_attempt( $row ) {
+		if ( ! is_array( $row ) ) {
+			return false;
+		}
+		$price = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::number( isset( $row['price'] ) ? $row['price'] : 0 ) : (float) ( isset( $row['price'] ) ? $row['price'] : 0 );
+		$stock = (int) ( class_exists( 'WBE_Jalali' ) ? WBE_Jalali::number( isset( $row['stock'] ) ? $row['stock'] : 0 ) : ( isset( $row['stock'] ) ? $row['stock'] : 0 ) );
+		$exp   = isset( $row['expiry'] ) ? trim( (string) $row['expiry'] ) : '';
+		return ( '' !== $exp || $price > 0 || $stock > 0 );
+	}
+
+	/**
+	 * بچ‌های ارسالی فرم: آرایه برای ذخیره، null یعنی موجودی فعلی را نگه دار.
+	 *
+	 * @param array  $rows
+	 * @param string $calendar
+	 * @return array|null
+	 */
+	public static function decide_posted_batches( $rows, $calendar = 'gregorian' ) {
+		$rows  = is_array( $rows ) ? $rows : array();
+		$clean = self::sanitize_batches( $rows, $calendar );
+		if ( $clean ) {
+			return $clean;
+		}
+		foreach ( $rows as $row ) {
+			if ( self::row_looks_like_batch_attempt( $row ) ) {
+				return null;
+			}
+		}
+		return array();
 	}
 
 	public static function unique_bulk_rows( array $rows ) {

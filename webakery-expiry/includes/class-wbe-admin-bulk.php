@@ -680,11 +680,12 @@ class WBE_Admin_Bulk {
 			wp_send_json_error( array( 'message' => 'لایسنس نامعتبر است.' ), 403 );
 		}
 
-		$calendar = WBE_Settings::calendar();
-		$limit    = self::chunk_size();
-		$mode     = isset( $_POST['wbe_bulk_mode'] ) ? sanitize_key( wp_unslash( $_POST['wbe_bulk_mode'] ) ) : 'rows';
-		$updated  = 0;
-		$skipped  = 0;
+		$calendar  = WBE_Settings::calendar();
+		$limit     = self::chunk_size();
+		$mode      = isset( $_POST['wbe_bulk_mode'] ) ? sanitize_key( wp_unslash( $_POST['wbe_bulk_mode'] ) ) : 'rows';
+		$updated   = 0;
+		$skipped   = 0;
+		$processed = array();
 
 		if ( 'selected' === $mode ) {
 			$ops = self::ops_from_request( $_POST, $calendar ); // phpcs:ignore WordPress.Security.NonceVerification
@@ -693,13 +694,15 @@ class WBE_Admin_Bulk {
 			if ( ! self::ops_meaningful( $ops ) || ! $ids ) {
 				wp_send_json_success(
 					array(
-						'updated' => 0,
-						'skipped' => 0,
-						'empty'   => 1,
+						'updated'   => 0,
+						'skipped'   => 0,
+						'empty'     => 1,
+						'processed' => array(),
 					)
 				);
 			}
 			foreach ( $ids as $id ) {
+				$processed[] = $id;
 				if ( WBE_Product::apply_bulk( $id, $ops, false ) ) {
 					$updated++;
 				} else {
@@ -713,12 +716,17 @@ class WBE_Admin_Bulk {
 				if ( $n >= $limit ) {
 					break;
 				}
+				$id = (int) $id;
+				if ( $id <= 0 ) {
+					continue;
+				}
 				$ops = self::ops_from_row( $row, $calendar );
 				if ( ! self::ops_meaningful( $ops ) ) {
 					continue;
 				}
 				$n++;
-				if ( WBE_Product::apply_bulk( (int) $id, $ops, false ) ) {
+				$processed[] = $id;
+				if ( WBE_Product::apply_bulk( $id, $ops, false ) ) {
 					$updated++;
 				} else {
 					$skipped++;
@@ -732,9 +740,10 @@ class WBE_Admin_Bulk {
 
 		wp_send_json_success(
 			array(
-				'updated' => $updated,
-				'skipped' => $skipped,
-				'chunk'   => $limit,
+				'updated'   => $updated,
+				'skipped'   => $skipped,
+				'chunk'     => $limit,
+				'processed' => $processed,
 			)
 		);
 	}
@@ -757,6 +766,9 @@ class WBE_Admin_Bulk {
 		if ( 'rows' === $mode ) {
 			$rows = isset( $_POST['wbe_row'] ) && is_array( $_POST['wbe_row'] ) ? wp_unslash( $_POST['wbe_row'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			foreach ( $rows as $id => $row ) {
+				if ( ! is_array( $row ) || empty( $row['dirty'] ) ) {
+					continue;
+				}
 				$ops = self::ops_from_row( $row, $calendar );
 				if ( ! self::ops_meaningful( $ops ) ) {
 					continue;

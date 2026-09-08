@@ -105,6 +105,8 @@ class WBE_Product {
 		}
 		if ( $sync ) {
 			self::sync_wc( $product_id );
+		} else {
+			self::refresh_parent_expiry_index( $product_id );
 		}
 		if ( class_exists( 'WBE_Alerts' ) ) {
 			WBE_Alerts::flush();
@@ -231,6 +233,7 @@ class WBE_Product {
 		$product_id = (int) $product_id;
 		if ( ! self::configured( $product_id ) ) {
 			delete_post_meta( $product_id, self::META_ACTIVE_EXPIRY );
+			self::refresh_parent_expiry_index( $product_id );
 			return;
 		}
 		$product = wc_get_product( $product_id );
@@ -239,6 +242,7 @@ class WBE_Product {
 		}
 		// والد متغیر موجودی ندارد — بچ روی تنوع‌هاست.
 		if ( ! self::owns_price_stock( $product ) ) {
+			self::refresh_parent_expiry_index( $product_id );
 			return;
 		}
 		self::$syncing = true;
@@ -270,6 +274,7 @@ class WBE_Product {
 		}
 		$product->save();
 		self::$syncing = false;
+		self::refresh_parent_expiry_index( $product_id );
 	}
 
 	public static function is_syncing() {
@@ -681,7 +686,7 @@ class WBE_Product {
 
 		if ( ! $batches ) {
 			if ( ! empty( $ops['add_batch'] ) && is_array( $ops['add_batch'] ) ) {
-				$cal     = WBE_Settings::calendar();
+				$cal     = self::calendar( $product_id );
 				$batches = WBE_Engine::sanitize_batches( array( $ops['add_batch'] ), $cal );
 				if ( $batches ) {
 					self::$syncing = true;
@@ -710,7 +715,7 @@ class WBE_Product {
 		}
 
 		$today           = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
-		$ops['calendar'] = WBE_Settings::calendar();
+		$ops['calendar'] = self::calendar( $product_id );
 		$next            = WBE_Engine::apply_bulk_to_active( $batches, $ops, $today );
 		$batches_changed = $next !== $batches;
 		$touch_dates     = ! empty( $ops['clear_sale'] )
@@ -718,7 +723,7 @@ class WBE_Product {
 			|| ( isset( $ops['sale_to'] ) && '' !== $ops['sale_to'] );
 
 		if ( ! $batches_changed && ! $touch_dates ) {
-			return true;
+			return $did;
 		}
 
 		self::$syncing = true;
@@ -994,6 +999,49 @@ class WBE_Product {
 	}
 
 	/**
+	 * نزدیک‌ترین انقضای تنوع‌ها را روی والد متغیر می‌نویسد تا سورت کاتالوگ کار کند.
+	 *
+	 * @param int $product_id تنوع یا والد
+	 */
+	public static function refresh_parent_expiry_index( $product_id ) {
+		$product_id = (int) $product_id;
+		if ( $product_id <= 0 || ! function_exists( 'wc_get_product' ) ) {
+			return;
+		}
+		$product = wc_get_product( $product_id );
+		if ( ! $product || ! method_exists( $product, 'is_type' ) ) {
+			return;
+		}
+		$parent_id = $product_id;
+		if ( $product->is_type( 'variation' ) ) {
+			$parent_id = method_exists( $product, 'get_parent_id' ) ? (int) $product->get_parent_id() : 0;
+			$product   = $parent_id > 0 ? wc_get_product( $parent_id ) : null;
+		} elseif ( ! $product->is_type( 'variable' ) ) {
+			return;
+		}
+		if ( ! $product || ! method_exists( $product, 'get_children' ) ) {
+			return;
+		}
+		$nearest = '';
+		foreach ( $product->get_children() as $vid ) {
+			$vid = (int) $vid;
+			$exp = get_post_meta( $vid, self::META_ACTIVE_EXPIRY, true );
+			if ( ! $exp ) {
+				$active = self::active( $vid );
+				$exp    = ( $active && ! empty( $active['expiry'] ) ) ? $active['expiry'] : '';
+			}
+			if ( '' !== $exp && ( '' === $nearest || $exp < $nearest ) ) {
+				$nearest = $exp;
+			}
+		}
+		if ( '' !== $nearest ) {
+			update_post_meta( $parent_id, self::META_ACTIVE_EXPIRY, $nearest );
+		} else {
+			delete_post_meta( $parent_id, self::META_ACTIVE_EXPIRY );
+		}
+	}
+
+	/**
 	 * کش و جدول جستجوی ووکامرس را برای یک محصول تازه می‌کند.
 	 *
 	 * @param int $product_id
@@ -1025,5 +1073,6 @@ class WBE_Product {
 			}
 		} catch ( Exception $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
 		}
+		self::refresh_parent_expiry_index( $product_id );
 	}
 }

@@ -3,7 +3,8 @@ defined( 'ABSPATH' ) || exit;
 $placeholder = ( 'jalali' === $effective ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27';
 $today       = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
 $loop        = isset( $loop ) ? (int) $loop : 0;
-$prefix      = 'wbe_var[' . $loop . ']';
+$vid         = isset( $pid ) ? (int) $pid : 0;
+$prefix      = 'wbe_var[' . ( $vid > 0 ? $vid : $loop ) . ']';
 $active_idx  = ( ! empty( $batches ) && class_exists( 'WBE_Engine' ) ) ? WBE_Engine::active_index( $batches, $today ) : null;
 $active      = ( null !== $active_idx && isset( $batches[ $active_idx ] ) ) ? $batches[ $active_idx ] : null;
 $reserves    = array();
@@ -32,10 +33,11 @@ $a_id     = $active && isset( $active['id'] ) ? $active['id'] : '';
 $a_disc_v = $a_disc > 0 ? (string) $a_disc : '';
 $attr_lbl = isset( $attr_label ) ? (string) $attr_label : '';
 ?>
-<div class="wbe-product-panel wbe-variation-panel" dir="rtl" data-loop="<?php echo (int) $loop; ?>" data-wc-price="<?php echo esc_attr( isset( $wc_price ) ? $wc_price : '' ); ?>">
+<div class="wbe-product-panel wbe-variation-panel" dir="rtl" data-loop="<?php echo (int) $loop; ?>" data-variation-id="<?php echo (int) $vid; ?>" data-wc-price="<?php echo esc_attr( isset( $wc_price ) ? $wc_price : '' ); ?>">
 	<?php if ( 0 === $loop ) : ?>
 		<?php wp_nonce_field( 'wbe_save_batches', 'wbe_batches_nonce' ); ?>
 	<?php endif; ?>
+	<input type="hidden" name="wbe_var_present[<?php echo (int) ( $vid > 0 ? $vid : $loop ); ?>]" value="1" />
 
 	<p class="form-field wbe-calendar-field">
 		<label for="wbe_var_<?php echo (int) $loop; ?>_calendar">تقویم تاریخ انقضا</label>
