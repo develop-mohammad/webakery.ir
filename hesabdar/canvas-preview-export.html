@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>پیش‌نمایش خروجی تصویری حسابدار</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    body { margin: 0; background: #f1f5f9; font-family: Tahoma, Vazirmatn, sans-serif; }
+    .preview-wrap { max-width: 980px; margin: 24px auto; padding: 0 16px 40px; }
+    .preview-note { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; color: #334155; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <div class="preview-wrap wap-app">
+    <div class="preview-note">
+      پیش‌نمایش بدون وردپرس: دکمه‌های JPG/PNG باید کارت‌ها و نمودار را با html2canvas ذخیره کنند.
+    </div>
+
+    <div class="wap-export-bar" data-wap-no-capture>
+      <span class="wap-export-label">خروجی تصویری:</span>
+      <button type="button" class="wap-btn wap-btn-jpg" data-wap-export-image data-format="jpg" data-label="preview" data-target="#wap_capture">🖼️ خروجی تصویری (JPG)</button>
+      <button type="button" class="wap-btn wap-btn-ghost" data-wap-export-image data-format="png" data-label="preview" data-target="#wap_capture">🖼️ PNG</button>
+    </div>
+
+    <div id="wap_capture" class="wap-capture">
+      <div class="wap-cards">
+        <div class="wap-card">
+          <span class="wap-card-label">فروش ناخالص</span>
+          <span class="wap-card-value">۱۲٬۵۰۰٬۰۰۰ تومان</span>
+          <span class="wap-card-accent">۴۲ سفارش</span>
+        </div>
+        <div class="wap-card wap-card-net">
+          <span class="wap-card-label">فروش خالص</span>
+          <span class="wap-card-value">۱۱٬۲۰۰٬۰۰۰ تومان</span>
+          <span class="wap-card-accent">۳۸ سفارش موفق</span>
+        </div>
+        <div class="wap-card wap-card-accent">
+          <span class="wap-card-label">میانگین سفارش</span>
+          <span class="wap-card-value">۲۹۴٬۷۰۰ تومان</span>
+        </div>
+      </div>
+
+      <div class="wap-chart-card">
+        <h3 class="wap-section-title">نمودار فروش نمونه</h3>
+        <div class="wap-chart">
+          <div class="wap-bar-col"><div class="wap-bar-track"><div class="wap-bar-fill" style="height:55%"><span class="wap-bar-tip">۵٫۵م</span></div></div><span class="wap-bar-label">فروردین</span></div>
+          <div class="wap-bar-col"><div class="wap-bar-track"><div class="wap-bar-fill" style="height:80%"><span class="wap-bar-tip">۸م</span></div></div><span class="wap-bar-label">اردیبهشت</span></div>
+          <div class="wap-bar-col"><div class="wap-bar-track"><div class="wap-bar-fill" style="height:40%"><span class="wap-bar-tip">۴م</span></div></div><span class="wap-bar-label">خرداد</span></div>
+          <div class="wap-bar-col"><div class="wap-bar-track"><div class="wap-bar-fill" style="height:95%"><span class="wap-bar-tip">۹٫۵م</span></div></div><span class="wap-bar-label">تیر</span></div>
+        </div>
+      </div>
+
+      <div class="wap-table-wrap">
+        <table class="wap-table">
+          <thead><tr><th>دوره</th><th>تعداد</th><th>مبلغ</th></tr></thead>
+          <tbody>
+            <tr><td>فروردین</td><td>۱۰</td><td>۵٬۵۰۰٬۰۰۰</td></tr>
+            <tr><td>اردیبهشت</td><td>۱۴</td><td>۸٬۰۰۰٬۰۰۰</td></tr>
+            <tr><td>خرداد</td><td>۸</td><td>۴٬۰۰۰٬۰۰۰</td></tr>
+            <tr><td>تیر</td><td>۱۶</td><td>۹٬۵۰۰٬۰۰۰</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script src="assets/app.js"></script>
+</body>
+</html>

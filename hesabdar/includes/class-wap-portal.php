@@ -63,11 +63,19 @@ class WAP_Portal {
         }
     }
 
-    private static function render_export_bar( string $csv_url, bool $sheets = true ): void {
+    private static function render_image_export_buttons( string $image_label = 'report', string $target = '#wap_capture' ): void {
         ?>
-        <div class="wap-export-bar">
+        <button type="button" class="wap-btn wap-btn-jpg" data-wap-export-image data-format="jpg" data-label="<?php echo esc_attr( $image_label ); ?>" data-target="<?php echo esc_attr( $target ); ?>">🖼️ خروجی تصویری (JPG)</button>
+        <button type="button" class="wap-btn wap-btn-ghost" data-wap-export-image data-format="png" data-label="<?php echo esc_attr( $image_label ); ?>" data-target="<?php echo esc_attr( $target ); ?>">🖼️ PNG</button>
+        <?php
+    }
+
+    private static function render_export_bar( string $csv_url, string $image_label = 'report' ): void {
+        ?>
+        <div class="wap-export-bar" data-wap-no-capture>
             <span class="wap-export-label">خروجی گزارش:</span>
             <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV / اکسل</a>
+            <?php self::render_image_export_buttons( $image_label ); ?>
         </div>
         <?php
     }
@@ -547,6 +555,15 @@ class WAP_Portal {
                 <?php endforeach; ?>
             </div>
 
+            <div class="wap-export-bar" data-wap-no-capture>
+                <span class="wap-export-label">خروجی گزارش:</span>
+                <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
+                <a class="wap-btn wap-btn-xml" href="<?php echo esc_url( $xml_url ); ?>">📄 XML</a>
+                <a class="wap-btn wap-btn-pdf" href="<?php echo esc_url( $pdf_url ); ?>" target="_blank">🖨️ چاپ / PDF</a>
+                <?php self::render_image_export_buttons( 'sales' ); ?>
+            </div>
+
+            <div id="wap_capture" class="wap-capture">
             <div class="wap-cards">
                 <div class="wap-card">
                     <span class="wap-card-icon">📦</span>
@@ -586,15 +603,7 @@ class WAP_Portal {
             </div>
             <?php endif; ?>
 
-            <div class="wap-export-bar">
-                <span class="wap-export-label">خروجی گزارش:</span>
-                <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
-                <a class="wap-btn wap-btn-xml" href="<?php echo esc_url( $xml_url ); ?>">📄 XML</a>
-                <a class="wap-btn wap-btn-pdf" href="<?php echo esc_url( $pdf_url ); ?>" target="_blank">🖨️ چاپ / PDF</a>
-                <button type="button" class="wap-btn wap-btn-jpg" id="wap_export_jpg">🖼️ JPG</button>
-            </div>
-
-            <div class="wap-table-wrap" id="wap_capture">
+            <div class="wap-table-wrap">
                 <table class="wap-table">
                     <thead><tr><th>دوره</th><th>تعداد فروش</th><th>مبلغ فروش</th><th>میانگین هر سفارش</th></tr></thead>
                     <tbody>
@@ -612,6 +621,7 @@ class WAP_Portal {
                     </tbody>
                 </table>
             </div>
+            </div><!-- #wap_capture -->
         <?php
     }
 
@@ -693,6 +703,16 @@ class WAP_Portal {
             <?php endforeach; ?>
         </div>
 
+        <div class="wap-export-bar" data-wap-no-capture>
+            <span class="wap-export-label">خروجی گزارش:</span>
+            <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
+            <?php self::render_image_export_buttons( 'orders' ); ?>
+        <?php if ( $can_edit_orders ) : ?>
+            <a class="wap-btn wap-btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wci-order-edit' ) ); ?>" target="_blank">➕ سفارش جدید</a>
+        <?php endif; ?>
+        </div>
+
+        <div id="wap_capture" class="wap-capture">
         <?php if ( ! empty( $status_counts ) ) : ?>
         <div class="wap-chart-card wap-donut-card">
             <h3 class="wap-section-title">🥧 وضعیت سفارش‌ها</h3>
@@ -723,14 +743,6 @@ class WAP_Portal {
         </div>
         <?php endif; ?>
 
-        <div class="wap-export-bar">
-            <span class="wap-export-label">خروجی گزارش:</span>
-            <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
-        <?php if ( $can_edit_orders ) : ?>
-            <a class="wap-btn wap-btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wci-order-edit' ) ); ?>" target="_blank">➕ سفارش جدید</a>
-        <?php endif; ?>
-        </div>
-
         <form method="post" id="wap-orders-bulk-form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
             <?php wp_nonce_field( 'wci_bulk_orders' ); ?>
             <input type="hidden" name="action" value="wap_bulk_orders">
@@ -741,7 +753,7 @@ class WAP_Portal {
             <?php endforeach; ?>
 
         <?php if ( $can_bulk ) : ?>
-        <div class="wap-bulk-bar">
+        <div class="wap-bulk-bar" data-wap-no-capture>
             <select name="wci_bulk_action" class="wap-bulk-select">
                 <?php foreach ( WAP_Order_Service::bulk_action_options() as $value => $label ) : ?>
                     <option value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $label ); ?></option>
@@ -751,7 +763,7 @@ class WAP_Portal {
         </div>
         <?php endif; ?>
 
-        <div class="wap-table-wrap" id="wap_capture">
+        <div class="wap-table-wrap">
             <table class="wap-table wap-orders-table">
                 <thead><tr>
                 <?php if ( $can_bulk ) : ?><th class="wap-check-col"><input type="checkbox" id="wap-cb-select-all"></th><?php endif; ?>
@@ -797,7 +809,7 @@ class WAP_Portal {
         </div>
 
         <?php if ( $can_bulk ) : ?>
-        <div class="wap-bulk-bar wap-bulk-bar-bottom">
+        <div class="wap-bulk-bar wap-bulk-bar-bottom" data-wap-no-capture>
             <select name="wci_bulk_action2" class="wap-bulk-select">
                 <?php foreach ( WAP_Order_Service::bulk_action_options() as $value => $label ) : ?>
                     <option value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $label ); ?></option>
@@ -849,9 +861,10 @@ class WAP_Portal {
         </script>
         <?php endif; ?>
         </form>
+        </div><!-- #wap_capture -->
 
         <?php if ( $total_pages > 1 ) : ?>
-        <div class="wap-pagination">
+        <div class="wap-pagination" data-wap-no-capture>
             <span class="wap-count">نمایش <?php echo esc_html( number_format( ( $paged - 1 ) * $per_page + 1 ) ); ?>–<?php echo esc_html( number_format( min( $total, $paged * $per_page ) ) ); ?> از <?php echo esc_html( number_format( $total ) ); ?> سفارش</span>
             <div class="wap-pages">
                 <?php
@@ -916,13 +929,14 @@ class WAP_Portal {
             <h2 class="wap-section-title">سفارش‌های محصول: <?php echo esc_html( $product_name ); ?>
                 <a href="<?php echo esc_url( add_query_arg( array_merge( $base_params, array( 'wap_view' => 'products' ) ), self::panel_url() ) ); ?>" class="wap-btn wap-btn-ghost" style="font-size:12px">← بازگشت</a>
             </h2>
+            <?php self::render_export_bar( $products_csv_url, 'products' ); ?>
+            <div id="wap_capture" class="wap-capture">
             <div class="wap-cards">
                 <div class="wap-card"><span class="wap-card-icon">📦</span><span class="wap-card-label">تعداد سفارش</span><span class="wap-card-value"><?php echo esc_html( number_format( count( $rows ) ) ); ?></span></div>
                 <div class="wap-card wap-card-accent"><span class="wap-card-icon">🔢</span><span class="wap-card-label">تعداد فروخته‌شده</span><span class="wap-card-value"><?php echo esc_html( number_format( $total_qty ) ); ?></span></div>
                 <div class="wap-card wap-card-net"><span class="wap-card-icon">💰</span><span class="wap-card-label">درآمد کل</span><span class="wap-card-value"><?php echo esc_html( number_format( $total_revenue ) . ' ' . $currency ); ?></span></div>
             </div>
-            <?php self::render_export_bar( $products_csv_url ); ?>
-            <div class="wap-table-wrap" id="wap_capture">
+            <div class="wap-table-wrap">
                 <table class="wap-table">
                     <thead><tr><th>#</th><th>نام خریدار</th><th>تلفن</th><th>تاریخ</th><th>تعداد</th><th>مبلغ</th><th>وضعیت</th><?php WAP_Baget_Fields::render_table_headers(); ?></tr></thead>
                     <tbody>
@@ -949,11 +963,14 @@ class WAP_Portal {
                     </tbody>
                 </table>
             </div>
+            </div><!-- #wap_capture -->
         <?php else :
             $products      = WAP_Data::get_product_sales( $orders );
             $total_qty     = array_sum( array_column( $products, 'qty' ) );
             $total_revenue = array_sum( array_column( $products, 'revenue' ) );
             ?>
+            <?php self::render_export_bar( $products_csv_url, 'products' ); ?>
+            <div id="wap_capture" class="wap-capture">
             <div class="wap-cards">
                 <div class="wap-card"><span class="wap-card-icon">🛍️</span><span class="wap-card-label">تعداد محصولات فروخته‌شده</span><span class="wap-card-value"><?php echo esc_html( number_format( count( $products ) ) ); ?></span></div>
                 <div class="wap-card wap-card-accent"><span class="wap-card-icon">💰</span><span class="wap-card-label">مجموع فروش</span><span class="wap-card-value"><?php echo esc_html( number_format( $total_revenue ) . ' ' . $currency ); ?></span></div>
@@ -984,8 +1001,7 @@ class WAP_Portal {
                 </div>
             <?php endif; ?>
 
-            <?php self::render_export_bar( $products_csv_url ); ?>
-            <div class="wap-table-wrap" id="wap_capture">
+            <div class="wap-table-wrap">
                 <table class="wap-table">
                     <thead><tr><th>#</th><th>نام محصول</th><th>SKU</th><th>تعداد فروخته‌شده</th><th>تعداد سفارشات</th><th>درآمد کل</th></tr></thead>
                     <tbody>
@@ -1005,6 +1021,7 @@ class WAP_Portal {
                     </tbody>
                 </table>
             </div>
+            </div><!-- #wap_capture -->
         <?php endif;
     }
 
@@ -1059,6 +1076,14 @@ class WAP_Portal {
             <div class="wap-alert"><?php echo esc_html( $report['error'] ); ?></div>
         <?php endif; ?>
 
+        <div class="wap-export-bar" data-wap-no-capture>
+            <span class="wap-export-label">خروجی گزارش:</span>
+            <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $xlsx_url ); ?>">📊 اکسل (.xlsx)</a>
+            <a class="wap-btn wap-btn-ghost" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
+            <?php self::render_image_export_buttons( 'shaparak' ); ?>
+        </div>
+
+        <div id="wap_capture" class="wap-capture">
         <div class="wap-cards">
             <div class="wap-card">
                 <div class="wap-card-label">خرید ووکامرس (زرین‌پال)</div>
@@ -1080,12 +1105,6 @@ class WAP_Portal {
                 <div class="wap-card-value"><?php echo esc_html( number_format( $s['settle_total_rial'] ?? ( $s['settle_total'] * 10 ) ) ); ?> <small>ریال</small></div>
                 <div class="wap-card-accent"><?php echo esc_html( number_format( $s['settle_count'] ) ); ?> تسویه — معادل <?php echo esc_html( number_format( $s['settle_total'] ) ); ?> تومان — Δ خالص: <?php echo esc_html( number_format( $s['diff_net_settle'] ) ); ?></div>
             </div>
-        </div>
-
-        <div class="wap-export-bar">
-            <span class="wap-export-label">خروجی گزارش:</span>
-            <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $xlsx_url ); ?>">📊 اکسل (.xlsx)</a>
-            <a class="wap-btn wap-btn-ghost" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
         </div>
 
         <div class="wap-table-wrap" style="margin-bottom:24px">
@@ -1149,6 +1168,7 @@ class WAP_Portal {
                 </tbody>
             </table>
         </div>
+        </div><!-- #wap_capture -->
         <?php
     }
 
@@ -1190,6 +1210,12 @@ class WAP_Portal {
             <?php endforeach; ?>
         </div>
 
+        <div class="wap-export-bar" data-wap-no-capture>
+            <span class="wap-export-label">خروجی تصویری داشبورد:</span>
+            <?php self::render_image_export_buttons( 'analytics' ); ?>
+        </div>
+
+        <div id="wap_capture" class="wap-capture">
         <div class="wap-cards">
             <div class="wap-card">
                 <div class="wap-card-label">فروش ناخالص</div>
@@ -1312,6 +1338,7 @@ class WAP_Portal {
                 </table>
             </div>
         </section>
+        </div><!-- #wap_capture -->
         <?php
     }
 }

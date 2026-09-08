@@ -204,74 +204,102 @@
         });
     });
 
-    // خروجی JPEG — رندر جدول روی canvas در همان مرورگر (بدون کتابخانه خارجی)
-    var jpegBtn = document.getElementById('wap_export_jpeg');
-    if (jpegBtn) {
-        jpegBtn.addEventListener('click', function () {
-            var table = document.querySelector('#wap_capture table');
-            if (!table) return;
+    // خروجی تصویری گزارش (JPG/PNG) — با html2canvas برای نمودارها و کارت‌ها
+    function wapLoadHtml2Canvas(cb) {
+        if (window.html2canvas) {
+            cb();
+            return;
+        }
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+        s.async = true;
+        s.onload = function () { cb(); };
+        s.onerror = function () {
+            wapToast('بارگذاری ابزار خروجی تصویر ناموفق بود.');
+        };
+        document.head.appendChild(s);
+    }
 
-            var rows = Array.prototype.map.call(table.querySelectorAll('tr'), function (tr) {
-                return Array.prototype.map.call(tr.querySelectorAll('th,td'), function (cell) {
-                    return cell.textContent.trim();
-                });
+    function wapCaptureTarget(btn) {
+        var sel = btn.getAttribute('data-target') || '#wap_capture';
+        return document.querySelector(sel);
+    }
+
+    function wapExportImage(btn, format) {
+        var target = wapCaptureTarget(btn);
+        if (!target) {
+            wapToast('بخش گزارش برای خروجی تصویر یافت نشد.');
+            return;
+        }
+        var label = btn.getAttribute('data-label') || 'گزارش';
+        var orig = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'در حال ساخت تصویر…';
+
+        wapLoadHtml2Canvas(function () {
+            var hideNodes = [];
+            target.querySelectorAll('[data-wap-no-capture], .wap-export-bar, .wap-bulk-bar, .wap-pagination').forEach(function (el) {
+                hideNodes.push({ el: el, display: el.style.display });
+                el.style.display = 'none';
             });
-
-            var colCount = rows[0] ? rows[0].length : 0;
-            var colWidth = 220;
-            var rowHeight = 40;
-            var padding = 24;
-            var width = colCount * colWidth + padding * 2;
-            var height = rows.length * rowHeight + padding * 2 + 50;
-
-            var canvas = document.createElement('canvas');
-            var ratio = window.devicePixelRatio || 1;
-            canvas.width = width * ratio;
-            canvas.height = height * ratio;
-            var ctx = canvas.getContext('2d');
-            ctx.scale(ratio, ratio);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, width, height);
-
-            ctx.direction = 'rtl';
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'middle';
-            ctx.font = '600 16px Vazirmatn, Tahoma, Arial, sans-serif';
-            ctx.fillStyle = '#059669';
-            ctx.fillText('گزارش فروش — ' + new Date().toLocaleDateString('fa-IR'), width - padding, padding + 10);
-
-            var top = padding + 46;
-            rows.forEach(function (cells, rIdx) {
-                var y = top + rIdx * rowHeight;
-                var isHeader = rIdx === 0;
-                ctx.fillStyle = isHeader ? '#059669' : (rIdx % 2 === 0 ? '#f8fafc' : '#ffffff');
-                ctx.fillRect(padding, y, width - padding * 2, rowHeight);
-
-                ctx.fillStyle = isHeader ? '#ffffff' : '#0f172a';
-                ctx.font = isHeader
-                    ? '600 14px Vazirmatn, Tahoma, Arial, sans-serif'
-                    : '400 14px Vazirmatn, Tahoma, Arial, sans-serif';
-
-                cells.forEach(function (text, cIdx) {
-                    var cellRightEdge = width - padding - cIdx * colWidth - 12;
-                    ctx.fillText(text, cellRightEdge, y + rowHeight / 2);
+            var prevBg = target.style.background;
+            target.classList.add('is-capturing');
+            target.style.background = '#ffffff';
+            window.html2canvas(target, {
+                backgroundColor: '#ffffff',
+                scale: Math.min(2, window.devicePixelRatio || 2),
+                useCORS: true,
+                logging: false,
+                scrollX: 0,
+                scrollY: -window.scrollY,
+                ignoreElements: function (el) {
+                    return !!(el && el.getAttribute && el.getAttribute('data-wap-no-capture') !== null);
+                }
+            }).then(function (canvas) {
+                target.style.background = prevBg;
+                target.classList.remove('is-capturing');
+                hideNodes.forEach(function (item) {
+                    item.el.style.display = item.display;
                 });
+                var mime = format === 'png' ? 'image/png' : 'image/jpeg';
+                var ext = format === 'png' ? 'png' : 'jpg';
+                var quality = format === 'png' ? undefined : 0.92;
+                var link = document.createElement('a');
+                var stamp = new Date().toISOString().slice(0, 10);
+                link.download = 'hesabdar-' + label + '-' + stamp + '.' + ext;
+                link.href = quality ? canvas.toDataURL(mime, quality) : canvas.toDataURL(mime);
+                link.click();
+                btn.disabled = false;
+                btn.textContent = orig;
+                wapToast('خروجی تصویری آماده شد.');
+            }).catch(function () {
+                target.style.background = prevBg;
+                target.classList.remove('is-capturing');
+                hideNodes.forEach(function (item) {
+                    item.el.style.display = item.display;
+                });
+                btn.disabled = false;
+                btn.textContent = orig;
+                wapToast('ساخت تصویر با خطا مواجه شد.');
             });
-
-            ctx.strokeStyle = '#e5e9ec';
-            for (var r = 0; r <= rows.length; r++) {
-                var ly = top + r * rowHeight;
-                ctx.beginPath();
-                ctx.moveTo(padding, ly);
-                ctx.lineTo(width - padding, ly);
-                ctx.stroke();
-            }
-
-            var link = document.createElement('a');
-            link.download = 'sales-report-' + new Date().toISOString().slice(0, 10) + '.jpg';
-            link.href = canvas.toDataURL('image/jpeg', 0.95);
-            link.click();
         });
     }
+
+    document.querySelectorAll('[data-wap-export-image]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            wapExportImage(btn, btn.getAttribute('data-format') || 'jpg');
+        });
+    });
+    // سازگاری با دکمه‌های قدیمی
+    ['wap_export_jpg', 'wap_export_jpeg'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el && !el.hasAttribute('data-wap-export-image')) {
+            el.setAttribute('data-wap-export-image', '1');
+            el.setAttribute('data-format', 'jpg');
+            el.setAttribute('data-label', 'sales');
+            el.addEventListener('click', function () {
+                wapExportImage(el, 'jpg');
+            });
+        }
+    });
 })();
