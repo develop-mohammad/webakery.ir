@@ -748,9 +748,11 @@ class WBE_Product {
 	 * @return bool
 	 */
 	public static function apply_identity( $product_id, array $ops ) {
-		$product_id = (int) $product_id;
-		$ok         = false;
-		if ( isset( $ops['name'] ) && '' !== trim( (string) $ops['name'] ) && function_exists( 'wp_update_post' ) ) {
+		$product_id   = (int) $product_id;
+		$ok           = false;
+		$is_variation = function_exists( 'get_post_type' ) && 'product_variation' === get_post_type( $product_id );
+		// نام تنوع از والد + ویژگی ساخته می‌شود؛ روی خود تنوع ننویس.
+		if ( ! $is_variation && isset( $ops['name'] ) && '' !== trim( (string) $ops['name'] ) && function_exists( 'wp_update_post' ) ) {
 			$title = function_exists( 'sanitize_text_field' ) ? sanitize_text_field( $ops['name'] ) : trim( (string) $ops['name'] );
 			wp_update_post(
 				array(

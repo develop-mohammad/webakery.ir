@@ -220,14 +220,21 @@ $csv_url     = wp_nonce_url(
 							}
 							$st       = isset( $statuses[ $r['status'] ] ) ? $r['status'] : 'publish';
 							$reserves = ( $show_res && ! empty( $r['reserves'] ) && is_array( $r['reserves'] ) ) ? $r['reserves'] : array();
+							$is_var   = ! empty( $r['is_variation'] );
+							$edit_id  = ( $is_var && ! empty( $r['parent_id'] ) ) ? (int) $r['parent_id'] : (int) $r['id'];
 							?>
 							<tr class="<?php echo esc_attr( $row_class ); ?>" data-id="<?php echo (int) $r['id']; ?>" data-name="<?php echo esc_attr( $r['name'] . ' ' . $r['sku'] . ' ' . ( isset( $r['brand'] ) ? $r['brand'] : '' ) ); ?>">
 								<th class="check-column">
 									<input type="checkbox" class="wbe-bulk-id" name="ids[]" value="<?php echo (int) $r['id']; ?>" />
 								</th>
 								<td>
-									<input type="text" class="wbe-cell-name" data-field="name" data-orig="<?php echo esc_attr( $r['name'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][name]" value="<?php echo esc_attr( $r['name'] ); ?>" />
-									<div class="wbe-muted"><a href="<?php echo esc_url( get_edit_post_link( $r['id'] ) ); ?>">ویرایش محصول</a></div>
+									<input type="text" class="wbe-cell-name" data-field="name" data-orig="<?php echo esc_attr( $r['name'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][name]" value="<?php echo esc_attr( $r['name'] ); ?>" <?php echo $is_var ? 'readonly' : ''; ?> />
+									<div class="wbe-muted">
+										<?php if ( $is_var ) : ?>
+											<span>تنوع</span> —
+										<?php endif; ?>
+										<a href="<?php echo esc_url( get_edit_post_link( $edit_id ) ); ?>">ویرایش محصول</a>
+									</div>
 									<?php if ( ! empty( $r['brand'] ) ) : ?>
 										<div class="wbe-muted"><?php echo esc_html( $r['brand'] ); ?></div>
 									<?php endif; ?>

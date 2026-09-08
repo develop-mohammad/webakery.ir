@@ -491,10 +491,152 @@ if ( ! function_exists( 'add_action' ) ) {
 		return true;
 	}
 }
+if ( ! function_exists( 'sanitize_key' ) ) {
+	function sanitize_key( $key ) {
+		return strtolower( preg_replace( '/[^a-z0-9_\-]/i', '', (string) $key ) );
+	}
+}
+if ( ! function_exists( 'sanitize_text_field' ) ) {
+	function sanitize_text_field( $str ) {
+		return trim( strip_tags( (string) $str ) );
+	}
+}
+if ( ! function_exists( 'wp_unslash' ) ) {
+	function wp_unslash( $value ) {
+		return is_string( $value ) ? stripslashes( $value ) : $value;
+	}
+}
 require_once dirname( __DIR__ ) . '/includes/class-wbe-admin-bulk.php';
 wbe_check( 'بدون برند، فیلتر آماده نیست', false === WBE_Admin_Bulk::has_brand_filter( array( 'brand' => '' ) ) );
 wbe_check( 'برند خالی فاصله هم آماده نیست', false === WBE_Admin_Bulk::has_brand_filter( array( 'brand' => '  ' ) ) );
 wbe_check( 'با شناسه برند، فیلتر آماده است', true === WBE_Admin_Bulk::has_brand_filter( array( 'brand' => '42' ) ) );
+
+echo "\n=== ویرایش گروهی — فیلتر و عملیات ===\n";
+$ff = WBE_Admin_Bulk::filters_from_request(
+	array(
+		's'          => 'شیر',
+		'wbe_cat'    => '12',
+		'wbe_scope'  => 'batches',
+		'wbe_status' => 'draft',
+		'wbe_brand'  => '42',
+	)
+);
+wbe_check( 'فیلتر جستجو خوانده می‌شود', 'شیر' === $ff['q'] );
+wbe_check( 'فیلتر دسته و برند خوانده می‌شود', 12 === (int) $ff['category'] && '42' === $ff['brand'] );
+wbe_check( 'فیلتر محدوده و وضعیت خوانده می‌شود', 'batches' === $ff['scope'] && 'draft' === $ff['status'] );
+$bad = WBE_Admin_Bulk::filters_from_request( array( 'wbe_scope' => 'hack', 'wbe_status' => 'trash' ) );
+wbe_check( 'محدوده نامعتبر = همه', 'all' === $bad['scope'] );
+wbe_check( 'وضعیت نامعتبر خالی می‌شود', '' === $bad['status'] );
+
+$ops_req = WBE_Admin_Bulk::ops_from_request(
+	array(
+		'wbe_regular_mode'  => 'set',
+		'wbe_regular_value' => '۱۵۰۰۰۰',
+		'wbe_discount'      => '۲۰',
+		'wbe_stock_mode'    => 'set',
+		'wbe_stock_value'   => '8',
+		'wbe_expiry'        => '2026-09-01',
+		'wbe_sale_from'     => '2026-08-01',
+		'wbe_sale_to'       => '2026-08-31',
+		'wbe_set_status'    => 'publish',
+		'wbe_add_price'     => '90000',
+		'wbe_add_discount'  => '10',
+		'wbe_add_stock'     => '4',
+		'wbe_add_expiry'    => '2026-12-01',
+	),
+	'gregorian'
+);
+wbe_check( 'نوار گروهی قیمت اصلی را می‌خواند', isset( $ops_req['regular_mode'] ) && 150000.0 === (float) $ops_req['regular_value'] );
+wbe_check( 'نوار گروهی تخفیف را می‌خواند', 20.0 === (float) $ops_req['discount'] );
+wbe_check( 'نوار گروهی موجودی و انقضا', 'set' === $ops_req['stock_mode'] && '2026-09-01' === $ops_req['expiry'] );
+wbe_check( 'نوار گروهی بازه جشنواره', '2026-08-01' === $ops_req['sale_from'] && '2026-08-31' === $ops_req['sale_to'] );
+wbe_check( 'نوار گروهی افزودن رزرو با تخفیف', isset( $ops_req['add_batch'] ) && 10 === (int) $ops_req['add_batch']['discount'] && 4 === (int) $ops_req['add_batch']['stock'] );
+wbe_check( 'عملیات نوار معنادار است', true === WBE_Admin_Bulk::ops_meaningful( $ops_req ) );
+wbe_check( 'نوار خالی معنادار نیست', false === WBE_Admin_Bulk::ops_meaningful( array() ) );
+
+$ops_row = WBE_Admin_Bulk::ops_from_row(
+	array(
+		'regular'      => '120000',
+		'discount'     => '15',
+		'sale'         => '102000',
+		'stock'        => '6',
+		'expiry'       => '2026-10-10',
+		'from'         => '2026-09-01',
+		'to'           => '2026-09-20',
+		'name'         => 'شیر پگاه',
+		'sku'          => 'SKU-1',
+		'status'       => 'draft',
+		'add_price'    => '80000',
+		'add_discount' => '۵',
+		'add_stock'    => '2',
+		'add_expiry'   => '2027-01-01',
+	),
+	'gregorian'
+);
+wbe_check( 'ردیف: قیمت تنظیم می‌شود', 'set' === $ops_row['regular_mode'] && 120000.0 === (float) $ops_row['regular_value'] );
+wbe_check( 'ردیف: تخفیف و موجودی', 15.0 === (float) $ops_row['discount'] && 6.0 === (float) $ops_row['stock'] );
+wbe_check( 'ردیف: نام و SKU و وضعیت', 'شیر پگاه' === $ops_row['name'] && 'SKU-1' === $ops_row['sku'] && 'draft' === $ops_row['status'] );
+wbe_check( 'ردیف: افزودن رزرو تخفیف را حفظ می‌کند', 5 === (int) $ops_row['add_batch']['discount'] );
+wbe_check( 'ردیف: بازه جشنواره', '2026-09-01' === $ops_row['sale_from'] && '2026-09-20' === $ops_row['sale_to'] );
+
+$ops_empty_res = WBE_Admin_Bulk::ops_from_row( array( 'reserves' => array() ), 'gregorian' );
+wbe_check( 'حذف همه رزروها در عملیات می‌آید', isset( $ops_empty_res['reserves'] ) && array() === $ops_empty_res['reserves'] );
+wbe_check( 'حذف رزروها معنادار است', true === WBE_Admin_Bulk::ops_meaningful( $ops_empty_res ) );
+
+$ops_multi_res = WBE_Admin_Bulk::ops_from_row(
+	array(
+		'reserves' => array(
+			array( 'id' => 'r1', 'price' => '90000', 'discount' => '0', 'stock' => '3', 'expiry' => '2027-01-01' ),
+			array( 'id' => 'r2', 'price' => '70000', 'discount' => '10', 'stock' => '5', 'expiry' => '2028-01-01' ),
+			array( 'price' => '1', 'stock' => '1', 'expiry' => '' ),
+		),
+	),
+	'gregorian'
+);
+wbe_check( 'رزرو بدون انقضا رد می‌شود', 2 === count( $ops_multi_res['reserves'] ) );
+wbe_check( 'رزرو دوم تخفیف دارد', 10 === (int) $ops_multi_res['reserves'][1]['discount'] );
+
+$cleared = WBE_Engine::replace_reserve_batches(
+	array(
+		array( 'id' => 'a', 'price' => '100', 'stock' => 4, 'expiry' => '2026-06-01', 'discount' => 0 ),
+		array( 'id' => 'b', 'price' => '90', 'stock' => 8, 'expiry' => '2027-01-01', 'discount' => 0 ),
+	),
+	array(),
+	'2026-01-15',
+	'gregorian'
+);
+wbe_check( 'جایگزینی رزرو خالی فقط فعال را نگه می‌دارد', 1 === count( $cleared ) && 'a' === $cleared[0]['id'] );
+
+$pipeline = WBE_Engine::apply_bulk_to_active(
+	array(
+		array( 'id' => 'a', 'price' => '100000', 'stock' => 4, 'expiry' => '2026-06-01', 'discount' => 0 ),
+	),
+	$ops_req,
+	'2026-01-15'
+);
+wbe_check( 'اعمال نوار روی بچ فعال', '150000' === (string) $pipeline[0]['price'] && 20 === (int) $pipeline[0]['discount'] && 8 === (int) $pipeline[0]['stock'] );
+wbe_check( 'اعمال نوار بچ رزرو می‌افزاید', 2 === count( $pipeline ) && 10 === (int) $pipeline[1]['discount'] );
+
+$ten_dup = array();
+for ( $pid = 1; $pid <= 10; $pid++ ) {
+	for ( $c = 0; $c < 100; $c++ ) {
+		$rec               = new stdClass();
+		$rec->ID           = $pid;
+		$rec->product_type = ( 0 === $c && $pid <= 2 ) ? 'variable' : '';
+		$ten_dup[]         = $rec;
+	}
+}
+$ten_u = WBE_Engine::unique_sql_records_by_id( $ten_dup );
+wbe_check( '۱۰ محصول × ۱۰۰ کپی = ۱۰ ردیف', 10 === count( $ten_u ), (string) count( $ten_u ) );
+wbe_check( 'نوع متغیر بین کپی‌ها گم نمی‌شود', 'variable' === $ten_u[0]->product_type && 'variable' === $ten_u[1]->product_type );
+
+$bulk_rows = array();
+for ( $i = 0; $i < 10; $i++ ) {
+	for ( $j = 0; $j < 100; $j++ ) {
+		$bulk_rows[] = array( 'id' => 100 + $i, 'name' => 'p' . $i );
+	}
+}
+wbe_check( 'جدول گروهی ۱۰۰۰ کپی را ۱۰ می‌کند', 10 === count( WBE_Engine::unique_bulk_rows( $bulk_rows ) ) );
 
 echo "\n=== فعال‌سازی وردپرس ===\n";
 if ( ! defined( 'WBE_PATH' ) ) {

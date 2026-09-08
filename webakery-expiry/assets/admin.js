@@ -205,7 +205,7 @@
 	$(document).on('change input', '#wbe-batches-body .wbe-batch-stock, #wbe-batches-body input[name*="[stock]"]', refreshReservedTotal);
 
 	$(document).on('change', '#wbe-bulk-check-all', function () {
-		$('.wbe-bulk-id').prop('checked', this.checked);
+		$('.wbe-bulk-row:visible .wbe-bulk-id').prop('checked', this.checked);
 	});
 
 	$(document).on('change', '.wbe-bulk-mode', function () {

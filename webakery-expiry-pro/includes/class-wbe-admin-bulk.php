@@ -207,7 +207,7 @@ class WBE_Admin_Bulk {
 			}
 		}
 
-		if ( ! empty( $row['reserves'] ) && is_array( $row['reserves'] ) ) {
+		if ( array_key_exists( 'reserves', $row ) && is_array( $row['reserves'] ) ) {
 			$list = array();
 			foreach ( $row['reserves'] as $rr ) {
 				if ( ! is_array( $rr ) ) {
@@ -266,11 +266,13 @@ class WBE_Admin_Bulk {
 		$add_stock  = array_key_exists( 'add_stock', $row ) ? WBE_Engine::parse_amount( $row['add_stock'] ) : null;
 		$add_price  = array_key_exists( 'add_price', $row ) ? WBE_Engine::parse_amount( $row['add_price'] ) : null;
 		$add_sale   = array_key_exists( 'add_sale', $row ) ? WBE_Engine::parse_amount( $row['add_sale'] ) : null;
+		$add_disc   = array_key_exists( 'add_discount', $row ) ? WBE_Engine::parse_amount( $row['add_discount'] ) : null;
 		if ( '' !== $add_expiry && null !== $add_stock ) {
 			$add = array(
-				'expiry' => $add_expiry,
-				'stock'  => max( 0, (int) $add_stock ),
-				'price'  => null !== $add_price ? $add_price : 0,
+				'expiry'   => $add_expiry,
+				'stock'    => max( 0, (int) $add_stock ),
+				'price'    => null !== $add_price ? $add_price : 0,
+				'discount' => null !== $add_disc ? max( 0, min( 100, $add_disc ) ) : 0,
 			);
 			if ( null !== $add_sale && $add_sale > 0 ) {
 				$add['sale'] = $add_sale;
@@ -836,13 +838,14 @@ class WBE_Admin_Bulk {
 		fprintf( $out, chr( 0xEF ) . chr( 0xBB ) . chr( 0xBF ) );
 		fputcsv(
 			$out,
-			array( 'ID', 'نام', 'SKU', 'برند', 'وضعیت', 'قیمت اصلی', 'تخفیف', 'جشنواره', 'از', 'تا', 'موجودی', 'انقضا' )
+			array( 'ID', 'نوع', 'نام', 'SKU', 'برند', 'وضعیت', 'قیمت اصلی', 'تخفیف', 'جشنواره', 'از', 'تا', 'موجودی', 'انقضا', 'تعداد رزرو' )
 		);
 		foreach ( $rows as $r ) {
 			fputcsv(
 				$out,
 				array(
 					$r['id'],
+					! empty( $r['is_variation'] ) ? 'تنوع' : 'ساده',
 					$r['name'],
 					$r['sku'],
 					isset( $r['brand'] ) ? $r['brand'] : '',
@@ -854,6 +857,7 @@ class WBE_Admin_Bulk {
 					$r['to_fa'],
 					$r['stock'],
 					$r['expiry_fa'],
+					isset( $r['reserves'] ) && is_array( $r['reserves'] ) ? count( $r['reserves'] ) : 0,
 				)
 			);
 		}
@@ -925,6 +929,15 @@ class WBE_Admin_Bulk {
 		}
 		$ops = self::ops_from_request( $_REQUEST, WBE_Settings::calendar() ); // phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! self::ops_meaningful( $ops ) ) {
+			return;
+		}
+		if ( method_exists( $product, 'is_type' ) && $product->is_type( 'variable' ) && method_exists( $product, 'get_children' ) ) {
+			foreach ( $product->get_children() as $vid ) {
+				WBE_Product::apply_bulk( (int) $vid, $ops, false );
+			}
+			if ( class_exists( 'WBE_Alerts' ) ) {
+				WBE_Alerts::flush();
+			}
 			return;
 		}
 		WBE_Product::apply_bulk( (int) $product->get_id(), $ops );
