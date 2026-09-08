@@ -67,10 +67,7 @@ class WAP_Portal {
         ?>
         <div class="wap-export-bar">
             <span class="wap-export-label">خروجی گزارش:</span>
-            <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
-            <?php if ( $sheets ) : ?>
-                <button type="button" class="wap-btn wap-btn-sheets" data-wap-sheets>📊 خروجی گوگل شیت</button>
-            <?php endif; ?>
+            <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV / اکسل</a>
         </div>
         <?php
     }
@@ -247,6 +244,18 @@ class WAP_Portal {
             return;
         }
 
+        if ( $type === 'shaparak_csv' ) {
+            $report = WAP_Zarinpal_Report::build();
+            WAP_Export::zarinpal_reconcile_csv( $report );
+            return;
+        }
+
+        if ( $type === 'shaparak_xlsx' ) {
+            $report = WAP_Zarinpal_Report::build();
+            WAP_Export::zarinpal_reconcile_xlsx( $report );
+            return;
+        }
+
         if ( $type === 'products_csv' || $type === 'product_orders_csv' ) {
             $f          = WAP_Data::get_filters();
             $orders     = WAP_Data::get_orders( $f );
@@ -369,7 +378,7 @@ class WAP_Portal {
             $raw = wp_unslash( $_GET['wap_view'] );
         }
         $view = sanitize_text_field( $raw ?: 'sales' );
-        return in_array( $view, array( 'sales', 'orders', 'products' ), true ) ? $view : 'sales';
+        return in_array( $view, array( 'sales', 'orders', 'products', 'shaparak', 'analytics' ), true ) ? $view : 'sales';
     }
 
     private static function render_dashboard( $panel_type = self::PANEL_ACCOUNTANT ) {
@@ -384,7 +393,17 @@ class WAP_Portal {
                 <div class="wap-brand-wrap">
                     <div class="wap-brand"><?php echo esc_html( $brand ); ?></div>
                     <div class="wap-brand-sub"><?php
-                        echo $view === 'orders' ? 'لیست و جزئیات سفارش‌های پرداخت‌شده' : ( $view === 'products' ? 'تحلیل فروش به تفکیک محصول' : 'خلاصه فروش و خروجی‌های حسابداری' );
+                        if ( $view === 'orders' ) {
+                            echo 'لیست و جزئیات سفارش‌های پرداخت‌شده';
+                        } elseif ( $view === 'products' ) {
+                            echo 'تحلیل فروش به تفکیک محصول';
+                        } elseif ( $view === 'shaparak' ) {
+                            echo 'تطبیق واریز شاپرک، خرید ووکامرس و کارمزد زرین‌پال';
+                        } elseif ( $view === 'analytics' ) {
+                            echo 'نمودار فروش، منبع ورود، مشتریان ثابت و پیک خرید';
+                        } else {
+                            echo 'خلاصه فروش و خروجی‌های حسابداری';
+                        }
                     ?></div>
                 </div>
                 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wap-logout-form">
@@ -422,8 +441,10 @@ class WAP_Portal {
 
             <nav class="wap-tabs">
                 <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'sales', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'sales' ? ' wap-tab-active' : ''; ?>">📈 گزارش مالی</a>
+                <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'analytics', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'analytics' ? ' wap-tab-active' : ''; ?>">📊 داشبورد تصویری</a>
                 <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'orders', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'orders' ? ' wap-tab-active' : ''; ?>">🧾 لیست سفارش‌ها</a>
                 <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'products', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'products' ? ' wap-tab-active' : ''; ?>">📦 فروش محصولات</a>
+                <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'shaparak', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'shaparak' ? ' wap-tab-active' : ''; ?>">🏦 شاپرک / کارمزد</a>
             </nav>
 
             <?php
@@ -432,6 +453,10 @@ class WAP_Portal {
                     self::render_orders_tab();
                 } elseif ( $view === 'products' ) {
                     self::render_products_tab();
+                } elseif ( $view === 'shaparak' ) {
+                    self::render_shaparak_tab();
+                } elseif ( $view === 'analytics' ) {
+                    self::render_analytics_tab();
                 } else {
                     self::render_sales_tab();
                 }
@@ -463,18 +488,6 @@ class WAP_Portal {
         $overall_count = $gn['net_count'];
 
         $currency = class_exists( 'WooCommerce' ) ? get_woocommerce_currency_symbol() : '';
-
-        // فرمول سفارشی
-        $formula      = get_option( 'wap_custom_formula', '' );
-        $formula_vars = array(
-            'GROSS'       => $gn['gross_total'],
-            'GROSS_COUNT' => $gn['gross_count'],
-            'NET'         => $gn['net_total'],
-            'NET_COUNT'   => $gn['net_count'],
-            'REFUNDED'    => $gn['gross_total'] - $gn['net_total'],
-            'AVG'         => $gn['net_count'] > 0 ? $gn['net_total'] / $gn['net_count'] : 0,
-        );
-        $formula_result = $formula !== '' ? WAP_Formula::evaluate( $formula, $formula_vars ) : null;
 
         $base_params = array_filter( $f, function( $v ) { return $v !== null && $v !== ''; } );
         $csv_url = self::export_url( $base_params, 'csv' );
@@ -537,17 +550,19 @@ class WAP_Portal {
             <div class="wap-cards">
                 <div class="wap-card">
                     <span class="wap-card-icon">📦</span>
-                    <span class="wap-card-label">تعداد سفارش موفق</span>
-                    <span class="wap-card-value"><?php echo esc_html( number_format( $overall_count ) ); ?></span>
-                </div>
-                <div class="wap-card wap-card-accent">
-                    <span class="wap-card-icon">💰</span>
-                    <span class="wap-card-label">مجموع فروش (سفارش‌های موفق)</span>
-                    <span class="wap-card-value"><?php echo esc_html( number_format( $overall_total ) . ' ' . $currency ); ?></span>
+                    <span class="wap-card-label">فروش ناخالص</span>
+                    <span class="wap-card-value"><?php echo esc_html( number_format( $gn['gross_total'] ) . ' ' . $currency ); ?></span>
+                    <span class="wap-card-accent"><?php echo esc_html( number_format( $gn['gross_count'] ) ); ?> سفارش (همه)</span>
                 </div>
                 <div class="wap-card wap-card-net">
+                    <span class="wap-card-icon">✅</span>
+                    <span class="wap-card-label">فروش خالص (موفق)</span>
+                    <span class="wap-card-value"><?php echo esc_html( number_format( $gn['net_total'] ) . ' ' . $currency ); ?></span>
+                    <span class="wap-card-accent"><?php echo esc_html( number_format( $gn['net_count'] ) ); ?> سفارش موفق</span>
+                </div>
+                <div class="wap-card wap-card-accent">
                     <span class="wap-card-icon">📊</span>
-                    <span class="wap-card-label">میانگین هر سفارش موفق</span>
+                    <span class="wap-card-label">میانگین سفارش موفق</span>
                     <span class="wap-card-value"><?php echo esc_html( number_format( $overall_count > 0 ? $overall_total / $overall_count : 0 ) . ' ' . $currency ); ?></span>
                 </div>
             </div>
@@ -571,34 +586,12 @@ class WAP_Portal {
             </div>
             <?php endif; ?>
 
-            <div class="wap-formula-card">
-                <h3 class="wap-section-title">🧮 فرمول سفارشی (شبیه اکسل)</h3>
-                <p class="wap-formula-hint">
-                    متغیرهای در دسترس برای بازه فعلی: <code>GROSS</code> (فروش ناخالص)، <code>NET</code> (فروش خالص)، <code>GROSS_COUNT</code>، <code>NET_COUNT</code>، <code>REFUNDED</code> (مبلغ لغو/مستردشده)، <code>AVG</code> (میانگین سفارش خالص).
-                    توابع: <code>ROUND(x,n)</code>، <code>ABS(x)</code>، <code>MIN(...)</code>، <code>MAX(...)</code>، <code>SUM(...)</code>، <code>IF(شرط، آنگاه، وگرنه)</code>.
-                    مثال: <code>ROUND((NET - REFUNDED) / NET_COUNT, 0)</code>
-                </p>
-                <form method="post" action="<?php echo esc_url( add_query_arg( $base_params, self::panel_url() ) ); ?>" class="wap-formula-form">
-                    <?php wp_nonce_field( 'wap_save_formula', 'wap_formula_nonce' ); ?>
-                    <input type="text" name="wap_formula" class="wap-formula-input" placeholder="مثال: ROUND(NET / NET_COUNT, 0)" value="<?php echo esc_attr( $formula ); ?>" dir="ltr">
-                    <button type="submit" name="wap_save_formula" value="1" class="wap-btn wap-btn-primary">محاسبه و ذخیره</button>
-                </form>
-                <?php if ( $formula_result !== null ) : ?>
-                    <?php if ( $formula_result['ok'] ) : ?>
-                        <div class="wap-formula-result">نتیجه: <strong><?php echo esc_html( number_format( $formula_result['value'], 2 ) ); ?></strong></div>
-                    <?php else : ?>
-                        <div class="wap-formula-result wap-formula-error">خطا در فرمول: <?php echo esc_html( $formula_result['error'] ); ?></div>
-                    <?php endif; ?>
-                <?php endif; ?>
-            </div>
-
             <div class="wap-export-bar">
                 <span class="wap-export-label">خروجی گزارش:</span>
                 <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
-                <a class="wap-btn wap-btn-xml" href="<?php echo esc_url( $xml_url ); ?>">XML</a>
-                <a class="wap-btn wap-btn-pdf" href="<?php echo esc_url( $pdf_url ); ?>" target="_blank">PDF</a>
-                <button type="button" class="wap-btn wap-btn-jpeg" id="wap_export_jpeg">JPEG</button>
-                <button type="button" class="wap-btn wap-btn-sheets" data-wap-sheets>📊 خروجی گوگل شیت</button>
+                <a class="wap-btn wap-btn-xml" href="<?php echo esc_url( $xml_url ); ?>">📄 XML</a>
+                <a class="wap-btn wap-btn-pdf" href="<?php echo esc_url( $pdf_url ); ?>" target="_blank">🖨️ چاپ / PDF</a>
+                <button type="button" class="wap-btn wap-btn-jpg" id="wap_export_jpg">🖼️ JPG</button>
             </div>
 
             <div class="wap-table-wrap" id="wap_capture">
@@ -733,7 +726,6 @@ class WAP_Portal {
         <div class="wap-export-bar">
             <span class="wap-export-label">خروجی گزارش:</span>
             <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
-            <button type="button" class="wap-btn wap-btn-sheets" data-wap-sheets>📊 خروجی گوگل شیت</button>
         <?php if ( $can_edit_orders ) : ?>
             <a class="wap-btn wap-btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wci-order-edit' ) ); ?>" target="_blank">➕ سفارش جدید</a>
         <?php endif; ?>
@@ -1014,5 +1006,312 @@ class WAP_Portal {
                 </table>
             </div>
         <?php endif;
+    }
+
+    private static function render_shaparak_tab() {
+        if ( ! class_exists( 'WAP_Zarinpal_Report' ) ) {
+            echo '<div class="wap-alert">ماژول گزارش شاپرک بارگذاری نشده است.</div>';
+            return;
+        }
+        $report  = WAP_Zarinpal_Report::build();
+        $f       = $report['filters'];
+        $s       = $report['summary'];
+        $presets = WAP_Data::quick_presets();
+        $currency = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : 'تومان';
+        $csv_url = self::export_url( array_merge( $f, array( 'wap_view' => 'shaparak' ) ), 'shaparak_csv' );
+        $xlsx_url = self::export_url( array_merge( $f, array( 'wap_view' => 'shaparak' ) ), 'shaparak_xlsx' );
+        ?>
+        <form method="get" class="wap-filters" action="<?php echo esc_url( self::panel_url() ); ?>">
+            <input type="hidden" name="wap_view" value="shaparak">
+            <div class="wap-field wap-field-date">
+                <label>از تاریخ (شمسی)</label>
+                <input type="text" id="wap_date_from" name="date_from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="۱۴۰۴/۰۱/۰۱" autocomplete="off">
+            </div>
+            <div class="wap-field wap-field-date">
+                <label>تا تاریخ (شمسی)</label>
+                <input type="text" id="wap_date_to" name="date_to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="۱۴۰۴/۱۲/۲۹" autocomplete="off">
+            </div>
+            <div class="wap-field">
+                <label class="wap-check" style="display:flex;align-items:center;gap:6px;margin-top:22px">
+                    <input type="hidden" name="only_paid" value="0">
+                    <input type="checkbox" name="only_paid" value="1" <?php checked( ! empty( $f['only_paid'] ) ); ?>>
+                    فقط سفارش‌های موفق
+                </label>
+            </div>
+            <div class="wap-field wap-field-actions">
+                <button type="submit" class="wap-btn wap-btn-primary">اعمال فیلتر</button>
+                <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'shaparak', self::panel_url() ) ); ?>" class="wap-btn wap-btn-ghost">پاک کردن</a>
+            </div>
+        </form>
+
+        <div class="wap-presets" id="wap_presets">
+            <?php foreach ( $presets as $label => $range ) : ?>
+                <button type="button" class="wap-chip" data-from="<?php echo esc_attr( $range[0] ); ?>" data-to="<?php echo esc_attr( $range[1] ); ?>"><?php echo esc_html( $label ); ?></button>
+            <?php endforeach; ?>
+        </div>
+
+        <p class="wap-hint" style="margin:8px 0 16px;line-height:1.8;color:#475569">
+            <?php echo esc_html( WAP_Zarinpal_Fee::tariff_note() ); ?>
+            واریز شاپرک معمولاً یک روز کاری بعد از خرید است؛ اختلاف بازهٔ سفارش و واریز طبیعی است.
+        </p>
+
+        <?php if ( $report['error'] !== '' ) : ?>
+            <div class="wap-alert"><?php echo esc_html( $report['error'] ); ?></div>
+        <?php endif; ?>
+
+        <div class="wap-cards">
+            <div class="wap-card">
+                <div class="wap-card-label">خرید ووکامرس (زرین‌پال)</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $s['wc_gross'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
+                <div class="wap-card-accent"><?php echo esc_html( number_format( $s['wc_count'] ) ); ?> سفارش</div>
+            </div>
+            <div class="wap-card">
+                <div class="wap-card-label">کارمزد زرین‌پال</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $s['wc_fee'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
+                <div class="wap-card-accent">تعرفه رسمی ۰٫۵٪+۵۰۰</div>
+            </div>
+            <div class="wap-card wap-card-net">
+                <div class="wap-card-label">خالص مورد انتظار</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $s['wc_net'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
+                <div class="wap-card-accent">خرید − کارمزد</div>
+            </div>
+            <div class="wap-card">
+                <div class="wap-card-label">واریز شاپرک (عین پنل زرین‌پال)</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $s['settle_total_rial'] ?? ( $s['settle_total'] * 10 ) ) ); ?> <small>ریال</small></div>
+                <div class="wap-card-accent"><?php echo esc_html( number_format( $s['settle_count'] ) ); ?> تسویه — معادل <?php echo esc_html( number_format( $s['settle_total'] ) ); ?> تومان — Δ خالص: <?php echo esc_html( number_format( $s['diff_net_settle'] ) ); ?></div>
+            </div>
+        </div>
+
+        <div class="wap-export-bar">
+            <span class="wap-export-label">خروجی گزارش:</span>
+            <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $xlsx_url ); ?>">📊 اکسل (.xlsx)</a>
+            <a class="wap-btn wap-btn-ghost" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
+        </div>
+
+        <div class="wap-table-wrap" style="margin-bottom:24px">
+            <h3 style="margin:0 0 10px">خریدهای ووکامرس (درگاه زرین‌پال)</h3>
+            <table class="wap-table">
+                <thead>
+                    <tr>
+                        <th>سفارش</th>
+                        <th>تاریخ</th>
+                        <th>خریدار</th>
+                        <th>وضعیت</th>
+                        <th>مبلغ</th>
+                        <th>کارمزد</th>
+                        <th>خالص</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if ( empty( $report['orders'] ) ) : ?>
+                    <tr><td colspan="7" class="wap-empty">سفارش زرین‌پالی در این بازه نیست.</td></tr>
+                <?php else : foreach ( $report['orders'] as $o ) : ?>
+                    <tr>
+                        <td><strong>#<?php echo esc_html( $o['order_number'] ); ?></strong></td>
+                        <td dir="ltr"><?php echo esc_html( $o['date_jalali'] ); ?></td>
+                        <td><?php echo esc_html( $o['customer'] ); ?></td>
+                        <td><?php echo esc_html( $o['status_label'] ); ?></td>
+                        <td><?php echo esc_html( number_format( $o['gross'] ) ); ?></td>
+                        <td><?php echo esc_html( number_format( $o['fee'] ) ); ?></td>
+                        <td><strong><?php echo esc_html( number_format( $o['net'] ) ); ?></strong></td>
+                    </tr>
+                <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="wap-table-wrap">
+            <h3 style="margin:0 0 10px">واریزهای شاپرک به حساب (دقیقاً از API زرین‌پال — وضعیت PAID)</h3>
+            <table class="wap-table">
+                <thead>
+                    <tr>
+                        <th>شناسه تسویه</th>
+                        <th>تاریخ واریز</th>
+                        <th>مبلغ ریال (عین پنل)</th>
+                        <th>معادل تومان</th>
+                        <th>شناسه ارجاع بانکی</th>
+                        <th>وضعیت</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if ( empty( $report['settles'] ) ) : ?>
+                    <tr><td colspan="6" class="wap-empty">واریز PAID در این بازه یافت نشد یا API تنظیم نشده است.</td></tr>
+                <?php else : foreach ( $report['settles'] as $r ) : ?>
+                    <tr>
+                        <td dir="ltr"><?php echo esc_html( $r['id'] ); ?></td>
+                        <td dir="ltr"><?php echo esc_html( $r['date_jalali'] ?: $r['reconciled_at'] ); ?></td>
+                        <td dir="ltr"><strong><?php echo esc_html( number_format( $r['amount_rial'] ) ); ?></strong></td>
+                        <td><?php echo esc_html( number_format( $r['amount'] ) ); ?></td>
+                        <td dir="ltr" style="font-size:12px"><?php echo esc_html( $r['reference_id'] ); ?></td>
+                        <td><?php echo esc_html( $r['status'] ); ?></td>
+                    </tr>
+                <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
+    private static function render_analytics_tab() {
+        if ( ! class_exists( 'WAP_Analytics' ) ) {
+            echo '<div class="wap-alert">ماژول داشبورد بارگذاری نشده است.</div>';
+            return;
+        }
+        $data = WAP_Analytics::build();
+        $f    = $data['filters'];
+        $gn   = $data['gross_net'];
+        $fees = $data['fees'];
+        $presets = WAP_Data::quick_presets();
+        $currency = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : 'تومان';
+        $max_hour = max( 1, max( array_column( $data['peak_hours'], 'count' ) ) );
+        $max_day  = max( 1, max( array_column( $data['peak_days'], 'count' ) ) );
+        $max_gw   = max( 1, (float) max( array_merge( array( 1 ), array_column( $data['gateways'], 'total' ) ) ) );
+        $max_tr   = max( 1, (float) max( array_merge( array( 1 ), array_column( $data['traffic'], 'total' ) ) ) );
+        $max_prod = max( 1, (float) max( array_merge( array( 1 ), array_column( $data['top_products'], 'revenue' ) ) ) );
+        ?>
+        <form method="get" class="wap-filters" action="<?php echo esc_url( self::panel_url() ); ?>">
+            <input type="hidden" name="wap_view" value="analytics">
+            <div class="wap-field wap-field-date">
+                <label>از تاریخ (شمسی)</label>
+                <input type="text" id="wap_date_from" name="date_from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="۱۴۰۴/۰۱/۰۱" autocomplete="off">
+            </div>
+            <div class="wap-field wap-field-date">
+                <label>تا تاریخ (شمسی)</label>
+                <input type="text" id="wap_date_to" name="date_to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="۱۴۰۴/۱۲/۲۹" autocomplete="off">
+            </div>
+            <div class="wap-field wap-field-actions">
+                <button type="submit" class="wap-btn wap-btn-primary">اعمال</button>
+                <a class="wap-btn wap-btn-ghost" href="<?php echo esc_url( add_query_arg( 'wap_view', 'analytics', self::panel_url() ) ); ?>">پاک کردن</a>
+            </div>
+        </form>
+        <div class="wap-presets" id="wap_presets">
+            <?php foreach ( $presets as $label => $range ) : ?>
+                <button type="button" class="wap-chip" data-from="<?php echo esc_attr( $range[0] ); ?>" data-to="<?php echo esc_attr( $range[1] ); ?>"><?php echo esc_html( $label ); ?></button>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="wap-cards">
+            <div class="wap-card">
+                <div class="wap-card-label">فروش ناخالص</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $gn['gross_total'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
+                <div class="wap-card-accent"><?php echo esc_html( number_format( $gn['gross_count'] ) ); ?> سفارش</div>
+            </div>
+            <div class="wap-card wap-card-net">
+                <div class="wap-card-label">فروش خالص (موفق)</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $gn['net_total'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
+                <div class="wap-card-accent"><?php echo esc_html( number_format( $gn['net_count'] ) ); ?> سفارش موفق</div>
+            </div>
+            <div class="wap-card">
+                <div class="wap-card-label">کارمزد تخمینی درگاه‌ها</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $fees['fee'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
+                <div class="wap-card-accent">خالص پس از کارمزد: <?php echo esc_html( number_format( $fees['net'] ) ); ?></div>
+            </div>
+            <div class="wap-card wap-card-accent">
+                <div class="wap-card-label">مشتریان ثابت (≥۳ خرید)</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $data['loyal']['count'] ) ); ?></div>
+                <div class="wap-card-accent">در بازه انتخابی</div>
+            </div>
+        </div>
+
+        <div class="wap-analytics-grid">
+            <section class="wap-chart-card">
+                <h3 class="wap-section-title">درگاه‌های پرداخت</h3>
+                <p class="wap-hint">زرین‌پال، زیبال، ترب‌پی، اسنپ‌پی، دیجی‌پی، آیدی‌پی — با کارمزد تخمینی طبق تعرفه</p>
+                <?php if ( empty( $data['gateways'] ) ) : ?>
+                    <div class="wap-empty">داده‌ای نیست.</div>
+                <?php else : foreach ( $data['gateways'] as $g ) :
+                    $pct = (int) round( $g['total'] / $max_gw * 100 ); ?>
+                    <div class="wap-hbar">
+                        <div class="wap-hbar-label"><?php echo esc_html( $g['label'] ); ?> <small>(<?php echo esc_html( $g['note'] ); ?>)</small></div>
+                        <div class="wap-hbar-track"><div class="wap-hbar-fill" style="width:<?php echo $pct; ?>%"></div></div>
+                        <div class="wap-hbar-val"><?php echo esc_html( number_format( $g['total'] ) ); ?> — <?php echo esc_html( number_format( $g['count'] ) ); ?> سفارش — کارمزد ~<?php echo esc_html( number_format( $g['fee'] ) ); ?></div>
+                    </div>
+                <?php endforeach; endif; ?>
+            </section>
+
+            <section class="wap-chart-card">
+                <h3 class="wap-section-title">منبع ورود (گوگل / سوشال / …)</h3>
+                <p class="wap-hint">از سفارش‌های جدید با ردیابی کوکی؛ سفارش‌های قدیمی «ورود مستقیم» نشان داده می‌شوند.</p>
+                <?php if ( empty( $data['traffic'] ) ) : ?>
+                    <div class="wap-empty">داده‌ای نیست.</div>
+                <?php else : foreach ( $data['traffic'] as $t ) :
+                    $pct = (int) round( $t['total'] / $max_tr * 100 ); ?>
+                    <div class="wap-hbar">
+                        <div class="wap-hbar-label"><?php echo esc_html( $t['label'] ); ?></div>
+                        <div class="wap-hbar-track"><div class="wap-hbar-fill wap-hbar-traffic" style="width:<?php echo $pct; ?>%"></div></div>
+                        <div class="wap-hbar-val"><?php echo esc_html( number_format( $t['total'] ) ); ?> — <?php echo esc_html( number_format( $t['count'] ) ); ?> سفارش</div>
+                    </div>
+                <?php endforeach; endif; ?>
+            </section>
+        </div>
+
+        <section class="wap-chart-card">
+            <h3 class="wap-section-title">پرفروش‌ترین محصولات</h3>
+            <div class="wap-chart">
+                <?php if ( empty( $data['top_products'] ) ) : ?>
+                    <div class="wap-empty">محصولی نیست.</div>
+                <?php else : foreach ( array_slice( $data['top_products'], 0, 10 ) as $p ) :
+                    $pct = (int) round( $p['revenue'] / $max_prod * 100 ); ?>
+                    <div class="wap-bar-col">
+                        <div class="wap-bar-track">
+                            <div class="wap-bar-fill" style="height:<?php echo $pct; ?>%">
+                                <span class="wap-bar-tip"><?php echo esc_html( number_format( $p['revenue'] ) ); ?></span>
+                            </div>
+                        </div>
+                        <span class="wap-bar-label" title="<?php echo esc_attr( $p['name'] ); ?>"><?php echo esc_html( function_exists( 'mb_strimwidth' ) ? mb_strimwidth( $p['name'], 0, 14, '…' ) : substr( $p['name'], 0, 12 ) ); ?></span>
+                    </div>
+                <?php endforeach; endif; ?>
+            </div>
+        </section>
+
+        <div class="wap-analytics-grid">
+            <section class="wap-chart-card">
+                <h3 class="wap-section-title">پیک خرید — ساعت روز</h3>
+                <div class="wap-heat-hours">
+                    <?php foreach ( $data['peak_hours'] as $h ) :
+                        $intensity = $h['count'] / $max_hour;
+                        $alpha = 0.12 + $intensity * 0.88; ?>
+                        <div class="wap-heat-cell" style="background:rgba(5,150,105,<?php echo esc_attr( number_format( $alpha, 2, '.', '' ) ); ?>)" title="<?php echo esc_attr( $h['hour'] . ':00 — ' . $h['count'] . ' سفارش' ); ?>">
+                            <span><?php echo esc_html( sprintf( '%02d', $h['hour'] ) ); ?></span>
+                            <strong><?php echo esc_html( (string) $h['count'] ); ?></strong>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <section class="wap-chart-card">
+                <h3 class="wap-section-title">پیک خرید — روز هفته</h3>
+                <?php foreach ( $data['peak_days'] as $d ) :
+                    $pct = (int) round( $d['count'] / $max_day * 100 ); ?>
+                    <div class="wap-hbar">
+                        <div class="wap-hbar-label"><?php echo esc_html( $d['label'] ); ?></div>
+                        <div class="wap-hbar-track"><div class="wap-hbar-fill wap-hbar-day" style="width:<?php echo $pct; ?>%"></div></div>
+                        <div class="wap-hbar-val"><?php echo esc_html( number_format( $d['count'] ) ); ?> سفارش — <?php echo esc_html( number_format( $d['total'] ) ); ?></div>
+                    </div>
+                <?php endforeach; ?>
+            </section>
+        </div>
+
+        <section class="wap-chart-card">
+            <h3 class="wap-section-title">مشتریان ثابت (حداقل ۳ خرید در بازه)</h3>
+            <div class="wap-table-wrap">
+                <table class="wap-table">
+                    <thead><tr><th>نام</th><th>تلفن</th><th>ایمیل</th><th>تعداد خرید</th><th>جمع مبلغ</th></tr></thead>
+                    <tbody>
+                    <?php if ( empty( $data['loyal']['rows'] ) ) : ?>
+                        <tr><td colspan="5" class="wap-empty">مشتری ثابتی با این آستانه یافت نشد.</td></tr>
+                    <?php else : foreach ( $data['loyal']['rows'] as $c ) : ?>
+                        <tr>
+                            <td><?php echo esc_html( $c['name'] ); ?></td>
+                            <td dir="ltr"><?php echo esc_html( $c['phone'] ); ?></td>
+                            <td dir="ltr"><?php echo esc_html( $c['email'] ); ?></td>
+                            <td><strong><?php echo esc_html( number_format( $c['count'] ) ); ?></strong></td>
+                            <td><?php echo esc_html( number_format( $c['total'] ) ); ?></td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <?php
     }
 }

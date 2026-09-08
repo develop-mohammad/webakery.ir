@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.9.11',
+        'version'      => '1.11.0',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۹.۱۱: رفع قطعی صفحه سفید دانلود bulk + باگ dropdown پایین.',
+        'changelog'    => 'نسخه ۱.۱۱.۰: داشبورد تصویری (ناخالص/خالص، منبع ورود گوگل/سوشال، مشتریان ثابت، پرفروش، پیک خرید) + درگاه‌های زیبال/ترب‌پی/اسنپ‌پی/دیجی‌پی/آیدی‌پی با کارمزد مستند؛ حذف UI گوگل‌شیت و فرمول کم‌کاربرد.',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',
