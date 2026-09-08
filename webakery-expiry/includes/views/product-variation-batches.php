@@ -62,10 +62,6 @@ $attr_lbl = isset( $attr_label ) ? (string) $attr_label : '';
 		<p class="description">قیمت، موجودی و انقضای همین تنوع روی فروشگاه دیده می‌شود.</p>
 		<div class="wbe-active-grid wbe-active-grid--variation">
 			<p class="form-field">
-				<label>SKU</label>
-				<input type="text" class="wbe-var-sku" name="<?php echo esc_attr( $prefix ); ?>[sku]" value="<?php echo esc_attr( isset( $product_sku ) ? $product_sku : '' ); ?>" dir="ltr" />
-			</p>
-			<p class="form-field">
 				<label>قیمت اصلی</label>
 				<input type="hidden" name="<?php echo esc_attr( $prefix ); ?>[active][id]" value="<?php echo esc_attr( $a_id ); ?>" />
 				<input type="text" class="wbe-batch-price" name="<?php echo esc_attr( $prefix ); ?>[active][price]" value="<?php echo esc_attr( (string) $a_price ); ?>" dir="ltr" />

@@ -47,10 +47,8 @@ class WBE_Admin_Product {
 		$effective      = WBE_Product::calendar( $pid );
 		$global         = WBE_Settings::calendar();
 		$hide_cd        = (string) get_post_meta( $pid, WBE_Product::META_HIDE_COUNTDOWN, true ) === '1';
-		$product_name   = get_the_title( $pid );
-		$product_status = get_post_status( $pid );
-		$product_sku    = '';
-		$wc_price       = '';
+		$product_name = get_the_title( $pid );
+		$wc_price     = '';
 		$wc_sale        = '';
 		$wc_disc        = '';
 		$wc_stock       = '';
@@ -59,11 +57,10 @@ class WBE_Admin_Product {
 		if ( function_exists( 'wc_get_product' ) ) {
 			$wc_product = wc_get_product( $pid );
 			if ( $wc_product ) {
-				$product_sku = (string) $wc_product->get_sku( 'edit' );
-				$wc_price    = $wc_product->get_regular_price( 'edit' );
-				$wc_sale     = $wc_product->get_sale_price( 'edit' );
-				$wc_stock    = $wc_product->get_stock_quantity( 'edit' );
-				$wc_disc     = (string) WBE_Engine::discount_from_prices( $wc_price, $wc_sale );
+				$wc_price  = $wc_product->get_regular_price( 'edit' );
+				$wc_sale   = $wc_product->get_sale_price( 'edit' );
+				$wc_stock  = $wc_product->get_stock_quantity( 'edit' );
+				$wc_disc   = (string) WBE_Engine::discount_from_prices( $wc_price, $wc_sale );
 				if ( '0' === $wc_disc ) {
 					$wc_disc = '';
 				}
@@ -94,7 +91,6 @@ class WBE_Admin_Product {
 		$effective    = WBE_Product::calendar( $pid );
 		$global       = WBE_Settings::calendar();
 		$hide_cd      = (string) get_post_meta( $pid, WBE_Product::META_HIDE_COUNTDOWN, true ) === '1';
-		$product_sku  = '';
 		$wc_price     = '';
 		$wc_sale      = '';
 		$wc_disc      = '';
@@ -105,7 +101,6 @@ class WBE_Admin_Product {
 		if ( function_exists( 'wc_get_product' ) ) {
 			$wc_product = wc_get_product( $pid );
 			if ( $wc_product ) {
-				$product_sku = (string) $wc_product->get_sku( 'edit' );
 				$wc_price    = $wc_product->get_regular_price( 'edit' );
 				$wc_sale     = $wc_product->get_sale_price( 'edit' );
 				$wc_stock    = $wc_product->get_stock_quantity( 'edit' );
@@ -135,35 +130,18 @@ class WBE_Admin_Product {
 		$override = isset( $_POST['wbe_calendar'] ) ? sanitize_key( wp_unslash( $_POST['wbe_calendar'] ) ) : '';
 		$cal      = in_array( $override, array( 'jalali', 'gregorian' ), true ) ? $override : WBE_Settings::calendar();
 
-		$ops = array();
 		if ( isset( $_POST['wbe_name'] ) ) {
-			$ops['name'] = sanitize_text_field( wp_unslash( $_POST['wbe_name'] ) );
-		}
-		if ( array_key_exists( 'wbe_sku', $_POST ) ) {
-			$ops['sku'] = sanitize_text_field( wp_unslash( $_POST['wbe_sku'] ) );
-		}
-		if ( isset( $_POST['wbe_status'] ) ) {
-			$st = sanitize_key( wp_unslash( $_POST['wbe_status'] ) );
-			if ( in_array( $st, array( 'publish', 'draft', 'private', 'pending' ), true ) ) {
-				$ops['status'] = $st;
-			}
-		}
-		if ( $ops ) {
-			WBE_Product::apply_identity( $pid, $ops );
+			WBE_Product::apply_identity(
+				$pid,
+				array(
+					'name' => sanitize_text_field( wp_unslash( $_POST['wbe_name'] ) ),
+				)
+			);
 		}
 
-		$rows   = array();
-		$active = isset( $_POST['wbe_active'] ) && is_array( $_POST['wbe_active'] ) ? wp_unslash( $_POST['wbe_active'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		if ( $active ) {
-			$rows[] = $active;
-		}
+		$active  = isset( $_POST['wbe_active'] ) && is_array( $_POST['wbe_active'] ) ? wp_unslash( $_POST['wbe_active'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 		$reserve = isset( $_POST['wbe_reserve'] ) && is_array( $_POST['wbe_reserve'] ) ? wp_unslash( $_POST['wbe_reserve'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		foreach ( $reserve as $row ) {
-			if ( ! is_array( $row ) ) {
-				continue;
-			}
-			$rows[] = $row;
-		}
+		$rows    = WBE_Engine::merge_active_and_reserve_rows( $active, $reserve );
 
 		// سازگاری با فرم قدیمی wbe_batches اگر هنوز ارسال شود.
 		if ( ! $rows && isset( $_POST['wbe_batches'] ) && is_array( $_POST['wbe_batches'] ) ) {
@@ -215,26 +193,9 @@ class WBE_Admin_Product {
 		$override = isset( $data['calendar'] ) ? sanitize_key( $data['calendar'] ) : '';
 		$cal      = in_array( $override, array( 'jalali', 'gregorian' ), true ) ? $override : WBE_Product::calendar( $variation_id );
 
-		if ( array_key_exists( 'sku', $data ) ) {
-			WBE_Product::apply_identity(
-				$variation_id,
-				array(
-					'sku' => sanitize_text_field( $data['sku'] ),
-				)
-			);
-		}
-
-		$rows = array();
-		if ( ! empty( $data['active'] ) && is_array( $data['active'] ) ) {
-			$rows[] = $data['active'];
-		}
-		if ( ! empty( $data['reserve'] ) && is_array( $data['reserve'] ) ) {
-			foreach ( $data['reserve'] as $row ) {
-				if ( is_array( $row ) ) {
-					$rows[] = $row;
-				}
-			}
-		}
+		$active  = ( ! empty( $data['active'] ) && is_array( $data['active'] ) ) ? $data['active'] : array();
+		$reserve = ( ! empty( $data['reserve'] ) && is_array( $data['reserve'] ) ) ? $data['reserve'] : array();
+		$rows    = WBE_Engine::merge_active_and_reserve_rows( $active, $reserve );
 		$batches = WBE_Engine::sanitize_batches( $rows, $cal );
 		WBE_Product::save_batches( $variation_id, $batches, $override, false );
 		WBE_Product::save_hide_countdown( $variation_id, ! empty( $data['hide_countdown'] ) );

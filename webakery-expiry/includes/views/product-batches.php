@@ -2,12 +2,6 @@
 defined( 'ABSPATH' ) || exit;
 $placeholder = ( 'jalali' === $effective ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27';
 $today       = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
-$statuses    = class_exists( 'WBE_Admin_Bulk' ) ? WBE_Admin_Bulk::status_labels() : array(
-	'publish' => 'منتشرشده',
-	'draft'   => 'پیش‌نویس',
-	'private' => 'خصوصی',
-	'pending' => 'در انتظار',
-);
 $active_idx  = ( ! empty( $batches ) && class_exists( 'WBE_Engine' ) ) ? WBE_Engine::active_index( $batches, $today ) : null;
 $active      = ( null !== $active_idx && isset( $batches[ $active_idx ] ) ) ? $batches[ $active_idx ] : null;
 $reserves    = array();
@@ -34,7 +28,6 @@ $a_stock  = $active ? (int) $active['stock'] : ( isset( $wc_stock ) && '' !== $w
 $a_expiry = ( $active && ! empty( $active['expiry'] ) ) ? WBE_Jalali::format_ymd( $active['expiry'], $effective, false ) : '';
 $a_id     = $active && isset( $active['id'] ) ? $active['id'] : '';
 $a_disc_v = $a_disc > 0 ? (string) $a_disc : '';
-$st       = isset( $statuses[ $product_status ] ) ? $product_status : 'publish';
 ?>
 <div class="wbe-product-panel" id="wbe-product-panel" dir="rtl" data-wc-price="<?php echo esc_attr( isset( $wc_price ) ? $wc_price : '' ); ?>">
 	<?php wp_nonce_field( 'wbe_save_batches', 'wbe_batches_nonce' ); ?>
@@ -58,51 +51,39 @@ $st       = isset( $statuses[ $product_status ] ) ? $product_status : 'publish';
 		<div class="wbe-batches__head">
 			<strong>موجودی فعال (قابل ویرایش)</strong>
 		</div>
-		<p class="description">همین ۱۰ مورد روی فروشگاه دیده می‌شود / روی محصول اعمال می‌شود.</p>
+		<p class="description">قیمت، موجودی و انقضای فعال روی فروشگاه دیده می‌شود. SKU و وضعیت را از ویرایش گروهی عوض کنید.</p>
 		<div class="wbe-active-grid">
 			<p class="form-field">
 				<label for="wbe_name">۱. نام محصول</label>
 				<input type="text" id="wbe_name" name="wbe_name" value="<?php echo esc_attr( $product_name ); ?>" />
 			</p>
 			<p class="form-field">
-				<label for="wbe_sku">۲. SKU</label>
-				<input type="text" id="wbe_sku" name="wbe_sku" value="<?php echo esc_attr( $product_sku ); ?>" dir="ltr" />
-			</p>
-			<p class="form-field">
-				<label for="wbe_status">۳. وضعیت</label>
-				<select id="wbe_status" name="wbe_status">
-					<?php foreach ( $statuses as $opt => $opt_label ) : ?>
-						<option value="<?php echo esc_attr( $opt ); ?>" <?php selected( $st, $opt ); ?>><?php echo esc_html( $opt_label ); ?></option>
-					<?php endforeach; ?>
-				</select>
-			</p>
-			<p class="form-field">
-				<label for="wbe_active_price">۴. قیمت اصلی</label>
+				<label for="wbe_active_price">۲. قیمت اصلی</label>
 				<input type="hidden" name="wbe_active[id]" value="<?php echo esc_attr( $a_id ); ?>" />
 				<input type="text" class="wbe-batch-price" id="wbe_active_price" name="wbe_active[price]" value="<?php echo esc_attr( (string) $a_price ); ?>" dir="ltr" />
 			</p>
 			<p class="form-field">
-				<label for="wbe_active_discount">۵. درصد تخفیف</label>
+				<label for="wbe_active_discount">۳. درصد تخفیف</label>
 				<input type="number" class="wbe-disc" id="wbe_active_discount" name="wbe_active[discount]" min="0" max="100" step="1" value="<?php echo esc_attr( $a_disc_v ); ?>" dir="ltr" />
 			</p>
 			<p class="form-field">
-				<label for="wbe_active_sale">۶. قیمت جشنواره</label>
+				<label for="wbe_active_sale">۴. قیمت جشنواره</label>
 				<input type="text" class="wbe-batch-sale" id="wbe_active_sale" name="wbe_active[sale]" value="<?php echo esc_attr( (string) $a_sale ); ?>" dir="ltr" />
 			</p>
 			<p class="form-field">
-				<label for="wbe_sale_from">۷. زمان شروع جشنواره</label>
+				<label for="wbe_sale_from">۵. زمان شروع جشنواره</label>
 				<input type="text" id="wbe_sale_from" name="wbe_sale_from" value="<?php echo esc_attr( $sale_from_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
 			</p>
 			<p class="form-field">
-				<label for="wbe_sale_to">۸. زمان پایان جشنواره</label>
+				<label for="wbe_sale_to">۶. زمان پایان جشنواره</label>
 				<input type="text" id="wbe_sale_to" name="wbe_sale_to" value="<?php echo esc_attr( $sale_to_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
 			</p>
 			<p class="form-field">
-				<label for="wbe_active_stock">۹. موجودی</label>
+				<label for="wbe_active_stock">۷. موجودی</label>
 				<input type="number" class="wbe-batch-stock" id="wbe_active_stock" name="wbe_active[stock]" min="0" step="1" value="<?php echo esc_attr( (string) $a_stock ); ?>" />
 			</p>
 			<p class="form-field">
-				<label for="wbe_active_expiry">۱۰. تاریخ انقضا</label>
+				<label for="wbe_active_expiry">۸. تاریخ انقضا</label>
 				<input type="text" class="wbe-date" id="wbe_active_expiry" name="wbe_active[expiry]" value="<?php echo esc_attr( $a_expiry ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" />
 			</p>
 		</div>

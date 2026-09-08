@@ -638,6 +638,40 @@ for ( $i = 0; $i < 10; $i++ ) {
 }
 wbe_check( 'جدول گروهی ۱۰۰۰ کپی را ۱۰ می‌کند', 10 === count( WBE_Engine::unique_bulk_rows( $bulk_rows ) ) );
 
+echo "\n=== موجودی رزرو ویرایش تکی ===\n";
+$single_rows = WBE_Engine::merge_active_and_reserve_rows(
+	array(
+		'id'       => 'act',
+		'price'    => '100000',
+		'discount' => '10',
+		'stock'    => '5',
+		'expiry'   => '2026-06-01',
+	),
+	array(
+		array( 'id' => 'r1', 'price' => '90000', 'discount' => '0', 'stock' => '3', 'expiry' => '2027-01-01' ),
+		array( 'id' => 'r2', 'price' => '80000', 'discount' => '15', 'stock' => '7', 'expiry' => '2028-01-01' ),
+		'bad',
+	)
+);
+wbe_check( 'فرم تکی فعال + ۲ رزرو را جمع می‌کند', 3 === count( $single_rows ) );
+$single_clean = WBE_Engine::sanitize_batches( $single_rows, 'gregorian' );
+wbe_check( 'ذخیره تکی ۳ بچ معتبر دارد', 3 === count( $single_clean ) );
+$single_idx = WBE_Engine::active_index( $single_clean, '2026-01-15' );
+wbe_check( 'در تکی نزدیک‌ترین انقضا فعال است', 0 === $single_idx );
+$single_res = WBE_Engine::reserve_batches( $single_clean, '2026-01-15' );
+wbe_check( 'در تکی ۲ بچ رزرو می‌ماند', 2 === count( $single_res ) );
+wbe_check( 'رزرو دوم تخفیف ۱۵٪ دارد', 15 === (int) $single_res[1]['discount'] && 7 === (int) $single_res[1]['stock'] );
+$single_cleared = WBE_Engine::replace_reserve_batches( $single_clean, array(), '2026-01-15', 'gregorian' );
+wbe_check( 'حذف رزرو در تکی فقط فعال را نگه می‌دارد', 1 === count( $single_cleared ) );
+
+$single_view = file_get_contents( dirname( __DIR__ ) . '/includes/views/product-batches.php' );
+$var_view    = file_get_contents( dirname( __DIR__ ) . '/includes/views/product-variation-batches.php' );
+$bulk_view   = file_get_contents( dirname( __DIR__ ) . '/includes/views/bulk-prices.php' );
+wbe_check( 'ویرایش تکی فیلد SKU ندارد', false === strpos( $single_view, 'name="wbe_sku"' ) && false === strpos( $var_view, '[sku]' ) );
+wbe_check( 'ویرایش تکی فیلد وضعیت ندارد', false === strpos( $single_view, 'name="wbe_status"' ) );
+wbe_check( 'ویرایش گروهی ستون SKU دارد', false !== strpos( $bulk_view, '>SKU<' ) );
+wbe_check( 'ویرایش گروهی ستون وضعیت دارد', false !== strpos( $bulk_view, '>وضعیت<' ) );
+
 echo "\n=== فعال‌سازی وردپرس ===\n";
 if ( ! defined( 'WBE_PATH' ) ) {
 	define( 'WBE_PATH', dirname( __DIR__ ) . '/' );

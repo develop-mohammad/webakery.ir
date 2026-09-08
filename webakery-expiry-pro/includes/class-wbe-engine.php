@@ -1181,6 +1181,28 @@ class WBE_Engine {
 	 * @param array<int,array> $rows
 	 * @return array<int,array>
 	 */
+	/**
+	 * ردیف‌های فرم ویرایش تکی: بچ فعال + همهٔ رزروها.
+	 *
+	 * @param array $active
+	 * @param array $reserve
+	 * @return array<int,array>
+	 */
+	public static function merge_active_and_reserve_rows( $active, $reserve ) {
+		$rows = array();
+		if ( is_array( $active ) && $active ) {
+			$rows[] = $active;
+		}
+		if ( is_array( $reserve ) ) {
+			foreach ( $reserve as $row ) {
+				if ( is_array( $row ) ) {
+					$rows[] = $row;
+				}
+			}
+		}
+		return $rows;
+	}
+
 	public static function unique_bulk_rows( array $rows ) {
 		$out = array();
 		foreach ( $rows as $row ) {
