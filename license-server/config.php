@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.9.11',
+        'version'      => '1.10.3',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۹.۱۱: رفع قطعی صفحه سفید دانلود bulk + باگ dropdown پایین.',
+        'changelog'    => 'نسخه ۱.۱۰.۳: خروجی اکسل واقعی (.xlsx) برای گزارش شاپرک + تطبیق دقیق واریزها با API زرین‌پال (فیلتر تاریخ رسمی).',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',
