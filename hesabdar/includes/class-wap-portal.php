@@ -63,10 +63,64 @@ class WAP_Portal {
         }
     }
 
+    public static function current_view_public(): string {
+        return self::current_view();
+    }
+
     private static function render_image_export_buttons( string $image_label = 'report', string $target = '#wap_capture' ): void {
+        $can_archive = class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::can_archive();
         ?>
-        <button type="button" class="wap-btn wap-btn-jpg" data-wap-export-image data-format="jpg" data-label="<?php echo esc_attr( $image_label ); ?>" data-target="<?php echo esc_attr( $target ); ?>">🖼️ خروجی تصویری (JPG)</button>
+        <button type="button" class="wap-btn wap-btn-jpg" data-wap-export-image data-format="jpg" data-label="<?php echo esc_attr( $image_label ); ?>" data-target="<?php echo esc_attr( $target ); ?>">🖼️ JPG</button>
         <button type="button" class="wap-btn wap-btn-ghost" data-wap-export-image data-format="png" data-label="<?php echo esc_attr( $image_label ); ?>" data-target="<?php echo esc_attr( $target ); ?>">🖼️ PNG</button>
+        <button type="button" class="wap-btn wap-btn-ghost" data-wap-export-image data-format="clipboard" data-label="<?php echo esc_attr( $image_label ); ?>" data-target="<?php echo esc_attr( $target ); ?>">📋 کپی</button>
+        <?php if ( $can_archive ) : ?>
+        <button type="button" class="wap-btn wap-btn-ghost" data-wap-export-image data-format="archive" data-label="<?php echo esc_attr( $image_label ); ?>" data-target="<?php echo esc_attr( $target ); ?>">💾 آرشیو رسانه</button>
+        <?php endif; ?>
+        <?php
+    }
+
+    private static function render_image_export_tools( string $image_label = 'report', string $target = '#wap_capture' ): void {
+        $cfg_from = class_exists( 'WAP_Report_Image' ) ? ( WAP_Report_Image::client_config()['compareFrom'] ?? '' ) : '';
+        $cfg_to   = class_exists( 'WAP_Report_Image' ) ? ( WAP_Report_Image::client_config()['compareTo'] ?? '' ) : '';
+        $locked   = class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::is_date_locked();
+        ?>
+        <div class="wap-image-export-tools" data-wap-no-capture data-wap-image-tools>
+            <div class="wap-image-export-row">
+                <label>محدوده
+                    <select data-wap-img-scope>
+                        <option value="full">کل گزارش</option>
+                        <option value="cards">فقط کارت‌ها</option>
+                        <option value="chart">فقط نمودار</option>
+                        <option value="table">فقط جدول</option>
+                    </select>
+                </label>
+                <label>کیفیت
+                    <select data-wap-img-quality>
+                        <option value="normal">عادی</option>
+                        <option value="high">باکیفیت (چاپ)</option>
+                    </select>
+                </label>
+                <label class="wap-check"><input type="checkbox" data-wap-img-compact> حالت فشرده چاپ</label>
+                <label class="wap-check"><input type="checkbox" data-wap-img-multipage checked> چندصفحه‌ای اگر بلند باشد</label>
+            </div>
+            <div class="wap-image-export-row">
+                <label>یادداشت حسابدار
+                    <input type="text" data-wap-img-note placeholder="مثلاً تأیید شد — برای مدیر" maxlength="200" style="min-width:220px">
+                </label>
+                <label>مقایسه از
+                    <input type="text" data-wap-img-compare-from value="<?php echo esc_attr( $cfg_from ); ?>" placeholder="۱۴۰۴/۰۱/۰۱" <?php disabled( $locked ); ?>>
+                </label>
+                <label>تا
+                    <input type="text" data-wap-img-compare-to value="<?php echo esc_attr( $cfg_to ); ?>" placeholder="۱۴۰۴/۰۱/۳۱" <?php disabled( $locked ); ?>>
+                </label>
+            </div>
+            <div class="wap-image-export-row wap-image-export-actions">
+                <?php self::render_image_export_buttons( $image_label, $target ); ?>
+            </div>
+            <?php if ( class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::is_accountant_only() ) : ?>
+                <p class="wap-hint" style="margin:6px 0 0">حسابدار: دانلود تصویر مجاز است. آرشیو/ارسال خودکار طبق تنظیمات مدیر محدود می‌شود.</p>
+            <?php endif; ?>
+        </div>
         <?php
     }
 
@@ -75,7 +129,7 @@ class WAP_Portal {
         <div class="wap-export-bar" data-wap-no-capture>
             <span class="wap-export-label">خروجی گزارش:</span>
             <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV / اکسل</a>
-            <?php self::render_image_export_buttons( $image_label ); ?>
+            <?php self::render_image_export_tools( $image_label ); ?>
         </div>
         <?php
     }
@@ -321,9 +375,11 @@ class WAP_Portal {
             'productId' => ! empty( $_GET['product_id'] ) ? (int) $_GET['product_id'] : 0,
             'query'     => array_map( 'sanitize_text_field', wp_unslash( $_GET ) ),
         );
+        $img = class_exists( 'WAP_Report_Image' ) ? WAP_Report_Image::client_config() : array();
         ?>
         <script>window.WAP_TODAY = <?php echo wp_json_encode( $today ); ?>;</script>
         <script>window.WAP_SHEETS = <?php echo wp_json_encode( $params ); ?>;</script>
+        <script>window.WAP_IMAGE = <?php echo wp_json_encode( $img ); ?>;</script>
         <script src="<?php echo esc_url( WAP_URL . 'assets/jalali-calendar.js?v=' . WAP_VERSION ); ?>"></script>
         <script src="<?php echo esc_url( WAP_URL . 'assets/app.js?v=' . WAP_VERSION ); ?>"></script>
         </body></html>
@@ -386,7 +442,12 @@ class WAP_Portal {
             $raw = wp_unslash( $_GET['wap_view'] );
         }
         $view = sanitize_text_field( $raw ?: 'sales' );
-        return in_array( $view, array( 'sales', 'orders', 'products', 'shaparak', 'analytics' ), true ) ? $view : 'sales';
+        $view = in_array( $view, array( 'sales', 'orders', 'products', 'shaparak', 'analytics' ), true ) ? $view : 'sales';
+        if ( class_exists( 'WAP_Report_Image' ) && ! WAP_Report_Image::can_view_tab( $view ) ) {
+            $allowed = WAP_Report_Image::allowed_tabs_for_user();
+            $view = $allowed[0] ?? 'sales';
+        }
+        return $view;
     }
 
     private static function render_dashboard( $panel_type = self::PANEL_ACCOUNTANT ) {
@@ -448,11 +509,21 @@ class WAP_Portal {
             <?php else : ?>
 
             <nav class="wap-tabs">
-                <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'sales', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'sales' ? ' wap-tab-active' : ''; ?>">📈 گزارش مالی</a>
-                <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'analytics', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'analytics' ? ' wap-tab-active' : ''; ?>">📊 داشبورد تصویری</a>
-                <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'orders', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'orders' ? ' wap-tab-active' : ''; ?>">🧾 لیست سفارش‌ها</a>
-                <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'products', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'products' ? ' wap-tab-active' : ''; ?>">📦 فروش محصولات</a>
-                <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'shaparak', self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === 'shaparak' ? ' wap-tab-active' : ''; ?>">🏦 شاپرک / کارمزد</a>
+                <?php
+                $tabs = array(
+                    'sales'     => '📈 گزارش مالی',
+                    'analytics' => '📊 داشبورد تصویری',
+                    'orders'    => '🧾 لیست سفارش‌ها',
+                    'products'  => '📦 فروش محصولات',
+                    'shaparak'  => '🏦 شاپرک / کارمزد',
+                );
+                foreach ( $tabs as $tab_key => $tab_label ) :
+                    if ( class_exists( 'WAP_Report_Image' ) && ! WAP_Report_Image::can_view_tab( $tab_key ) ) {
+                        continue;
+                    }
+                    ?>
+                <a href="<?php echo esc_url( add_query_arg( 'wap_view', $tab_key, self::panel_url() ) ); ?>" class="wap-tab<?php echo $view === $tab_key ? ' wap-tab-active' : ''; ?>"><?php echo esc_html( $tab_label ); ?></a>
+                <?php endforeach; ?>
             </nav>
 
             <?php
@@ -523,11 +594,11 @@ class WAP_Portal {
                 </div>
                 <div class="wap-field wap-field-date">
                     <label>از تاریخ (شمسی)</label>
-                    <input type="text" id="wap_date_from" name="date_from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off">
+                    <input type="text" id="wap_date_from" name="date_from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off" <?php echo ( class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::is_date_locked() ) ? 'readonly' : ''; ?>>
                 </div>
                 <div class="wap-field wap-field-date">
                     <label>تا تاریخ (شمسی)</label>
-                    <input type="text" id="wap_date_to" name="date_to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="۱۴۰۳/۱۲/۲۹" autocomplete="off">
+                    <input type="text" id="wap_date_to" name="date_to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="۱۴۰۳/۱۲/۲۹" autocomplete="off" <?php echo ( class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::is_date_locked() ) ? 'readonly' : ''; ?>>
                 </div>
                 <div class="wap-field">
                     <label>مبلغ فروش دوره (حداقل / حداکثر)</label>
@@ -560,11 +631,15 @@ class WAP_Portal {
                 <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
                 <a class="wap-btn wap-btn-xml" href="<?php echo esc_url( $xml_url ); ?>">📄 XML</a>
                 <a class="wap-btn wap-btn-pdf" href="<?php echo esc_url( $pdf_url ); ?>" target="_blank">🖨️ چاپ / PDF</a>
-                <?php self::render_image_export_buttons( 'sales' ); ?>
+                <?php self::render_image_export_tools( 'sales' ); ?>
             </div>
 
             <div id="wap_capture" class="wap-capture">
-            <div class="wap-cards">
+            <?php
+            $cmp_from = sanitize_text_field( wp_unslash( $_GET['compare_from'] ?? '' ) );
+            $cmp_to   = sanitize_text_field( wp_unslash( $_GET['compare_to'] ?? '' ) );
+            ?>
+            <div class="wap-cards" data-wap-capture-part="cards">
                 <div class="wap-card">
                     <span class="wap-card-icon">📦</span>
                     <span class="wap-card-label">فروش ناخالص</span>
@@ -583,9 +658,26 @@ class WAP_Portal {
                     <span class="wap-card-value"><?php echo esc_html( number_format( $overall_count > 0 ? $overall_total / $overall_count : 0 ) . ' ' . $currency ); ?></span>
                 </div>
             </div>
+            <?php if ( $cmp_from && $cmp_to ) :
+                $f2 = array_merge( $f, array( 'date_from' => $cmp_from, 'date_to' => $cmp_to ) );
+                $gn2 = WAP_Data::gross_vs_net( WAP_Data::get_orders( $f2 ) );
+                ?>
+            <div class="wap-cards wap-compare-cards" data-wap-capture-part="cards">
+                <div class="wap-card">
+                    <span class="wap-card-label">مقایسه ناخالص (<?php echo esc_html( $cmp_from . ' تا ' . $cmp_to ); ?>)</span>
+                    <span class="wap-card-value"><?php echo esc_html( number_format( $gn2['gross_total'] ) . ' ' . $currency ); ?></span>
+                    <span class="wap-card-accent">Δ ناخالص: <?php echo esc_html( number_format( $gn['gross_total'] - $gn2['gross_total'] ) ); ?></span>
+                </div>
+                <div class="wap-card wap-card-net">
+                    <span class="wap-card-label">مقایسه خالص</span>
+                    <span class="wap-card-value"><?php echo esc_html( number_format( $gn2['net_total'] ) . ' ' . $currency ); ?></span>
+                    <span class="wap-card-accent">Δ خالص: <?php echo esc_html( number_format( $gn['net_total'] - $gn2['net_total'] ) ); ?></span>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <?php if ( ! empty( $groups ) ) : $max_total = max( array_column( $groups, 'total' ) ); ?>
-            <div class="wap-chart-card">
+            <div class="wap-chart-card" data-wap-capture-part="chart">
                 <h3 class="wap-section-title">📈 نمودار فروش بر اساس دوره</h3>
                 <div class="wap-chart">
                     <?php foreach ( $groups as $g ) :
@@ -603,7 +695,7 @@ class WAP_Portal {
             </div>
             <?php endif; ?>
 
-            <div class="wap-table-wrap">
+            <div class="wap-table-wrap" data-wap-capture-part="table">
                 <table class="wap-table">
                     <thead><tr><th>دوره</th><th>تعداد فروش</th><th>مبلغ فروش</th><th>میانگین هر سفارش</th></tr></thead>
                     <tbody>
@@ -706,7 +798,7 @@ class WAP_Portal {
         <div class="wap-export-bar" data-wap-no-capture>
             <span class="wap-export-label">خروجی گزارش:</span>
             <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
-            <?php self::render_image_export_buttons( 'orders' ); ?>
+            <?php self::render_image_export_tools( 'orders' ); ?>
         <?php if ( $can_edit_orders ) : ?>
             <a class="wap-btn wap-btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wci-order-edit' ) ); ?>" target="_blank">➕ سفارش جدید</a>
         <?php endif; ?>
@@ -1080,7 +1172,7 @@ class WAP_Portal {
             <span class="wap-export-label">خروجی گزارش:</span>
             <a class="wap-btn wap-btn-csv" href="<?php echo esc_url( $xlsx_url ); ?>">📊 اکسل (.xlsx)</a>
             <a class="wap-btn wap-btn-ghost" href="<?php echo esc_url( $csv_url ); ?>">📥 CSV</a>
-            <?php self::render_image_export_buttons( 'shaparak' ); ?>
+            <?php self::render_image_export_tools( 'shaparak' ); ?>
         </div>
 
         <div id="wap_capture" class="wap-capture">
@@ -1212,7 +1304,7 @@ class WAP_Portal {
 
         <div class="wap-export-bar" data-wap-no-capture>
             <span class="wap-export-label">خروجی تصویری داشبورد:</span>
-            <?php self::render_image_export_buttons( 'analytics' ); ?>
+            <?php self::render_image_export_tools( 'analytics' ); ?>
         </div>
 
         <div id="wap_capture" class="wap-capture">

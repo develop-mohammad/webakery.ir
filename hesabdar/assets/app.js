@@ -204,7 +204,11 @@
         });
     });
 
-    // خروجی تصویری گزارش (JPG/PNG) — با html2canvas برای نمودارها و کارت‌ها
+    // خروجی تصویری پیشرفته گزارش‌ها
+    function wapImgCfg() {
+        return window.WAP_IMAGE || {};
+    }
+
     function wapLoadHtml2Canvas(cb) {
         if (window.html2canvas) {
             cb();
@@ -220,9 +224,208 @@
         document.head.appendChild(s);
     }
 
+    function wapToolsRoot(btn) {
+        return btn.closest('[data-wap-image-tools]') || document.querySelector('[data-wap-image-tools]');
+    }
+
+    function wapToolsVal(tools, sel, fallback) {
+        if (!tools) return fallback;
+        var el = tools.querySelector(sel);
+        if (!el) return fallback;
+        if (el.type === 'checkbox') return !!el.checked;
+        return el.value || fallback;
+    }
+
     function wapCaptureTarget(btn) {
         var sel = btn.getAttribute('data-target') || '#wap_capture';
         return document.querySelector(sel);
+    }
+
+    function wapPersianStamp() {
+        try {
+            return new Date().toLocaleDateString('fa-IR');
+        } catch (e) {
+            return new Date().toISOString().slice(0, 10);
+        }
+    }
+
+    function wapSafeFilePart(s) {
+        return String(s || '')
+            .replace(/[\\/:*?"<>|]+/g, '-')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '') || 'گزارش';
+    }
+
+    function wapEnsureWatermark(target, tools) {
+        var old = target.querySelector('.wap-capture-watermark');
+        if (old) old.remove();
+        var cfg = wapImgCfg();
+        var note = wapToolsVal(tools, '[data-wap-img-note]', '');
+        var cmpFrom = wapToolsVal(tools, '[data-wap-img-compare-from]', cfg.compareFrom || '');
+        var cmpTo = wapToolsVal(tools, '[data-wap-img-compare-to]', cfg.compareTo || '');
+        var wm = document.createElement('div');
+        wm.className = 'wap-capture-watermark';
+        wm.setAttribute('data-wap-watermark', '1');
+        var range = (cfg.dateFrom || '—') + ' تا ' + (cfg.dateTo || '—');
+        var html = '<div><strong>حسابدار</strong> — بازه: ' + range + '</div>';
+        html += '<div>تاریخ خروجی: ' + wapPersianStamp() + '</div>';
+        if (cmpFrom && cmpTo) {
+            html += '<div>مقایسه با: ' + cmpFrom + ' تا ' + cmpTo + '</div>';
+        }
+        if (note) {
+            html += '<div>یادداشت: ' + String(note).replace(/</g, '&lt;') + '</div>';
+        }
+        wm.innerHTML = html;
+        target.insertBefore(wm, target.firstChild);
+        return wm;
+    }
+
+    function wapApplyScope(target, scope) {
+        var changed = [];
+        var parts = target.querySelectorAll('[data-wap-capture-part]');
+        if (!parts.length) {
+            // fallback selectors
+            var map = {
+                cards: target.querySelectorAll('.wap-cards'),
+                chart: target.querySelectorAll('.wap-chart-card, .wap-analytics-grid, .wap-donut-card'),
+                table: target.querySelectorAll('.wap-table-wrap')
+            };
+            Object.keys(map).forEach(function (key) {
+                map[key].forEach(function (el) {
+                    el.setAttribute('data-wap-capture-part', key);
+                });
+            });
+            parts = target.querySelectorAll('[data-wap-capture-part]');
+        }
+        if (scope === 'full' || !parts.length) return changed;
+        parts.forEach(function (el) {
+            var part = el.getAttribute('data-wap-capture-part');
+            if (part !== scope) {
+                changed.push({ el: el, display: el.style.display });
+                el.style.display = 'none';
+            }
+        });
+        return changed;
+    }
+
+    function wapInjectCompareCards(target, metrics) {
+        var old = target.querySelector('[data-wap-live-compare]');
+        if (old) old.remove();
+        if (!metrics) return null;
+        var box = document.createElement('div');
+        box.className = 'wap-cards wap-compare-cards';
+        box.setAttribute('data-wap-capture-part', 'cards');
+        box.setAttribute('data-wap-live-compare', '1');
+        box.innerHTML =
+            '<div class="wap-card"><span class="wap-card-label">مقایسه ناخالص (' + metrics.date_from + ' تا ' + metrics.date_to + ')</span>' +
+            '<span class="wap-card-value">' + Number(metrics.gross_total || 0).toLocaleString('fa-IR') + '</span>' +
+            '<span class="wap-card-accent">' + Number(metrics.gross_count || 0).toLocaleString('fa-IR') + ' سفارش</span></div>' +
+            '<div class="wap-card wap-card-net"><span class="wap-card-label">مقایسه خالص</span>' +
+            '<span class="wap-card-value">' + Number(metrics.net_total || 0).toLocaleString('fa-IR') + '</span>' +
+            '<span class="wap-card-accent">' + Number(metrics.net_count || 0).toLocaleString('fa-IR') + ' سفارش موفق</span></div>';
+        var cards = target.querySelector('.wap-cards');
+        if (cards && cards.parentNode) {
+            cards.parentNode.insertBefore(box, cards.nextSibling);
+        } else {
+            target.insertBefore(box, target.firstChild);
+        }
+        return box;
+    }
+
+    function wapFetchCompare(tools) {
+        return new Promise(function (resolve) {
+            var cfg = wapImgCfg();
+            var from = wapToolsVal(tools, '[data-wap-img-compare-from]', '');
+            var to = wapToolsVal(tools, '[data-wap-img-compare-to]', '');
+            if (!from || !to || !cfg.ajaxUrl) {
+                resolve(null);
+                return;
+            }
+            // اگر سرور قبلاً رندر کرده، دوباره نگیر
+            if (document.querySelector('.wap-compare-cards:not([data-wap-live-compare])')) {
+                resolve(null);
+                return;
+            }
+            var body = new FormData();
+            body.append('action', 'wap_compare_report_metrics');
+            body.append('nonce', cfg.nonce || '');
+            body.append('compare_from', from);
+            body.append('compare_to', to);
+            fetch(cfg.ajaxUrl, { method: 'POST', body: body, credentials: 'same-origin' })
+                .then(function (r) { return r.json(); })
+                .then(function (json) {
+                    if (json && json.success) resolve(json.data);
+                    else resolve(null);
+                })
+                .catch(function () { resolve(null); });
+        });
+    }
+
+    function wapSliceCanvases(source, maxH) {
+        if (!maxH || source.height <= maxH) return [source];
+        var pages = [];
+        var y = 0;
+        while (y < source.height) {
+            var h = Math.min(maxH, source.height - y);
+            var c = document.createElement('canvas');
+            c.width = source.width;
+            c.height = h;
+            var ctx = c.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, c.width, c.height);
+            ctx.drawImage(source, 0, y, source.width, h, 0, 0, source.width, h);
+            pages.push(c);
+            y += h;
+        }
+        return pages;
+    }
+
+    function wapDownloadCanvas(canvas, filename, mime, quality) {
+        var link = document.createElement('a');
+        link.download = filename;
+        link.href = quality != null ? canvas.toDataURL(mime, quality) : canvas.toDataURL(mime);
+        link.click();
+    }
+
+    function wapCopyCanvas(canvas) {
+        return new Promise(function (resolve, reject) {
+            if (!navigator.clipboard || !window.ClipboardItem) {
+                reject(new Error('clipboard'));
+                return;
+            }
+            canvas.toBlob(function (blob) {
+                if (!blob) {
+                    reject(new Error('blob'));
+                    return;
+                }
+                navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(resolve).catch(reject);
+            }, 'image/png');
+        });
+    }
+
+    function wapArchiveCanvas(canvas, label, note, mime, quality) {
+        var cfg = wapImgCfg();
+        return new Promise(function (resolve, reject) {
+            if (!cfg.canArchive) {
+                reject(new Error('آرشیو برای نقش شما مجاز نیست.'));
+                return;
+            }
+            var dataUrl = quality != null ? canvas.toDataURL(mime, quality) : canvas.toDataURL(mime === 'image/jpeg' ? 'image/jpeg' : 'image/png');
+            var body = new FormData();
+            body.append('action', 'wap_archive_report_image');
+            body.append('nonce', cfg.nonce || '');
+            body.append('data_url', dataUrl);
+            body.append('label', label || 'report');
+            body.append('note', note || '');
+            fetch(cfg.ajaxUrl, { method: 'POST', body: body, credentials: 'same-origin' })
+                .then(function (r) { return r.json(); })
+                .then(function (json) {
+                    if (json && json.success) resolve(json.data);
+                    else reject(new Error((json && json.data && json.data.message) || 'آرشیو ناموفق'));
+                })
+                .catch(reject);
+        });
     }
 
     function wapExportImage(btn, format) {
@@ -231,56 +434,124 @@
             wapToast('بخش گزارش برای خروجی تصویر یافت نشد.');
             return;
         }
-        var label = btn.getAttribute('data-label') || 'گزارش';
+        var tools = wapToolsRoot(btn);
+        var cfg = wapImgCfg();
+        var label = btn.getAttribute('data-label') || cfg.view || 'report';
+        var scope = wapToolsVal(tools, '[data-wap-img-scope]', 'full');
+        var qualityMode = wapToolsVal(tools, '[data-wap-img-quality]', 'normal');
+        var compact = wapToolsVal(tools, '[data-wap-img-compact]', false);
+        var multipage = wapToolsVal(tools, '[data-wap-img-multipage]', true);
+        var note = wapToolsVal(tools, '[data-wap-img-note]', '');
         var orig = btn.textContent;
         btn.disabled = true;
         btn.textContent = 'در حال ساخت تصویر…';
 
-        wapLoadHtml2Canvas(function () {
-            var hideNodes = [];
-            target.querySelectorAll('[data-wap-no-capture], .wap-export-bar, .wap-bulk-bar, .wap-pagination').forEach(function (el) {
-                hideNodes.push({ el: el, display: el.style.display });
-                el.style.display = 'none';
-            });
-            var prevBg = target.style.background;
-            target.classList.add('is-capturing');
-            target.style.background = '#ffffff';
-            window.html2canvas(target, {
-                backgroundColor: '#ffffff',
-                scale: Math.min(2, window.devicePixelRatio || 2),
-                useCORS: true,
-                logging: false,
-                scrollX: 0,
-                scrollY: -window.scrollY,
-                ignoreElements: function (el) {
-                    return !!(el && el.getAttribute && el.getAttribute('data-wap-no-capture') !== null);
+        wapFetchCompare(tools).then(function (metrics) {
+            wapLoadHtml2Canvas(function () {
+                var hideNodes = [];
+                target.querySelectorAll('[data-wap-no-capture], .wap-export-bar, .wap-bulk-bar, .wap-pagination, .wap-image-export-tools').forEach(function (el) {
+                    hideNodes.push({ el: el, display: el.style.display });
+                    el.style.display = 'none';
+                });
+                var scopeChanged = wapApplyScope(target, scope);
+                var liveCompare = wapInjectCompareCards(target, metrics);
+                var wm = wapEnsureWatermark(target, tools);
+                var prevBg = target.style.background;
+                target.classList.add('is-capturing');
+                if (compact) target.classList.add('is-compact-print');
+                target.style.background = '#ffffff';
+
+                // حالت فشرده: مخفی کردن لینک‌ها در capture
+                var linkHides = [];
+                if (compact) {
+                    target.querySelectorAll('a').forEach(function (a) {
+                        linkHides.push({ el: a, href: a.getAttribute('href') });
+                        a.removeAttribute('href');
+                    });
                 }
-            }).then(function (canvas) {
-                target.style.background = prevBg;
-                target.classList.remove('is-capturing');
-                hideNodes.forEach(function (item) {
-                    item.el.style.display = item.display;
+
+                var scale = qualityMode === 'high' ? Math.min(3, (window.devicePixelRatio || 1) * 2) : Math.min(2, window.devicePixelRatio || 2);
+                window.html2canvas(target, {
+                    backgroundColor: '#ffffff',
+                    scale: scale,
+                    useCORS: true,
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: -window.scrollY,
+                    ignoreElements: function (el) {
+                        return !!(el && el.getAttribute && el.getAttribute('data-wap-no-capture') !== null);
+                    }
+                }).then(function (canvas) {
+                    target.style.background = prevBg;
+                    target.classList.remove('is-capturing');
+                    target.classList.remove('is-compact-print');
+                    hideNodes.forEach(function (item) { item.el.style.display = item.display; });
+                    scopeChanged.forEach(function (item) { item.el.style.display = item.display; });
+                    linkHides.forEach(function (item) {
+                        if (item.href != null) item.el.setAttribute('href', item.href);
+                    });
+                    if (wm && wm.parentNode) wm.remove();
+                    if (liveCompare && liveCompare.parentNode) liveCompare.remove();
+
+                    var mime = (format === 'png' || format === 'clipboard' || format === 'archive') ? 'image/png' : 'image/jpeg';
+                    if (format === 'jpg' || format === 'jpeg') mime = 'image/jpeg';
+                    var jpegQ = qualityMode === 'high' ? 0.95 : 0.9;
+                    var labelFa = cfg.labelFa || label;
+                    var rangePart = wapSafeFilePart((cfg.dateFrom || '') + '_' + (cfg.dateTo || ''));
+                    var baseName = 'حسابدار-' + wapSafeFilePart(labelFa) + '-' + rangePart + '-' + wapSafeFilePart(wapPersianStamp());
+
+                    var pages = multipage ? wapSliceCanvases(canvas, cfg.multipageMax || 3200) : [canvas];
+                    var finishOk = function (msg) {
+                        btn.disabled = false;
+                        btn.textContent = orig;
+                        wapToast(msg || 'خروجی تصویری آماده شد.');
+                    };
+                    var finishErr = function (msg) {
+                        btn.disabled = false;
+                        btn.textContent = orig;
+                        wapToast(msg || 'ساخت تصویر با خطا مواجه شد.');
+                    };
+
+                    if (format === 'clipboard') {
+                        wapCopyCanvas(pages[0]).then(function () {
+                            finishOk('تصویر در کلیپ‌بورد کپی شد.');
+                        }).catch(function () {
+                            // fallback: دانلود PNG
+                            wapDownloadCanvas(pages[0], baseName + '.png', 'image/png');
+                            finishOk('کپی پشتیبانی نشد — PNG دانلود شد.');
+                        });
+                        return;
+                    }
+
+                    if (format === 'archive') {
+                        wapArchiveCanvas(pages[0], label, note, mime, mime === 'image/jpeg' ? jpegQ : undefined)
+                            .then(function (data) {
+                                finishOk((data && data.message) || 'در رسانه ذخیره شد.');
+                            })
+                            .catch(function (err) {
+                                finishErr((err && err.message) || 'آرشیو ناموفق');
+                            });
+                        return;
+                    }
+
+                    var ext = mime === 'image/png' ? 'png' : 'jpg';
+                    pages.forEach(function (page, idx) {
+                        var name = pages.length > 1 ? (baseName + '-صفحه' + (idx + 1) + '.' + ext) : (baseName + '.' + ext);
+                        wapDownloadCanvas(page, name, mime, mime === 'image/jpeg' ? jpegQ : undefined);
+                    });
+                    finishOk(pages.length > 1 ? (pages.length + ' صفحه تصویر آماده شد.') : 'خروجی تصویری آماده شد.');
+                }).catch(function () {
+                    target.style.background = prevBg;
+                    target.classList.remove('is-capturing');
+                    target.classList.remove('is-compact-print');
+                    hideNodes.forEach(function (item) { item.el.style.display = item.display; });
+                    scopeChanged.forEach(function (item) { item.el.style.display = item.display; });
+                    if (wm && wm.parentNode) wm.remove();
+                    if (liveCompare && liveCompare.parentNode) liveCompare.remove();
+                    btn.disabled = false;
+                    btn.textContent = orig;
+                    wapToast('ساخت تصویر با خطا مواجه شد.');
                 });
-                var mime = format === 'png' ? 'image/png' : 'image/jpeg';
-                var ext = format === 'png' ? 'png' : 'jpg';
-                var quality = format === 'png' ? undefined : 0.92;
-                var link = document.createElement('a');
-                var stamp = new Date().toISOString().slice(0, 10);
-                link.download = 'hesabdar-' + label + '-' + stamp + '.' + ext;
-                link.href = quality ? canvas.toDataURL(mime, quality) : canvas.toDataURL(mime);
-                link.click();
-                btn.disabled = false;
-                btn.textContent = orig;
-                wapToast('خروجی تصویری آماده شد.');
-            }).catch(function () {
-                target.style.background = prevBg;
-                target.classList.remove('is-capturing');
-                hideNodes.forEach(function (item) {
-                    item.el.style.display = item.display;
-                });
-                btn.disabled = false;
-                btn.textContent = orig;
-                wapToast('ساخت تصویر با خطا مواجه شد.');
             });
         });
     }
@@ -290,7 +561,6 @@
             wapExportImage(btn, btn.getAttribute('data-format') || 'jpg');
         });
     });
-    // سازگاری با دکمه‌های قدیمی
     ['wap_export_jpg', 'wap_export_jpeg'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el && !el.hasAttribute('data-wap-export-image')) {
@@ -302,4 +572,19 @@
             });
         }
     });
+
+    // قفل بازه تاریخ
+    if (wapImgCfg().dateLocked) {
+        ['wap_date_from', 'wap_date_to'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.readOnly = true;
+                el.title = 'بازه تاریخ توسط مدیر قفل شده است';
+            }
+        });
+        document.querySelectorAll('.wap-chip').forEach(function (c) {
+            c.style.pointerEvents = 'none';
+            c.style.opacity = '0.45';
+        });
+    }
 })();

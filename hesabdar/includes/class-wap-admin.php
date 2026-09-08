@@ -13,6 +13,7 @@ class WAP_Admin {
     public static function menu() {
         add_menu_page( 'پرتال حسابدار', 'پرتال حسابدار', 'manage_options', 'wap-accountants', array( __CLASS__, 'page' ), 'dashicons-id-alt', 57 );
         add_submenu_page( 'wap-accountants', 'اطلاع‌رسانی پیامک', 'اطلاع‌رسانی پیامک', 'manage_options', 'wap-payment-sms', array( __CLASS__, 'sms_page' ) );
+        add_submenu_page( 'wap-accountants', 'خروجی تصویری گزارش', 'خروجی تصویری', 'manage_options', 'wap-report-image', array( __CLASS__, 'report_image_page' ) );
     }
 
     public static function page() {
@@ -354,6 +355,140 @@ class WAP_Admin {
                 </p>
                 <p><button type="submit" class="button">ارسال تست</button></p>
             </form>
+        </div>
+        <?php
+    }
+
+    public static function report_image_page() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( 'Unauthorized' );
+        }
+        if ( ! class_exists( 'WAP_Report_Image' ) ) {
+            echo '<div class="wrap"><div class="notice notice-error"><p>ماژول خروجی تصویری بارگذاری نشده.</p></div></div>';
+            return;
+        }
+        $notice = '';
+        if ( isset( $_POST['wap_save_report_image'] ) && check_admin_referer( 'wap_report_image_settings' ) ) {
+            WAP_Report_Image::save_settings( wp_unslash( $_POST['wap_ri'] ?? array() ) );
+            $notice = 'تنظیمات خروجی تصویری ذخیره شد.';
+        }
+        if ( isset( $_POST['wap_run_digest_now'] ) && check_admin_referer( 'wap_report_image_digest' ) ) {
+            WAP_Report_Image::run_daily_digest();
+            $notice = 'ارسال آزمایشی خلاصه روزانه اجرا شد.';
+        }
+        $s = WAP_Report_Image::settings();
+        $last = get_option( 'wap_report_image_last_digest', array() );
+        $ids = get_option( 'wap_report_image_archive_ids', array() );
+        ?>
+        <div class="wrap">
+            <h1>خروجی تصویری گزارش‌ها</h1>
+            <p style="max-width:760px;line-height:1.8">
+                تنظیمات واترمارک/مقایسه در پرتال اعمال می‌شود. اینجا ارسال روزانه تلگرام/ایمیل، قفل بازه تاریخ،
+                و محدودیت تب‌های حسابدار را مدیریت کنید.
+            </p>
+            <?php if ( $notice ) : ?>
+                <div class="notice notice-success is-dismissible"><p><?php echo esc_html( $notice ); ?></p></div>
+            <?php endif; ?>
+
+            <form method="post" style="background:#fff;border:1px solid #ccd0d4;border-radius:6px;padding:16px 20px;max-width:780px">
+                <?php wp_nonce_field( 'wap_report_image_settings' ); ?>
+
+                <h2 style="margin-top:0">قفل بازه گزارش‌های مالی</h2>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th>فعال‌سازی قفل</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wap_ri[date_lock_enabled]" value="1" <?php checked( (int) $s['date_lock_enabled'], 1 ); ?>>
+                                بازه تاریخ در پرتال قفل شود (حسابدار نتواند عوض کند)
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>از / تا (شمسی)</th>
+                        <td>
+                            <input type="text" class="regular-text" dir="ltr" name="wap_ri[date_lock_from]" value="<?php echo esc_attr( $s['date_lock_from'] ); ?>" placeholder="۱۴۰۴/۰۱/۰۱">
+                            —
+                            <input type="text" class="regular-text" dir="ltr" name="wap_ri[date_lock_to]" value="<?php echo esc_attr( $s['date_lock_to'] ); ?>" placeholder="۱۴۰۴/۱۲/۲۹">
+                        </td>
+                    </tr>
+                </table>
+
+                <h2>نقش حسابدار</h2>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th>محدودیت تب‌ها</th>
+                        <td>
+                            <label><input type="checkbox" name="wap_ri[restrict_accountant]" value="1" <?php checked( (int) $s['restrict_accountant'], 1 ); ?>> فقط تب‌های انتخابی برای حسابدار</label>
+                            <div style="margin-top:8px">
+                                <?php foreach ( array( 'sales' => 'گزارش مالی', 'orders' => 'سفارش‌ها', 'products' => 'محصولات', 'shaparak' => 'شاپرک', 'analytics' => 'داشبورد' ) as $k => $lbl ) : ?>
+                                    <label style="margin-left:12px"><input type="checkbox" name="wap_ri[accountant_tabs][]" value="<?php echo esc_attr( $k ); ?>" <?php checked( in_array( $k, (array) $s['accountant_tabs'], true ) ); ?>> <?php echo esc_html( $lbl ); ?></label>
+                                <?php endforeach; ?>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>فقط دانلود</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wap_ri[accountant_download_only]" value="1" <?php checked( (int) $s['accountant_download_only'], 1 ); ?>>
+                                حسابدار فقط دانلود کند (بدون آرشیو در رسانه)
+                            </label>
+                        </td>
+                    </tr>
+                </table>
+
+                <h2>ارسال روزانه (تلگرام / ایمیل)</h2>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th>فعال</th>
+                        <td><label><input type="checkbox" name="wap_ri[daily_enabled]" value="1" <?php checked( (int) $s['daily_enabled'], 1 ); ?>> ارسال خودکار روزانه</label></td>
+                    </tr>
+                    <tr>
+                        <th>ساعت (۰–۲۳)</th>
+                        <td><input type="number" min="0" max="23" name="wap_ri[daily_hour]" value="<?php echo esc_attr( (string) $s['daily_hour'] ); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th>تلگرام</th>
+                        <td>
+                            <label><input type="checkbox" name="wap_ri[telegram_enabled]" value="1" <?php checked( (int) $s['telegram_enabled'], 1 ); ?>> ارسال به تلگرام</label><br>
+                            <input type="text" class="regular-text" dir="ltr" name="wap_ri[telegram_bot_token]" value="" placeholder="<?php echo $s['telegram_bot_token'] !== '' ? 'توکن ذخیره شده — برای تغییر پر کنید' : 'Bot Token'; ?>" style="margin-top:6px">
+                            <br>
+                            <input type="text" class="regular-text" dir="ltr" name="wap_ri[telegram_chat_id]" value="<?php echo esc_attr( $s['telegram_chat_id'] ); ?>" placeholder="Chat ID" style="margin-top:6px">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>ایمیل</th>
+                        <td>
+                            <label><input type="checkbox" name="wap_ri[email_enabled]" value="1" <?php checked( (int) $s['email_enabled'], 1 ); ?>> ارسال ایمیل با تصویر</label><br>
+                            <input type="email" class="regular-text" dir="ltr" name="wap_ri[email_to]" value="<?php echo esc_attr( $s['email_to'] ); ?>" placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" style="margin-top:6px">
+                        </td>
+                    </tr>
+                </table>
+
+                <p><button type="submit" name="wap_save_report_image" class="button button-primary" value="1">ذخیره تنظیمات</button></p>
+            </form>
+
+            <form method="post" style="margin-top:16px">
+                <?php wp_nonce_field( 'wap_report_image_digest' ); ?>
+                <button type="submit" name="wap_run_digest_now" class="button" value="1">ارسال آزمایشی الان</button>
+                <?php if ( is_array( $last ) && ! empty( $last['at'] ) ) : ?>
+                    <p class="description">آخرین اجرا: <?php echo esc_html( wp_date( 'Y-m-d H:i', (int) $last['at'] ) ); ?> — تلگرام: <?php echo ! empty( $last['tg'] ) ? 'موفق' : '—'; ?> / ایمیل: <?php echo ! empty( $last['email'] ) ? 'موفق' : '—'; ?></p>
+                <?php endif; ?>
+            </form>
+
+            <h2>آرشیو اخیر (کتابخانه رسانه)</h2>
+            <?php if ( empty( $ids ) || ! is_array( $ids ) ) : ?>
+                <p>هنوز تصویری آرشیو نشده. از پرتال دکمه «آرشیو رسانه» را بزنید.</p>
+            <?php else : ?>
+                <ul>
+                    <?php foreach ( array_slice( $ids, 0, 10 ) as $aid ) :
+                        $url = wp_get_attachment_url( (int) $aid );
+                        if ( ! $url ) continue; ?>
+                        <li><a href="<?php echo esc_url( $url ); ?>" target="_blank">#<?php echo (int) $aid; ?> — <?php echo esc_html( get_the_title( (int) $aid ) ); ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
         </div>
         <?php
     }

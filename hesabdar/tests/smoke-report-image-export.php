@@ -16,10 +16,10 @@ $ok = function ( $msg ) {
 	echo "OK: $msg\n";
 };
 
-if ( ! preg_match( "/define\\(\\s*'WAP_VERSION'\\s*,\\s*'1\\.11\\.1'\\s*\\)/", $main ) ) {
-	$fail( 'WAP_VERSION must be 1.11.1' );
+if ( ! preg_match( "/define\\(\\s*'WAP_VERSION'\\s*,\\s*'1\\.12\\.0'\\s*\\)/", $main ) ) {
+	$fail( 'WAP_VERSION must be 1.12.0' );
 }
-$ok( 'version 1.11.1' );
+$ok( 'version 1.12.0' );
 
 if ( strpos( $js, 'html2canvas' ) === false ) {
 	$fail( 'app.js missing html2canvas loader' );
@@ -39,19 +39,15 @@ $ok( 'css jpg button' );
 
 $labels = array( 'sales', 'orders', 'products', 'shaparak', 'analytics' );
 foreach ( $labels as $label ) {
-	if ( strpos( $portal, "render_image_export_buttons( '$label' )" ) === false
-		&& strpos( $portal, "render_export_bar( \$products_csv_url, 'products' )" ) === false
-		&& $label === 'products' ) {
-		// products via render_export_bar
-	}
 	if ( $label === 'products' ) {
-		if ( substr_count( $portal, "render_export_bar( \$products_csv_url, 'products' )" ) < 1 ) {
+		if ( strpos( $portal, "render_export_bar( \$products_csv_url, 'products' )" ) === false ) {
 			$fail( 'products missing image export bar' );
 		}
 		$ok( 'products export bar' );
 		continue;
 	}
-	if ( strpos( $portal, "render_image_export_buttons( '$label' )" ) === false ) {
+	if ( strpos( $portal, "render_image_export_tools( '$label' )" ) === false
+		&& strpos( $portal, "render_image_export_buttons( '$label' )" ) === false ) {
 		$fail( "missing image export for $label" );
 	}
 	$ok( "image export: $label" );

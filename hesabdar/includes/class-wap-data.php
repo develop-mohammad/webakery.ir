@@ -20,6 +20,13 @@ class WAP_Data {
             $date_to   = sprintf( '%d/%02d/%02d', $today['y'], $today['m'], $today['d'] );
         }
 
+        // قفل بازه مالی حساس (تنظیمات مدیر)
+        if ( class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::is_date_locked() ) {
+            $lock = WAP_Report_Image::locked_range();
+            $date_from = $lock['date_from'];
+            $date_to   = $lock['date_to'];
+        }
+
         return array(
             'date_from'    => $date_from,
             'date_to'      => $date_to,

@@ -1627,14 +1627,18 @@ function wci_shaparak_report_page() {
     ) ), admin_url( 'admin-post.php' ) ) );
     echo '<div class="wci-export-bar">';
     echo '<a class="button button-primary wci-btn-excel" href="' . $xlsx_url . '">📊 خروجی اکسل (.xlsx)</a> ';
-    echo '<a class="button" href="' . $csv_url . '">📥 CSV</a>';
+    echo '<a class="button" href="' . $csv_url . '">📥 CSV</a> ';
+    echo '<button type="button" class="button button-secondary" data-wap-export-image data-format="jpg" data-label="shaparak" data-target="#wap_capture">🖼️ JPG</button> ';
+    echo '<button type="button" class="button" data-wap-export-image data-format="png" data-label="shaparak" data-target="#wap_capture">PNG</button> ';
+    echo '<button type="button" class="button" data-wap-export-image data-format="clipboard" data-label="shaparak" data-target="#wap_capture">کپی</button>';
     echo '</div>';
 
     if ( $report['error'] !== '' ) {
         echo '<div class="notice notice-warning"><p>' . esc_html( $report['error'] ) . '</p></div>';
     }
 
-    echo '<div class="wci-export-bar" style="display:flex;flex-wrap:wrap;gap:18px">';
+    echo '<div id="wap_capture" class="wap-capture" style="background:#fff;padding:12px;border:1px solid #e2e8f0;border-radius:8px">';
+    echo '<div class="wci-export-bar" style="display:flex;flex-wrap:wrap;gap:18px" data-wap-capture-part="cards">';
     echo '<span>🛒 خرید ووکامرس: <strong>' . esc_html( number_format( $s['wc_gross'] ) ) . '</strong> (' . esc_html( number_format( $s['wc_count'] ) ) . ')</span>';
     echo '<span>💳 کارمزد: <strong>' . esc_html( number_format( $s['wc_fee'] ) ) . '</strong></span>';
     echo '<span>✅ خالص: <strong>' . esc_html( number_format( $s['wc_net'] ) ) . '</strong></span>';
@@ -1642,6 +1646,7 @@ function wci_shaparak_report_page() {
     echo '<span>Δ اختلاف: <strong>' . esc_html( number_format( $s['diff_net_settle'] ) ) . '</strong></span>';
     echo '</div>';
 
+    echo '<div data-wap-capture-part="table">';
     echo '<h2>خریدهای ووکامرس (زرین‌پال)</h2>';
     echo '<table class="widefat striped"><thead><tr><th>سفارش</th><th>تاریخ</th><th>خریدار</th><th>وضعیت</th><th>مبلغ</th><th>کارمزد</th><th>خالص</th></tr></thead><tbody>';
     if ( empty( $report['orders'] ) ) {
@@ -1679,7 +1684,14 @@ function wci_shaparak_report_page() {
             );
         }
     }
-    echo '</tbody></table></div>';
+    echo '</tbody></table></div></div>';
+
+    $img_cfg = class_exists( 'WAP_Report_Image' ) ? WAP_Report_Image::client_config() : array();
+    $img_cfg['view'] = 'shaparak';
+    $img_cfg['labelFa'] = 'شاپرک';
+    echo '<script>window.WAP_IMAGE=' . wp_json_encode( $img_cfg ) . ';</script>';
+    echo '<script src="' . esc_url( WAP_URL . 'assets/app.js?v=' . WAP_VERSION ) . '"></script>';
+    echo '</div>';
 }
 
 // ─── Shortcode [wci_my_info] ──────────────────────────────────────────────────
