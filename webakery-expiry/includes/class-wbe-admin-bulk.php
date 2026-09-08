@@ -433,9 +433,13 @@ class WBE_Admin_Bulk {
 			LEFT JOIN {$wpdb->postmeta} reg ON reg.post_id = p.ID AND reg.meta_key = '_regular_price'
 			LEFT JOIN {$wpdb->postmeta} sale ON sale.post_id = p.ID AND sale.meta_key = '_sale_price'
 			LEFT JOIN {$wpdb->postmeta} stock ON stock.post_id = p.ID AND stock.meta_key = '_stock'
-			LEFT JOIN {$wpdb->term_relationships} ptr ON ptr.object_id = p.ID
-			LEFT JOIN {$wpdb->term_taxonomy} ptt ON ptt.term_taxonomy_id = ptr.term_taxonomy_id AND ptt.taxonomy = 'product_type'
-			LEFT JOIN {$wpdb->terms} ptype ON ptype.term_id = ptt.term_id
+			LEFT JOIN (
+				SELECT tr.object_id, MIN(t.slug) AS slug
+				FROM {$wpdb->term_relationships} tr
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'product_type'
+				INNER JOIN {$wpdb->terms} t ON t.term_id = tt.term_id
+				GROUP BY tr.object_id
+			) ptype ON ptype.object_id = p.ID
 			WHERE p.post_type = 'product'
 			AND p.post_status IN ('publish','private','draft','pending')";
 
@@ -477,10 +481,11 @@ class WBE_Admin_Bulk {
 		if ( ! $records ) {
 			return array();
 		}
+		$records = WBE_Engine::unique_sql_records_by_id( $records );
 
-		$out            = array();
-		$variable_ids   = array();
-		$parent_by_id   = array();
+		$out          = array();
+		$variable_ids = array();
+		$parent_by_id = array();
 		foreach ( $records as $rec ) {
 			$parent_by_id[ (int) $rec->ID ] = $rec;
 			$type = isset( $rec->product_type ) ? (string) $rec->product_type : '';
@@ -520,6 +525,7 @@ class WBE_Admin_Bulk {
 				ORDER BY v.menu_order ASC, v.ID ASC";
 			$variations = $wpdb->get_results( $var_sql ); // phpcs:ignore WordPress.DB.PreparedSQL
 			if ( $variations ) {
+				$variations = WBE_Engine::unique_sql_records_by_id( $variations );
 				foreach ( $variations as $var ) {
 					$parent_id = (int) $var->post_parent;
 					$parent    = isset( $parent_by_id[ $parent_id ] ) ? $parent_by_id[ $parent_id ] : null;
@@ -534,6 +540,7 @@ class WBE_Admin_Bulk {
 			}
 		}
 
+		$out = WBE_Engine::unique_bulk_rows( $out );
 		usort(
 			$out,
 			function ( $a, $b ) {

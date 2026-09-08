@@ -1145,4 +1145,54 @@ class WBE_Engine {
 		$type = (string) $type;
 		return 'variable' !== $type;
 	}
+
+	/**
+	 * ردیف‌های SQL را یکتا کن — JOIN ترم‌ها/متا نباید محصول را تکرار کند.
+	 *
+	 * @param array<int,object> $records
+	 * @return array<int,object>
+	 */
+	public static function unique_sql_records_by_id( array $records ) {
+		$out = array();
+		foreach ( $records as $rec ) {
+			if ( ! is_object( $rec ) || ! isset( $rec->ID ) ) {
+				continue;
+			}
+			$id = (int) $rec->ID;
+			if ( $id <= 0 ) {
+				continue;
+			}
+			if ( ! isset( $out[ $id ] ) ) {
+				$out[ $id ] = $rec;
+				continue;
+			}
+			$have = isset( $out[ $id ]->product_type ) ? (string) $out[ $id ]->product_type : '';
+			$next = isset( $rec->product_type ) ? (string) $rec->product_type : '';
+			if ( '' === $have && '' !== $next ) {
+				$out[ $id ] = $rec;
+			}
+		}
+		return array_values( $out );
+	}
+
+	/**
+	 * ردیف‌های جدول گروهی را بر اساس شناسه یکتا کن.
+	 *
+	 * @param array<int,array> $rows
+	 * @return array<int,array>
+	 */
+	public static function unique_bulk_rows( array $rows ) {
+		$out = array();
+		foreach ( $rows as $row ) {
+			if ( ! is_array( $row ) || ! isset( $row['id'] ) ) {
+				continue;
+			}
+			$id = (int) $row['id'];
+			if ( $id <= 0 || isset( $out[ $id ] ) ) {
+				continue;
+			}
+			$out[ $id ] = $row;
+		}
+		return array_values( $out );
+	}
 }

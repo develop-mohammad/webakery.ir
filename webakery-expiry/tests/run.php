@@ -443,6 +443,26 @@ $row_var = WBE_Engine::bulk_row_from_record(
 );
 wbe_check( 'ردیف گروهی پرچم تنوع دارد', ! empty( $row_var['is_variation'] ) && 50 === (int) $row_var['parent_id'] );
 
+echo "\n=== یکتایی ردیف گروهی ===\n";
+$dup_sql = array();
+for ( $i = 0; $i < 100; $i++ ) {
+	$r                 = new stdClass();
+	$r->ID             = 10;
+	$r->product_type   = ( 99 === $i ) ? 'variable' : '';
+	$r->post_title     = 'شیر';
+	$dup_sql[]         = $r;
+}
+$uniq_sql = WBE_Engine::unique_sql_records_by_id( $dup_sql );
+wbe_check( '۱۰۰ کپی SQL یک محصول می‌شود', 1 === count( $uniq_sql ), (string) count( $uniq_sql ) );
+wbe_check( 'نوع متغیر در کپی‌ها حفظ می‌شود', 'variable' === $uniq_sql[0]->product_type );
+$dup_rows = array();
+for ( $i = 0; $i < 100; $i++ ) {
+	$dup_rows[] = array( 'id' => 7, 'name' => 'الف' );
+	$dup_rows[] = array( 'id' => 8, 'name' => 'ب' );
+}
+$uniq_rows = WBE_Engine::unique_bulk_rows( $dup_rows );
+wbe_check( 'ردیف‌های تکراری جدول حذف می‌شوند', 2 === count( $uniq_rows ), (string) count( $uniq_rows ) );
+
 echo "\n=== هشدار انقضا ===\n";
 wbe_check( '۵ روز = فوری', 'soon' === WBE_Engine::urgency( 5, 7, 30, 60 ) );
 wbe_check( '۲۰ روز = یک ماه', 'month' === WBE_Engine::urgency( 20, 7, 30, 60 ) );
