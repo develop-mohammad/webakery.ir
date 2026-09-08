@@ -1105,7 +1105,55 @@ a.wap-bar-fill:hover { filter: brightness(1.1); }
     font-size: 12px;
     display: inline-block;
 }
-.wap-invoice-actions .wap-btn-primary {
-    width: auto;
-    margin-top: 0;
+/* ── داشبورد تحلیلی ── */
+.wap-analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
 }
+.wap-hint {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 0 0 12px;
+}
+.wap-hbar { margin-bottom: 12px; }
+.wap-hbar-label { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #0f172a; }
+.wap-hbar-label small { font-weight: 400; color: #64748b; }
+.wap-hbar-track {
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.wap-hbar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #059669, #10b981);
+    border-radius: 999px;
+    min-width: 4px;
+}
+.wap-hbar-traffic { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+.wap-hbar-day { background: linear-gradient(90deg, #d97706, #fbbf24); }
+.wap-hbar-val { font-size: 12px; color: #475569; margin-top: 4px; }
+.wap-heat-hours {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 6px;
+}
+.wap-heat-cell {
+    border-radius: 8px;
+    padding: 8px 4px;
+    text-align: center;
+    color: #064e3b;
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid rgba(5,150,105,.15);
+}
+.wap-heat-cell strong { font-size: 13px; }
+@media (max-width: 720px) {
+    .wap-heat-hours { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+

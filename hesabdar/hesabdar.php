@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hesabdar
  * Description: مدیریت کامل مشتریان و فروش ووکامرس (سفارش‌ها، ایجاد/ویرایش سفارش، محصولات، گزارش مالی، فاکتور) از داخل پیشخوان + پرتال مستقل و مینیمال ورود حسابدار بدون دسترسی به پیشخوان.
- * Version:     1.10.3
+ * Version:     1.11.0
  * Plugin URI:  https://webakery.ir
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,7 +22,7 @@ if ( defined( 'HESABDAR_LOADED' ) ) {
 }
 define( 'HESABDAR_LOADED', true );
 
-define( 'WAP_VERSION', '1.10.3' );
+define( 'WAP_VERSION', '1.11.0' );
 define( 'WAP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WAP_URL', plugin_dir_url( __FILE__ ) );
 
@@ -86,6 +86,9 @@ function hesabdar_bootstrap_core() {
 		'class-wap-zarinpal-fee.php',
 		'class-wap-zarinpal-report.php',
 		'class-wap-excel.php',
+		'class-wap-gateway.php',
+		'class-wap-traffic.php',
+		'class-wap-analytics.php',
 	);
 	foreach ( $required as $file ) {
 		if ( ! hesabdar_require_include( $file ) ) {
@@ -356,6 +359,15 @@ function hesabdar_register_wci_hooks() {
 		add_submenu_page( 'wci-orders', 'فروش محصولات', 'فروش محصولات', $cap, 'wci-products', hesabdar_wci_page_cb( 'wci_products_page' ) );
 		add_submenu_page( 'wci-orders', 'گزارش مالی', 'گزارش مالی', $cap, 'wci-reports', hesabdar_wci_page_cb( 'wci_reports_page' ) );
 		add_submenu_page( 'wci-orders', 'شاپرک و کارمزد', 'شاپرک و کارمزد', $cap, 'wci-shaparak', hesabdar_wci_page_cb( 'wci_shaparak_report_page' ) );
+		add_submenu_page( 'wci-orders', 'داشبورد تصویری', 'داشبورد تصویری', $cap, 'wci-analytics', function() {
+			if ( ! hesabdar_user_can_wci() ) {
+				wp_die( 'Unauthorized' );
+			}
+			$url = class_exists( 'WAP_Portal' ) ? add_query_arg( 'wap_view', 'analytics', WAP_Portal::panel_url() ) : admin_url();
+			echo '<div class="wrap"><h1>داشبورد تصویری حسابدار</h1>';
+			echo '<p>نمودارهای فروش ناخالص/خالص، درگاه‌ها، منبع ورود، مشتریان ثابت، پرفروش و پیک خرید در پرتال حسابدار است.</p>';
+			echo '<p><a class="button button-primary" href="' . esc_url( $url ) . '" target="_blank">باز کردن داشبورد تصویری</a></p></div>';
+		} );
 		add_submenu_page( 'wci-orders', 'تنظیمات فاکتور', 'تنظیمات فاکتور', $cap, 'wci-settings', hesabdar_wci_page_cb( 'wci_settings_page' ) );
 	} );
 
@@ -608,6 +620,9 @@ add_filter( 'login_redirect', function( $redirect_to, $requested_redirect_to, $u
 }, 10, 3 );
 
 WAP_Admin::init();
+if ( class_exists( 'WAP_Traffic' ) ) {
+	WAP_Traffic::init();
+}
 if ( class_exists( 'WAP_Payment_Notify' ) ) {
 	WAP_Payment_Notify::init();
 }

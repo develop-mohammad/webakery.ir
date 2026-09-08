@@ -92,8 +92,20 @@ class WAP_Payment_Notify {
 	}
 
 	public static function is_zarinpal_method( string $method ): bool {
+		if ( class_exists( 'WAP_Gateway' ) ) {
+			return WAP_Gateway::is_family( $method, WAP_Gateway::FAMILY_ZARINPAL );
+		}
 		$method = strtolower( $method );
 		return (bool) preg_match( '/zarin|zpal|زرین/', $method );
+	}
+
+	/** آیا روش پرداخت جزو درگاه‌های پشتیبانی‌شده (نه COD) است؟ */
+	public static function is_online_gateway( string $method ): bool {
+		if ( class_exists( 'WAP_Gateway' ) ) {
+			$fam = WAP_Gateway::family( $method );
+			return $fam !== WAP_Gateway::FAMILY_OTHER;
+		}
+		return self::is_zarinpal_method( $method );
 	}
 
 	public static function handle_test_sms(): void {
