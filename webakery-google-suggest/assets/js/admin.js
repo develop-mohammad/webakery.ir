@@ -7,6 +7,7 @@
 	var stopBtn = document.getElementById('wbgs-stop');
 	var listEl = document.getElementById('wbgs-list');
 	var treeEl = document.getElementById('wbgs-tree');
+	var clusterEl = document.getElementById('wbgs-cluster');
 	var emptyEl = document.getElementById('wbgs-empty');
 	var countEl = document.getElementById('wbgs-count');
 	var statusEl = document.getElementById('wbgs-status');
@@ -18,6 +19,9 @@
 	var txtBtn = document.getElementById('wbgs-txt');
 	var viewListBtn = document.getElementById('wbgs-view-list');
 	var viewTreeBtn = document.getElementById('wbgs-view-tree');
+	var viewClusterBtn = document.getElementById('wbgs-view-cluster');
+	var filtersEl = document.getElementById('wbgs-intent-filters');
+	var googleRoot = document.querySelector('[data-wbgs-ui="google"]');
 
 	if (!seedEl || !startBtn) {
 		return;
@@ -26,14 +30,43 @@
 	var running = false;
 	var stopFlag = false;
 	var view = 'list';
+	var intentFilter = 'all';
 	var items = [];
 	var seen = {};
+
+	var INTENT_RULES = {
+		navigational: ['دیجی کالا', 'دیجیکالا', 'آمازون', 'دیوار', 'اینستاگرام', 'ترب', 'amazon', 'digikala', 'instagram', '.com', '.ir'],
+		transactional: ['خرید', 'فروش', 'سفارش', 'ارزان', 'تخفیف', 'قیمت', 'اینترنتی', 'آنلاین', 'buy', 'price', 'cheap', 'order', 'shop'],
+		informational: ['چیست', 'چیه', 'چگونه', 'چطور', 'چرا', 'یعنی', 'آموزش', 'راهنما', 'معنی', 'how', 'what', 'why'],
+		commercial: ['بهترین', 'مقایسه', 'بررسی', 'انواع', 'مدل', 'تفاوت', 'best', 'review', 'compare']
+	};
 
 	function i18n(key) {
 		return (cfg.i18n && cfg.i18n[key]) || key;
 	}
 
+	function intentLabel(key) {
+		return (cfg.intents && cfg.intents[key]) || key;
+	}
+
+	function classifyIntent(text) {
+		var t = String(text || '');
+		var groups = ['navigational', 'transactional', 'informational', 'commercial'];
+		for (var g = 0; g < groups.length; g++) {
+			var key = groups[g];
+			for (var i = 0; i < INTENT_RULES[key].length; i++) {
+				if (t.toLowerCase().indexOf(INTENT_RULES[key][i].toLowerCase()) !== -1) {
+					return key;
+				}
+			}
+		}
+		return 'commercial';
+	}
+
 	function setStatus(text, kind) {
+		if (!statusEl) {
+			return;
+		}
 		statusEl.textContent = text || '';
 		statusEl.classList.remove('is-error', 'is-ok');
 		if (kind) {
@@ -88,38 +121,42 @@
 		return tt;
 	}
 
-	function score(row) {
-		var relevance = row.relevance || 0;
-		var count = Math.max(1, row.count || 1);
-		var rank = row.rank || 10;
-		return (relevance * 2) + (count * 20) + Math.max(0, 16 - rank);
-	}
-
-	function applyVolume() {
-		var max = 1;
-		items.forEach(function (row) {
-			max = Math.max(max, score(row));
-		});
-		items.forEach(function (row) {
-			row.volume = Math.round((100 * score(row)) / max);
+	function visibleItems() {
+		if (intentFilter === 'all') {
+			return items.slice();
+		}
+		return items.filter(function (row) {
+			return row.intent === intentFilter;
 		});
 	}
 
-	function volBar(n) {
-		var wrap = document.createElement('span');
-		wrap.className = 'wbgs-vol';
-		wrap.title = 'میزان سرچ نسبی از سجست گوگل';
-		var bar = document.createElement('span');
-		bar.className = 'wbgs-vol-bar';
-		var fill = document.createElement('i');
-		fill.style.width = Math.max(0, Math.min(100, n || 0)) + '%';
-		bar.appendChild(fill);
-		var num = document.createElement('span');
-		num.className = 'wbgs-vol-n';
-		num.textContent = String(n || 0);
-		wrap.appendChild(bar);
-		wrap.appendChild(num);
-		return wrap;
+	function formatNum(n) {
+		n = parseInt(n, 10);
+		if (!n && n !== 0) {
+			return '';
+		}
+		return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+	}
+
+	function searchesCell(row) {
+		var el = document.createElement('span');
+		if (row.searches == null) {
+			el.className = 'wbgs-searches is-empty';
+			el.textContent = '—';
+			el.title = i18n('vol_off');
+			return el;
+		}
+		el.className = 'wbgs-searches';
+		el.textContent = formatNum(row.searches);
+		el.title = 'میانگین جستجوی ماهانهٔ واقعی از Keyword Planner';
+		return el;
+	}
+
+	function intentBadge(row) {
+		var el = document.createElement('span');
+		el.className = 'wbgs-intent wbgs-intent-' + (row.intent || 'commercial');
+		el.textContent = intentLabel(row.intent || 'commercial');
+		return el;
 	}
 
 	function setView(next) {
@@ -130,12 +167,45 @@
 		if (treeEl) {
 			treeEl.hidden = view !== 'tree';
 		}
+		if (clusterEl) {
+			clusterEl.hidden = view !== 'cluster';
+		}
 		if (viewListBtn) {
 			viewListBtn.classList.toggle('wbgs-view-on', view === 'list');
 		}
 		if (viewTreeBtn) {
 			viewTreeBtn.classList.toggle('wbgs-view-on', view === 'tree');
 		}
+		if (viewClusterBtn) {
+			viewClusterBtn.classList.toggle('wbgs-view-on', view === 'cluster');
+		}
+	}
+
+	function renderFilters() {
+		if (!filtersEl) {
+			return;
+		}
+		var counts = { all: items.length };
+		items.forEach(function (row) {
+			counts[row.intent] = (counts[row.intent] || 0) + 1;
+		});
+		filtersEl.innerHTML = '';
+		filtersEl.hidden = items.length === 0;
+		var keys = ['all', 'informational', 'commercial', 'transactional', 'navigational'];
+		keys.forEach(function (key) {
+			if (key !== 'all' && !counts[key]) {
+				return;
+			}
+			var btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = key === intentFilter ? 'is-on' : '';
+			btn.textContent = (key === 'all' ? 'همه' : intentLabel(key)) + ' ' + (counts[key] || 0);
+			btn.addEventListener('click', function () {
+				intentFilter = key;
+				render();
+			});
+			filtersEl.appendChild(btn);
+		});
 	}
 
 	function renderList() {
@@ -143,24 +213,25 @@
 			return;
 		}
 		listEl.innerHTML = '';
-		items.forEach(function (row) {
+		visibleItems().forEach(function (row) {
 			var li = document.createElement('li');
 			var kw = document.createElement('span');
 			kw.className = 'wbgs-kw';
-			kw.textContent = row.text;
+			kw.appendChild(document.createTextNode(row.text));
 			li.appendChild(kw);
-			li.appendChild(volBar(row.volume));
+			li.appendChild(intentBadge(row));
+			li.appendChild(searchesCell(row));
 			listEl.appendChild(li);
 		});
 	}
 
 	function emptyNode(label) {
-		return { label: label, children: {}, leaves: [], volume: 0, count: 0 };
+		return { label: label, children: {}, leaves: [], searches: 0, count: 0 };
 	}
 
-	function buildTree(seed) {
+	function buildTree(seed, rows) {
 		var root = emptyNode(seed || 'ریشه');
-		items.forEach(function (row) {
+		rows.forEach(function (row) {
 			var path = branchPath(seed, row.text);
 			if (!path.length) {
 				root.leaves.push(row);
@@ -178,65 +249,73 @@
 				}
 			});
 		});
-
 		function rollup(node) {
 			var count = node.leaves.length;
-			var volume = 0;
+			var searches = 0;
 			node.leaves.forEach(function (leaf) {
-				volume = Math.max(volume, leaf.volume || 0);
+				searches += leaf.searches || 0;
 			});
 			Object.keys(node.children).forEach(function (key) {
 				rollup(node.children[key]);
 				count += node.children[key].count;
-				volume = Math.max(volume, node.children[key].volume);
+				searches += node.children[key].searches;
 			});
 			node.count = count;
-			node.volume = volume;
+			node.searches = searches;
 		}
 		rollup(root);
 		return root;
 	}
 
-	function renderNode(node) {
-		var keys = Object.keys(node.children);
+	function renderKNode(node, open) {
 		var wrap = document.createElement('div');
-		if (!keys.length && !node.leaves.length) {
-			return wrap;
-		}
-
-		keys.sort(function (a, b) {
-			return (node.children[b].volume || 0) - (node.children[a].volume || 0);
+		var keys = Object.keys(node.children).sort(function (a, b) {
+			return (node.children[b].searches || node.children[b].count) - (node.children[a].searches || node.children[a].count);
 		});
-
 		keys.forEach(function (key) {
 			var child = node.children[key];
-			var det = document.createElement('details');
-			det.open = keys.length < 12;
-			var sum = document.createElement('summary');
-			var title = document.createElement('span');
-			title.textContent = child.label + ' (' + child.count + ')';
-			sum.appendChild(title);
-			sum.appendChild(volBar(child.volume));
-			det.appendChild(sum);
-			det.appendChild(renderNode(child));
-			wrap.appendChild(det);
+			var box = document.createElement('div');
+			var row = document.createElement('div');
+			row.className = 'wbgs-ktree-row is-branch';
+			var tog = document.createElement('span');
+			tog.className = 'wbgs-ktree-tog';
+			tog.textContent = open ? '▾' : '▸';
+			row.appendChild(tog);
+			var name = document.createElement('span');
+			name.className = 'wbgs-kw';
+			name.textContent = child.label + ' (' + child.count + ')';
+			row.appendChild(name);
+			var gap = document.createElement('span');
+			gap.className = 'wbgs-intent wbgs-intent-branch';
+			gap.textContent = 'شاخه';
+			row.appendChild(gap);
+			row.appendChild(searchesCell({ searches: child.searches || null }));
+			var kids = document.createElement('div');
+			kids.className = 'wbgs-ktree-kids';
+			kids.hidden = !open;
+			kids.appendChild(renderKNode(child, child.count < 8));
+			row.addEventListener('click', function () {
+				kids.hidden = !kids.hidden;
+				tog.textContent = kids.hidden ? '▸' : '▾';
+			});
+			box.appendChild(row);
+			box.appendChild(kids);
+			wrap.appendChild(box);
 		});
-
 		if (node.leaves.length) {
-			var ul = document.createElement('ul');
-			ul.className = 'wbgs-tree-leaves';
 			node.leaves.slice().sort(function (a, b) {
-				return (b.volume || 0) - (a.volume || 0);
+				return (b.searches || 0) - (a.searches || 0);
 			}).forEach(function (row) {
-				var li = document.createElement('li');
+				var line = document.createElement('div');
+				line.className = 'wbgs-ktree-row';
 				var kw = document.createElement('span');
 				kw.className = 'wbgs-kw';
 				kw.textContent = row.text;
-				li.appendChild(kw);
-				li.appendChild(volBar(row.volume));
-				ul.appendChild(li);
+				line.appendChild(kw);
+				line.appendChild(intentBadge(row));
+				line.appendChild(searchesCell(row));
+				wrap.appendChild(line);
 			});
-			wrap.appendChild(ul);
 		}
 		return wrap;
 	}
@@ -245,13 +324,88 @@
 		if (!treeEl) {
 			return;
 		}
-		var seed = (seedEl.value || '').trim();
 		treeEl.innerHTML = '';
-		treeEl.appendChild(renderNode(buildTree(seed)));
+		var head = document.createElement('div');
+		head.className = 'wbgs-ktree-head';
+		['عبارت', 'اینتنت', 'سرچ ماهانه'].forEach(function (label) {
+			var cell = document.createElement('span');
+			cell.textContent = label;
+			head.appendChild(cell);
+		});
+		treeEl.appendChild(head);
+		treeEl.appendChild(renderKNode(buildTree((seedEl.value || '').trim(), visibleItems()), true));
+	}
+
+	function renderCluster() {
+		if (!clusterEl) {
+			return;
+		}
+		clusterEl.innerHTML = '';
+		var seed = (seedEl.value || '').trim();
+		var tree = buildTree(seed, items);
+		var mmap = document.createElement('div');
+		mmap.className = 'wbgs-mmap';
+		var hub = document.createElement('div');
+		hub.className = 'wbgs-mmap-hub';
+		var hubTitle = document.createElement('strong');
+		hubTitle.textContent = seed || 'پیلار';
+		var hubSub = document.createElement('span');
+		hubSub.textContent = 'پیلار — صفحهٔ ستون محتوا';
+		hub.appendChild(hubTitle);
+		hub.appendChild(hubSub);
+		mmap.appendChild(hub);
+		var grid = document.createElement('div');
+		grid.className = 'wbgs-mmap-grid';
+		Object.keys(tree.children).sort(function (a, b) {
+			return (tree.children[b].searches || tree.children[b].count) - (tree.children[a].searches || tree.children[a].count);
+		}).forEach(function (key) {
+			var child = tree.children[key];
+			var card = document.createElement('article');
+			card.className = 'wbgs-mmap-card';
+			var intents = {};
+			var leaves = [];
+			(function walk(n) {
+				leaves = leaves.concat(n.leaves || []);
+				Object.keys(n.children || {}).forEach(function (k) {
+					walk(n.children[k]);
+				});
+			})(child);
+			leaves.forEach(function (row) {
+				intents[row.intent] = (intents[row.intent] || 0) + 1;
+			});
+			var top = 'commercial';
+			var max = 0;
+			Object.keys(intents).forEach(function (k) {
+				if (intents[k] > max) {
+					max = intents[k];
+					top = k;
+				}
+			});
+			var h = document.createElement('h3');
+			h.appendChild(document.createTextNode(key));
+			h.appendChild(intentBadge({ intent: top }));
+			card.appendChild(h);
+			var meta = document.createElement('p');
+			meta.className = 'wbgs-hint';
+			meta.textContent = child.count + ' عبارت' + (child.searches ? ' · مجموع سرچ ماهانه ' + formatNum(child.searches) : '');
+			card.appendChild(meta);
+			var ul = document.createElement('ul');
+			leaves.slice(0, 10).forEach(function (row) {
+				var li = document.createElement('li');
+				var t = document.createElement('span');
+				t.textContent = row.text;
+				li.appendChild(t);
+				li.appendChild(searchesCell(row));
+				ul.appendChild(li);
+			});
+			card.appendChild(ul);
+			grid.appendChild(card);
+		});
+		mmap.appendChild(grid);
+		clusterEl.appendChild(mmap);
 	}
 
 	function render() {
-		applyVolume();
 		countEl.textContent = items.length + ' عبارت';
 		emptyEl.hidden = items.length > 0;
 		copyBtn.disabled = items.length === 0;
@@ -263,8 +417,16 @@
 		if (viewTreeBtn) {
 			viewTreeBtn.disabled = items.length === 0;
 		}
+		if (viewClusterBtn) {
+			viewClusterBtn.disabled = items.length === 0;
+		}
+		if (googleRoot && items.length) {
+			googleRoot.classList.add('has-results');
+		}
+		renderFilters();
 		renderList();
 		renderTree();
+		renderCluster();
 		setView(view);
 	}
 
@@ -292,7 +454,14 @@
 				}
 				return;
 			}
-			var row = { text: text, relevance: relevance, rank: rank, count: 1, volume: 0 };
+			var row = {
+				text: text,
+				relevance: relevance,
+				rank: rank,
+				count: 1,
+				intent: classifyIntent(text),
+				searches: null
+			};
 			seen[text] = row;
 			items.push(row);
 		});
@@ -302,14 +471,22 @@
 	function setBusy(on) {
 		running = on;
 		startBtn.disabled = on || !cfg.licensed;
-		stopBtn.hidden = !on;
+		if (stopBtn) {
+			stopBtn.hidden = !on;
+		}
 		seedEl.disabled = on || !cfg.licensed;
 		document.querySelectorAll('input[name="wbgs-mode"]').forEach(function (el) {
 			el.disabled = on || !cfg.licensed;
 		});
+		if (googleRoot) {
+			googleRoot.classList.toggle('is-busy', on);
+		}
 	}
 
 	function setProgress(current, total) {
+		if (!progressWrap) {
+			return;
+		}
 		var pct = total ? Math.round((current / total) * 100) : 0;
 		progressWrap.hidden = false;
 		progressBar.style.width = pct + '%';
@@ -322,7 +499,11 @@
 		body.set('nonce', cfg.nonce || '');
 		Object.keys(extra || {}).forEach(function (key) {
 			var val = extra[key];
-			if (val && typeof val === 'object' && !Array.isArray(val)) {
+			if (Array.isArray(val)) {
+				val.forEach(function (v) {
+					body.append(key + '[]', v);
+				});
+			} else if (val && typeof val === 'object') {
 				Object.keys(val).forEach(function (inner) {
 					body.set(key + '[' + inner + ']', val[inner]);
 				});
@@ -330,7 +511,6 @@
 				body.set(key, val);
 			}
 		});
-
 		return fetch(cfg.ajax, {
 			method: 'POST',
 			credentials: 'same-origin',
@@ -369,6 +549,40 @@
 		return value;
 	}
 
+	function loadVolumes() {
+		if (!items.length) {
+			return Promise.resolve();
+		}
+		if (!cfg.ads) {
+			setStatus(i18n('vol_off'), '');
+			return Promise.resolve();
+		}
+		setStatus(i18n('vol_wait'), '');
+		return post('wbgs_volumes', {
+			keywords: items.map(function (row) {
+				return row.text;
+			})
+		}).then(function (out) {
+			if (!out.json || !out.json.success) {
+				var msg = out.json && out.json.data && out.json.data.message ? out.json.data.message : i18n('vol_off');
+				setStatus(msg, 'error');
+				return;
+			}
+			var map = (out.json.data && out.json.data.volumes) || {};
+			items.forEach(function (row) {
+				var hit = map[row.text] || map[String(row.text).replace(/\s+/g, ' ').trim()];
+				if (hit && hit.searches != null) {
+					row.searches = parseInt(hit.searches, 10);
+					if (isNaN(row.searches)) {
+						row.searches = null;
+					}
+				}
+			});
+			render();
+			setStatus(i18n('done'), 'ok');
+		});
+	}
+
 	startBtn.addEventListener('click', function () {
 		if (running) {
 			return;
@@ -377,18 +591,17 @@
 			setStatus(i18n('locked'), 'error');
 			return;
 		}
-
 		var seed = (seedEl.value || '').trim();
 		if (!seed) {
 			setStatus(i18n('empty'), 'error');
 			seedEl.focus();
 			return;
 		}
-
 		items = [];
 		seen = {};
 		stopFlag = false;
 		view = 'list';
+		intentFilter = 'all';
 		render();
 		setBusy(true);
 		setStatus('');
@@ -402,22 +615,28 @@
 				}
 				return runQueries(out.json.data.queries || []);
 			})
+			.then(function () {
+				if (items.length) {
+					view = 'list';
+					return loadVolumes();
+				}
+			})
 			.catch(function (err) {
 				setStatus(err.message || i18n('network'), 'error');
 			})
 			.then(function () {
 				setBusy(false);
 				if (items.length) {
-					view = 'tree';
 					render();
 				}
 			});
 	});
 
-	stopBtn.addEventListener('click', function () {
-		stopFlag = true;
-	});
-
+	if (stopBtn) {
+		stopBtn.addEventListener('click', function () {
+			stopFlag = true;
+		});
+	}
 	if (viewListBtn) {
 		viewListBtn.addEventListener('click', function () {
 			setView('list');
@@ -426,6 +645,11 @@
 	if (viewTreeBtn) {
 		viewTreeBtn.addEventListener('click', function () {
 			setView('tree');
+		});
+	}
+	if (viewClusterBtn) {
+		viewClusterBtn.addEventListener('click', function () {
+			setView('cluster');
 		});
 	}
 
@@ -446,13 +670,12 @@
 
 	csvBtn.addEventListener('click', function () {
 		var seed = (seedEl.value || '').trim();
-		var header = ['keyword', 'volume', 'relevance', 'count', 'branch'];
+		var header = ['keyword', 'intent', 'searches', 'branch'];
 		var rows = [header.join(',')].concat(items.map(function (row) {
 			return [
 				csvEscape(row.text),
-				row.volume || 0,
-				row.relevance || 0,
-				row.count || 1,
+				csvEscape(intentLabel(row.intent)),
+				row.searches == null ? '' : row.searches,
 				csvEscape(branchPath(seed, row.text).join(' > '))
 			].join(',');
 		}));
@@ -468,7 +691,6 @@
 	function runQueries(queries) {
 		var delay = Math.max(150, parseInt(cfg.delay, 10) || 300);
 		var i = 0;
-
 		function next() {
 			if (stopFlag) {
 				setStatus(i18n('stopped'), 'ok');
@@ -483,7 +705,6 @@
 				}
 				return Promise.resolve();
 			}
-
 			var q = queries[i];
 			setProgress(i, queries.length);
 			return post('wbgs_fetch', { q: q }).then(function (out) {
@@ -500,7 +721,15 @@
 				return sleep(delay).then(next);
 			});
 		}
-
 		return next();
+	}
+
+	if (seedEl && startBtn) {
+		seedEl.addEventListener('keydown', function (e) {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				startBtn.click();
+			}
+		});
 	}
 })();

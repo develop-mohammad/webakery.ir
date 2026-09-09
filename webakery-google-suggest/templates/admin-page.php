@@ -47,6 +47,13 @@ defined( 'ABSPATH' ) || exit;
 				</label>
 			</p>
 			<p>
+				<label class="wbgs-check">
+					<input type="checkbox" name="front_public" value="1" <?php checked( ! empty( $settings['front_public'] ) ); ?> />
+					ابزار رایگان بدون ورود (شورت‌کد و صفحهٔ جدا)
+				</label>
+			</p>
+			<p class="wbgs-hint">شورت‌کد صفحهٔ گوگل‌مانند: <code>[webakery_suggest]</code></p>
+			<p>
 				<label class="wbgs-label" for="wbgs-slug">آدرس صفحه (اسلاگ)</label>
 				<input id="wbgs-slug" class="wbgs-input wbgs-input-sm" type="text" name="front_slug" value="<?php echo esc_attr( $settings['front_slug'] ); ?>" dir="ltr" />
 			</p>
@@ -72,6 +79,32 @@ defined( 'ABSPATH' ) || exit;
 			<p>
 				<label class="wbgs-label" for="wbgs-delay">فاصله بین درخواست‌ها (میلی‌ثانیه)</label>
 				<input id="wbgs-delay" class="wbgs-input wbgs-input-sm" type="number" name="delay_ms" min="150" max="2000" step="50" value="<?php echo esc_attr( (string) $settings['delay_ms'] ); ?>" dir="ltr" />
+			</p>
+			<h2>میزان سرچ دقیق (Google Ads Keyword Planner)</h2>
+			<p class="wbgs-hint">عدد ماهانه فقط از خودِ گوگل ادز خوانده می‌شود. اگر وصل نباشد، ستون سرچ خالی می‌ماند — هیچ عددی ساخته نمی‌شود.</p>
+			<p>
+				<label class="wbgs-label">Developer token</label>
+				<input class="wbgs-input" type="password" name="ads_developer_token" value="" autocomplete="off" placeholder="<?php echo $settings['ads_developer_token'] ? '•••• ذخیره شده' : ''; ?>" />
+			</p>
+			<p>
+				<label class="wbgs-label">OAuth Client ID</label>
+				<input class="wbgs-input" type="text" name="ads_client_id" value="<?php echo esc_attr( $settings['ads_client_id'] ); ?>" dir="ltr" />
+			</p>
+			<p>
+				<label class="wbgs-label">OAuth Client Secret</label>
+				<input class="wbgs-input" type="password" name="ads_client_secret" value="" autocomplete="off" placeholder="<?php echo $settings['ads_client_secret'] ? '•••• ذخیره شده' : ''; ?>" />
+			</p>
+			<p>
+				<label class="wbgs-label">Refresh token</label>
+				<input class="wbgs-input" type="password" name="ads_refresh_token" value="" autocomplete="off" placeholder="<?php echo $settings['ads_refresh_token'] ? '•••• ذخیره شده' : ''; ?>" />
+			</p>
+			<p>
+				<label class="wbgs-label">Customer ID (اعداد)</label>
+				<input class="wbgs-input wbgs-input-sm" type="text" name="ads_customer_id" value="<?php echo esc_attr( $settings['ads_customer_id'] ); ?>" dir="ltr" />
+			</p>
+			<p>
+				<label class="wbgs-label">Login customer ID (اختیاری، MCC)</label>
+				<input class="wbgs-input wbgs-input-sm" type="text" name="ads_login_customer_id" value="<?php echo esc_attr( $settings['ads_login_customer_id'] ); ?>" dir="ltr" />
 			</p>
 			<?php submit_button( 'ذخیره تنظیمات' ); ?>
 		</form>

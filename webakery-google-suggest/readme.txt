@@ -5,7 +5,7 @@ Tags: google suggest, autocomplete, keywords, seo, webakery
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.1.0
 License: GPLv2 or later
 
 استخراج پیشنهادهای واقعی Autocomplete گوگل با فاصله قبل/بعد و حرف‌گردانی الفبای فارسی.
@@ -31,6 +31,12 @@ License: GPLv2 or later
 4. ورود آسان را برای پیامک و جیمیل تنظیم کنید.
 
 == Changelog ==
+
+= 1.1.0 =
+* شورت‌کد صفحهٔ شبیه گوگل: تایپ عبارت + دکمهٔ «نمایش همه عبارت‌ها»
+* اینتن جستجو برای هر عبارت
+* میزان سرچ ماهانهٔ واقعی از Google Ads Keyword Planner (بدون عدد ساختگی)
+* درخت محتوایی شبیه کیوردریسرچ و نمای پیلار کلاستر
 
 = 1.0.2 =
 * درخت محتوا از پیشنهادهای واقعی گوگل

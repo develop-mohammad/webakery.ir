@@ -161,4 +161,68 @@ class WBGS_Tree {
 		$node['count']  = $count;
 		$node['volume'] = $volume;
 	}
+
+	/**
+	 * پیلار (عبارت پایه) + کلاسترهای موضوعی از همان کیوردهای گوگل.
+	 *
+	 * @param string           $seed
+	 * @param array<int,array> $rows
+	 * @return array{pillar:string,clusters:array<int,array>}
+	 */
+	public static function clusters( $seed, $rows ) {
+		$rows = WBGS_Intent::attach( $rows );
+		$tree = self::build( $seed, $rows );
+		$out  = array();
+		foreach ( $tree['children'] as $label => $child ) {
+			$leaves = self::flatten_leaves( $child );
+			$intents = array();
+			$searches = 0;
+			foreach ( $leaves as $leaf ) {
+				$key = isset( $leaf['intent'] ) ? $leaf['intent'] : WBGS_Intent::classify( $leaf['text'] );
+				if ( ! isset( $intents[ $key ] ) ) {
+					$intents[ $key ] = 0;
+				}
+				$intents[ $key ]++;
+				$searches += isset( $leaf['searches'] ) ? (int) $leaf['searches'] : 0;
+			}
+			arsort( $intents );
+			$top = $intents ? (string) array_key_first( $intents ) : WBGS_Intent::COMMERCIAL;
+			$labels = WBGS_Intent::labels();
+			$out[]  = array(
+				'name'       => $label,
+				'count'      => count( $leaves ),
+				'searches'   => $searches,
+				'intent'     => $top,
+				'intent_fa'  => isset( $labels[ $top ] ) ? $labels[ $top ] : '',
+				'keywords'   => $leaves,
+			);
+		}
+		usort(
+			$out,
+			function ( $a, $b ) {
+				if ( $a['searches'] === $b['searches'] ) {
+					return $b['count'] - $a['count'];
+				}
+				return $b['searches'] - $a['searches'];
+			}
+		);
+		return array(
+			'pillar'   => WBGS_Suggest::normalize_seed( $seed ),
+			'clusters' => $out,
+		);
+	}
+
+	/**
+	 * @param array $node
+	 * @return array<int,array>
+	 */
+	public static function flatten_leaves( $node ) {
+		$out = isset( $node['leaves'] ) ? $node['leaves'] : array();
+		if ( ! empty( $node['children'] ) && is_array( $node['children'] ) ) {
+			foreach ( $node['children'] as $child ) {
+				$out = array_merge( $out, self::flatten_leaves( $child ) );
+			}
+		}
+		return $out;
+	}
 }

@@ -2,6 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 /** @var bool $licensed */
 /** @var bool $logged */
+$public = ! empty( WBGS_Plugin::settings()['front_public'] );
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?> dir="rtl">
 <head>
@@ -10,58 +11,36 @@ defined( 'ABSPATH' ) || exit;
 	<title>سجست‌یاب گوگل</title>
 	<?php wp_head(); ?>
 </head>
-<body class="wbgs-app">
+<body class="wbgs-app wbgs-app-google">
 	<div class="wbgs-app-shell">
-		<header class="wbgs-app-head">
-			<div>
-				<h1>سجست‌یاب گوگل</h1>
-				<p>پیشنهادهای واقعی Autocomplete گوگل · webakery.ir</p>
-			</div>
-			<?php if ( $logged ) : ?>
-				<p class="wbgs-app-user">
-					<?php echo esc_html( wp_get_current_user()->display_name ); ?>
-					<a href="<?php echo esc_url( wp_logout_url( WBGS_Frontend::url() ) ); ?>">خروج</a>
-				</p>
-			<?php endif; ?>
-		</header>
+		<?php if ( $logged ) : ?>
+			<p class="wbgs-app-user wbgs-g-user">
+				<?php echo esc_html( wp_get_current_user()->display_name ); ?>
+				<a href="<?php echo esc_url( wp_logout_url( WBGS_Frontend::url() ) ); ?>">خروج</a>
+			</p>
+		<?php endif; ?>
 
-		<?php if ( ! $logged ) : ?>
+		<?php if ( ! $logged && ! $public ) : ?>
 			<section class="wbgs-login-panel">
 				<h2>ورود برای استفاده از ابزار</h2>
-				<p class="wbgs-hint">با شماره موبایل یا حساب جیمیل وارد شوید. بعد از ورود، استخراج سجست در همین صفحه باز می‌شود.</p>
 				<?php
 				if ( WBGS_Frontend::has_easy_login() ) {
 					echo WBL_Frontend::shortcode( // phpcs:ignore WordPress.Security.EscapeOutput
 						array(
-							'redirect'   => WBGS_Frontend::url(),
-							'title'      => 'ورود به سجست‌یاب',
-							'subtitle'   => 'موبایل یا جیمیل',
+							'redirect' => WBGS_Frontend::url(),
+							'title'    => 'ورود به سجست‌یاب',
+							'subtitle' => 'موبایل یا جیمیل',
 						)
 					);
 				} else {
-					echo '<div class="wbgs-card">';
-					if ( current_user_can( 'manage_options' ) ) {
-						echo '<p class="wbgs-admin-hint">برای ورود با موبایل و جیمیل، افزونه «ورود آسان» را نصب و فعال کنید. تا آن زمان فرم ورود وردپرس نمایش داده می‌شود.</p>';
-					}
-					wp_login_form(
-						array(
-							'redirect'       => WBGS_Frontend::url(),
-							'label_username' => 'نام کاربری یا ایمیل',
-							'label_password' => 'رمز عبور',
-							'label_log_in'   => 'ورود',
-							'remember'       => true,
-						)
-					);
-					echo '</div>';
+					wp_login_form( array( 'redirect' => WBGS_Frontend::url() ) );
 				}
 				?>
 			</section>
 		<?php elseif ( ! $licensed ) : ?>
-			<div class="wbgs-card">
-				<p>لایسنس یا دوره آزمایشی سجست‌یاب فعال نیست. مدیر سایت باید از پیشخوان افزونه را فعال کند.</p>
-			</div>
+			<div class="wbgs-card"><p>لایسنس سجست‌یاب فعال نیست.</p></div>
 		<?php else : ?>
-			<?php include WBGS_PATH . 'templates/extract-form.php'; ?>
+			<?php include WBGS_PATH . 'templates/google-home.php'; ?>
 		<?php endif; ?>
 	</div>
 	<?php wp_footer(); ?>

@@ -9,6 +9,17 @@
 	font-family: Vazirmatn, Tahoma, sans-serif;
 }
 
+.wbgs-app-google {
+	background: #fff;
+	color: #202124;
+}
+
+.wbgs-embed .wbgs-g {
+	font-family: inherit;
+	max-width: 100%;
+	padding-top: 8px;
+}
+
 .wbgs-app [hidden] {
 	display: none !important;
 }

@@ -1,0 +1,56 @@
+<?php
+defined( 'ABSPATH' ) || exit;
+/** @var bool $licensed */
+?>
+<div class="wbgs-g" data-wbgs-ui="google" dir="rtl">
+	<div class="wbgs-g-hero" id="wbgs-hero">
+		<div class="wbgs-g-logo" aria-hidden="true">
+			<span>س</span><span>ج</span><span>س</span><span>ت</span><span>‌</span><span>ی</span><span>ا</span><span>ب</span>
+		</div>
+		<p class="wbgs-g-tag">همه پیشنهادهای واقعی گوگل برای یک عبارت</p>
+		<div class="wbgs-g-box">
+			<span class="wbgs-g-icon" aria-hidden="true">
+				<svg width="20" height="20" viewBox="0 0 24 24"><path fill="#9aa0a6" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+			</span>
+			<input id="wbgs-seed" class="wbgs-g-input" type="text" dir="auto" placeholder="عبارت را بنویسید؛ مثلاً کفش" <?php disabled( ! $licensed ); ?> />
+		</div>
+		<div class="wbgs-g-btns">
+			<button type="button" class="wbgs-g-btn" id="wbgs-start" <?php disabled( ! $licensed ); ?>>نمایش همه عبارت‌ها</button>
+			<button type="button" class="wbgs-g-btn" id="wbgs-stop" hidden>توقف</button>
+		</div>
+		<fieldset class="wbgs-modes wbgs-g-modes" <?php disabled( ! $licensed ); ?>>
+			<legend>روش استخراج</legend>
+			<label><input type="checkbox" name="wbgs-mode" value="space" checked /> فاصله</label>
+			<label><input type="checkbox" name="wbgs-mode" value="alphabet" checked /> الفبا</label>
+			<label><input type="checkbox" name="wbgs-mode" value="modifiers" checked /> پیشوند رایج</label>
+			<label><input type="checkbox" name="wbgs-mode" value="latin" /> a–z</label>
+			<label><input type="checkbox" name="wbgs-mode" value="digits" /> ارقام</label>
+		</fieldset>
+		<div class="wbgs-progress" id="wbgs-progress" hidden>
+			<div class="wbgs-progress-bar" id="wbgs-progress-bar"></div>
+			<p class="wbgs-progress-text" id="wbgs-progress-text"></p>
+		</div>
+		<p class="wbgs-status" id="wbgs-status" role="status"></p>
+	</div>
+
+	<div class="wbgs-g-stage" id="wbgs-stage">
+		<div class="wbgs-results-head">
+			<h2>عبارت‌ها</h2>
+			<span class="wbgs-count" id="wbgs-count">۰ عبارت</span>
+		</div>
+		<p class="wbgs-hint">عبارت‌ها فقط از Autocomplete واقعی گوگل هستند. اینتنت از خودِ عبارت خوانده می‌شود. سرچ ماهانه فقط با اتصال Keyword Planner پر می‌شود؛ وگرنه «—» می‌ماند.</p>
+		<div class="wbgs-actions">
+			<button type="button" class="button" id="wbgs-view-list" disabled>عبارت‌ها</button>
+			<button type="button" class="button" id="wbgs-view-tree" disabled>درخت کیورد</button>
+			<button type="button" class="button" id="wbgs-view-cluster" disabled>پیلار کلاستر</button>
+			<button type="button" class="button" id="wbgs-copy" disabled>کپی</button>
+			<button type="button" class="button" id="wbgs-csv" disabled>CSV</button>
+			<button type="button" class="button" id="wbgs-txt" disabled>TXT</button>
+		</div>
+		<div class="wbgs-intent-filters" id="wbgs-intent-filters" hidden></div>
+		<ol class="wbgs-list" id="wbgs-list"></ol>
+		<div class="wbgs-ktree" id="wbgs-tree" hidden></div>
+		<div class="wbgs-pillar" id="wbgs-cluster" hidden></div>
+		<p class="wbgs-empty" id="wbgs-empty">عبارت را بنویسید و دکمه را بزنید.</p>
+	</div>
+</div>

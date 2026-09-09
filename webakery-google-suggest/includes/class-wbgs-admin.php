@@ -21,6 +21,10 @@ class WBGS_Admin {
 		add_action( 'admin_post_wbgs_save_settings', array( $this, 'handle_save_settings' ) );
 		add_action( 'wp_ajax_wbgs_queries', array( $this, 'ajax_queries' ) );
 		add_action( 'wp_ajax_wbgs_fetch', array( $this, 'ajax_fetch' ) );
+		add_action( 'wp_ajax_wbgs_volumes', array( $this, 'ajax_volumes' ) );
+		add_action( 'wp_ajax_nopriv_wbgs_queries', array( $this, 'ajax_queries' ) );
+		add_action( 'wp_ajax_nopriv_wbgs_fetch', array( $this, 'ajax_fetch' ) );
+		add_action( 'wp_ajax_nopriv_wbgs_volumes', array( $this, 'ajax_volumes' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( WBGS_FILE ), array( $this, 'action_links' ) );
 	}
 
@@ -42,6 +46,7 @@ class WBGS_Admin {
 		}
 
 		wp_enqueue_style( 'wbgs-admin', WBGS_URL . 'assets/css/admin.css', array(), WBGS_VERSION );
+		wp_enqueue_style( 'wbgs-google', WBGS_URL . 'assets/css/google.css', array( 'wbgs-admin' ), WBGS_VERSION );
 		wp_enqueue_script( 'wbgs-admin', WBGS_URL . 'assets/js/admin.js', array(), WBGS_VERSION, true );
 		wp_localize_script( 'wbgs-admin', 'wbgsAdmin', WBGS_Plugin::script_data( 'wbgs_admin' ) );
 	}
@@ -86,15 +91,28 @@ class WBGS_Admin {
 
 		$slug = isset( $_POST['front_slug'] ) ? wp_unslash( $_POST['front_slug'] ) : 'sajest';
 		$slug = WBGS_Frontend::sanitize_slug( is_string( $slug ) ? $slug : 'sajest' );
+		$prev = WBGS_Plugin::settings();
+
+		$keep = function ( $key ) use ( $prev ) {
+			$raw = isset( $_POST[ $key ] ) ? trim( (string) wp_unslash( $_POST[ $key ] ) ) : '';
+			return $raw !== '' ? $raw : (string) $prev[ $key ];
+		};
 
 		update_option(
 			WBGS_Plugin::OPTION,
 			array(
-				'hl'            => $hl ? $hl : 'fa',
-				'gl'            => $gl ? $gl : 'ir',
-				'delay_ms'      => $delay,
-				'front_enabled' => ! empty( $_POST['front_enabled'] ) ? 1 : 0,
-				'front_slug'    => $slug,
+				'hl'                    => $hl ? $hl : 'fa',
+				'gl'                    => $gl ? $gl : 'ir',
+				'delay_ms'              => $delay,
+				'front_enabled'         => ! empty( $_POST['front_enabled'] ) ? 1 : 0,
+				'front_public'          => ! empty( $_POST['front_public'] ) ? 1 : 0,
+				'front_slug'            => $slug,
+				'ads_developer_token'   => $keep( 'ads_developer_token' ),
+				'ads_client_id'         => $keep( 'ads_client_id' ),
+				'ads_client_secret'     => $keep( 'ads_client_secret' ),
+				'ads_refresh_token'     => $keep( 'ads_refresh_token' ),
+				'ads_customer_id'       => preg_replace( '/\D/', '', $keep( 'ads_customer_id' ) ),
+				'ads_login_customer_id' => preg_replace( '/\D/', '', $keep( 'ads_login_customer_id' ) ),
 			),
 			false
 		);
@@ -169,6 +187,35 @@ class WBGS_Admin {
 		);
 	}
 
+	public function ajax_volumes() {
+		$this->ajax_guard();
+		$this->rate_limit_front();
+
+		$raw = isset( $_POST['keywords'] ) ? wp_unslash( $_POST['keywords'] ) : array();
+		if ( is_string( $raw ) ) {
+			$raw = explode( "\n", $raw );
+		}
+		$keywords = array();
+		foreach ( (array) $raw as $kw ) {
+			if ( is_string( $kw ) && trim( $kw ) !== '' ) {
+				$keywords[] = $kw;
+			}
+		}
+		$settings = WBGS_Plugin::settings();
+		$out      = WBGS_Ads::volumes( $keywords, $settings['hl'], $settings['gl'] );
+		if ( ! $out['ok'] ) {
+			wp_send_json_error(
+				array(
+					'message'     => $out['message'],
+					'configured'  => $out['configured'],
+					'volumes'     => $out['volumes'],
+				),
+				$out['configured'] ? 502 : 400
+			);
+		}
+		wp_send_json_success( $out );
+	}
+
 	public function action_links( $links ) {
 		$url   = admin_url( 'admin.php?page=' . WBGS_MENU );
 		$front = '<a href="' . esc_url( $url ) . '">استخراج</a>';
@@ -181,8 +228,8 @@ class WBGS_Admin {
 	}
 
 	private function ajax_guard() {
-		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( array( 'message' => 'ابتدا وارد شوید.' ), 403 );
+		if ( ! WBGS_Plugin::licensed() ) {
+			wp_send_json_error( array( 'message' => 'لایسنس یا دوره آزمایشی فعال نیست.' ), 402 );
 		}
 		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
 		$admin = $nonce && wp_verify_nonce( $nonce, 'wbgs_admin' );
@@ -193,8 +240,9 @@ class WBGS_Admin {
 		if ( $admin && ! current_user_can( self::CAP ) ) {
 			wp_send_json_error( array( 'message' => 'دسترسی غیرمجاز' ), 403 );
 		}
-		if ( ! WBGS_Plugin::licensed() ) {
-			wp_send_json_error( array( 'message' => 'لایسنس یا دوره آزمایشی فعال نیست.' ), 402 );
+		$public = ! empty( WBGS_Plugin::settings()['front_public'] );
+		if ( ! is_user_logged_in() && ! ( $front && $public ) ) {
+			wp_send_json_error( array( 'message' => 'ابتدا وارد شوید.' ), 403 );
 		}
 	}
 
@@ -202,9 +250,11 @@ class WBGS_Admin {
 		if ( current_user_can( self::CAP ) ) {
 			return;
 		}
-		$key = 'wbgs_rl_' . get_current_user_id();
+		$who = is_user_logged_in() ? ( 'u' . get_current_user_id() ) : ( 'ip' . md5( isset( $_SERVER['REMOTE_ADDR'] ) ? (string) $_SERVER['REMOTE_ADDR'] : 'x' ) );
+		$key = 'wbgs_rl_' . $who;
 		$n   = (int) get_transient( $key );
-		if ( $n >= 90 ) {
+		$cap = is_user_logged_in() ? 90 : 40;
+		if ( $n >= $cap ) {
 			wp_send_json_error(
 				array(
 					'message' => 'تعداد درخواست در این دقیقه زیاد بود. کمی صبر کنید.',

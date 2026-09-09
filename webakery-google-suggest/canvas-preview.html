@@ -3,182 +3,112 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>سجست‌یاب گوگل — پیش‌نمایش</title>
+<title>سجست‌یاب — پیش‌نمایش شورت‌کد</title>
 <link rel="stylesheet" href="assets/css/admin.css" />
 <link rel="stylesheet" href="assets/css/front.css" />
+<link rel="stylesheet" href="assets/css/google.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet" />
 <style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    min-height: 100vh;
-    font-family: Vazirmatn, Tahoma, sans-serif;
-    background: #f1f5f9;
-    color: #0f172a;
-    padding: 28px 16px 48px;
-  }
-  .stage { max-width: 1100px; margin: 0 auto; }
-  .wp-chrome {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 8px 16px;
-    margin-bottom: 16px;
-    color: #64748b;
-    font-size: 13px;
-  }
-  .nav-tab-wrapper { border-bottom: 1px solid #c3c4c7; }
-  .nav-tab {
-    display: inline-block;
-    padding: 8px 14px;
-    margin-left: 4px;
-    text-decoration: none;
-    color: #1d2327;
-    background: #dcdcde;
-    border: 1px solid #c3c4c7;
-    border-bottom: none;
-    border-radius: 4px 4px 0 0;
-  }
-  .nav-tab-active { background: #f1f5f9; font-weight: 700; }
-  .button {
-    display: inline-block;
-    border: 1px solid #8c8f94;
-    background: #f6f7f7;
-    border-radius: 4px;
-    padding: 6px 12px;
-    font: inherit;
-    cursor: default;
-  }
-  .button-primary {
-    background: #0f766e;
-    border-color: #0f766e;
-    color: #fff;
-  }
-  .note {
-    margin-top: 16px;
-    color: #64748b;
-    font-size: 13px;
-    line-height: 1.8;
-  }
-  [hidden] { display: none !important; }
+  body { margin: 0; background: #fff; font-family: Vazirmatn, Tahoma, sans-serif; }
+  .note { max-width: 920px; margin: 0 auto; padding: 12px; color: #5f6368; font-size: 13px; text-align: center; }
+  .button { display: inline-block; border: 1px solid #dadce0; background: #fff; border-radius: 6px; padding: 7px 14px; font: inherit; cursor: pointer; }
+  .wbgs-view-on { border-color: #1a73e8 !important; color: #1a73e8; font-weight: 700; }
 </style>
 </head>
-<body>
-  <div class="stage">
-    <div class="wp-chrome">پیش‌نمایش — صفحهٔ جدا روی سایت (اول ورود، بعد استخراج). داده زنده نیست.</div>
-    <p class="note" style="margin:0 0 12px">
-      <button type="button" class="button" id="show-login">نمایش ورود</button>
-      <button type="button" class="button button-primary" id="show-app">بعد از ورود</button>
-    </p>
-
-    <div id="view-login">
-      <div class="wbgs-app-shell" style="padding:0">
-        <header class="wbgs-app-head">
-          <div>
-            <h1>سجست‌یاب گوگل</h1>
-            <p>پیشنهادهای واقعی Autocomplete گوگل · آدرس نمونه: /sajest/</p>
-          </div>
-        </header>
-        <section class="wbgs-login-panel">
-          <h2>ورود برای استفاده از ابزار</h2>
-          <p class="wbgs-hint">با شماره موبایل یا حساب جیمیل وارد شوید.</p>
-          <div class="wbgs-card">
-            <label class="wbgs-label">شماره موبایل</label>
-            <input class="wbgs-input" type="tel" value="۰۹۱۲۳۴۵۶۷۸۹" readonly dir="ltr" />
-            <div class="wbgs-actions">
-              <button type="button" class="button button-primary">دریافت کد</button>
-            </div>
-            <p class="wbgs-hint" style="margin-top:14px">یا ادامه با گوگل / جیمیل</p>
-            <button type="button" class="button">ادامه با گوگل</button>
-          </div>
-        </section>
+<body class="wbgs-app wbgs-app-google">
+  <p class="note">پیش‌نمایش شورت‌کد <code>[webakery_suggest]</code> — دادهٔ نمونه از Suggest واقعی گوگل برای «کفش». روی سایت زنده از خودِ گوگل خوانده می‌شود.</p>
+  <div class="wbgs-g has-results" data-wbgs-ui="google" dir="rtl">
+    <div class="wbgs-g-hero">
+      <div class="wbgs-g-logo" aria-hidden="true">
+        <span>س</span><span>ج</span><span>س</span><span>ت</span><span>‌</span><span>ی</span><span>ا</span><span>ب</span>
+      </div>
+      <p class="wbgs-g-tag">همه پیشنهادهای واقعی گوگل برای یک عبارت</p>
+      <div class="wbgs-g-box">
+        <span class="wbgs-g-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#9aa0a6" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </span>
+        <input id="wbgs-seed" class="wbgs-g-input" type="text" value="کفش" dir="auto" />
+      </div>
+      <div class="wbgs-g-btns">
+        <button type="button" class="wbgs-g-btn" id="show-list">نمایش همه عبارت‌ها</button>
       </div>
     </div>
-
-    <div id="view-app" hidden>
-    <div class="wrap wbgs-wrap" dir="rtl">
-      <h1 class="wbgs-h1">سجست‌یاب گوگل <span class="wbgs-ver">v1.0.2</span></h1>
-      <p class="wbgs-sub">پیشنهادهای واقعی Autocomplete گوگل — سازنده: webakery.ir</p>
-      <nav class="nav-tab-wrapper wbgs-tabs">
-        <a class="nav-tab nav-tab-active" href="#">استخراج</a>
-        <a class="nav-tab" href="#">تنظیمات</a>
-        <a class="nav-tab" href="#">لایسنس</a>
-      </nav>
-      <div class="wbgs-grid">
-        <section class="wbgs-card">
-          <h2>عبارت پایه</h2>
-          <p class="wbgs-hint">مثل «کفش». ابزار همان عبارت را با فاصله و حروف الفبا از گوگل می‌پرسد.</p>
-          <label class="wbgs-label" for="demo-seed">عبارت</label>
-          <input id="demo-seed" class="wbgs-input" type="text" value="کفش" readonly />
-          <fieldset class="wbgs-modes">
-            <legend>روش‌ها</legend>
-            <label><input type="checkbox" checked disabled /> فاصله قبل و بعد</label>
-            <label><input type="checkbox" checked disabled /> حرف‌گردانی فارسی (ا تا ی)</label>
-            <label><input type="checkbox" disabled /> حروف انگلیسی a–z</label>
-            <label><input type="checkbox" disabled /> ارقام ۰–۹</label>
-            <label><input type="checkbox" disabled /> پیشوندهای رایج (خرید، قیمت، …)</label>
-          </fieldset>
-          <div class="wbgs-actions">
-            <button type="button" class="button button-primary">استخراج از گوگل</button>
-          </div>
-          <div class="wbgs-progress">
-            <div class="wbgs-progress-bar" style="width:70%"></div>
-          </div>
-          <p class="wbgs-progress-text">۹۱ از ۱۳۰ کوئری</p>
-          <p class="wbgs-status is-ok">نمونهٔ ظاهری — داده زنده نیست</p>
-        </section>
-        <section class="wbgs-card">
-          <div class="wbgs-results-head">
-            <h2>نتایج</h2>
-            <span class="wbgs-count">۶ عبارت</span>
-          </div>
-          <p class="wbgs-hint">میزان سرچ نسبی از سجست گوگل — درخت محتوا از همان کیوردها.</p>
-          <div class="wbgs-actions">
-            <button type="button" class="button">لیست</button>
-            <button type="button" class="button wbgs-view-on">درخت محتوا</button>
-            <button type="button" class="button">دانلود CSV</button>
-          </div>
-          <div class="wbgs-tree">
-            <details open>
-              <summary><span>مردانه (۲)</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:100%"></i></span><span class="wbgs-vol-n">100</span></span></summary>
-              <ul class="wbgs-tree-leaves">
-                <li><span class="wbgs-kw">کفش مردانه</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:100%"></i></span><span class="wbgs-vol-n">100</span></span></li>
-                <li><span class="wbgs-kw">کفش مردانه اسپرت</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:72%"></i></span><span class="wbgs-vol-n">72</span></span></li>
-              </ul>
-            </details>
-            <details open>
-              <summary><span>زنانه (۱)</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:81%"></i></span><span class="wbgs-vol-n">81</span></span></summary>
-              <ul class="wbgs-tree-leaves">
-                <li><span class="wbgs-kw">کفش زنانه</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:81%"></i></span><span class="wbgs-vol-n">81</span></span></li>
-              </ul>
-            </details>
-            <details open>
-              <summary><span>خرید (۱)</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:58%"></i></span><span class="wbgs-vol-n">58</span></span></summary>
-              <ul class="wbgs-tree-leaves">
-                <li><span class="wbgs-kw">خرید کفش</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:58%"></i></span><span class="wbgs-vol-n">58</span></span></li>
-              </ul>
-            </details>
-          </div>
-        </section>
+    <div class="wbgs-g-stage">
+      <div class="wbgs-results-head">
+        <h2>عبارت‌ها</h2>
+        <span class="wbgs-count" id="wbgs-count">۱۰ عبارت</span>
       </div>
+      <p class="wbgs-hint">اینتنت از خودِ عبارت است. سرچ ماهانه در این پیش‌نمایش «—» است چون Keyword Planner وصل نیست.</p>
+      <div class="wbgs-actions">
+        <button type="button" class="button wbgs-view-on" id="tab-list">عبارت‌ها</button>
+        <button type="button" class="button" id="tab-tree">درخت کیورد</button>
+        <button type="button" class="button" id="tab-cluster">پیلار کلاستر</button>
+      </div>
+      <div class="wbgs-intent-filters">
+        <button type="button" class="is-on">همه ۱۰</button>
+        <button type="button">تجاری ۷</button>
+        <button type="button">تراکنشی ۲</button>
+        <button type="button">ناوبری ۱</button>
+      </div>
+      <ol class="wbgs-list" id="wbgs-list"></ol>
+      <div class="wbgs-ktree" id="wbgs-tree" hidden></div>
+      <div class="wbgs-pillar" id="wbgs-cluster" hidden></div>
     </div>
-    </div>
-    <p class="note">نصب: دو ZIP را در وردپرس بارگذاری کنید (سجست‌یاب + ورود آسان). آدرس صفحه را در تنظیمات وارد کنید.</p>
   </div>
 <script>
-  document.getElementById('show-login').onclick = function () {
-    document.getElementById('view-login').hidden = false;
-    document.getElementById('view-app').hidden = true;
-  };
-  document.getElementById('show-app').onclick = function () {
-    document.getElementById('view-login').hidden = true;
-    document.getElementById('view-app').hidden = false;
-  };
-  if (/[?&]app=1/.test(location.search)) {
-    document.getElementById('show-app').click();
-  };
+(function () {
+  var rows = [
+    { text: 'کفش مردانه', intent: 'commercial', intent_fa: 'تجاری' },
+    { text: 'کفش زنانه', intent: 'commercial', intent_fa: 'تجاری' },
+    { text: 'خرید کفش', intent: 'transactional', intent_fa: 'تراکنشی' },
+    { text: 'کفش نایک', intent: 'commercial', intent_fa: 'تجاری' },
+    { text: 'قیمت کفش', intent: 'transactional', intent_fa: 'تراکنشی' },
+    { text: 'کفش دیجی کالا', intent: 'navigational', intent_fa: 'ناوبری' },
+    { text: 'کفش جردن', intent: 'commercial', intent_fa: 'تجاری' },
+    { text: 'کفش مجلسی', intent: 'commercial', intent_fa: 'تجاری' },
+    { text: 'کفش کالج', intent: 'commercial', intent_fa: 'تجاری' },
+    { text: 'کفش ونس', intent: 'commercial', intent_fa: 'تجاری' }
+  ];
+  var list = document.getElementById('wbgs-list');
+  var tree = document.getElementById('wbgs-tree');
+  var cluster = document.getElementById('wbgs-cluster');
+  rows.forEach(function (row) {
+    var li = document.createElement('li');
+    li.innerHTML = '<span class="wbgs-kw"></span><span class="wbgs-intent wbgs-intent-' + row.intent + '"></span><span class="wbgs-searches is-empty">—</span>';
+    li.querySelector('.wbgs-kw').textContent = row.text;
+    li.querySelector('.wbgs-intent').textContent = row.intent_fa;
+    list.appendChild(li);
+  });
+  tree.innerHTML = '<div class="wbgs-ktree-head"><span>عبارت</span><span>اینتنت</span><span>سرچ ماهانه</span></div>' +
+    '<div class="wbgs-ktree-row is-branch"><span class="wbgs-ktree-tog">▾</span><span class="wbgs-kw">مردانه (۱)</span><span class="wbgs-intent wbgs-intent-branch">شاخه</span><span class="wbgs-searches is-empty">—</span></div>' +
+    '<div class="wbgs-ktree-kids"><div class="wbgs-ktree-row"><span class="wbgs-kw">کفش مردانه</span><span class="wbgs-intent wbgs-intent-commercial">تجاری</span><span class="wbgs-searches is-empty">—</span></div></div>' +
+    '<div class="wbgs-ktree-row is-branch"><span class="wbgs-ktree-tog">▾</span><span class="wbgs-kw">زنانه (۱)</span><span class="wbgs-intent wbgs-intent-branch">شاخه</span><span class="wbgs-searches is-empty">—</span></div>' +
+    '<div class="wbgs-ktree-kids"><div class="wbgs-ktree-row"><span class="wbgs-kw">کفش زنانه</span><span class="wbgs-intent wbgs-intent-commercial">تجاری</span><span class="wbgs-searches is-empty">—</span></div></div>' +
+    '<div class="wbgs-ktree-row is-branch"><span class="wbgs-ktree-tog">▾</span><span class="wbgs-kw">خرید (۱)</span><span class="wbgs-intent wbgs-intent-branch">شاخه</span><span class="wbgs-searches is-empty">—</span></div>' +
+    '<div class="wbgs-ktree-kids"><div class="wbgs-ktree-row"><span class="wbgs-kw">خرید کفش</span><span class="wbgs-intent wbgs-intent-transactional">تراکنشی</span><span class="wbgs-searches is-empty">—</span></div></div>';
+  cluster.innerHTML = '<div class="wbgs-mmap"><div class="wbgs-mmap-hub"><strong>کفش</strong><span>پیلار — صفحهٔ ستون محتوا</span></div>' +
+    '<div class="wbgs-mmap-grid">' +
+    '<article class="wbgs-mmap-card"><h3>مردانه <span class="wbgs-intent wbgs-intent-commercial">تجاری</span></h3><p class="wbgs-hint">۱ عبارت</p><ul><li><span>کفش مردانه</span><span class="wbgs-searches is-empty">—</span></li></ul></article>' +
+    '<article class="wbgs-mmap-card"><h3>خرید <span class="wbgs-intent wbgs-intent-transactional">تراکنشی</span></h3><p class="wbgs-hint">۱ عبارت</p><ul><li><span>خرید کفش</span><span class="wbgs-searches is-empty">—</span></li></ul></article>' +
+    '<article class="wbgs-mmap-card"><h3>دیجی <span class="wbgs-intent wbgs-intent-navigational">ناوبری</span></h3><p class="wbgs-hint">۱ عبارت</p><ul><li><span>کفش دیجی کالا</span><span class="wbgs-searches is-empty">—</span></li></ul></article>' +
+    '</div></div>';
+  function show(name) {
+    list.hidden = name !== 'list';
+    tree.hidden = name !== 'tree';
+    cluster.hidden = name !== 'cluster';
+    document.getElementById('tab-list').classList.toggle('wbgs-view-on', name === 'list');
+    document.getElementById('tab-tree').classList.toggle('wbgs-view-on', name === 'tree');
+    document.getElementById('tab-cluster').classList.toggle('wbgs-view-on', name === 'cluster');
+  }
+  document.getElementById('tab-list').onclick = function () { show('list'); };
+  document.getElementById('tab-tree').onclick = function () { show('tree'); };
+  document.getElementById('tab-cluster').onclick = function () { show('cluster'); };
+  document.getElementById('show-list').onclick = function () { show('list'); window.scrollTo(0, 400); };
+  if (/cluster=1/.test(location.search)) show('cluster');
+  else if (/tree=1/.test(location.search)) show('tree');
+})();
 </script>
 </body>
 </html>

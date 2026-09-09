@@ -105,6 +105,7 @@ class WBGS_Frontend {
 		ob_start();
 		$licensed = WBGS_Plugin::licensed();
 		$logged   = is_user_logged_in();
+		$public   = ! empty( WBGS_Plugin::settings()['front_public'] );
 		include WBGS_PATH . 'templates/front-embed.php';
 		return ob_get_clean();
 	}
@@ -125,6 +126,7 @@ class WBGS_Frontend {
 	public function enqueue_app() {
 		wp_enqueue_style( 'wbgs-admin', WBGS_URL . 'assets/css/admin.css', array(), WBGS_VERSION );
 		wp_enqueue_style( 'wbgs-front', WBGS_URL . 'assets/css/front.css', array( 'wbgs-admin' ), WBGS_VERSION );
+		wp_enqueue_style( 'wbgs-google', WBGS_URL . 'assets/css/google.css', array( 'wbgs-front' ), WBGS_VERSION );
 		wp_enqueue_script( 'wbgs-admin', WBGS_URL . 'assets/js/admin.js', array(), WBGS_VERSION, true );
 		wp_localize_script( 'wbgs-admin', 'wbgsAdmin', WBGS_Plugin::script_data( 'wbgs_front' ) );
 

@@ -2,9 +2,11 @@
 defined( 'ABSPATH' ) || exit;
 /** @var bool $licensed */
 /** @var bool $logged */
+/** @var bool $public */
+$public = isset( $public ) ? $public : ! empty( WBGS_Plugin::settings()['front_public'] );
 ?>
 <div class="wbgs-embed" dir="rtl">
-	<?php if ( ! $logged ) : ?>
+	<?php if ( ! $logged && ! $public ) : ?>
 		<div class="wbgs-card">
 			<h2>ورود برای استفاده از سجست‌یاب</h2>
 			<p class="wbgs-hint">با شماره موبایل یا جیمیل وارد شوید.</p>
@@ -29,6 +31,6 @@ defined( 'ABSPATH' ) || exit;
 	<?php elseif ( ! $licensed ) : ?>
 		<div class="wbgs-card"><p>لایسنس سجست‌یاب فعال نیست.</p></div>
 	<?php else : ?>
-		<?php include WBGS_PATH . 'templates/extract-form.php'; ?>
+		<?php include WBGS_PATH . 'templates/google-home.php'; ?>
 	<?php endif; ?>
 </div>

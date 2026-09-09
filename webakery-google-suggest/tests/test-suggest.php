@@ -76,6 +76,28 @@ wbgs_assert( isset( $tree['children']['خرید'] ), 'tree has خرید branch' 
 wbgs_assert( $tree['count'] >= 3, 'tree counts leaves' );
 wbgs_assert( $tree['children']['مردانه']['volume'] >= $tree['children']['خرید']['volume'], 'higher google score ranks higher' );
 
+require_once dirname( __DIR__ ) . '/includes/class-wbgs-intent.php';
+wbgs_assert( WBGS_Intent::INFORMATIONAL === WBGS_Intent::classify( 'کفش چیست' ), 'intent informational' );
+wbgs_assert( WBGS_Intent::TRANSACTIONAL === WBGS_Intent::classify( 'خرید کفش' ), 'intent transactional' );
+wbgs_assert( WBGS_Intent::COMMERCIAL === WBGS_Intent::classify( 'بهترین کفش' ), 'intent commercial' );
+wbgs_assert( WBGS_Intent::NAVIGATIONAL === WBGS_Intent::classify( 'کفش دیجی کالا' ), 'intent navigational' );
+
+$clusters = WBGS_Tree::clusters(
+	'کفش',
+	array(
+		array( 'text' => 'کفش مردانه', 'relevance' => 601, 'rank' => 1, 'count' => 1, 'searches' => 1200 ),
+		array( 'text' => 'خرید کفش', 'relevance' => 400, 'rank' => 2, 'count' => 1, 'searches' => 800 ),
+	)
+);
+wbgs_assert( 'کفش' === $clusters['pillar'], 'pillar is the seed' );
+wbgs_assert( count( $clusters['clusters'] ) >= 2, 'clusters from real phrases' );
+$names = array_column( $clusters['clusters'], 'name' );
+wbgs_assert( in_array( 'مردانه', $names, true ) && in_array( 'خرید', $names, true ), 'cluster names from google phrases' );
+
+require_once dirname( __DIR__ ) . '/includes/class-wbgs-ads.php';
+wbgs_assert( '2303' === WBGS_Ads::geo_id( 'ir' ), 'iran geo constant' );
+wbgs_assert( '1056' === WBGS_Ads::lang_id( 'fa' ), 'persian language constant' );
+
 require_once dirname( __DIR__ ) . '/includes/class-wbgs-frontend.php';
 wbgs_assert( 'sajest' === WBGS_Frontend::sanitize_slug( '' ), 'empty slug falls back' );
 wbgs_assert( 'sajest' === WBGS_Frontend::sanitize_slug( 'wp-admin' ), 'reserved slug blocked' );
@@ -88,3 +110,4 @@ if ( $failed ) {
 
 echo "\nall passed\n";
 exit( 0 );
+

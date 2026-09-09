@@ -1,0 +1,333 @@
+/* شورت‌کد شبیه صفحهٔ اول گوگل + درخت کیوردریسرچ + پیلار کلاستر */
+
+.wbgs-g {
+	font-family: Vazirmatn, Arial, Tahoma, sans-serif;
+	color: #202124;
+	max-width: 920px;
+	margin: 0 auto;
+	padding: 24px 12px 48px;
+}
+
+.wbgs-g [hidden] {
+	display: none !important;
+}
+
+.wbgs-g-hero {
+	min-height: 46vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+}
+
+.wbgs-g.is-busy .wbgs-g-hero,
+.wbgs-g.has-results .wbgs-g-hero {
+	min-height: 0;
+	padding-bottom: 8px;
+}
+
+.wbgs-g-logo {
+	font-size: 52px;
+	font-weight: 700;
+	letter-spacing: -1px;
+	line-height: 1.1;
+	margin-bottom: 8px;
+}
+
+.wbgs-g-logo span:nth-child(1),
+.wbgs-g-logo span:nth-child(5) { color: #4285f4; }
+.wbgs-g-logo span:nth-child(2),
+.wbgs-g-logo span:nth-child(6) { color: #ea4335; }
+.wbgs-g-logo span:nth-child(3),
+.wbgs-g-logo span:nth-child(7) { color: #fbbc05; }
+.wbgs-g-logo span:nth-child(4),
+.wbgs-g-logo span:nth-child(8) { color: #34a853; }
+
+.wbgs-g-tag {
+	color: #5f6368;
+	margin: 0 0 22px;
+	font-size: 14px;
+}
+
+.wbgs-g-box {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: min(584px, 100%);
+	border: 1px solid #dfe1e5;
+	border-radius: 24px;
+	padding: 10px 18px;
+	background: #fff;
+	box-shadow: 0 1px 6px rgba(32, 33, 36, 0.08);
+}
+
+.wbgs-g-box:focus-within {
+	box-shadow: 0 1px 8px rgba(32, 33, 36, 0.18);
+	border-color: #dfe1e5;
+}
+
+.wbgs-g-input {
+	flex: 1;
+	border: 0;
+	outline: none;
+	font: inherit;
+	font-size: 16px;
+	background: transparent;
+}
+
+.wbgs-g-btns {
+	display: flex;
+	gap: 10px;
+	margin-top: 22px;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+.wbgs-g-btn {
+	background: #f8f9fa;
+	border: 1px solid #f8f9fa;
+	border-radius: 4px;
+	color: #3c4043;
+	font: inherit;
+	padding: 9px 18px;
+	cursor: pointer;
+}
+
+.wbgs-g-btn:hover {
+	border-color: #dadce0;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06);
+}
+
+.wbgs-g-modes {
+	margin-top: 18px;
+	text-align: right;
+	max-width: 584px;
+	width: 100%;
+	background: #fff;
+}
+
+.wbgs-g:not(.has-results):not(.is-busy) .wbgs-g-stage {
+	display: none;
+}
+
+.wbgs-g-stage {
+	margin-top: 10px;
+}
+
+.wbgs-g .wbgs-list {
+	list-style: none;
+	padding: 0;
+	margin: 12px 0 0;
+	border: 1px solid #e8eaed;
+	border-radius: 10px;
+	background: #fff;
+}
+
+.wbgs-g .wbgs-list li {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto 5.5em;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 14px;
+	border-bottom: 1px solid #f1f3f4;
+}
+
+.wbgs-g .wbgs-list li:last-child {
+	border-bottom: 0;
+}
+
+.wbgs-g-user {
+	text-align: left;
+	direction: ltr;
+}
+
+.wbgs-intent {
+	display: inline-block;
+	font-size: 11px;
+	font-weight: 700;
+	border-radius: 99px;
+	padding: 2px 8px;
+	margin-left: 6px;
+	white-space: nowrap;
+}
+
+.wbgs-intent-informational { background: #e0f2fe; color: #0369a1; }
+.wbgs-intent-commercial { background: #fef3c7; color: #b45309; }
+.wbgs-intent-transactional { background: #dcfce7; color: #15803d; }
+.wbgs-intent-navigational { background: #ede9fe; color: #6d28d9; }
+
+.wbgs-intent-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 8px 0 4px;
+}
+
+.wbgs-intent-filters button {
+	border: 1px solid #dadce0;
+	background: #fff;
+	border-radius: 99px;
+	padding: 4px 10px;
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.wbgs-intent-filters button.is-on {
+	border-color: #1a73e8;
+	color: #1a73e8;
+	font-weight: 700;
+}
+
+.wbgs-searches {
+	font-size: 12px;
+	font-weight: 700;
+	color: #188038;
+	direction: ltr;
+	min-width: 4.5em;
+	text-align: left;
+}
+
+.wbgs-searches.is-empty {
+	color: #9aa0a6;
+	font-weight: 500;
+}
+
+/* درخت شبیه کیورد ریسرچ / keywordtool */
+.wbgs-ktree {
+	margin-top: 8px;
+	border: 1px solid #e8eaed;
+	border-radius: 10px;
+	background: #fff;
+	max-height: 680px;
+	overflow: auto;
+}
+
+.wbgs-ktree-head,
+.wbgs-ktree-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto 5.5em;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-bottom: 1px solid #f1f3f4;
+	font-size: 13.5px;
+}
+
+.wbgs-ktree-head {
+	background: #f8f9fa;
+	font-size: 11px;
+	font-weight: 700;
+	color: #5f6368;
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+
+.wbgs-ktree-row.is-branch {
+	grid-template-columns: 18px minmax(0, 1fr) auto 5.5em;
+	background: #f8f9fa;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.wbgs-ktree-kids {
+	padding-right: 18px;
+	border-right: 3px solid #e8f0fe;
+	margin-right: 14px;
+}
+
+.wbgs-ktree-tog {
+	width: 18px;
+	color: #5f6368;
+}
+
+/* پیلار کلاستر / مایند مپ شبیه کیوردچی */
+.wbgs-mmap-hub,
+.wbgs-pillar-hub {
+	text-align: center;
+	background: #1a73e8;
+	color: #fff;
+	border-radius: 16px;
+	padding: 18px 16px;
+	margin: 12px auto 0;
+	max-width: 280px;
+}
+
+.wbgs-mmap-hub strong,
+.wbgs-pillar-hub strong {
+	display: block;
+	font-size: 22px;
+	margin-bottom: 4px;
+}
+
+.wbgs-mmap-hub span,
+.wbgs-pillar-hub span {
+	font-size: 12px;
+	opacity: 0.9;
+}
+
+.wbgs-mmap-hub::after {
+	content: "";
+	display: block;
+	width: 2px;
+	height: 22px;
+	background: #1a73e8;
+	margin: 12px auto -8px;
+}
+
+.wbgs-mmap-grid,
+.wbgs-pillar-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 12px;
+	margin-top: 8px;
+	padding-top: 14px;
+	border-top: 2px solid #e8f0fe;
+}
+
+.wbgs-mmap-card,
+.wbgs-pillar-card {
+	border: 1px solid #e8eaed;
+	border-radius: 12px;
+	padding: 12px 14px;
+	background: #fff;
+}
+
+.wbgs-mmap-card h3,
+.wbgs-pillar-card h3 {
+	margin: 0 0 8px;
+	font-size: 15px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.wbgs-mmap-card ul,
+.wbgs-pillar-card ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: 13px;
+	line-height: 1.8;
+}
+
+.wbgs-mmap-card li,
+.wbgs-pillar-card li {
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+	border-bottom: 1px solid #f8f9fa;
+	padding: 3px 0;
+}
+
+.wbgs-intent-branch {
+	background: #eef2ff;
+	color: #3730a3;
+}
+
+@media (max-width: 640px) {
+	.wbgs-g-logo { font-size: 40px; }
+}
