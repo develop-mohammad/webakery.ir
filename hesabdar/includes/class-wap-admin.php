@@ -43,7 +43,7 @@ class WAP_Admin {
                 <code><?php echo esc_html( $panel_url ); ?></code>
                 <a href="<?php echo esc_url( $panel_url ); ?>" target="_blank" class="button button-small">باز کردن</a>
             </p>
-            <p class="description">یک پنل واحد برای همهٔ کاربران مجاز (حسابدار و مدیر سایت).</p>
+            <p class="description">یک پنل واحد برای همهٔ کاربران مجاز.</p>
 
             <?php if ( $notice ) : ?>
                 <div class="notice notice-info"><p><?php echo esc_html( $notice ); ?></p></div>
