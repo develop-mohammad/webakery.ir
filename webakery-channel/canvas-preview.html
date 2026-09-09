@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>کانال‌یار — پیش‌نمایش کانال تلگرام</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Vazirmatn, Tahoma, sans-serif;
+    background: #e8eef5;
+    color: #0f172a;
+    padding: 24px 16px 40px;
+  }
+  h1 { font-size: 20px; margin: 0 0 6px; text-align: center; }
+  .lead { text-align: center; color: #64748b; font-size: 13px; margin: 0 0 18px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 18px; }
+  .chips button {
+    font: inherit; font-size: 12.5px; border: 1px solid #cbd5e1; background: #fff;
+    border-radius: 99px; padding: 6px 12px; cursor: pointer;
+  }
+  .chips button.on { background: #229ed9; color: #fff; border-color: #229ed9; }
+  .phone {
+    width: min(380px, 100%);
+    margin: 0 auto;
+    background: #0e1621;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, .22);
+    min-height: 560px;
+    display: flex;
+    flex-direction: column;
+  }
+  .bar {
+    background: #17212b;
+    color: #fff;
+    padding: 14px 16px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .av {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #229ed9; display: grid; place-items: center; font-weight: 700;
+  }
+  .bar small { display: block; color: #8ea0b3; font-size: 11px; }
+  .feed { flex: 1; padding: 14px 12px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .bubble {
+    align-self: stretch;
+    background: #182533;
+    color: #e8f4ff;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    line-height: 1.85;
+    white-space: pre-wrap;
+    border: 1px solid #243647;
+  }
+  .bubble b { color: #fff; }
+  .meta { color: #6d8da6; font-size: 11px; text-align: left; margin-top: 8px; }
+  .why {
+    max-width: 380px; margin: 16px auto 0; font-size: 13px; color: #475569; text-align: center; line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+  <h1>کانال‌یار — از یک مطلب، ده پست کانال</h1>
+  <p class="lead">نمونه واقعی موتور ایده، بدون وردپرس. قالب را عوض کنید.</p>
+  <div class="chips" id="chips"></div>
+  <div class="phone">
+    <div class="bar">
+      <div class="av">و</div>
+      <div>
+        وب‌آکری
+        <small>کانال · محتوای ارزشمند از سایت</small>
+      </div>
+    </div>
+    <div class="feed" id="feed"></div>
+  </div>
+  <p class="why" id="why"></p>
+<script>
+const posts = {
+  tip: { why: "ذخیره و بازنشر بالا — ارزش در ۳ خط", parts: [
+    "💡 نکته طلایی\n\nچطور با پیامک ورود فروشگاه را ساده کنیم\n\nشماره موبایل را نرمال کنید.\n\n🔗 ادامه مطلب"
+  ]},
+  checklist: { why: "کاربر ذخیره می‌کند و برمی‌گردد", parts: [
+    "✅ چک‌لیست\nچطور با پیامک ورود فروشگاه را ساده کنیم\n\n۱. شماره موبایل را نرمال کنید\n۲. کد یک‌بارمصرف را هش کنید\n۳. محدودیت ارسال بگذارید\n\nذخیره‌اش کنید تا بعداً مرور کنید."
+  ]},
+  question: { why: "تعامل؛ پست پرحرف در فید می‌ماند", parts: [
+    "❓ سؤال برای شما\n\nشما دربارهٔ «چطور با پیامک ورود فروشگاه را ساده کنیم» چه تجربه‌ای دارید؟ کدام بخش برای‌تان سخت‌تر بوده؟\n\nیک خط در نظرات بنویسید — تجربه‌تان برای بقیه هم مفید است."
+  ]},
+  mistake: { why: "قلاب احساسی بدون فروش مستقیم", parts: [
+    "⚠️ اشتباه رایجی که گران تمام می‌شود\n\nخیلی‌ها در موضوع ورود همین کار را می‌کنند:\n\n❌ فرم پیش‌فرض وردپرس و رمز فراموش‌شده\n\n✅ به‌جایش: ورود با پیامک و محدودیت ارسال."
+  ]},
+  summary: { why: "اعتماد می‌سازد؛ لینک آخر می‌آید", parts: [
+    "⏱ در ۶۰ ثانیه\nچطور با پیامک ورود فروشگاه را ساده کنیم\n\n• مشتری رمز را گم می‌کند و سبد خالی می‌ماند\n• شماره را نرمال کنید و OTP را هش کنید\n• رنگ و فونت را از قالب به ارث ببرید"
+  ]},
+  quote: { why: "قابل اسکرین‌شات و فوروارد", parts: [
+    "📌 یک جمله از مطلب\n\n«هرگز کلید API را در قالب سخت‌کد نکنید»\n\nچطور با پیامک ورود فروشگاه را ساده کنیم"
+  ]},
+  thread: { why: "یک مقاله = سه حضور در فید امروز", parts: [
+    "🧵 ۱/۳ چطور با پیامک ورود فروشگاه را ساده کنیم\n\nخیلی از فروشگاه‌ها هنوز فرم پیش‌فرض وردپرس را دارند.",
+    "🧵 ۲/۳\n\nشماره موبایل را نرمال کنید و کد را هش کنید.",
+    "🧵 ۳/۳\n\nرنگ و فونت را از قالب به ارث ببرید تا با المنتور هماهنگ باشد.\n\n🔗 ادامه مطلب"
+  ]}
+};
+const labels = {tip:"نکته طلایی",checklist:"چک‌لیست",question:"سؤال",mistake:"اشتباه رایج",summary:"خلاصه ۶۰ث",quote:"نقل‌قول",thread:"رشته ۳تایی"};
+const chips = document.getElementById("chips");
+const feed = document.getElementById("feed");
+const why = document.getElementById("why");
+Object.keys(posts).forEach((k,i) => {
+  const b = document.createElement("button");
+  b.textContent = labels[k];
+  b.dataset.k = k;
+  if (i===0) b.className = "on";
+  b.onclick = () => show(k);
+  chips.appendChild(b);
+});
+function show(k) {
+  chips.querySelectorAll("button").forEach(btn => btn.classList.toggle("on", btn.dataset.k===k));
+  const p = posts[k];
+  feed.innerHTML = "";
+  p.parts.forEach(t => {
+    const el = document.createElement("div");
+    el.className = "bubble";
+    el.textContent = t;
+    const m = document.createElement("div");
+    m.className = "meta";
+    m.textContent = "۱۲:۲۴";
+    el.appendChild(m);
+    feed.appendChild(el);
+  });
+  why.textContent = p.why;
+}
+show("tip");
+</script>
+</body>
+</html>
