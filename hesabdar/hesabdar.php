@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hesabdar
  * Description: مدیریت کامل مشتریان و فروش ووکامرس (سفارش‌ها، ایجاد/ویرایش سفارش، محصولات، گزارش مالی، فاکتور) از داخل پیشخوان + پرتال مستقل و مینیمال ورود حسابدار بدون دسترسی به پیشخوان.
- * Version:     1.9.11
+ * Version:     1.19.1
  * Plugin URI:  https://webakery.ir
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,7 +22,7 @@ if ( defined( 'HESABDAR_LOADED' ) ) {
 }
 define( 'HESABDAR_LOADED', true );
 
-define( 'WAP_VERSION', '1.9.11' );
+define( 'WAP_VERSION', '1.19.1' );
 define( 'WAP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WAP_URL', plugin_dir_url( __FILE__ ) );
 
@@ -80,6 +80,17 @@ function hesabdar_bootstrap_core() {
 		'class-wap-google-sheets.php',
 		'class-wap-portal.php',
 		'class-wap-admin.php',
+		'class-wap-sms.php',
+		'class-wap-payment-notify.php',
+		'class-wap-zarinpal-reconcile.php',
+		'class-wap-zarinpal-fee.php',
+		'class-wap-zarinpal-report.php',
+		'class-wap-excel.php',
+		'class-wap-gateway.php',
+		'class-wap-traffic.php',
+		'class-wap-analytics.php',
+		'class-wap-report-image.php',
+		'class-wap-chart.php',
 	);
 	foreach ( $required as $file ) {
 		if ( ! hesabdar_require_include( $file ) ) {
@@ -349,6 +360,16 @@ function hesabdar_register_wci_hooks() {
 		add_submenu_page( 'wci-orders', 'ویرایش سفارش', '—', $cap, 'wci-order-edit', hesabdar_wci_page_cb( 'wci_order_edit_page' ) );
 		add_submenu_page( 'wci-orders', 'فروش محصولات', 'فروش محصولات', $cap, 'wci-products', hesabdar_wci_page_cb( 'wci_products_page' ) );
 		add_submenu_page( 'wci-orders', 'گزارش مالی', 'گزارش مالی', $cap, 'wci-reports', hesabdar_wci_page_cb( 'wci_reports_page' ) );
+		add_submenu_page( 'wci-orders', 'شاپرک و کارمزد', 'شاپرک و کارمزد', $cap, 'wci-shaparak', hesabdar_wci_page_cb( 'wci_shaparak_report_page' ) );
+		add_submenu_page( 'wci-orders', 'داشبورد تصویری', 'داشبورد تصویری', $cap, 'wci-analytics', function() {
+			if ( ! hesabdar_user_can_wci() ) {
+				wp_die( 'Unauthorized' );
+			}
+			$url = class_exists( 'WAP_Portal' ) ? add_query_arg( 'wap_view', 'analytics', WAP_Portal::panel_url() ) : admin_url();
+			echo '<div class="wrap"><h1>داشبورد تصویری حسابدار</h1>';
+			echo '<p>نمودارهای فروش ناخالص/خالص، درگاه‌ها، منبع ورود، مشتریان ثابت، پرفروش و پیک خرید در پرتال حسابدار است.</p>';
+			echo '<p><a class="button button-primary" href="' . esc_url( $url ) . '" target="_blank">باز کردن داشبورد تصویری</a></p></div>';
+		} );
 		add_submenu_page( 'wci-orders', 'تنظیمات فاکتور', 'تنظیمات فاکتور', $cap, 'wci-settings', hesabdar_wci_page_cb( 'wci_settings_page' ) );
 	} );
 
@@ -412,6 +433,24 @@ function hesabdar_register_wci_hooks() {
 		wci_export_report_csv();
 	} );
 
+	add_action( 'admin_post_wci_export_shaparak_csv', function() {
+		if ( ! hesabdar_user_can_wci() || ! wap_is_active() ) {
+			wp_die( 'Unauthorized' );
+		}
+		check_admin_referer( 'wci_shaparak_export' );
+		$report = WAP_Zarinpal_Report::build( wp_unslash( $_GET ) );
+		WAP_Export::zarinpal_reconcile_csv( $report );
+	} );
+
+	add_action( 'admin_post_wci_export_shaparak_xlsx', function() {
+		if ( ! hesabdar_user_can_wci() || ! wap_is_active() ) {
+			wp_die( 'Unauthorized' );
+		}
+		check_admin_referer( 'wci_shaparak_export' );
+		$report = WAP_Zarinpal_Report::build( wp_unslash( $_GET ) );
+		WAP_Export::zarinpal_reconcile_xlsx( $report );
+	} );
+
 	add_action( 'admin_init', function() {
 		if ( ! isset( $_GET['page'] ) || strpos( $_GET['page'], 'wci' ) === false ) {
 			return;
@@ -436,7 +475,8 @@ function hesabdar_register_wci_hooks() {
 if ( ! function_exists( 'wap_register_rewrite' ) ) {
 function wap_register_rewrite() {
     add_rewrite_rule( '^accountant-panel/?$', 'index.php?wap_panel=accountant', 'top' );
-    add_rewrite_rule( '^manager-panel/?$', 'index.php?wap_panel=manager', 'top' );
+    // سازگاری: آدرس قدیمی پنل مدیر → همان پنل یکپارچه
+    add_rewrite_rule( '^manager-panel/?$', 'index.php?wap_panel=accountant', 'top' );
 }
 }
 add_action( 'init', 'wap_register_rewrite' );
@@ -459,14 +499,14 @@ add_action( 'template_redirect', function() {
             array( 'response' => 503 )
         );
     }
-    if ( $panel === '1' ) {
+    if ( $panel === '1' || $panel === 'manager' ) {
         $panel = WAP_Portal::PANEL_ACCOUNTANT;
     }
-    if ( ! in_array( $panel, array( WAP_Portal::PANEL_ACCOUNTANT, WAP_Portal::PANEL_MANAGER ), true ) ) {
+    if ( $panel !== WAP_Portal::PANEL_ACCOUNTANT ) {
         return;
     }
     try {
-        WAP_Portal::render( $panel );
+        WAP_Portal::render();
     } catch ( Throwable $e ) {
         $detail = $e->getMessage() . ' @ ' . basename( $e->getFile() ) . ':' . $e->getLine();
         error_log( 'Hesabdar portal error: ' . $detail );
@@ -511,22 +551,11 @@ function wap_handle_login() {
         'remember'      => true,
     );
     $user = wp_signon( $creds, is_ssl() );
-
-    $panel_type = sanitize_key( $_POST['wap_panel'] ?? WAP_Portal::PANEL_ACCOUNTANT );
-    if ( ! in_array( $panel_type, array( WAP_Portal::PANEL_ACCOUNTANT, WAP_Portal::PANEL_MANAGER ), true ) ) {
-        $panel_type = WAP_Portal::PANEL_ACCOUNTANT;
-    }
-    $panel_url = WAP_Portal::panel_url( $panel_type );
+    $panel_url = WAP_Portal::panel_url();
 
     if ( is_wp_error( $user ) || ! WAP_Portal::user_has_access( $user ) ) {
         if ( ! is_wp_error( $user ) ) { wp_logout(); }
         wp_safe_redirect( add_query_arg( 'wap_error', '1', $panel_url ) );
-        exit;
-    }
-
-    if ( $panel_type === WAP_Portal::PANEL_MANAGER && ! WAP_Portal::user_has_manager_access( $user ) ) {
-        wp_logout();
-        wp_safe_redirect( add_query_arg( 'wap_error', '1', WAP_Portal::panel_url( WAP_Portal::PANEL_ACCOUNTANT ) ) );
         exit;
     }
 
@@ -540,11 +569,7 @@ add_action( 'admin_post_wap_logout', function() {
         wp_die( 'درخواست نامعتبر است.' );
     }
     wp_logout();
-    $panel_type = sanitize_key( $_POST['wap_panel'] ?? WAP_Portal::PANEL_ACCOUNTANT );
-    if ( ! in_array( $panel_type, array( WAP_Portal::PANEL_ACCOUNTANT, WAP_Portal::PANEL_MANAGER ), true ) ) {
-        $panel_type = WAP_Portal::PANEL_ACCOUNTANT;
-    }
-    wp_safe_redirect( WAP_Portal::panel_url( $panel_type ) );
+    wp_safe_redirect( WAP_Portal::panel_url() );
     exit;
 } );
 
@@ -576,10 +601,22 @@ add_filter( 'login_redirect', function( $redirect_to, $requested_redirect_to, $u
         return $redirect_to;
     }
     $roles = (array) $user->roles;
-    if ( in_array( WAP_Portal::ROLE, $roles, true ) && ! in_array( 'administrator', $roles, true ) && ! WAP_Portal::user_has_manager_access( $user ) ) {
-        return WAP_Portal::panel_url( WAP_Portal::PANEL_ACCOUNTANT );
+    if ( in_array( WAP_Portal::ROLE, $roles, true ) && ! in_array( 'administrator', $roles, true ) ) {
+        return WAP_Portal::panel_url();
     }
     return $redirect_to;
 }, 10, 3 );
 
 WAP_Admin::init();
+if ( class_exists( 'WAP_Traffic' ) ) {
+	WAP_Traffic::init();
+}
+if ( class_exists( 'WAP_Payment_Notify' ) ) {
+	WAP_Payment_Notify::init();
+}
+if ( class_exists( 'WAP_Zarinpal_Reconcile' ) ) {
+	WAP_Zarinpal_Reconcile::init();
+}
+if ( class_exists( 'WAP_Report_Image' ) ) {
+	WAP_Report_Image::init();
+}

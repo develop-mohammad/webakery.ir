@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" class="wap-panel-accountant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1a73e8">
+  <title>پیش‌نمایش UI گوگل — حسابدار</title>
+  <link rel="stylesheet" href="https://fonts.bunny.net/css?family=vazirmatn:400,500,600,700&display=swap">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="wap-body">
+  <div class="wap-wrap">
+    <header class="wap-header">
+      <div class="wap-brand-wrap">
+        <div class="wap-brand">پرتال حسابدار</div>
+        <div class="wap-brand-sub">خلاصه فروش و خروجی‌های حسابداری</div>
+      </div>
+      <div class="wap-logout-form">
+        <span class="wap-user">کاربر نمونه</span>
+        <button type="button" class="wap-btn wap-btn-ghost">خروج</button>
+      </div>
+    </header>
+    <nav class="wap-tabs">
+      <a class="wap-tab wap-tab-active" href="#">گزارش مالی</a>
+      <a class="wap-tab" href="#">داشبورد</a>
+      <a class="wap-tab" href="#">سفارش‌ها</a>
+      <a class="wap-tab" href="#">محصولات</a>
+      <a class="wap-tab" href="#">شاپرک / کارمزد</a>
+    </nav>
+    <div class="wap-presets">
+      <button type="button" class="wap-chip is-active">این ماه</button>
+      <button type="button" class="wap-chip">۷ روز اخیر</button>
+      <button type="button" class="wap-chip">امسال</button>
+    </div>
+    <div class="wap-export-bar">
+      <span class="wap-export-label">خروجی گزارش:</span>
+      <a class="wap-btn wap-btn-csv" href="#">CSV / اکسل</a>
+      <button type="button" class="wap-btn wap-btn-jpg">JPG</button>
+      <button type="button" class="wap-btn wap-btn-ghost">PNG</button>
+      <button type="button" class="wap-btn wap-btn-primary">اعمال فیلتر</button>
+    </div>
+    <div class="wap-cards">
+      <div class="wap-card">
+        <span class="wap-card-label">فروش ناخالص</span>
+        <span class="wap-card-value">۱۲٬۵۰۰٬۰۰۰ تومان</span>
+        <span class="wap-card-accent">۴۲ سفارش</span>
+      </div>
+      <div class="wap-card wap-card-net">
+        <span class="wap-card-label">فروش خالص</span>
+        <span class="wap-card-value">۱۱٬۲۰۰٬۰۰۰ تومان</span>
+        <span class="wap-card-accent">۳۸ سفارش موفق</span>
+      </div>
+      <div class="wap-card">
+        <span class="wap-card-label">میانگین سفارش</span>
+        <span class="wap-card-value">۲۹۴٬۷۰۰ تومان</span>
+      </div>
+    </div>
+    <div class="wap-gsc-card">
+      <div class="wap-gsc-head">
+        <h3 class="wap-gsc-title">روند فروش بر اساس دوره</h3>
+        <div class="wap-gsc-legend"><span class="wap-gsc-leg wap-gsc-leg-a"><i></i>بازه فعلی</span></div>
+      </div>
+      <div class="wap-gsc-chart-wrap" id="c"></div>
+    </div>
+    <div class="wap-table-wrap">
+      <table class="wap-table">
+        <thead><tr><th>دوره</th><th>تعداد</th><th>مبلغ</th></tr></thead>
+        <tbody>
+          <tr><td>فروردین</td><td>۱۰</td><td>۵٬۵۰۰٬۰۰۰</td></tr>
+          <tr><td>اردیبهشت</td><td>۱۴</td><td>۸٬۰۰۰٬۰۰۰</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var a=[5.5,8,4,9.5], labels=['فروردین','اردیبهشت','خرداد','تیر'];
+    var w=960,h=240,pl=48,pr=12,pt=20,pb=36,pw=w-pl-pr,ph=h-pt-pb,max=11;
+    function pts(arr){return arr.map(function(v,i){return [pl+(i/(arr.length-1))*pw, pt+ph-(v/max)*ph];});}
+    function line(p){return p.map(function(pt,i){return (i?'L':'M')+pt[0].toFixed(1)+' '+pt[1].toFixed(1);}).join(' ');}
+    var pa=pts(a), d=line(pa), last=pa[pa.length-1], first=pa[0];
+    var area=d+' L'+last[0]+' '+(pt+ph)+' L'+first[0]+' '+(pt+ph)+' Z';
+    var svg='<svg class="wap-gsc-svg" viewBox="0 0 '+w+' '+h+'"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a73e8" stop-opacity=".25"/><stop offset="100%" stop-color="#1a73e8" stop-opacity="0"/></linearGradient></defs>';
+    for(var g=0;g<=4;g++){var gy=pt+(g/4)*ph; svg+='<line class="wap-gsc-grid" x1="'+pl+'" x2="'+(w-pr)+'" y1="'+gy+'" y2="'+gy+'"/>';}
+    svg+='<path class="wap-gsc-area" d="'+area+'" fill="url(#f)"/><path class="wap-gsc-line wap-gsc-line-a" d="'+d+'" fill="none"/>';
+    pa.forEach(function(p){svg+='<circle class="wap-gsc-dot wap-gsc-dot-a" cx="'+p[0]+'" cy="'+p[1]+'" r="3.5"/>';});
+    labels.forEach(function(lb,i){svg+='<text class="wap-gsc-xlabel" x="'+pa[i][0]+'" y="'+(h-12)+'" text-anchor="middle">'+lb+'</text>';});
+    document.getElementById('c').innerHTML=svg+'</svg>';
+  })();
+  </script>
+</body>
+</html>

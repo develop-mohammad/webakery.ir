@@ -196,4 +196,116 @@ class WAP_Export {
         <?php
         exit;
     }
+
+    /** خروجی CSV گزارش شاپرک / ووکامرس / کارمزد */
+    public static function zarinpal_reconcile_csv( array $report ) {
+        while ( ob_get_level() ) { ob_end_clean(); }
+        header( 'Content-Type: text/csv; charset=UTF-8' );
+        header( 'Content-Disposition: attachment; filename="shaparak-wc-report-' . date( 'Y-m-d' ) . '.csv"' );
+        header( 'Pragma: no-cache' );
+
+        $fp = fopen( 'php://output', 'w' );
+        fputs( $fp, "\xEF\xBB\xBF" );
+        $s = $report['summary'] ?? array();
+        fputcsv( $fp, array( 'بخش', 'مقدار' ) );
+        fputcsv( $fp, array( 'تعداد سفارش زرین‌پال', $s['wc_count'] ?? 0 ) );
+        fputcsv( $fp, array( 'جمع خرید ووکامرس (تومان)', $s['wc_gross'] ?? 0 ) );
+        fputcsv( $fp, array( 'جمع کارمزد زرین‌پال (تومان)', $s['wc_fee'] ?? 0 ) );
+        fputcsv( $fp, array( 'خالص مورد انتظار (تومان)', $s['wc_net'] ?? 0 ) );
+        fputcsv( $fp, array( 'تعداد واریز شاپرک', $s['settle_count'] ?? 0 ) );
+        fputcsv( $fp, array( 'جمع واریز شاپرک (ریال — عین پنل)', $s['settle_total_rial'] ?? 0 ) );
+        fputcsv( $fp, array( 'جمع واریز شاپرک (تومان)', $s['settle_total'] ?? 0 ) );
+        fputcsv( $fp, array( 'اختلاف واریز − خالص (تومان)', $s['diff_net_settle'] ?? 0 ) );
+        fputcsv( $fp, array() );
+        fputcsv( $fp, array( '--- سفارش‌های ووکامرس ---' ) );
+        fputcsv( $fp, array( 'شماره', 'تاریخ شمسی', 'خریدار', 'وضعیت', 'روش', 'مبلغ', 'کارمزد', 'خالص', 'تراکنش' ) );
+        foreach ( (array) ( $report['orders'] ?? array() ) as $o ) {
+            fputcsv( $fp, array(
+                $o['order_number'] ?? '',
+                $o['date_jalali'] ?? '',
+                $o['customer'] ?? '',
+                $o['status_label'] ?? '',
+                $o['payment'] ?? '',
+                $o['gross'] ?? 0,
+                $o['fee'] ?? 0,
+                $o['net'] ?? 0,
+                $o['transaction'] ?? '',
+            ) );
+        }
+        fputcsv( $fp, array() );
+        fputcsv( $fp, array( '--- واریزهای شاپرک (دقیقاً از API زرین‌پال / PAID) ---' ) );
+        fputcsv( $fp, array( 'شناسه تسویه', 'وضعیت', 'مبلغ ریال', 'مبلغ تومان', 'شناسه ارجاع بانکی', 'تاریخ واریز', 'تاریخ ایجاد', 'تاریخ شمسی واریز' ) );
+        foreach ( (array) ( $report['settles'] ?? array() ) as $r ) {
+            fputcsv( $fp, array(
+                $r['id'] ?? '',
+                $r['status'] ?? '',
+                $r['amount_rial'] ?? 0,
+                $r['amount'] ?? 0,
+                $r['reference_id'] ?? '',
+                $r['reconciled_at'] ?? '',
+                $r['payable_at'] ?? '',
+                $r['date_jalali'] ?? '',
+            ) );
+        }
+        fclose( $fp );
+        exit;
+    }
+
+    /** خروجی Excel واقعی (.xlsx) — چند شیت */
+    public static function zarinpal_reconcile_xlsx( array $report ) {
+        if ( ! class_exists( 'WAP_Excel' ) ) {
+            self::zarinpal_reconcile_csv( $report );
+            return;
+        }
+        $s = $report['summary'] ?? array();
+        $sheets = array(
+            'خلاصه' => array(
+                'headers' => array( 'بخش', 'مقدار' ),
+                'rows'    => array(
+                    array( 'تعداد سفارش زرین‌پال', (int) ( $s['wc_count'] ?? 0 ) ),
+                    array( 'جمع خرید ووکامرس (تومان)', (float) ( $s['wc_gross'] ?? 0 ) ),
+                    array( 'جمع کارمزد زرین‌پال (تومان)', (float) ( $s['wc_fee'] ?? 0 ) ),
+                    array( 'خالص مورد انتظار (تومان)', (float) ( $s['wc_net'] ?? 0 ) ),
+                    array( 'تعداد واریز شاپرک', (int) ( $s['settle_count'] ?? 0 ) ),
+                    array( 'جمع واریز شاپرک (ریال — عین پنل)', (float) ( $s['settle_total_rial'] ?? 0 ) ),
+                    array( 'جمع واریز شاپرک (تومان)', (float) ( $s['settle_total'] ?? 0 ) ),
+                    array( 'اختلاف واریز − خالص (تومان)', (float) ( $s['diff_net_settle'] ?? 0 ) ),
+                ),
+            ),
+            'سفارش ووکامرس' => array(
+                'headers' => array( 'شماره', 'تاریخ شمسی', 'خریدار', 'وضعیت', 'روش', 'مبلغ تومان', 'کارمزد', 'خالص', 'تراکنش' ),
+                'rows'    => array(),
+            ),
+            'واریز شاپرک' => array(
+                'headers' => array( 'شناسه تسویه', 'وضعیت', 'مبلغ ریال (عین زرین‌پال)', 'مبلغ تومان', 'شناسه ارجاع بانکی', 'تاریخ واریز', 'تاریخ ایجاد', 'تاریخ شمسی واریز' ),
+                'rows'    => array(),
+            ),
+        );
+        foreach ( (array) ( $report['orders'] ?? array() ) as $o ) {
+            $sheets['سفارش ووکامرس']['rows'][] = array(
+                (string) ( $o['order_number'] ?? '' ),
+                (string) ( $o['date_jalali'] ?? '' ),
+                (string) ( $o['customer'] ?? '' ),
+                (string) ( $o['status_label'] ?? '' ),
+                (string) ( $o['payment'] ?? '' ),
+                (float) ( $o['gross'] ?? 0 ),
+                (float) ( $o['fee'] ?? 0 ),
+                (float) ( $o['net'] ?? 0 ),
+                (string) ( $o['transaction'] ?? '' ),
+            );
+        }
+        foreach ( (array) ( $report['settles'] ?? array() ) as $r ) {
+            $sheets['واریز شاپرک']['rows'][] = array(
+                (string) ( $r['id'] ?? '' ),
+                (string) ( $r['status'] ?? '' ),
+                (float) ( $r['amount_rial'] ?? 0 ),
+                (float) ( $r['amount'] ?? 0 ),
+                (string) ( $r['reference_id'] ?? '' ),
+                (string) ( $r['reconciled_at'] ?? '' ),
+                (string) ( $r['payable_at'] ?? '' ),
+                (string) ( $r['date_jalali'] ?? '' ),
+            );
+        }
+        WAP_Excel::download( $sheets, 'shaparak-wc-report-' . date( 'Y-m-d' ) );
+    }
 }
