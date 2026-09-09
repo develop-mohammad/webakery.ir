@@ -10,13 +10,13 @@
 'webakery-google-suggest' => [
 	'name'         => 'سجست‌یاب گوگل',
 	'price'        => 199000,          // تومان
-	'version'      => '1.1.0',
+	'version'      => '1.2.0',
 	'file'         => 'webakery-google-suggest.zip',
 	'homepage'     => 'https://webakery.ir/product/webakery-google-suggest/',
 	'requires'     => '5.8',
 	'requires_php' => '7.4',
 	'tested'       => '6.7',
-	'changelog'    => '<h4>1.1.0</h4><ul><li>شورت‌کد شبیه گوگل، اینتنت، درخت کیورد و پیلار کلاستر</li><li>سرچ ماهانه فقط از Keyword Planner</li></ul>',
+	'changelog'    => '<h4>1.2.0</h4><ul><li>بریف محتوا، عنوان/متا، فیلتر سوالی، رقابت نسبی</li><li>تاریخچه گزارش، مقایسه دو عبارت، CSV اکسل</li><li>سرچ ماهانه فقط از Keyword Planner</li></ul>',
 ],
 ```
 

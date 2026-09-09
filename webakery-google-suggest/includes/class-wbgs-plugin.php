@@ -45,6 +45,7 @@ class WBGS_Plugin {
 			'ads_refresh_token'    => '',
 			'ads_customer_id'      => '',
 			'ads_login_customer_id'=> '',
+			'guest_daily_cap'      => 400,
 		);
 	}
 
@@ -76,8 +77,18 @@ class WBGS_Plugin {
 				'vol_wait' => 'در حال گرفتن میزان سرچ ماهانه از گوگل ادز…',
 				'vol_off'  => 'میزان سرچ ماهانه فقط با اتصال Keyword Planner نشان داده می‌شود.',
 				'longtail' => 'در حال گرفتن لانگ‌تیل از سجست گوگل…',
+				'saved'    => 'گزارش ذخیره شد.',
+				'loaded'   => 'گزارش باز شد.',
+				'compare'  => 'مقایسه آماده است.',
+				'comp_b'   => 'در حال استخراج عبارت دوم برای مقایسه…',
+				'comp_note'=> 'امتیاز رقابت نسبی از سجست است؛ KD اهرفس نیست.',
+				'need_b'   => 'گزارش دوم را از تاریخچه انتخاب کنید یا عبارت دوم را استخراج کنید.',
+				'usage'    => 'امروز %s درخواست به گوگل',
 			),
 			'longtailCap' => 50,
+			'canSave'     => function_exists( 'is_user_logged_in' ) && is_user_logged_in(),
+			'reportList'  => class_exists( 'WBGS_Reports' ) ? WBGS_Reports::list_for() : array(),
+			'usage'       => class_exists( 'WBGS_Reports' ) ? WBGS_Reports::usage_snapshot() : array( 'used' => 0, 'cap' => 400, 'admin' => false ),
 		);
 	}
 
@@ -87,6 +98,8 @@ class WBGS_Plugin {
 		require_once WBGS_PATH . 'includes/class-wbgs-suggest.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-tree.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-intent.php';
+		require_once WBGS_PATH . 'includes/class-wbgs-work.php';
+		require_once WBGS_PATH . 'includes/class-wbgs-reports.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-ads.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-frontend.php';
 		WBGS_Frontend::instance();
@@ -114,6 +127,9 @@ class WBGS_Plugin {
 					'حرف‌گردانی الفبای فارسی و فاصله قبل/بعد',
 					'صفحهٔ جدا روی سایت با ورود موبایل یا جیمیل',
 					'درخت محتوا، اینتنت و پیلار کلاستر',
+					'فیلتر سوالی، بریف محتوا و عنوان/متا از عبارت‌های واقعی',
+					'امتیاز رقابت نسبی (نه KD ساختگی)',
+					'تاریخچه گزارش، مقایسه دو عبارت، CSV اکسل',
 					'میزان سرچ ماهانه از Google Ads Keyword Planner',
 					'خروجی CSV و کپی یکجا',
 					'به‌روزرسانی خودکار از webakery.ir',

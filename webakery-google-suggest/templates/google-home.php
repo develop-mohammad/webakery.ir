@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 			</span>
 			<input id="wbgs-seed" class="wbgs-g-input" type="text" dir="auto" placeholder="عبارت را بنویسید؛ مثلاً کفش" <?php disabled( ! $licensed ); ?> />
 		</div>
+		<input id="wbgs-seed-b" class="wbgs-g-input-b" type="text" dir="auto" placeholder="عبارت دوم برای مقایسه (اختیاری)" <?php disabled( ! $licensed ); ?> />
 		<div class="wbgs-g-btns">
 			<button type="button" class="wbgs-g-btn" id="wbgs-start" <?php disabled( ! $licensed ); ?>>نمایش همه عبارت‌ها</button>
 			<button type="button" class="wbgs-g-btn" id="wbgs-stop" hidden>توقف</button>
@@ -37,19 +38,10 @@ defined( 'ABSPATH' ) || exit;
 			<h2>عبارت‌ها</h2>
 			<span class="wbgs-count" id="wbgs-count">۰ عبارت</span>
 		</div>
-		<p class="wbgs-hint">عبارت‌ها و لانگ‌تیل فقط از Autocomplete واقعی گوگل هستند. اینتنت از خودِ عبارت خوانده می‌شود. سرچ ماهانه فقط با اتصال Keyword Planner پر می‌شود؛ وگرنه «—» می‌ماند.</p>
-		<div class="wbgs-actions">
-			<button type="button" class="button" id="wbgs-view-list" disabled>عبارت‌ها</button>
-			<button type="button" class="button" id="wbgs-view-tree" disabled>درخت کیورد</button>
-			<button type="button" class="button" id="wbgs-view-cluster" disabled>پیلار کلاستر</button>
-			<button type="button" class="button" id="wbgs-copy" disabled>کپی</button>
-			<button type="button" class="button" id="wbgs-csv" disabled>CSV</button>
-			<button type="button" class="button" id="wbgs-txt" disabled>TXT</button>
-		</div>
-		<div class="wbgs-intent-filters" id="wbgs-intent-filters" hidden></div>
-		<ol class="wbgs-list" id="wbgs-list"></ol>
-		<div class="wbgs-ktree" id="wbgs-tree" hidden></div>
-		<div class="wbgs-pillar" id="wbgs-cluster" hidden></div>
-		<p class="wbgs-empty" id="wbgs-empty">عبارت را بنویسید و دکمه را بزنید.</p>
+		<p class="wbgs-hint">عبارت‌ها فقط از Autocomplete واقعی گوگل هستند. امتیاز رقابت نسبی KD اهرفس نیست. سرچ ماهانه فقط با Keyword Planner پر می‌شود.</p>
+		<?php
+		$empty_text = 'عبارت را بنویسید و دکمه را بزنید.';
+		include WBGS_PATH . 'templates/results-chrome.php';
+		?>
 	</div>
 </div>

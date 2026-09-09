@@ -22,9 +22,18 @@ class WBGS_Admin {
 		add_action( 'wp_ajax_wbgs_queries', array( $this, 'ajax_queries' ) );
 		add_action( 'wp_ajax_wbgs_fetch', array( $this, 'ajax_fetch' ) );
 		add_action( 'wp_ajax_wbgs_volumes', array( $this, 'ajax_volumes' ) );
+		add_action( 'wp_ajax_wbgs_report_save', array( $this, 'ajax_report_save' ) );
+		add_action( 'wp_ajax_wbgs_report_list', array( $this, 'ajax_report_list' ) );
+		add_action( 'wp_ajax_wbgs_report_get', array( $this, 'ajax_report_get' ) );
+		add_action( 'wp_ajax_wbgs_report_delete', array( $this, 'ajax_report_delete' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_queries', array( $this, 'ajax_queries' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_fetch', array( $this, 'ajax_fetch' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_volumes', array( $this, 'ajax_volumes' ) );
+		add_action( 'wp_ajax_nopriv_wbgs_report_save', array( $this, 'ajax_report_save' ) );
+		add_action( 'wp_ajax_nopriv_wbgs_report_list', array( $this, 'ajax_report_list' ) );
+		add_action( 'wp_ajax_nopriv_wbgs_report_get', array( $this, 'ajax_report_get' ) );
+		add_action( 'wp_ajax_nopriv_wbgs_report_delete', array( $this, 'ajax_report_delete' ) );
+		add_action( 'admin_post_wbgs_delete_report', array( $this, 'handle_delete_report' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( WBGS_FILE ), array( $this, 'action_links' ) );
 	}
 
@@ -54,6 +63,7 @@ class WBGS_Admin {
 	public static function tabs() {
 		return array(
 			'extract'  => 'استخراج',
+			'reports'  => 'گزارش‌ها',
 			'settings' => 'تنظیمات',
 			'license'  => 'لایسنس',
 		);
@@ -113,6 +123,7 @@ class WBGS_Admin {
 				'ads_refresh_token'     => $keep( 'ads_refresh_token' ),
 				'ads_customer_id'       => preg_replace( '/\D/', '', $keep( 'ads_customer_id' ) ),
 				'ads_login_customer_id' => preg_replace( '/\D/', '', $keep( 'ads_login_customer_id' ) ),
+				'guest_daily_cap'       => max( 50, min( 2000, isset( $_POST['guest_daily_cap'] ) ? (int) $_POST['guest_daily_cap'] : 400 ) ),
 			),
 			false
 		);
@@ -179,10 +190,15 @@ class WBGS_Admin {
 			);
 		}
 
+		$used = WBGS_Reports::usage_bump();
+		$snap = WBGS_Reports::usage_snapshot();
+		$snap['used'] = $used;
+
 		wp_send_json_success(
 			array(
 				'q'     => $query,
 				'items' => $result['items'],
+				'usage' => $snap,
 			)
 		);
 	}
@@ -214,6 +230,77 @@ class WBGS_Admin {
 			);
 		}
 		wp_send_json_success( $out );
+	}
+
+	public function ajax_report_save() {
+		$this->ajax_guard();
+
+		$seed = isset( $_POST['seed'] ) ? wp_unslash( $_POST['seed'] ) : '';
+		$seed = is_string( $seed ) ? $seed : '';
+		$raw  = isset( $_POST['rows'] ) ? wp_unslash( $_POST['rows'] ) : '';
+		$rows = array();
+		if ( is_string( $raw ) && $raw !== '' ) {
+			$decoded = json_decode( $raw, true );
+			if ( is_array( $decoded ) ) {
+				$rows = $decoded;
+			}
+		} elseif ( is_array( $raw ) ) {
+			$rows = $raw;
+		}
+		$out = WBGS_Reports::save( $seed, $rows );
+		if ( ! $out['ok'] ) {
+			wp_send_json_error( array( 'message' => $out['message'] ), 400 );
+		}
+		wp_send_json_success(
+			array(
+				'report' => $out['report'],
+				'list'   => WBGS_Reports::list_for(),
+			)
+		);
+	}
+
+	public function ajax_report_list() {
+		$this->ajax_guard();
+		wp_send_json_success( array( 'list' => WBGS_Reports::list_for() ) );
+	}
+
+	public function ajax_report_get() {
+		$this->ajax_guard();
+		$id     = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
+		$report = WBGS_Reports::get( $id );
+		if ( ! $report ) {
+			wp_send_json_error( array( 'message' => 'گزارش پیدا نشد.' ), 404 );
+		}
+		wp_send_json_success( array( 'report' => $report ) );
+	}
+
+	public function ajax_report_delete() {
+		$this->ajax_guard();
+		$id = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
+		if ( ! WBGS_Reports::delete( $id ) ) {
+			wp_send_json_error( array( 'message' => 'حذف نشد.' ), 404 );
+		}
+		wp_send_json_success( array( 'list' => WBGS_Reports::list_for() ) );
+	}
+
+	public function handle_delete_report() {
+		if ( ! current_user_can( self::CAP ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		check_admin_referer( 'wbgs_delete_report' );
+		$id = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
+		WBGS_Reports::delete( $id );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'    => WBGS_MENU,
+					'tab'     => 'reports',
+					'deleted' => '1',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
 	}
 
 	public function action_links( $links ) {
@@ -249,6 +336,17 @@ class WBGS_Admin {
 	private function rate_limit_front() {
 		if ( current_user_can( self::CAP ) ) {
 			return;
+		}
+		$snap = WBGS_Reports::usage_snapshot();
+		if ( $snap['cap'] > 0 && $snap['used'] >= $snap['cap'] ) {
+			wp_send_json_error(
+				array(
+					'message' => 'سقف استفادهٔ امروز پر شد. فردا دوباره تلاش کنید.',
+					'code'    => 'limited',
+					'usage'   => $snap,
+				),
+				429
+			);
 		}
 		$who = is_user_logged_in() ? ( 'u' . get_current_user_id() ) : ( 'ip' . md5( isset( $_SERVER['REMOTE_ADDR'] ) ? (string) $_SERVER['REMOTE_ADDR'] : 'x' ) );
 		$key = 'wbgs_rl_' . $who;

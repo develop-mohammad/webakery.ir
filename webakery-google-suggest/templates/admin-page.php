@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 		<span class="wbgs-ver">v<?php echo esc_html( WBGS_VERSION ); ?></span>
 	</h1>
 	<p class="wbgs-sub">
-		پیشنهادهای واقعی Autocomplete گوگل را با فاصله و حرف‌گردانی الفبا جمع می‌کند —
+		ایستگاه کار سئو با Suggest واقعی گوگل: بریف، رقابت نسبی، تاریخچه و مقایسه —
 		سازنده: <a href="https://webakery.ir" target="_blank" rel="noopener">webakery.ir</a>
 	</p>
 
@@ -27,6 +27,9 @@ defined( 'ABSPATH' ) || exit;
 	<?php if ( ! empty( $_GET['updated'] ) ) : ?>
 		<div class="notice notice-success is-dismissible"><p>تنظیمات ذخیره شد.</p></div>
 	<?php endif; ?>
+	<?php if ( ! empty( $_GET['deleted'] ) ) : ?>
+		<div class="notice notice-success is-dismissible"><p>گزارش حذف شد.</p></div>
+	<?php endif; ?>
 
 	<?php if ( ! $licensed ) : ?>
 		<div class="notice notice-warning"><p>دوره آزمایشی یا لایسنس فعال نیست. استخراج قفل است. از زبانه لایسنس اقدام کنید.</p></div>
@@ -34,6 +37,8 @@ defined( 'ABSPATH' ) || exit;
 
 	<?php if ( 'extract' === $tab ) : ?>
 		<?php include WBGS_PATH . 'templates/extract-form.php'; ?>
+	<?php elseif ( 'reports' === $tab ) : ?>
+		<?php include WBGS_PATH . 'templates/admin-reports.php'; ?>
 	<?php elseif ( 'settings' === $tab ) : ?>
 		<form class="wbgs-card wbgs-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="wbgs_save_settings" />
@@ -80,6 +85,11 @@ defined( 'ABSPATH' ) || exit;
 				<label class="wbgs-label" for="wbgs-delay">فاصله بین درخواست‌ها (میلی‌ثانیه)</label>
 				<input id="wbgs-delay" class="wbgs-input wbgs-input-sm" type="number" name="delay_ms" min="150" max="2000" step="50" value="<?php echo esc_attr( (string) $settings['delay_ms'] ); ?>" dir="ltr" />
 			</p>
+			<p>
+				<label class="wbgs-label" for="wbgs-guest-cap">سقف درخواست روزانه مهمان</label>
+				<input id="wbgs-guest-cap" class="wbgs-input wbgs-input-sm" type="number" name="guest_daily_cap" min="50" max="2000" step="10" value="<?php echo esc_attr( (string) ( isset( $settings['guest_daily_cap'] ) ? $settings['guest_daily_cap'] : 400 ) ); ?>" dir="ltr" />
+			</p>
+			<p class="wbgs-hint">برای صفحهٔ عمومی. مدیر پیشخوان سقف ندارد. این عدد حجم سرچ نیست؛ فقط شمارندهٔ درخواست به گوگل است.</p>
 			<h2>میزان سرچ دقیق (Google Ads Keyword Planner)</h2>
 			<p class="wbgs-hint">عدد ماهانه فقط از خودِ گوگل ادز خوانده می‌شود. اگر وصل نباشد، ستون سرچ خالی می‌ماند — هیچ عددی ساخته نمی‌شود.</p>
 			<p>

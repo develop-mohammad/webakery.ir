@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>سجست‌یاب — پیش‌نمایش شورت‌کد</title>
+<title>سجست‌یاب — ایستگاه کار سئو</title>
 <link rel="stylesheet" href="assets/css/admin.css" />
 <link rel="stylesheet" href="assets/css/front.css" />
 <link rel="stylesheet" href="assets/css/google.css" />
@@ -18,12 +18,10 @@
 </style>
 </head>
 <body class="wbgs-app wbgs-app-google">
-  <p class="note">پیش‌نمایش شورت‌کد <code>[webakery_suggest]</code> — دادهٔ نمونه از Suggest واقعی گوگل برای «کفش». روی سایت زنده از خودِ گوگل خوانده می‌شود.</p>
+  <p class="note">پیش‌نمایش ایستگاه کار سئو — دادهٔ نمونه از Suggest واقعی برای «کفش». روی سایت زنده از خودِ گوگل خوانده می‌شود. امتیاز رقابت نسبی KD اهرفس نیست.</p>
   <div class="wbgs-g has-results" data-wbgs-ui="google" dir="rtl">
     <div class="wbgs-g-hero">
-      <div class="wbgs-g-logo" aria-hidden="true">
-        سجست‌یاب
-      </div>
+      <div class="wbgs-g-logo" aria-hidden="true">سجست‌یاب</div>
       <p class="wbgs-g-tag">همه پیشنهادهای واقعی گوگل برای یک عبارت</p>
       <div class="wbgs-g-box">
         <span class="wbgs-g-icon" aria-hidden="true">
@@ -31,6 +29,7 @@
         </span>
         <input id="wbgs-seed" class="wbgs-g-input" type="text" value="کفش" dir="auto" />
       </div>
+      <input class="wbgs-g-input-b" type="text" value="کتانی" dir="auto" readonly />
       <div class="wbgs-g-btns">
         <button type="button" class="wbgs-g-btn" id="show-list">نمایش همه عبارت‌ها</button>
       </div>
@@ -38,75 +37,109 @@
     <div class="wbgs-g-stage">
       <div class="wbgs-results-head">
         <h2>عبارت‌ها</h2>
-        <span class="wbgs-count" id="wbgs-count">۱۰ عبارت</span>
+        <span class="wbgs-count" id="wbgs-count">۱۲ عبارت</span>
       </div>
-      <p class="wbgs-hint">اینتنت از خودِ عبارت است. سرچ ماهانه در این پیش‌نمایش «—» است چون Keyword Planner وصل نیست.</p>
+      <p class="wbgs-hint">اینتنت و رقابت نسبی از خودِ عبارت است. سرچ ماهانه در این پیش‌نمایش «—» است چون Keyword Planner وصل نیست.</p>
+      <p class="wbgs-usage">امروز ۱۲ درخواست به گوگل · سقف ۴۰۰</p>
+      <div class="wbgs-desk">
+        <label class="wbgs-desk-label">گزارش‌های ذخیره‌شده</label>
+        <select class="wbgs-select"><option>کفش — ۱۲ عبارت</option><option>کتانی — ۸ عبارت</option></select>
+        <button type="button" class="button">باز کردن</button>
+        <button type="button" class="button">ذخیره گزارش</button>
+        <button type="button" class="button">مقایسه با این گزارش</button>
+      </div>
       <div class="wbgs-actions">
         <button type="button" class="button wbgs-view-on" id="tab-list">عبارت‌ها</button>
         <button type="button" class="button" id="tab-tree">درخت کیورد</button>
         <button type="button" class="button" id="tab-cluster">پیلار کلاستر</button>
+        <button type="button" class="button" id="tab-brief">بریف محتوا</button>
+        <button type="button" class="button" id="tab-compare">مقایسه</button>
       </div>
       <div class="wbgs-intent-filters">
-        <button type="button" class="is-on">همه ۱۰</button>
+        <button type="button" class="is-on">همه ۱۲</button>
+        <button type="button">سوالی ۲</button>
         <button type="button">تجاری ۷</button>
         <button type="button">تراکنشی ۲</button>
+        <button type="button">اطلاعاتی ۲</button>
         <button type="button">ناوبری ۱</button>
       </div>
       <ol class="wbgs-list" id="wbgs-list"></ol>
       <div class="wbgs-ktree" id="wbgs-tree" hidden></div>
       <div class="wbgs-pillar" id="wbgs-cluster" hidden></div>
+      <div class="wbgs-briefs" id="wbgs-brief" hidden></div>
+      <div class="wbgs-compare" id="wbgs-compare" hidden></div>
     </div>
   </div>
 <script>
 (function () {
   var rows = [
-    { text: 'کفش مردانه', intent: 'commercial', intent_fa: 'تجاری' },
-    { text: 'کفش زنانه', intent: 'commercial', intent_fa: 'تجاری' },
-    { text: 'خرید کفش', intent: 'transactional', intent_fa: 'تراکنشی' },
-    { text: 'کفش نایک', intent: 'commercial', intent_fa: 'تجاری' },
-    { text: 'قیمت کفش', intent: 'transactional', intent_fa: 'تراکنشی' },
-    { text: 'کفش دیجی کالا', intent: 'navigational', intent_fa: 'ناوبری' },
-    { text: 'کفش جردن', intent: 'commercial', intent_fa: 'تجاری' },
-    { text: 'کفش مجلسی', intent: 'commercial', intent_fa: 'تجاری' },
-    { text: 'کفش کالج', intent: 'commercial', intent_fa: 'تجاری' },
-    { text: 'کفش ونس', intent: 'commercial', intent_fa: 'تجاری' }
+    { text: 'کفش مردانه', intent: 'commercial', intent_fa: 'تجاری', comp: 66, band: 'متوسط' },
+    { text: 'کفش زنانه', intent: 'commercial', intent_fa: 'تجاری', comp: 64, band: 'متوسط' },
+    { text: 'خرید کفش', intent: 'transactional', intent_fa: 'تراکنشی', comp: 84, band: 'بالا' },
+    { text: 'کفش نایک', intent: 'commercial', intent_fa: 'تجاری', comp: 62, band: 'متوسط' },
+    { text: 'قیمت کفش', intent: 'transactional', intent_fa: 'تراکنشی', comp: 80, band: 'بالا' },
+    { text: 'کفش چیست', intent: 'informational', intent_fa: 'اطلاعاتی', comp: 28, band: 'پایین', q: 1 },
+    { text: 'چگونه کفش مناسب بخریم', intent: 'informational', intent_fa: 'اطلاعاتی', comp: 22, band: 'پایین', q: 1, lt: 1 },
+    { text: 'کفش دیجی کالا', intent: 'navigational', intent_fa: 'ناوبری', comp: 52, band: 'متوسط' },
+    { text: 'کفش جردن', intent: 'commercial', intent_fa: 'تجاری', comp: 60, band: 'متوسط' },
+    { text: 'کفش مجلسی', intent: 'commercial', intent_fa: 'تجاری', comp: 58, band: 'متوسط' },
+    { text: 'کفش کالج', intent: 'commercial', intent_fa: 'تجاری', comp: 56, band: 'متوسط' },
+    { text: 'کفش ونس', intent: 'commercial', intent_fa: 'تجاری', comp: 54, band: 'متوسط' }
   ];
   var list = document.getElementById('wbgs-list');
   var tree = document.getElementById('wbgs-tree');
   var cluster = document.getElementById('wbgs-cluster');
+  var brief = document.getElementById('wbgs-brief');
+  var compare = document.getElementById('wbgs-compare');
   rows.forEach(function (row) {
     var li = document.createElement('li');
-    li.innerHTML = '<span class="wbgs-kw"></span><span class="wbgs-intent wbgs-intent-' + row.intent + '"></span><span class="wbgs-searches is-empty">—</span>';
-    li.querySelector('.wbgs-kw').textContent = row.text;
-    li.querySelector('.wbgs-intent').textContent = row.intent_fa;
+    var badges = '';
+    if (row.lt) badges += ' <span class="wbgs-intent wbgs-intent-longtail">لانگ‌تیل</span>';
+    if (row.q) badges += ' <span class="wbgs-intent wbgs-intent-question">سوالی</span>';
+    li.innerHTML = '<span class="wbgs-kw"><span class="wbgs-kw-text"></span>' + badges + '</span>' +
+      '<span class="wbgs-intent wbgs-intent-' + row.intent + '"></span>' +
+      '<span class="wbgs-comp wbgs-comp-' + (row.band === 'بالا' ? 'high' : row.band === 'پایین' ? 'low' : 'mid') + '"></span>' +
+      '<span class="wbgs-searches is-empty">—</span>';
+    li.querySelector('.wbgs-kw-text').textContent = row.text;
+    li.querySelector('.wbgs-intent.wbgs-intent-' + row.intent).textContent = row.intent_fa;
+    li.querySelector('.wbgs-comp').textContent = row.comp + ' ' + row.band;
     list.appendChild(li);
   });
   tree.innerHTML = '<div class="wbgs-ktree-head"><span>عبارت</span><span>اینتنت</span><span>سرچ ماهانه</span></div>' +
     '<div class="wbgs-ktree-row is-branch"><span class="wbgs-ktree-tog">▾</span><span class="wbgs-kw">مردانه (۱)</span><span class="wbgs-intent wbgs-intent-branch">شاخه</span><span class="wbgs-searches is-empty">—</span></div>' +
     '<div class="wbgs-ktree-kids"><div class="wbgs-ktree-row"><span class="wbgs-kw">کفش مردانه</span><span class="wbgs-intent wbgs-intent-commercial">تجاری</span><span class="wbgs-searches is-empty">—</span></div></div>' +
-    '<div class="wbgs-ktree-row is-branch"><span class="wbgs-ktree-tog">▾</span><span class="wbgs-kw">زنانه (۱)</span><span class="wbgs-intent wbgs-intent-branch">شاخه</span><span class="wbgs-searches is-empty">—</span></div>' +
-    '<div class="wbgs-ktree-kids"><div class="wbgs-ktree-row"><span class="wbgs-kw">کفش زنانه</span><span class="wbgs-intent wbgs-intent-commercial">تجاری</span><span class="wbgs-searches is-empty">—</span></div></div>' +
     '<div class="wbgs-ktree-row is-branch"><span class="wbgs-ktree-tog">▾</span><span class="wbgs-kw">خرید (۱)</span><span class="wbgs-intent wbgs-intent-branch">شاخه</span><span class="wbgs-searches is-empty">—</span></div>' +
     '<div class="wbgs-ktree-kids"><div class="wbgs-ktree-row"><span class="wbgs-kw">خرید کفش</span><span class="wbgs-intent wbgs-intent-transactional">تراکنشی</span><span class="wbgs-searches is-empty">—</span></div></div>';
   cluster.innerHTML = '<div class="wbgs-mmap"><div class="wbgs-mmap-hub"><strong>کفش</strong><span>پیلار — صفحهٔ ستون محتوا</span></div>' +
     '<div class="wbgs-mmap-grid">' +
     '<article class="wbgs-mmap-card"><h3>مردانه <span class="wbgs-intent wbgs-intent-commercial">تجاری</span></h3><p class="wbgs-hint">۱ عبارت</p><ul><li><span>کفش مردانه</span><span class="wbgs-searches is-empty">—</span></li></ul></article>' +
     '<article class="wbgs-mmap-card"><h3>خرید <span class="wbgs-intent wbgs-intent-transactional">تراکنشی</span></h3><p class="wbgs-hint">۱ عبارت</p><ul><li><span>خرید کفش</span><span class="wbgs-searches is-empty">—</span></li></ul></article>' +
-    '<article class="wbgs-mmap-card"><h3>دیجی <span class="wbgs-intent wbgs-intent-navigational">ناوبری</span></h3><p class="wbgs-hint">۱ عبارت</p><ul><li><span>کفش دیجی کالا</span><span class="wbgs-searches is-empty">—</span></li></ul></article>' +
     '</div></div>';
+  brief.innerHTML = '<article class="wbgs-brief-card is-pillar"><h3>پیلار: کفش <span class="wbgs-intent wbgs-intent-commercial">تجاری</span></h3>' +
+    '<p class="wbgs-hint">۱۲ عبارت · رقابت نسبی ۵۸ (متوسط) — KD اهرفس نیست</p>' +
+    '<p><strong>H1: </strong>کفش مردانه</p><p><strong>عنوان: </strong>کفش مردانه</p>' +
+    '<p><strong>متا: </strong>کفش زنانه، خرید کفش، کفش چیست</p>' +
+    '<p><strong>H2</strong></p><ul><li>کفش چیست</li><li>چگونه کفش مناسب بخریم</li><li>خرید کفش</li></ul></article>' +
+    '<article class="wbgs-brief-card"><h3>کلاستر: چیست <span class="wbgs-intent wbgs-intent-informational">اطلاعاتی</span></h3>' +
+    '<p><strong>H1: </strong>کفش چیست</p><p><strong>عنوان: </strong>کفش چیست</p></article>';
+  compare.innerHTML = '<p class="wbgs-hint">کفش (۱۲) در برابر کتانی (۸) — مشترک ۳ · فقط اولی ۹ · فقط دومی ۵</p>' +
+    '<article class="wbgs-compare-card"><h3>مشترک (۳)</h3><ul><li>خرید کفش</li><li>قیمت کفش</li><li>کفش مردانه</li></ul></article>' +
+    '<article class="wbgs-compare-card"><h3>فقط «کفش» (۹)</h3><ul><li>کفش چیست</li><li>کفش جردن</li></ul></article>' +
+    '<article class="wbgs-compare-card"><h3>فقط «کتانی» (۵)</h3><ul><li>کتانی مردانه</li><li>کتانی رانینگ</li></ul></article>';
+  var tabs = { list: list, tree: tree, cluster: cluster, brief: brief, compare: compare };
   function show(name) {
-    list.hidden = name !== 'list';
-    tree.hidden = name !== 'tree';
-    cluster.hidden = name !== 'cluster';
-    document.getElementById('tab-list').classList.toggle('wbgs-view-on', name === 'list');
-    document.getElementById('tab-tree').classList.toggle('wbgs-view-on', name === 'tree');
-    document.getElementById('tab-cluster').classList.toggle('wbgs-view-on', name === 'cluster');
+    Object.keys(tabs).forEach(function (key) { tabs[key].hidden = key !== name; });
+    ['list', 'tree', 'cluster', 'brief', 'compare'].forEach(function (key) {
+      document.getElementById('tab-' + key).classList.toggle('wbgs-view-on', key === name);
+    });
   }
-  document.getElementById('tab-list').onclick = function () { show('list'); };
-  document.getElementById('tab-tree').onclick = function () { show('tree'); };
-  document.getElementById('tab-cluster').onclick = function () { show('cluster'); };
+  ['list', 'tree', 'cluster', 'brief', 'compare'].forEach(function (key) {
+    document.getElementById('tab-' + key).onclick = function () { show(key); };
+  });
   document.getElementById('show-list').onclick = function () { show('list'); window.scrollTo(0, 400); };
-  if (/cluster=1/.test(location.search)) show('cluster');
+  if (/compare=1/.test(location.search)) show('compare');
+  else if (/brief=1/.test(location.search)) show('brief');
+  else if (/cluster=1/.test(location.search)) show('cluster');
   else if (/tree=1/.test(location.search)) show('tree');
 })();
 </script>

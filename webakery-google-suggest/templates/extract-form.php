@@ -9,6 +9,8 @@ defined( 'ABSPATH' ) || exit;
 
 		<label class="wbgs-label" for="wbgs-seed">عبارت</label>
 		<input id="wbgs-seed" class="wbgs-input" type="text" dir="auto" placeholder="کفش" <?php disabled( ! $licensed ); ?> />
+		<label class="wbgs-label" for="wbgs-seed-b">عبارت دوم برای مقایسه (اختیاری)</label>
+		<input id="wbgs-seed-b" class="wbgs-input" type="text" dir="auto" placeholder="مثلاً کتانی" <?php disabled( ! $licensed ); ?> />
 
 		<fieldset class="wbgs-modes" <?php disabled( ! $licensed ); ?>>
 			<legend>روش‌ها</legend>
@@ -37,19 +39,10 @@ defined( 'ABSPATH' ) || exit;
 			<h2>نتایج</h2>
 			<span class="wbgs-count" id="wbgs-count">۰ عبارت</span>
 		</div>
-		<p class="wbgs-hint">اینتنت از خودِ عبارت است. عدد ماهانه فقط از Google Ads Keyword Planner می‌آید؛ بدون اتصال، ستون سرچ «—» می‌ماند و هیچ عددی ساخته نمی‌شود.</p>
-		<div class="wbgs-actions">
-			<button type="button" class="button" id="wbgs-view-list" disabled>عبارت‌ها</button>
-			<button type="button" class="button" id="wbgs-view-tree" disabled>درخت کیورد</button>
-			<button type="button" class="button" id="wbgs-view-cluster" disabled>پیلار کلاستر</button>
-			<button type="button" class="button" id="wbgs-copy" disabled>کپی همه</button>
-			<button type="button" class="button" id="wbgs-csv" disabled>دانلود CSV</button>
-			<button type="button" class="button" id="wbgs-txt" disabled>دانلود TXT</button>
-		</div>
-		<div class="wbgs-intent-filters" id="wbgs-intent-filters" hidden></div>
-		<ol class="wbgs-list" id="wbgs-list"></ol>
-		<div class="wbgs-ktree" id="wbgs-tree" hidden></div>
-		<div class="wbgs-pillar" id="wbgs-cluster" hidden></div>
-		<p class="wbgs-empty" id="wbgs-empty">هنوز چیزی استخراج نشده.</p>
+		<p class="wbgs-hint">اینتنت و امتیاز رقابت نسبی از خودِ عبارت و رتبهٔ سجست است (KD اهرفس نیست). عدد ماهانه فقط از Keyword Planner می‌آید؛ وگرنه «—» می‌ماند.</p>
+		<?php
+		$empty_text = 'هنوز چیزی استخراج نشده.';
+		include WBGS_PATH . 'templates/results-chrome.php';
+		?>
 	</section>
 </div>
