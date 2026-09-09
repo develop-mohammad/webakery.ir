@@ -20,6 +20,13 @@ class WAP_Data {
             $date_to   = sprintf( '%d/%02d/%02d', $today['y'], $today['m'], $today['d'] );
         }
 
+        // قفل بازه مالی حساس (تنظیمات مدیر)
+        if ( class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::is_date_locked() ) {
+            $lock = WAP_Report_Image::locked_range();
+            $date_from = $lock['date_from'];
+            $date_to   = $lock['date_to'];
+        }
+
         return array(
             'date_from'    => $date_from,
             'date_to'      => $date_to,
@@ -170,6 +177,12 @@ class WAP_Data {
     }
 
     public static function payment_label( $method ) {
+        if ( class_exists( 'WAP_Gateway' ) ) {
+            $fam = WAP_Gateway::family( (string) $method );
+            if ( $fam !== WAP_Gateway::FAMILY_OTHER ) {
+                return WAP_Gateway::label( (string) $method );
+            }
+        }
         $labels = array(
             'zarinpal' => 'زرین‌پال', 'wc_zpal' => 'زرین‌پال', 'WC_ZPal' => 'زرین‌پال',
             'wc-zarinpal' => 'زرین‌پال', 'zarinpal-pg' => 'زرین‌پال',
@@ -177,7 +190,8 @@ class WAP_Data {
             'WC_Gateway_SnappPay' => 'اسنپ‌پی', 'wc_gateway_snapppay' => 'اسنپ‌پی',
             'WC_Gateway_TorobPay' => 'ترب‌پی', 'torobpay' => 'ترب‌پی', 'wc_gateway_torobpay' => 'ترب‌پی',
             'wc_zibal' => 'زیبال', 'WC_Zibal' => 'زیبال', 'zibal' => 'زیبال',
-            'idpay' => 'آیدی‌پی', 'nextpay' => 'نکست‌پی', 'aqayepay' => 'آقای‌پی',
+            'idpay' => 'آیدی‌پی', 'WC_IDPay' => 'آیدی‌پی', 'wc_idpay' => 'آیدی‌پی',
+            'nextpay' => 'نکست‌پی', 'aqayepay' => 'آقای‌پی',
             'wcdigipay' => 'دیجی‌پی', 'WCDigiPay' => 'دیجی‌پی', 'digipay' => 'دیجی‌پی',
             'wc_digipay' => 'دیجی‌پی', 'wc-digipay' => 'دیجی‌پی',
             'cod' => 'پرداخت در محل', 'bacs' => 'انتقال بانکی', 'cheque' => 'چک', '' => '—',

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>مقایسه فروش — سبک Search Console</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>body{margin:0;background:#f8f9fa;font-family:Vazirmatn,Tahoma,sans-serif}.wrap{max-width:980px;margin:24px auto;padding:0 16px 40px}</style>
+</head>
+<body>
+<div class="wrap wap-app">
+  <?php
+  // static fallback without PHP: embed sample SVG via include when served as php — for http.server use pre-rendered markup
+  ?>
+  <div class="wap-gsc-card">
+    <div class="wap-gsc-head">
+      <h3 class="wap-gsc-title">مقایسه فروش هر دوره</h3>
+      <div class="wap-gsc-legend">
+        <span class="wap-gsc-leg wap-gsc-leg-a"><i></i>۱۴۰۴/۰۱ تا ۱۴۰۴/۰۴</span>
+        <span class="wap-gsc-leg wap-gsc-leg-b"><i></i>۱۴۰۳/۰۱ تا ۱۴۰۳/۰۴</span>
+      </div>
+    </div>
+    <div class="wap-gsc-chart-wrap" id="demo_period"></div>
+  </div>
+
+  <div class="wap-gsc-card">
+    <div class="wap-gsc-head">
+      <h3 class="wap-gsc-title">مقایسه فروش محصولات</h3>
+      <div class="wap-gsc-legend">
+        <span class="wap-gsc-leg wap-gsc-leg-a"><i></i>بازه فعلی</span>
+        <span class="wap-gsc-leg wap-gsc-leg-b"><i></i>بازه مقایسه</span>
+      </div>
+    </div>
+    <div class="wap-gsc-prod-list">
+      <div class="wap-gsc-prod-row">
+        <div class="wap-gsc-prod-name">دوره آموزشی حسابداری</div>
+        <div class="wap-gsc-prod-bars">
+          <div class="wap-gsc-prod-track"><div class="wap-gsc-prod-fill wap-gsc-prod-a" style="width:92%"></div></div>
+          <div class="wap-gsc-prod-track"><div class="wap-gsc-prod-fill wap-gsc-prod-b" style="width:70%"></div></div>
+        </div>
+        <div class="wap-gsc-prod-vals"><span>۹٬۵۰۰٬۰۰۰</span><span class="wap-gsc-delta is-up">+۱۸٫۲٪</span></div>
+      </div>
+      <div class="wap-gsc-prod-row">
+        <div class="wap-gsc-prod-name">پکیج افزونه فروشگاهی</div>
+        <div class="wap-gsc-prod-bars">
+          <div class="wap-gsc-prod-track"><div class="wap-gsc-prod-fill wap-gsc-prod-a" style="width:68%"></div></div>
+          <div class="wap-gsc-prod-track"><div class="wap-gsc-prod-fill wap-gsc-prod-b" style="width:80%"></div></div>
+        </div>
+        <div class="wap-gsc-prod-vals"><span>۷٬۱۰۰٬۰۰۰</span><span class="wap-gsc-delta is-down">-۱۱٫۴٪</span></div>
+      </div>
+      <div class="wap-gsc-prod-row">
+        <div class="wap-gsc-prod-name">پشتیبانی ویژه سالانه</div>
+        <div class="wap-gsc-prod-bars">
+          <div class="wap-gsc-prod-track"><div class="wap-gsc-prod-fill wap-gsc-prod-a" style="width:45%"></div></div>
+          <div class="wap-gsc-prod-track"><div class="wap-gsc-prod-fill wap-gsc-prod-b" style="width:38%"></div></div>
+        </div>
+        <div class="wap-gsc-prod-vals"><span>۴٬۲۰۰٬۰۰۰</span><span class="wap-gsc-delta is-up">+۹٫۱٪</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var a=[5.5,8,4,9.5], b=[4.2,6.1,4.5,7], labels=['فروردین','اردیبهشت','خرداد','تیر'];
+  var w=960,h=280,pl=52,pr=16,pt=24,pb=42, pw=w-pl-pr, ph=h-pt-pb, max=10.5;
+  function pts(arr){return arr.map(function(v,i){var x=pl+(i/(arr.length-1))*pw; var y=pt+ph-(v/max)*ph; return [x,y];});}
+  function line(p){return p.map(function(pt,i){return (i?'L':'M')+pt[0].toFixed(1)+' '+pt[1].toFixed(1);}).join(' ');}
+  function area(p){var d=line(p); var last=p[p.length-1], first=p[0]; return d+' L'+last[0]+' '+(pt+ph)+' L'+first[0]+' '+(pt+ph)+' Z';}
+  var pa=pts(a), pb=pts(b);
+  var grid='';
+  for(var g=0;g<=4;g++){var gy=pt+(g/4)*ph; grid+='<line class="wap-gsc-grid" x1="'+pl+'" x2="'+(w-pr)+'" y1="'+gy+'" y2="'+gy+'"/>';}
+  var svg='<svg class="wap-gsc-svg" viewBox="0 0 '+w+' '+h+'"><defs><linearGradient id="f1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a73e8" stop-opacity="0.28"/><stop offset="100%" stop-color="#1a73e8" stop-opacity="0.02"/></linearGradient></defs>'+grid+
+    '<line class="wap-gsc-axis-line" x1="'+pl+'" x2="'+(w-pr)+'" y1="'+(pt+ph)+'" y2="'+(pt+ph)+'"/>'+
+    '<path class="wap-gsc-area" d="'+area(pa)+'" fill="url(#f1)"/>'+
+    '<path class="wap-gsc-line wap-gsc-line-a" d="'+line(pa)+'" fill="none"/>'+
+    '<path class="wap-gsc-line wap-gsc-line-b" d="'+line(pb)+'" fill="none"/>';
+  pa.forEach(function(p){svg+='<circle class="wap-gsc-dot wap-gsc-dot-a" cx="'+p[0]+'" cy="'+p[1]+'" r="3.5"/>';});
+  pb.forEach(function(p){svg+='<circle class="wap-gsc-dot wap-gsc-dot-b" cx="'+p[0]+'" cy="'+p[1]+'" r="3.5"/>';});
+  labels.forEach(function(lb,i){svg+='<text class="wap-gsc-xlabel" x="'+pa[i][0]+'" y="'+(h-14)+'" text-anchor="middle">'+lb+'</text>';});
+  svg+='</svg>';
+  document.getElementById('demo_period').innerHTML=svg;
+})();
+</script>
+</body>
+</html>
