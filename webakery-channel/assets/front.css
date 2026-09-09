@@ -1,0 +1,30 @@
+/* کانال‌یار — دکمه عضویت در سایت | فونت و رنگ از قالب ارث می‌برد */
+
+.wbcn-join {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 14px;
+	border: 1px solid currentColor;
+	border-radius: 10px;
+	direction: rtl;
+}
+.wbcn-join-text {
+	margin: 0;
+	flex: 1 1 220px;
+	line-height: 1.8;
+	font-size: 0.95em;
+}
+.wbcn-join-btn {
+	display: inline-block;
+	padding: 8px 16px;
+	border-radius: 8px;
+	text-decoration: none;
+	background: currentColor;
+	color: #fff !important;
+	font-weight: 700;
+}
+.wbcn-join-btn:hover { opacity: 0.9; }
+.wbcn-join[hidden] { display: none !important; }
