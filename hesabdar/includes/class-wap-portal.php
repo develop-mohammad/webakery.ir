@@ -1643,8 +1643,8 @@ class WAP_Portal {
                                             <div class="wap-peak-cal__cell is-blank"></div>
                                         <?php else :
                                             $cnt = (int) ( $cell['count'] ?? 0 );
-                                            $intensity = $cnt > 0 ? ( 0.14 + ( $cnt / $cal_max ) * 0.86 ) : 0;
-                                            $cls = 'wap-peak-cal__cell';
+                                            $tone = WAP_Analytics::heat_tone( $cnt, $cal_max );
+                                            $cls = 'wap-peak-cal__cell is-level-' . (int) $tone['level'];
                                             if ( empty( $cell['in_range'] ) ) {
                                                 $cls .= ' is-out';
                                             }
@@ -1664,7 +1664,7 @@ class WAP_Portal {
                                             );
                                             ?>
                                             <div class="<?php echo esc_attr( $cls ); ?>"
-                                                 style="<?php echo $cnt > 0 ? 'background:rgba(26,115,232,' . esc_attr( number_format( $intensity, 2, '.', '' ) ) . ');' : ''; ?>"
+                                                 style="background:<?php echo esc_attr( $tone['bg'] ); ?>;color:<?php echo esc_attr( $tone['fg'] ); ?>;border-color:<?php echo esc_attr( $tone['border'] ); ?>"
                                                  title="<?php echo esc_attr( $title ); ?>">
                                                 <span class="wap-peak-cal__day"><?php echo esc_html( (string) (int) $cell['d'] ); ?></span>
                                                 <?php if ( $cnt > 0 ) : ?>
@@ -1677,9 +1677,13 @@ class WAP_Portal {
                             </div>
                         <?php endforeach; ?>
                     </div>
-                    <div class="wap-peak-cal-legend">
+                    <div class="wap-peak-cal-legend" aria-hidden="true">
                         <span>کم</span>
-                        <span class="wap-peak-cal-legend__bar"></span>
+                        <span class="wap-peak-cal-legend__swatch is-l1"></span>
+                        <span class="wap-peak-cal-legend__swatch is-l2"></span>
+                        <span class="wap-peak-cal-legend__swatch is-l3"></span>
+                        <span class="wap-peak-cal-legend__swatch is-l4"></span>
+                        <span class="wap-peak-cal-legend__swatch is-l5"></span>
                         <span>زیاد</span>
                     </div>
                 <?php endif; ?>
@@ -1701,16 +1705,16 @@ class WAP_Portal {
                         }
                     }
                     foreach ( $data['peak_hours'] as $h ) :
-                        $intensity = $h['count'] / $max_hour;
-                        $pct = (int) round( $intensity * 100 );
+                        $tone = WAP_Analytics::heat_tone( (int) $h['count'], (int) $max_hour );
+                        $pct = (int) $h['count'] > 0 ? max( 8, (int) round( ( (int) $h['count'] / $max_hour ) * 100 ) ) : 0;
                         $is_peak = (int) $h['hour'] === $best_h && $best_c > 0;
                         ?>
                         <div class="wap-peak-dayview__row<?php echo $is_peak ? ' is-peak' : ''; ?>" title="<?php echo esc_attr( sprintf( '%02d:00 — %d سفارش — %s', $h['hour'], $h['count'], number_format( $h['total'] ) ) ); ?>">
                             <span class="wap-peak-dayview__hour"><?php echo esc_html( sprintf( '%02d:00', $h['hour'] ) ); ?></span>
                             <div class="wap-peak-dayview__track">
-                                <div class="wap-peak-dayview__fill" style="width:<?php echo esc_attr( (string) $pct ); ?>%"></div>
+                                <div class="wap-peak-dayview__fill" style="width:<?php echo esc_attr( (string) $pct ); ?>%;background:<?php echo esc_attr( $tone['bg'] === '#ffffff' ? '#dadce0' : $tone['bg'] ); ?>"></div>
                             </div>
-                            <span class="wap-peak-dayview__count"><?php echo esc_html( (string) $h['count'] ); ?></span>
+                            <span class="wap-peak-dayview__count" style="color:<?php echo esc_attr( $tone['level'] >= 3 ? '#0b57d0' : '#202124' ); ?>"><?php echo esc_html( (string) $h['count'] ); ?></span>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -1726,11 +1730,10 @@ class WAP_Portal {
                     </div>
                     <div class="wap-peak-weekcal__body">
                         <?php foreach ( $data['peak_days'] as $d ) :
-                            $intensity = $d['count'] / $max_day;
-                            $alpha = $d['count'] > 0 ? ( 0.14 + $intensity * 0.86 ) : 0;
+                            $tone = WAP_Analytics::heat_tone( (int) $d['count'], (int) $max_day );
                             ?>
-                            <div class="wap-peak-weekcal__cell<?php echo $d['count'] > 0 ? ' has-orders' : ''; ?>"
-                                 style="<?php echo $d['count'] > 0 ? 'background:rgba(26,115,232,' . esc_attr( number_format( $alpha, 2, '.', '' ) ) . ');' : ''; ?>"
+                            <div class="wap-peak-weekcal__cell is-level-<?php echo (int) $tone['level']; ?><?php echo $d['count'] > 0 ? ' has-orders' : ''; ?>"
+                                 style="background:<?php echo esc_attr( $tone['bg'] ); ?>;color:<?php echo esc_attr( $tone['fg'] ); ?>;border-color:<?php echo esc_attr( $tone['border'] ); ?>"
                                  title="<?php echo esc_attr( $d['label'] . ' — ' . $d['count'] . ' سفارش — ' . number_format( $d['total'] ) ); ?>">
                                 <span class="wap-peak-weekcal__label"><?php echo esc_html( $d['label'] ); ?></span>
                                 <strong><?php echo esc_html( (string) $d['count'] ); ?></strong>

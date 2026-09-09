@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.16.0',
+        'version'      => '1.16.1',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۱۶.۰: نمایش پیک خریدها به‌صورت تقویم شمسی (heatmap ماهانه)، نمای ساعتی روزانه و هفتهٔ تقویمی.',
+        'changelog'    => 'نسخه ۱.۱۶.۱: کنتراست بالاتر رنگ‌های پیک خرید — پله‌های آبی واضح و متن سفید/تیره خوانا.',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',

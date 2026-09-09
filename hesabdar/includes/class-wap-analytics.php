@@ -285,6 +285,36 @@ class WAP_Analytics {
 		);
 	}
 
+	/**
+	 * رنگ پله‌ای با کنتراست بالا برای heatmap پیک خرید.
+	 *
+	 * @return array{bg:string,fg:string,level:int,border:string}
+	 */
+	public static function heat_tone( int $count, int $max_count ): array {
+		if ( $count <= 0 ) {
+			return array(
+				'bg'     => '#ffffff',
+				'fg'     => '#5f6368',
+				'border' => '#dadce0',
+				'level'  => 0,
+			);
+		}
+		$ratio = $count / max( 1, $max_count );
+		if ( $ratio <= 0.2 ) {
+			return array( 'bg' => '#d2e3fc', 'fg' => '#0842a0', 'border' => '#8ab4f8', 'level' => 1 );
+		}
+		if ( $ratio <= 0.4 ) {
+			return array( 'bg' => '#8ab4f8', 'fg' => '#041e49', 'border' => '#4c8bf5', 'level' => 2 );
+		}
+		if ( $ratio <= 0.6 ) {
+			return array( 'bg' => '#4285f4', 'fg' => '#ffffff', 'border' => '#1a73e8', 'level' => 3 );
+		}
+		if ( $ratio <= 0.8 ) {
+			return array( 'bg' => '#1a73e8', 'fg' => '#ffffff', 'border' => '#174ea6', 'level' => 4 );
+		}
+		return array( 'bg' => '#0b57d0', 'fg' => '#ffffff', 'border' => '#0842a0', 'level' => 5 );
+	}
+
 	/** @param array<int,\WC_Order> $orders */
 	public static function fee_breakdown( array $orders ): array {
 		$fee_sum = 0.0;
