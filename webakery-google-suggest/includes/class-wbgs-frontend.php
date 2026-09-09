@@ -124,6 +124,9 @@ class WBGS_Frontend {
 	}
 
 	public function enqueue_app() {
+		if ( wp_script_is( 'wbgs-admin', 'enqueued' ) ) {
+			return;
+		}
 		wp_enqueue_style( 'wbgs-admin', WBGS_URL . 'assets/css/admin.css', array(), WBGS_VERSION );
 		wp_enqueue_style( 'wbgs-front', WBGS_URL . 'assets/css/front.css', array( 'wbgs-admin' ), WBGS_VERSION );
 		wp_enqueue_style( 'wbgs-google', WBGS_URL . 'assets/css/google.css', array( 'wbgs-front' ), WBGS_VERSION );
