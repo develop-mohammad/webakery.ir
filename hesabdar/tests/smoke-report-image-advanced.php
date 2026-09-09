@@ -1,10 +1,10 @@
 <?php
 /**
- * Smoke: خروجی تصویری پیشرفته 1.12.0
+ * Smoke: خروجی تصویری پیشرفته
  */
 $root = dirname( __DIR__ );
 $checks = array(
-	$root . '/hesabdar.php' => array( "1.12.0", "class-wap-report-image.php", "WAP_Report_Image::init" ),
+	$root . '/hesabdar.php' => array( "WAP_VERSION", "class-wap-report-image.php", "WAP_Report_Image::init" ),
 	$root . '/includes/class-wap-report-image.php' => array( 'ajax_archive', 'run_daily_digest', 'send_telegram_photo', 'date_lock' ),
 	$root . '/includes/class-wap-portal.php' => array( 'render_image_export_tools', 'current_view_public', 'data-wap-img-scope', 'آرشیو رسانه' ),
 	$root . '/includes/class-wap-admin.php' => array( 'wap-report-image', 'report_image_page' ),

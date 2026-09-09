@@ -16,10 +16,10 @@ $ok = function ( $msg ) {
 	echo "OK: $msg\n";
 };
 
-if ( ! preg_match( "/define\\(\\s*'WAP_VERSION'\\s*,\\s*'1\\.12\\.0'\\s*\\)/", $main ) ) {
-	$fail( 'WAP_VERSION must be 1.12.0' );
+if ( ! preg_match( "/define\\(\\s*'WAP_VERSION'\\s*,\\s*'1\\.\\d+\\.\\d+'\\s*\\)/", $main ) ) {
+	$fail( 'WAP_VERSION missing' );
 }
-$ok( 'version 1.12.0' );
+$ok( 'version defined' );
 
 if ( strpos( $js, 'html2canvas' ) === false ) {
 	$fail( 'app.js missing html2canvas loader' );

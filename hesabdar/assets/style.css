@@ -45,9 +45,7 @@ html.wap-panel-manager {
     direction: rtl;
     min-height: 100vh;
     background: var(--wap-bg);
-    background-image:
-        radial-gradient(ellipse 80% 50% at 100% -10%, var(--wap-primary-glow), transparent 55%),
-        radial-gradient(ellipse 60% 40% at 0% 100%, rgba(148, 163, 184, .12), transparent 50%);
+    background-image: none;
     font-family: var(--wap-font);
     color: var(--wap-text);
     -webkit-font-smoothing: antialiased;
