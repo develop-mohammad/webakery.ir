@@ -550,9 +550,101 @@ class WAP_Portal {
         self::foot();
     }
 
+    /**
+     * نرمال‌سازی بازه اصلی + مقایسه و جمع‌آوری پیام راهنما.
+     *
+     * @return array{filters:array,compare_from:string,compare_to:string,notices:string[],compare_ready:bool,compare_partial:bool}
+     */
+    private static function prepare_date_ranges( array $f ): array {
+        $notices = array();
+        $primary = WAP_Jalali::normalize_range( (string) ( $f['date_from'] ?? '' ), (string) ( $f['date_to'] ?? '' ) );
+        if ( ! empty( $primary['messages'] ) ) {
+            $notices = array_merge( $notices, $primary['messages'] );
+        }
+        if ( ! $primary['invalid'] ) {
+            $f['date_from'] = $primary['from'];
+            $f['date_to']   = $primary['to'];
+        }
+
+        $cmp_from = sanitize_text_field( wp_unslash( $_GET['compare_from'] ?? '' ) );
+        $cmp_to   = sanitize_text_field( wp_unslash( $_GET['compare_to'] ?? '' ) );
+        $partial  = ( $cmp_from !== '' ) xor ( $cmp_to !== '' );
+        $ready    = ( $cmp_from !== '' && $cmp_to !== '' );
+
+        if ( $partial ) {
+            $notices[] = 'برای مقایسه، هر دو فیلد «مقایسه از» و «مقایسه تا» را پر کنید (یا یک ماه را از لیست ماه‌ها انتخاب کنید).';
+            $ready     = false;
+        }
+
+        if ( $ready ) {
+            $cmp = WAP_Jalali::normalize_range( $cmp_from, $cmp_to );
+            if ( ! empty( $cmp['messages'] ) ) {
+                foreach ( $cmp['messages'] as $msg ) {
+                    $notices[] = 'بازه مقایسه: ' . $msg;
+                }
+            }
+            if ( $cmp['invalid'] ) {
+                $ready = false;
+            } else {
+                $cmp_from = $cmp['from'];
+                $cmp_to   = $cmp['to'];
+            }
+        }
+
+        return array(
+            'filters'         => $f,
+            'compare_from'    => $cmp_from,
+            'compare_to'      => $cmp_to,
+            'notices'         => $notices,
+            'compare_ready'   => $ready,
+            'compare_partial' => $partial,
+            'primary_invalid' => ! empty( $primary['invalid'] ),
+        );
+    }
+
+    private static function render_filter_notices( array $notices, string $type = 'wap-alert' ): void {
+        foreach ( $notices as $msg ) {
+            echo '<div class="' . esc_attr( $type ) . '" role="status">' . esc_html( $msg ) . '</div>';
+        }
+    }
+
+    /** نوار انتخاب سریع ماه + دکمه ماه مشابه پارسال. */
+    private static function render_month_pickers( bool $date_locked = false ): void {
+        if ( $date_locked ) {
+            return;
+        }
+        $months = WAP_Jalali::recent_months( 14 );
+        ?>
+        <div class="wap-month-bar" data-wap-no-capture>
+            <div class="wap-month-bar__row">
+                <span class="wap-month-bar__label">انتخاب ماه (بازه اصلی):</span>
+                <div class="wap-month-chips" data-wap-month-target="primary">
+                    <?php foreach ( $months as $m ) : ?>
+                        <button type="button" class="wap-chip wap-chip-month" data-from="<?php echo esc_attr( $m['from'] ); ?>" data-to="<?php echo esc_attr( $m['to'] ); ?>"><?php echo esc_html( $m['label'] ); ?></button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <div class="wap-month-bar__row">
+                <span class="wap-month-bar__label">ماه مقایسه:</span>
+                <div class="wap-month-chips" data-wap-month-target="compare">
+                    <?php foreach ( array_slice( $months, 0, 14 ) as $m ) : ?>
+                        <button type="button" class="wap-chip wap-chip-month" data-from="<?php echo esc_attr( $m['from'] ); ?>" data-to="<?php echo esc_attr( $m['to'] ); ?>"><?php echo esc_html( $m['label'] ); ?></button>
+                    <?php endforeach; ?>
+                </div>
+                <button type="button" class="wap-btn wap-btn-ghost wap-btn-sm" data-wap-compare-same-last-year>ماه مشابه پارسال</button>
+            </div>
+            <p class="wap-month-bar__hint">روی فیلد تاریخ کلیک کنید تا تقویم باز شود؛ روی نام ماه در تقویم بزنید تا کل آن ماه انتخاب شود.</p>
+        </div>
+        <?php
+    }
+
     private static function render_sales_tab() {
-        $f          = WAP_Data::get_filters();
-        $orders     = WAP_Data::get_orders( $f );
+        $prepared   = self::prepare_date_ranges( WAP_Data::get_filters() );
+        $f          = $prepared['filters'];
+        $notices    = $prepared['notices'];
+        $cmp_from   = $prepared['compare_from'];
+        $cmp_to     = $prepared['compare_to'];
+        $orders     = $prepared['primary_invalid'] ? array() : WAP_Data::get_orders( $f );
         $groups_all = WAP_Data::build_rows( $orders, $f['period'] );
         $groups     = WAP_Data::apply_filter( $groups_all, $f );
         $presets    = WAP_Data::quick_presets();
@@ -563,16 +655,24 @@ class WAP_Portal {
 
         $currency = class_exists( 'WooCommerce' ) ? get_woocommerce_currency_symbol() : '';
 
-        $cmp_from = sanitize_text_field( wp_unslash( $_GET['compare_from'] ?? '' ) );
-        $cmp_to   = sanitize_text_field( wp_unslash( $_GET['compare_to'] ?? '' ) );
         $groups2  = array();
         $gn2      = null;
         $aligned  = null;
-        if ( $cmp_from && $cmp_to ) {
+        $orders2  = array();
+        if ( $prepared['compare_ready'] ) {
             $f2 = array_merge( $f, array( 'date_from' => $cmp_from, 'date_to' => $cmp_to ) );
             $orders2 = WAP_Data::get_orders( $f2 );
             $groups2 = WAP_Data::apply_filter( WAP_Data::build_rows( $orders2, $f['period'] ), $f );
             $gn2     = WAP_Data::gross_vs_net( $orders2 );
+        }
+
+        if ( ! $prepared['primary_invalid'] && empty( $orders ) ) {
+            $notices[] = 'در بازه «' . $f['date_from'] . '» تا «' . $f['date_to'] . '» هیچ سفارشی پیدا نشد. ماه را از لیست زیر انتخاب کنید یا بازه را عوض کنید.';
+        } elseif ( ! empty( $orders ) && empty( $groups ) ) {
+            $notices[] = 'سفارش در این بازه هست، ولی با فیلتر مبلغ/تعداد هیچ دوره‌ای باقی نماند. حداقل/حداکثر را خالی کنید.';
+        }
+        if ( $prepared['compare_ready'] && empty( $orders2 ) ) {
+            $notices[] = 'بازه مقایسه («' . $cmp_from . '» تا «' . $cmp_to . '») سفارشی ندارد؛ نمودار مقایسه فقط بازه فعلی را نشان می‌دهد.';
         }
 
         $base_params = array_filter( $f, function( $v ) { return $v !== null && $v !== ''; } );
@@ -608,19 +708,19 @@ class WAP_Portal {
                 </div>
                 <div class="wap-field wap-field-date">
                     <label>از تاریخ (شمسی)</label>
-                    <input type="text" id="wap_date_from" name="date_from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+                    <input type="text" id="wap_date_from" name="date_from" class="wap-jcal" data-wap-jcal="primary-from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="کلیک کنید — انتخاب روز یا ماه" autocomplete="off" <?php echo $date_locked ? 'readonly data-wap-date-locked="1"' : ''; ?>>
                 </div>
                 <div class="wap-field wap-field-date">
                     <label>تا تاریخ (شمسی)</label>
-                    <input type="text" id="wap_date_to" name="date_to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="۱۴۰۳/۱۲/۲۹" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+                    <input type="text" id="wap_date_to" name="date_to" class="wap-jcal" data-wap-jcal="primary-to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="کلیک کنید — انتخاب روز یا ماه" autocomplete="off" <?php echo $date_locked ? 'readonly data-wap-date-locked="1"' : ''; ?>>
                 </div>
                 <div class="wap-field wap-field-date">
                     <label>مقایسه از</label>
-                    <input type="text" name="compare_from" value="<?php echo esc_attr( $cmp_from ); ?>" placeholder="بازه قبلی از" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+                    <input type="text" id="wap_compare_from" name="compare_from" class="wap-jcal" data-wap-jcal="compare-from" value="<?php echo esc_attr( $cmp_from ); ?>" placeholder="ماه مشابه — از" autocomplete="off" <?php echo $date_locked ? 'readonly data-wap-date-locked="1"' : ''; ?>>
                 </div>
                 <div class="wap-field wap-field-date">
                     <label>مقایسه تا</label>
-                    <input type="text" name="compare_to" value="<?php echo esc_attr( $cmp_to ); ?>" placeholder="بازه قبلی تا" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+                    <input type="text" id="wap_compare_to" name="compare_to" class="wap-jcal" data-wap-jcal="compare-to" value="<?php echo esc_attr( $cmp_to ); ?>" placeholder="ماه مشابه — تا" autocomplete="off" <?php echo $date_locked ? 'readonly data-wap-date-locked="1"' : ''; ?>>
                 </div>
                 <div class="wap-field">
                     <label>مبلغ فروش دوره (حداقل / حداکثر)</label>
@@ -647,6 +747,8 @@ class WAP_Portal {
                     <button type="button" class="wap-chip" data-from="<?php echo esc_attr( $range[0] ); ?>" data-to="<?php echo esc_attr( $range[1] ); ?>"><?php echo esc_html( $label ); ?></button>
                 <?php endforeach; ?>
             </div>
+            <?php self::render_month_pickers( $date_locked ); ?>
+            <?php self::render_filter_notices( $notices ); ?>
 
             <div class="wap-export-bar" data-wap-no-capture>
                 <span class="wap-export-label">خروجی گزارش:</span>
@@ -1014,13 +1116,18 @@ class WAP_Portal {
     }
 
     private static function render_products_tab() {
-        $f          = WAP_Data::get_filters();
+        $prepared   = self::prepare_date_ranges( WAP_Data::get_filters() );
+        $f          = $prepared['filters'];
+        $notices    = $prepared['notices'];
+        $cmp_from   = $prepared['compare_from'];
+        $cmp_to     = $prepared['compare_to'];
         $product_id = ! empty( $_GET['product_id'] ) ? (int) $_GET['product_id'] : 0;
-        $orders     = WAP_Data::get_orders( $f );
+        $orders     = $prepared['primary_invalid'] ? array() : WAP_Data::get_orders( $f );
         $presets    = WAP_Data::quick_presets();
         $currency   = get_woocommerce_currency_symbol();
-        $cmp_from   = sanitize_text_field( wp_unslash( $_GET['compare_from'] ?? '' ) );
-        $cmp_to     = sanitize_text_field( wp_unslash( $_GET['compare_to'] ?? '' ) );
+        if ( ! $prepared['primary_invalid'] && empty( $orders ) ) {
+            $notices[] = 'در بازه «' . $f['date_from'] . '» تا «' . $f['date_to'] . '» هیچ سفارشی پیدا نشد. ماه را از لیست زیر انتخاب کنید.';
+        }
         $base_params = array_filter( $f, function( $v ) { return $v !== null && $v !== ''; } );
         if ( $cmp_from ) {
             $base_params['compare_from'] = $cmp_from;
@@ -1043,19 +1150,19 @@ class WAP_Portal {
             <?php if ( $product_id ) : ?><input type="hidden" name="product_id" value="<?php echo esc_attr( $product_id ); ?>"><?php endif; ?>
             <div class="wap-field wap-field-date">
                 <label>از تاریخ (شمسی)</label>
-                <input type="text" id="wap_date_from" name="date_from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+                <input type="text" id="wap_date_from" name="date_from" class="wap-jcal" data-wap-jcal="primary-from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="کلیک کنید — انتخاب روز یا ماه" autocomplete="off" <?php echo $date_locked ? 'readonly data-wap-date-locked="1"' : ''; ?>>
             </div>
             <div class="wap-field wap-field-date">
                 <label>تا تاریخ (شمسی)</label>
-                <input type="text" id="wap_date_to" name="date_to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="۱۴۰۳/۱۲/۲۹" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+                <input type="text" id="wap_date_to" name="date_to" class="wap-jcal" data-wap-jcal="primary-to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="کلیک کنید — انتخاب روز یا ماه" autocomplete="off" <?php echo $date_locked ? 'readonly data-wap-date-locked="1"' : ''; ?>>
             </div>
             <div class="wap-field wap-field-date">
                 <label>مقایسه از</label>
-                <input type="text" name="compare_from" value="<?php echo esc_attr( $cmp_from ); ?>" placeholder="بازه قبلی از" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+                <input type="text" id="wap_compare_from" name="compare_from" class="wap-jcal" data-wap-jcal="compare-from" value="<?php echo esc_attr( $cmp_from ); ?>" placeholder="ماه مشابه — از" autocomplete="off" <?php echo $date_locked ? 'readonly data-wap-date-locked="1"' : ''; ?>>
             </div>
             <div class="wap-field wap-field-date">
                 <label>مقایسه تا</label>
-                <input type="text" name="compare_to" value="<?php echo esc_attr( $cmp_to ); ?>" placeholder="بازه قبلی تا" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+                <input type="text" id="wap_compare_to" name="compare_to" class="wap-jcal" data-wap-jcal="compare-to" value="<?php echo esc_attr( $cmp_to ); ?>" placeholder="ماه مشابه — تا" autocomplete="off" <?php echo $date_locked ? 'readonly data-wap-date-locked="1"' : ''; ?>>
             </div>
             <div class="wap-field wap-field-actions">
                 <button type="submit" class="wap-btn wap-btn-primary">اعمال فیلتر</button>
@@ -1068,6 +1175,8 @@ class WAP_Portal {
                 <button type="button" class="wap-chip" data-from="<?php echo esc_attr( $range[0] ); ?>" data-to="<?php echo esc_attr( $range[1] ); ?>"><?php echo esc_html( $label ); ?></button>
             <?php endforeach; ?>
         </div>
+        <?php self::render_month_pickers( $date_locked ); ?>
+        <?php self::render_filter_notices( $notices ); ?>
 
         <?php if ( $product_id ) :
             $product      = wc_get_product( $product_id );
@@ -1123,10 +1232,14 @@ class WAP_Portal {
             $total_revenue = array_sum( array_column( $products, 'revenue' ) );
             $products2     = array();
             $aligned_prod  = null;
-            if ( $cmp_from && $cmp_to ) {
+            if ( $prepared['compare_ready'] ) {
                 $f2 = array_merge( $f, array( 'date_from' => $cmp_from, 'date_to' => $cmp_to ) );
-                $products2 = WAP_Data::get_product_sales( WAP_Data::get_orders( $f2 ) );
-                if ( class_exists( 'WAP_Chart' ) ) {
+                $orders2 = WAP_Data::get_orders( $f2 );
+                $products2 = WAP_Data::get_product_sales( $orders2 );
+                if ( empty( $orders2 ) ) {
+                    echo '<div class="wap-alert" role="status">بازه مقایسه («' . esc_html( $cmp_from ) . '» تا «' . esc_html( $cmp_to ) . '») سفارشی ندارد.</div>';
+                }
+                if ( class_exists( 'WAP_Chart' ) && ! empty( $products2 ) ) {
                     $aligned_prod = WAP_Chart::align_product_series( $products, $products2, 15 );
                 }
             }

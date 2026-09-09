@@ -109,4 +109,125 @@ class WAP_Jalali {
                 return array( sprintf( '%04d%02d', $jy, $jm ), $month_names[ $jm - 1 ] . ' ' . $jy );
         }
     }
+
+    /** نام ماه‌های شمسی (۱..۱۲). */
+    public static function month_names(): array {
+        return array( 'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند' );
+    }
+
+    public static function format( $jy, $jm, $jd ): string {
+        return sprintf( '%d/%02d/%02d', (int) $jy, (int) $jm, (int) $jd );
+    }
+
+    /** پارس تاریخ شمسی YYYY/MM/DD — null اگر نامعتبر. */
+    public static function parse( $date_str ): ?array {
+        $date_str = trim( (string) $date_str );
+        if ( $date_str === '' ) {
+            return null;
+        }
+        $normalized = strtr( $date_str, array(
+            '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4',
+            '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9',
+        ) );
+        if ( ! preg_match( '/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/', $normalized, $m ) ) {
+            return null;
+        }
+        $y = (int) $m[1];
+        $mo = (int) $m[2];
+        $d = (int) $m[3];
+        if ( $y < 1200 || $mo < 1 || $mo > 12 || $d < 1 || $d > self::month_length( $y, $mo ) ) {
+            return null;
+        }
+        return array( 'y' => $y, 'm' => $mo, 'd' => $d );
+    }
+
+    /** ابتدا و انتهای یک ماه شمسی. */
+    public static function month_bounds( int $jy, int $jm ): array {
+        return array(
+            'from' => self::format( $jy, $jm, 1 ),
+            'to'   => self::format( $jy, $jm, self::month_length( $jy, $jm ) ),
+        );
+    }
+
+    /**
+     * نرمال‌سازی بازه: اگر از>تا جابه‌جا می‌شود؛ پیام‌های قابل‌نمایش برمی‌گرداند.
+     *
+     * @return array{from:string,to:string,swapped:bool,invalid:bool,messages:string[]}
+     */
+    public static function normalize_range( string $from, string $to ): array {
+        $out = array(
+            'from'     => $from,
+            'to'       => $to,
+            'swapped'  => false,
+            'invalid'  => false,
+            'messages' => array(),
+        );
+        if ( $from === '' && $to === '' ) {
+            return $out;
+        }
+        $pf = $from !== '' ? self::parse( $from ) : null;
+        $pt = $to !== '' ? self::parse( $to ) : null;
+        if ( $from !== '' && ! $pf ) {
+            $out['invalid']    = true;
+            $out['messages'][] = 'تاریخ شروع نامعتبر است. قالب درست: ۱۴۰۴/۰۱/۰۱';
+        }
+        if ( $to !== '' && ! $pt ) {
+            $out['invalid']    = true;
+            $out['messages'][] = 'تاریخ پایان نامعتبر است. قالب درست: ۱۴۰۴/۰۱/۳۱';
+        }
+        if ( $out['invalid'] ) {
+            return $out;
+        }
+        if ( $pf && $pt ) {
+            $ts_f = self::str_to_timestamp( $from, false );
+            $ts_t = self::str_to_timestamp( $to, true );
+            if ( $ts_f && $ts_t && $ts_f > $ts_t ) {
+                $out['from']       = $to;
+                $out['to']         = $from;
+                $out['swapped']    = true;
+                $out['messages'][] = 'بازه تاریخ برعکس بود (پایان قبل از شروع). خودکار اصلاح شد: «' . $out['from'] . '» تا «' . $out['to'] . '».';
+            }
+        }
+        return $out;
+    }
+
+    /** شیفت سال روی یک تاریخ شمسی (مثلاً ماه مشابه پارسال). */
+    public static function shift_year( string $date_str, int $years ): string {
+        $p = self::parse( $date_str );
+        if ( ! $p ) {
+            return '';
+        }
+        $y = $p['y'] + $years;
+        $d = min( $p['d'], self::month_length( $y, $p['m'] ) );
+        return self::format( $y, $p['m'], $d );
+    }
+
+    /**
+     * لیست ماه‌های اخیر برای انتخاب سریع.
+     *
+     * @return array<int,array{label:string,from:string,to:string,y:int,m:int}>
+     */
+    public static function recent_months( int $count = 14 ): array {
+        $today = self::today();
+        $y     = $today['y'];
+        $m     = $today['m'];
+        $names = self::month_names();
+        $out   = array();
+        for ( $i = 0; $i < $count; $i++ ) {
+            $bounds = self::month_bounds( $y, $m );
+            $out[]  = array(
+                'label' => $names[ $m - 1 ] . ' ' . $y,
+                'from'  => $bounds['from'],
+                'to'    => $bounds['to'],
+                'y'     => $y,
+                'm'     => $m,
+            );
+            $m--;
+            if ( $m < 1 ) {
+                $m = 12;
+                $y--;
+            }
+        }
+        return $out;
+    }
 }

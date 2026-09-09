@@ -1,25 +1,170 @@
 (function () {
     'use strict';
 
-    // تقویم شمسی برای فیلدهای تاریخ
-    if (window.attachJalaliDatePicker) {
-        ['wap_date_from', 'wap_date_to'].forEach(function (id) {
-            var el = document.getElementById(id);
-            if (el) attachJalaliDatePicker(el, { today: window.WAP_TODAY });
+    function wapParseJalali(str) {
+        if (!str) return null;
+        var v = String(str).trim().replace(/[۰-۹]/g, function (c) {
+            return '0123456789'['۰۱۲۳۴۵۶۷۸۹'.indexOf(c)];
         });
+        var m = v.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+        if (!m) return null;
+        return { y: +m[1], m: +m[2], d: +m[3] };
     }
 
-    // چیپ‌های بازه سریع
-    document.querySelectorAll('.wap-chip').forEach(function (btn) {
+    function wapFmtJalali(y, m, d) {
+        function pad(n) { return n < 10 ? '0' + n : '' + n; }
+        return y + '/' + pad(m) + '/' + pad(d);
+    }
+
+    function wapDateFields() {
+        return {
+            from: document.getElementById('wap_date_from'),
+            to: document.getElementById('wap_date_to'),
+            cmpFrom: document.getElementById('wap_compare_from'),
+            cmpTo: document.getElementById('wap_compare_to')
+        };
+    }
+
+    function wapAttachCalendars() {
+        if (!window.attachJalaliDatePicker) return;
+        var f = wapDateFields();
+        var today = window.WAP_TODAY;
+        if (f.from) {
+            attachJalaliDatePicker(f.from, {
+                today: today,
+                role: 'from',
+                pairFrom: f.from,
+                pairTo: f.to
+            });
+        }
+        if (f.to) {
+            attachJalaliDatePicker(f.to, {
+                today: today,
+                role: 'to',
+                pairFrom: f.from,
+                pairTo: f.to
+            });
+        }
+        if (f.cmpFrom) {
+            attachJalaliDatePicker(f.cmpFrom, {
+                today: today,
+                role: 'from',
+                pairFrom: f.cmpFrom,
+                pairTo: f.cmpTo
+            });
+        }
+        if (f.cmpTo) {
+            attachJalaliDatePicker(f.cmpTo, {
+                today: today,
+                role: 'to',
+                pairFrom: f.cmpFrom,
+                pairTo: f.cmpTo
+            });
+        }
+    }
+    wapAttachCalendars();
+
+    // چیپ‌های بازه سریع (بازه اصلی)
+    document.querySelectorAll('#wap_presets .wap-chip').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var from = document.getElementById('wap_date_from');
             var to   = document.getElementById('wap_date_to');
             if (from) from.value = btn.getAttribute('data-from');
             if (to)   to.value   = btn.getAttribute('data-to');
-            document.querySelectorAll('.wap-chip').forEach(function (c) {
+            document.querySelectorAll('#wap_presets .wap-chip').forEach(function (c) {
                 c.classList.remove('is-active');
             });
             btn.classList.add('is-active');
+        });
+    });
+
+    // چیپ‌های انتخاب ماه (اصلی / مقایسه)
+    document.querySelectorAll('[data-wap-month-target]').forEach(function (wrap) {
+        var target = wrap.getAttribute('data-wap-month-target');
+        wrap.querySelectorAll('.wap-chip-month').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var fromId = target === 'compare' ? 'wap_compare_from' : 'wap_date_from';
+                var toId = target === 'compare' ? 'wap_compare_to' : 'wap_date_to';
+                var from = document.getElementById(fromId);
+                var to = document.getElementById(toId);
+                if (from) from.value = btn.getAttribute('data-from');
+                if (to) to.value = btn.getAttribute('data-to');
+                wrap.querySelectorAll('.wap-chip-month').forEach(function (c) {
+                    c.classList.remove('is-active');
+                });
+                btn.classList.add('is-active');
+            });
+        });
+    });
+
+    // یک‌کلیک: ماه مشابه پارسال بر اساس بازه اصلی
+    document.querySelectorAll('[data-wap-compare-same-last-year]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var f = wapDateFields();
+            if (!f.from || !f.to || !f.cmpFrom || !f.cmpTo) return;
+            var pf = wapParseJalali(f.from.value);
+            var pt = wapParseJalali(f.to.value);
+            if (!pf || !pt) {
+                wapToast('ابتدا بازه اصلی (از/تا) را انتخاب کنید، بعد «ماه مشابه پارسال» را بزنید.');
+                return;
+            }
+            var lenFn = (window.WAP_JalaliCal && WAP_JalaliCal.monthLength)
+                ? WAP_JalaliCal.monthLength
+                : function (y, m) { return m <= 6 ? 31 : (m <= 11 ? 30 : 29); };
+            var y1 = pf.y - 1;
+            var y2 = pt.y - 1;
+            var d1 = Math.min(pf.d, lenFn(y1, pf.m));
+            var d2 = Math.min(pt.d, lenFn(y2, pt.m));
+            f.cmpFrom.value = wapFmtJalali(y1, pf.m, d1);
+            f.cmpTo.value = wapFmtJalali(y2, pt.m, d2);
+            wapToast('بازه مقایسه روی ماه مشابه پارسال تنظیم شد. «اعمال فیلتر» را بزنید.');
+        });
+    });
+
+    function wapValidateDateForm(form) {
+        var from = form.querySelector('[name="date_from"]');
+        var to = form.querySelector('[name="date_to"]');
+        var cmpFrom = form.querySelector('[name="compare_from"]');
+        var cmpTo = form.querySelector('[name="compare_to"]');
+        if (!from || !to) return true;
+
+        function swapIfNeeded(a, b, label) {
+            var pa = wapParseJalali(a.value);
+            var pb = wapParseJalali(b.value);
+            if (pa && pb) {
+                var ta = pa.y * 10000 + pa.m * 100 + pa.d;
+                var tb = pb.y * 10000 + pb.m * 100 + pb.d;
+                if (ta > tb) {
+                    var tmp = a.value;
+                    a.value = b.value;
+                    b.value = tmp;
+                    wapToast(label + ' برعکس بود و اصلاح شد.');
+                }
+            } else if ((a.value && !pa) || (b.value && !pb)) {
+                wapToast(label + ' نامعتبر است. از تقویم یا لیست ماه‌ها انتخاب کنید.');
+                return false;
+            }
+            return true;
+        }
+
+        if (!swapIfNeeded(from, to, 'بازه اصلی')) return false;
+        if (cmpFrom && cmpTo) {
+            var cf = (cmpFrom.value || '').trim();
+            var ct = (cmpTo.value || '').trim();
+            if ((cf && !ct) || (!cf && ct)) {
+                wapToast('برای مقایسه هر دو فیلد «مقایسه از» و «مقایسه تا» لازم است.');
+                return false;
+            }
+            if (cf && ct && !swapIfNeeded(cmpFrom, cmpTo, 'بازه مقایسه')) return false;
+        }
+        return true;
+    }
+
+    document.querySelectorAll('form.wap-filters').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            if (!wapValidateDateForm(form)) {
+                e.preventDefault();
+            }
         });
     });
 
@@ -575,14 +720,15 @@
 
     // قفل بازه تاریخ
     if (wapImgCfg().dateLocked) {
-        ['wap_date_from', 'wap_date_to'].forEach(function (id) {
+        ['wap_date_from', 'wap_date_to', 'wap_compare_from', 'wap_compare_to'].forEach(function (id) {
             var el = document.getElementById(id);
             if (el) {
                 el.readOnly = true;
+                el.setAttribute('data-wap-date-locked', '1');
                 el.title = 'بازه تاریخ توسط مدیر قفل شده است';
             }
         });
-        document.querySelectorAll('.wap-chip').forEach(function (c) {
+        document.querySelectorAll('.wap-chip, .wap-chip-month, [data-wap-compare-same-last-year]').forEach(function (c) {
             c.style.pointerEvents = 'none';
             c.style.opacity = '0.45';
         });

@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.14.0',
+        'version'      => '1.15.0',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۱۴.۰: بازطراحی UI/UX ساده به سبک گوگل — بدون گرافیک تزئینی، پالت آبی گوگل، هدر و دکمه‌های تخت.',
+        'changelog'    => 'نسخه ۱.۱۵.۰: انتخاب آسان ماه در تقویم، دکمه ماه مشابه پارسال، اصلاح خودکار بازه برعکس و پیام راهنما وقتی داده نیست.',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',

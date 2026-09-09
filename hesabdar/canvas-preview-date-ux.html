@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1a73e8">
+<title>پیش‌نمایش انتخاب ماه و پیام خطا</title>
+<link rel="stylesheet" href="https://fonts.bunny.net/css?family=vazirmatn:400,500,600,700&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="wap-body">
+<div class="wap-wrap">
+  <header class="wap-header"><div class="wap-brand">پرتال حسابدار</div></header>
+  <form class="wap-filters" onsubmit="return false">
+    <div class="wap-field wap-field-date"><label>از تاریخ</label><input id="wap_date_from" class="wap-jcal" value="1405/06/18"></div>
+    <div class="wap-field wap-field-date"><label>تا تاریخ</label><input id="wap_date_to" class="wap-jcal" value="1405/06/01"></div>
+    <div class="wap-field wap-field-date"><label>مقایسه از</label><input id="wap_compare_from" class="wap-jcal" value="1404/06/18"></div>
+    <div class="wap-field wap-field-date"><label>مقایسه تا</label><input id="wap_compare_to" class="wap-jcal" value="1404/06/01"></div>
+    <div class="wap-field wap-field-actions"><button class="wap-btn wap-btn-primary" type="submit">اعمال فیلتر</button></div>
+  </form>
+  <div class="wap-presets" id="wap_presets">
+    <button type="button" class="wap-chip" data-from="1405/06/01" data-to="1405/06/31">این ماه</button>
+  </div>
+  <div class="wap-month-bar">
+    <div class="wap-month-bar__row">
+      <span class="wap-month-bar__label">انتخاب ماه (بازه اصلی):</span>
+      <div class="wap-month-chips" data-wap-month-target="primary">
+        <button type="button" class="wap-chip wap-chip-month" data-from="1405/06/01" data-to="1405/06/31">شهریور ۱۴۰۵</button>
+        <button type="button" class="wap-chip wap-chip-month" data-from="1405/05/01" data-to="1405/05/31">مرداد ۱۴۰۵</button>
+        <button type="button" class="wap-chip wap-chip-month" data-from="1404/06/01" data-to="1404/06/31">شهریور ۱۴۰۴</button>
+      </div>
+    </div>
+    <div class="wap-month-bar__row">
+      <span class="wap-month-bar__label">ماه مقایسه:</span>
+      <div class="wap-month-chips" data-wap-month-target="compare">
+        <button type="button" class="wap-chip wap-chip-month" data-from="1404/06/01" data-to="1404/06/31">شهریور ۱۴۰۴</button>
+        <button type="button" class="wap-chip wap-chip-month" data-from="1404/05/01" data-to="1404/05/31">مرداد ۱۴۰۴</button>
+      </div>
+      <button type="button" class="wap-btn wap-btn-ghost wap-btn-sm" data-wap-compare-same-last-year>ماه مشابه پارسال</button>
+    </div>
+    <p class="wap-month-bar__hint">روی فیلد تاریخ کلیک کنید؛ روی نام ماه در تقویم بزنید تا کل ماه انتخاب شود.</p>
+  </div>
+  <div class="wap-alert" role="status">بازه تاریخ برعکس بود (پایان قبل از شروع). خودکار اصلاح شد: «۱۴۰۵/۰۶/۰۱» تا «۱۴۰۵/۰۶/۱۸».</div>
+  <div class="wap-alert" role="status">در بازه «۱۴۰۵/۰۶/۱۸» تا «۱۴۰۵/۰۶/۰۱» هیچ سفارشی پیدا نشد. ماه را از لیست زیر انتخاب کنید یا بازه را عوض کنید.</div>
+</div>
+<script>window.WAP_TODAY={y:1405,m:6,d:18};</script>
+<script src="assets/jalali-calendar.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
