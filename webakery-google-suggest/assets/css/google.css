@@ -28,31 +28,16 @@
 }
 
 .wbgs-g-logo {
-	display: flex;
-	flex-direction: row;
-	direction: ltr;
-	justify-content: center;
-	unicode-bidi: isolate;
 	font-size: 52px;
 	font-weight: 700;
 	letter-spacing: -1px;
 	line-height: 1.1;
 	margin-bottom: 8px;
+	background: linear-gradient(90deg, #4285f4 0 18%, #ea4335 18% 36%, #fbbc05 36% 54%, #4285f4 54% 72%, #34a853 72% 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
 }
-
-.wbgs-g-logo span {
-	display: block;
-	unicode-bidi: isolate;
-}
-
-.wbgs-g-logo span:nth-child(1),
-.wbgs-g-logo span:nth-child(5) { color: #4285f4; }
-.wbgs-g-logo span:nth-child(2),
-.wbgs-g-logo span:nth-child(6) { color: #ea4335; }
-.wbgs-g-logo span:nth-child(3),
-.wbgs-g-logo span:nth-child(7) { color: #fbbc05; }
-.wbgs-g-logo span:nth-child(4),
-.wbgs-g-logo span:nth-child(8) { color: #34a853; }
 
 .wbgs-g-tag {
 	color: #5f6368;

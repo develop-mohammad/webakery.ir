@@ -4,9 +4,7 @@ defined( 'ABSPATH' ) || exit;
 ?>
 <div class="wbgs-g" data-wbgs-ui="google" dir="rtl">
 	<div class="wbgs-g-hero" id="wbgs-hero">
-		<div class="wbgs-g-logo" aria-hidden="true">
-			<span>س</span><span>ج</span><span>س</span><span>ت</span><span>‌</span><span>ی</span><span>ا</span><span>ب</span>
-		</div>
+		<div class="wbgs-g-logo">سجست‌یاب</div>
 		<p class="wbgs-g-tag">همه پیشنهادهای واقعی گوگل برای یک عبارت</p>
 		<div class="wbgs-g-box">
 			<span class="wbgs-g-icon" aria-hidden="true">
