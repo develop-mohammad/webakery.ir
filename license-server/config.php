@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.16.2',
+        'version'      => '1.17.0',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۱۶.۲: رفع مقایسه ماه — انتخاب ماه بلافاصله اعمال می‌شود، پیام‌های خطا درست شد، ارقام فارسی نرمال می‌شوند.',
+        'changelog'    => 'نسخه ۱.۱۷.۰: مقایسه دقیقاً مثل Search Console — دو خط روزانه آبی/نارنجی روی‌هم با متریک Δ٪.',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',

@@ -114,35 +114,178 @@ class WAP_Chart {
     }
 
     /**
+     * سری روزانه هم‌تراز برای مقایسه روی‌هم (دقیق مثل Compare در Search Console).
+     * محور X = روز نسبی بازه (روز ۱، ۲، …) تا دو خط روی هم دیده شوند.
+     *
+     * @param array<int,\WC_Order> $orders_a
+     * @param array<int,\WC_Order> $orders_b
+     * @return array{labels:string[],a:float[],b:float[],a_count:int[],b_count:int[],total_a:float,total_b:float,count_a:int,count_b:int,delta_pct:float,label_dates_a:string[],label_dates_b:string[]}
+     */
+    public static function build_date_overlay( array $orders_a, array $orders_b, string $from_a, string $to_a, string $from_b, string $to_b ): array {
+        $seq_a = self::daily_sequence( $orders_a, $from_a, $to_a );
+        $seq_b = self::daily_sequence( $orders_b, $from_b, $to_b );
+        $n     = max( count( $seq_a ), count( $seq_b ), 1 );
+        $labels = array();
+        $a = array();
+        $b = array();
+        $ca = array();
+        $cb = array();
+        $dates_a = array();
+        $dates_b = array();
+        $total_a = 0.0;
+        $total_b = 0.0;
+        $count_a = 0;
+        $count_b = 0;
+        for ( $i = 0; $i < $n; $i++ ) {
+            $ra = $seq_a[ $i ] ?? array( 'label' => 'روز ' . ( $i + 1 ), 'date' => '', 'total' => 0.0, 'count' => 0 );
+            $rb = $seq_b[ $i ] ?? array( 'label' => 'روز ' . ( $i + 1 ), 'date' => '', 'total' => 0.0, 'count' => 0 );
+            // برچسب محور: تاریخ بازه فعلی (مثل GSC) و در صورت نیاز شماره روز
+            $labels[]  = $ra['date'] !== '' ? $ra['date'] : ( 'روز ' . ( $i + 1 ) );
+            $a[]       = (float) $ra['total'];
+            $b[]       = (float) $rb['total'];
+            $ca[]      = (int) $ra['count'];
+            $cb[]      = (int) $rb['count'];
+            $dates_a[] = $ra['date'];
+            $dates_b[] = $rb['date'];
+            $total_a  += (float) $ra['total'];
+            $total_b  += (float) $rb['total'];
+            $count_a  += (int) $ra['count'];
+            $count_b  += (int) $rb['count'];
+        }
+        $delta_pct = $total_b > 0 ? ( ( $total_a - $total_b ) / $total_b ) * 100 : ( $total_a > 0 ? 100.0 : 0.0 );
+        return array(
+            'labels'        => $labels,
+            'a'             => $a,
+            'b'             => $b,
+            'a_count'       => $ca,
+            'b_count'       => $cb,
+            'total_a'       => $total_a,
+            'total_b'       => $total_b,
+            'count_a'       => $count_a,
+            'count_b'       => $count_b,
+            'delta_pct'     => $delta_pct,
+            'label_dates_a' => $dates_a,
+            'label_dates_b' => $dates_b,
+        );
+    }
+
+    /**
+     * مجموع فروش روزانه از from تا to (روزهای بدون سفارش = صفر).
+     *
+     * @param array<int,\WC_Order> $orders
+     * @return array<int,array{label:string,date:string,total:float,count:int}>
+     */
+    public static function daily_sequence( array $orders, string $from, string $to ): array {
+        $ts_from = WAP_Jalali::str_to_timestamp( $from, false );
+        $ts_to   = WAP_Jalali::str_to_timestamp( $to, true );
+        if ( ! $ts_from || ! $ts_to || $ts_from > $ts_to ) {
+            return array();
+        }
+        $map = array();
+        foreach ( $orders as $order ) {
+            if ( ! WAP_Data::is_paid_order( $order ) ) {
+                continue;
+            }
+            $created = $order->get_date_created();
+            if ( ! $created ) {
+                continue;
+            }
+            $ts = $created->getTimestamp();
+            if ( $ts < $ts_from || $ts > $ts_to ) {
+                continue;
+            }
+            list( $jy, $jm, $jd ) = WAP_Jalali::to_jalali(
+                (int) $created->date( 'Y' ),
+                (int) $created->date( 'n' ),
+                (int) $created->date( 'j' )
+            );
+            $key = sprintf( '%04d-%02d-%02d', $jy, $jm, $jd );
+            if ( ! isset( $map[ $key ] ) ) {
+                $map[ $key ] = array(
+                    'total' => 0.0,
+                    'count' => 0,
+                    'y'     => $jy,
+                    'm'     => $jm,
+                    'd'     => $jd,
+                );
+            }
+            $map[ $key ]['total'] += (float) $order->get_total();
+            $map[ $key ]['count']++;
+        }
+
+        $out = array();
+        $cursor = $ts_from;
+        // گام روزانه تا انتهای بازه
+        $end_day = strtotime( date( 'Y-m-d', $ts_to ) . ' 00:00:00' );
+        $guard = 0;
+        while ( $cursor <= $ts_to + 1 && $guard < 400 ) {
+            $guard++;
+            $gy = (int) date( 'Y', $cursor );
+            $gm = (int) date( 'n', $cursor );
+            $gd = (int) date( 'j', $cursor );
+            list( $jy, $jm, $jd ) = WAP_Jalali::to_jalali( $gy, $gm, $gd );
+            $key  = sprintf( '%04d-%02d-%02d', $jy, $jm, $jd );
+            $date = WAP_Jalali::format( $jy, $jm, $jd );
+            $row  = $map[ $key ] ?? null;
+            $out[] = array(
+                'label' => $date,
+                'date'  => $date,
+                'total' => $row ? (float) $row['total'] : 0.0,
+                'count' => $row ? (int) $row['count'] : 0,
+            );
+            $next = strtotime( '+1 day', strtotime( date( 'Y-m-d', $cursor ) . ' 12:00:00' ) );
+            if ( $next === false || $next <= $cursor ) {
+                break;
+            }
+            // توقف وقتی از روز پایانی گذشتیم
+            if ( strtotime( date( 'Y-m-d', $next ) . ' 00:00:00' ) > $end_day ) {
+                break;
+            }
+            $cursor = $next;
+        }
+        return $out;
+    }
+
+    /**
      * نمودار خطی/ناحیه‌ای شبیه Search Console.
      *
-     * @param array $series ['a'=>float[], 'b'=>float[]|null, 'labels'=>string[]]
-     * @param array $opts   title, legend_a, legend_b, height, dual
+     * @param array $series ['a'=>float[], 'b'=>float[]|null, 'labels'=>string[], total_a?, total_b?, delta_pct?]
+     * @param array $opts   title, legend_a, legend_b, height, dual, show_metrics
      */
     public static function render_gsc_line( array $series, array $opts = array() ): void {
         $labels   = array_values( $series['labels'] ?? array() );
         $a        = array_map( 'floatval', array_values( $series['a'] ?? array() ) );
         $b        = isset( $series['b'] ) ? array_map( 'floatval', array_values( $series['b'] ) ) : null;
         $dual     = $b !== null && ! empty( $opts['dual'] );
-        $n        = count( $a );
+        $n        = max( count( $a ), $dual ? count( $b ) : 0 );
         if ( $n < 1 ) {
             echo '<div class="wap-empty">داده‌ای برای نمودار نیست.</div>';
             return;
         }
+        // هم‌طول کردن سری‌ها
+        while ( count( $a ) < $n ) {
+            $a[] = 0.0;
+            $labels[] = $labels[ count( $labels ) - 1 ] ?? '';
+        }
+        if ( $dual ) {
+            while ( count( $b ) < $n ) {
+                $b[] = 0.0;
+            }
+        }
         $title    = $opts['title'] ?? 'روند فروش';
         $leg_a    = $opts['legend_a'] ?? 'بازه فعلی';
         $leg_b    = $opts['legend_b'] ?? 'بازه مقایسه';
-        $height   = (int) ( $opts['height'] ?? 280 );
+        $height   = (int) ( $opts['height'] ?? ( $dual ? 340 : 280 ) );
+        $show_met = ! empty( $opts['show_metrics'] ) || $dual;
         $width    = 960;
-        $pad_l    = 52;
-        $pad_r    = 16;
-        $pad_t    = 24;
-        $pad_b    = 42;
+        $pad_l    = 56;
+        $pad_r    = 18;
+        $pad_t    = 28;
+        $pad_b    = 48;
         $plot_w   = $width - $pad_l - $pad_r;
         $plot_h   = $height - $pad_t - $pad_b;
         $max_v    = max( 1.0, max( $a ), $dual ? max( $b ) : 0 );
-        // کمی فضای بالای نمودار
-        $max_v   *= 1.08;
+        $max_v   *= 1.12;
 
         $pts_a = array();
         $pts_b = array();
@@ -159,9 +302,16 @@ class WAP_Chart {
         $line_a = self::polyline( $pts_a );
         $area_a = self::area_path( $pts_a, $pad_t + $plot_h );
         $line_b = $dual ? self::polyline( $pts_b ) : '';
-        $uid    = 'wapgsc' . substr( md5( $title . microtime( true ) ), 0, 8 );
+        $area_b = $dual ? self::area_path( $pts_b, $pad_t + $plot_h ) : '';
+        $uid    = 'wapgsc' . substr( md5( $title . wp_json_encode( $labels ) . microtime( true ) ), 0, 8 );
 
-        // خطوط شبکه افقی
+        $total_a = isset( $series['total_a'] ) ? (float) $series['total_a'] : array_sum( $a );
+        $total_b = isset( $series['total_b'] ) ? (float) $series['total_b'] : ( $dual ? array_sum( $b ) : 0.0 );
+        $delta_pct = isset( $series['delta_pct'] )
+            ? (float) $series['delta_pct']
+            : ( $total_b > 0 ? ( ( $total_a - $total_b ) / $total_b ) * 100 : ( $total_a > 0 ? 100.0 : 0.0 ) );
+        $up = $delta_pct >= 0;
+
         $grid = array();
         for ( $g = 0; $g <= 4; $g++ ) {
             $gy = $pad_t + ( $g / 4 ) * $plot_h;
@@ -169,7 +319,7 @@ class WAP_Chart {
             $grid[] = array( 'y' => $gy, 'v' => $gv );
         }
         ?>
-        <div class="wap-gsc-card" data-wap-capture-part="chart">
+        <div class="wap-gsc-card<?php echo $dual ? ' is-dual' : ''; ?>" data-wap-capture-part="chart">
             <div class="wap-gsc-head">
                 <h3 class="wap-gsc-title"><?php echo esc_html( $title ); ?></h3>
                 <div class="wap-gsc-legend">
@@ -179,12 +329,34 @@ class WAP_Chart {
                     <?php endif; ?>
                 </div>
             </div>
+            <?php if ( $show_met ) : ?>
+            <div class="wap-gsc-metrics">
+                <div class="wap-gsc-metric">
+                    <span class="wap-gsc-metric__label"><?php echo esc_html( $leg_a ); ?></span>
+                    <strong class="wap-gsc-metric__value is-a"><?php echo esc_html( number_format( $total_a ) ); ?></strong>
+                </div>
+                <?php if ( $dual ) : ?>
+                <div class="wap-gsc-metric">
+                    <span class="wap-gsc-metric__label"><?php echo esc_html( $leg_b ); ?></span>
+                    <strong class="wap-gsc-metric__value is-b"><?php echo esc_html( number_format( $total_b ) ); ?></strong>
+                </div>
+                <div class="wap-gsc-metric">
+                    <span class="wap-gsc-metric__label">تغییر</span>
+                    <strong class="wap-gsc-metric__value <?php echo $up ? 'is-up' : 'is-down'; ?>"><?php echo esc_html( ( $up ? '+' : '' ) . number_format( $delta_pct, 1 ) . '%' ); ?></strong>
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
             <div class="wap-gsc-chart-wrap">
                 <svg class="wap-gsc-svg" viewBox="0 0 <?php echo (int) $width; ?> <?php echo (int) $height; ?>" role="img" aria-label="<?php echo esc_attr( $title ); ?>" preserveAspectRatio="xMidYMid meet">
                     <defs>
-                        <linearGradient id="<?php echo esc_attr( $uid ); ?>-fill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#1a73e8" stop-opacity="0.28"/>
+                        <linearGradient id="<?php echo esc_attr( $uid ); ?>-fill-a" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#1a73e8" stop-opacity="0.32"/>
                             <stop offset="100%" stop-color="#1a73e8" stop-opacity="0.02"/>
+                        </linearGradient>
+                        <linearGradient id="<?php echo esc_attr( $uid ); ?>-fill-b" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#fa7b17" stop-opacity="0.22"/>
+                            <stop offset="100%" stop-color="#fa7b17" stop-opacity="0.02"/>
                         </linearGradient>
                     </defs>
                     <?php foreach ( $grid as $g ) : ?>
@@ -192,23 +364,31 @@ class WAP_Chart {
                         <text class="wap-gsc-axis" x="<?php echo $pad_l - 8; ?>" y="<?php echo esc_attr( number_format( $g['y'] + 4, 2, '.', '' ) ); ?>" text-anchor="end"><?php echo esc_html( self::short_num( $g['v'] ) ); ?></text>
                     <?php endforeach; ?>
                     <line class="wap-gsc-axis-line" x1="<?php echo $pad_l; ?>" x2="<?php echo $width - $pad_r; ?>" y1="<?php echo $pad_t + $plot_h; ?>" y2="<?php echo $pad_t + $plot_h; ?>"/>
-                    <path class="wap-gsc-area" d="<?php echo esc_attr( $area_a ); ?>" fill="url(#<?php echo esc_attr( $uid ); ?>-fill)"/>
+                    <path class="wap-gsc-area wap-gsc-area-a" d="<?php echo esc_attr( $area_a ); ?>" fill="url(#<?php echo esc_attr( $uid ); ?>-fill-a)"/>
+                    <?php if ( $dual ) : ?>
+                        <path class="wap-gsc-area wap-gsc-area-b" d="<?php echo esc_attr( $area_b ); ?>" fill="url(#<?php echo esc_attr( $uid ); ?>-fill-b)"/>
+                    <?php endif; ?>
                     <path class="wap-gsc-line wap-gsc-line-a" d="<?php echo esc_attr( $line_a ); ?>" fill="none"/>
                     <?php if ( $dual ) : ?>
                         <path class="wap-gsc-line wap-gsc-line-b" d="<?php echo esc_attr( $line_b ); ?>" fill="none"/>
                     <?php endif; ?>
-                    <?php foreach ( $pts_a as $p ) : ?>
-                        <circle class="wap-gsc-dot wap-gsc-dot-a" cx="<?php echo esc_attr( number_format( $p[0], 2, '.', '' ) ); ?>" cy="<?php echo esc_attr( number_format( $p[1], 2, '.', '' ) ); ?>" r="3.5">
-                            <title><?php echo esc_html( $p[3] . ': ' . number_format( $p[2] ) ); ?></title>
+                    <?php foreach ( $pts_a as $i => $p ) : ?>
+                        <circle class="wap-gsc-dot wap-gsc-dot-a" cx="<?php echo esc_attr( number_format( $p[0], 2, '.', '' ) ); ?>" cy="<?php echo esc_attr( number_format( $p[1], 2, '.', '' ) ); ?>" r="<?php echo $n <= 14 ? '4.5' : '3.2'; ?>">
+                            <title><?php
+                            $tip = ( $labels[ $i ] ?? '' ) . ' — فعلی: ' . number_format( $p[2] );
+                            if ( $dual ) {
+                                $tip .= ' | مقایسه: ' . number_format( $pts_b[ $i ][2] ?? 0 );
+                            }
+                            echo esc_html( $tip );
+                            ?></title>
                         </circle>
                     <?php endforeach; ?>
                     <?php if ( $dual ) : foreach ( $pts_b as $p ) : ?>
-                        <circle class="wap-gsc-dot wap-gsc-dot-b" cx="<?php echo esc_attr( number_format( $p[0], 2, '.', '' ) ); ?>" cy="<?php echo esc_attr( number_format( $p[1], 2, '.', '' ) ); ?>" r="3.5">
+                        <circle class="wap-gsc-dot wap-gsc-dot-b" cx="<?php echo esc_attr( number_format( $p[0], 2, '.', '' ) ); ?>" cy="<?php echo esc_attr( number_format( $p[1], 2, '.', '' ) ); ?>" r="<?php echo $n <= 14 ? '4.5' : '3.2'; ?>">
                             <title><?php echo esc_html( $p[3] . ': ' . number_format( $p[2] ) ); ?></title>
                         </circle>
                     <?php endforeach; endif; ?>
                     <?php
-                    // برچسب محور X — حداکثر ~8 برچسب
                     $step = max( 1, (int) ceil( $n / 8 ) );
                     for ( $i = 0; $i < $n; $i += $step ) :
                         $p = $pts_a[ $i ];
@@ -217,6 +397,9 @@ class WAP_Chart {
                     <?php endfor; ?>
                 </svg>
             </div>
+            <?php if ( $dual ) : ?>
+                <p class="wap-gsc-footnote">دو خط روی یک محور هم‌تراز شده‌اند (روز ۱ با روز ۱) — مثل Compare در Google Search Console. آبی = بازه فعلی، نارنجی = بازه مقایسه.</p>
+            <?php endif; ?>
         </div>
         <?php
     }

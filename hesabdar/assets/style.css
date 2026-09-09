@@ -1563,14 +1563,49 @@ a.wap-bar-fill:hover { filter: brightness(1.1); }
     display: inline-block;
 }
 .wap-gsc-leg-a i { background: #1a73e8; }
-.wap-gsc-leg-b i { background: #fa7b17; }
+.wap-gsc-leg-b i {
+    background: #fa7b17;
+    border-radius: 0;
+    height: 3px;
+    width: 16px;
+}
+.wap-gsc-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 4px 2px 14px;
+    border-bottom: 1px solid #e8eaed;
+    margin-bottom: 8px;
+}
+.wap-gsc-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 120px;
+}
+.wap-gsc-metric__label {
+    font-size: 12px;
+    color: #5f6368;
+}
+.wap-gsc-metric__value {
+    font-size: 22px;
+    font-weight: 500;
+    color: #202124;
+    line-height: 1.2;
+}
+.wap-gsc-metric__value.is-a { color: #1a73e8; }
+.wap-gsc-metric__value.is-b { color: #fa7b17; }
+.wap-gsc-metric__value.is-up { color: #137333; }
+.wap-gsc-metric__value.is-down { color: #c5221f; }
 .wap-gsc-chart-wrap { width: 100%; overflow-x: auto; }
 .wap-gsc-svg {
     width: 100%;
     height: auto;
-    min-height: 240px;
+    min-height: 280px;
     display: block;
+    background: #fff;
 }
+.wap-gsc-card.is-dual .wap-gsc-svg { min-height: 320px; }
 .wap-gsc-grid { stroke: #e8eaed; stroke-width: 1; }
 .wap-gsc-axis-line { stroke: #dadce0; stroke-width: 1; }
 .wap-gsc-axis,
@@ -1580,14 +1615,20 @@ a.wap-bar-fill:hover { filter: brightness(1.1); }
     font-family: 'Vazirmatn', Tahoma, sans-serif;
 }
 .wap-gsc-line {
-    stroke-width: 2.25;
+    stroke-width: 3;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 .wap-gsc-line-a { stroke: #1a73e8; }
-.wap-gsc-line-b { stroke: #fa7b17; stroke-dasharray: 5 4; }
-.wap-gsc-dot-a { fill: #1a73e8; }
-.wap-gsc-dot-b { fill: #fa7b17; }
+.wap-gsc-line-b { stroke: #fa7b17; stroke-dasharray: 7 5; stroke-width: 2.75; }
+.wap-gsc-dot-a { fill: #1a73e8; stroke: #fff; stroke-width: 1.5; }
+.wap-gsc-dot-b { fill: #fa7b17; stroke: #fff; stroke-width: 1.5; }
+.wap-gsc-footnote {
+    margin: 8px 2px 0;
+    font-size: 12px;
+    color: #5f6368;
+    line-height: 1.6;
+}
 
 .wap-gsc-prod-list { display: flex; flex-direction: column; gap: 12px; padding: 8px 0 12px; }
 .wap-gsc-prod-row {

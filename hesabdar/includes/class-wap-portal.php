@@ -816,32 +816,47 @@ class WAP_Portal {
             <?php endif; ?>
 
             <?php
-            if ( ! empty( $groups ) && class_exists( 'WAP_Chart' ) ) :
-                $series = array(
-                    'labels' => array_column( array_values( $groups ), 'label' ),
-                    'a'      => array_map( 'floatval', array_column( array_values( $groups ), 'total' ) ),
-                );
-                $dual = false;
-                $aligned = null;
-                if ( ! empty( $groups2 ) ) {
-                    $aligned = WAP_Chart::align_period_series( $groups, $groups2 );
-                    $series  = array(
-                        'labels' => $aligned['labels'],
-                        'a'      => $aligned['a'],
-                        'b'      => $aligned['b'],
+            if ( class_exists( 'WAP_Chart' ) ) :
+                if ( $prepared['compare_ready'] ) {
+                    // مثل Search Console: دو خط روزانه روی‌هم (روز ۱ با روز ۱)
+                    $overlay = WAP_Chart::build_date_overlay(
+                        $orders,
+                        $orders2,
+                        (string) $f['date_from'],
+                        (string) $f['date_to'],
+                        (string) $cmp_from,
+                        (string) $cmp_to
                     );
-                    $dual = true;
+                    $aligned = WAP_Chart::align_period_series(
+                        ! empty( $groups ) ? $groups : array(),
+                        ! empty( $groups2 ) ? $groups2 : array()
+                    );
+                    WAP_Chart::render_gsc_line(
+                        $overlay,
+                        array(
+                            'title'         => 'مقایسه فروش — سبک Search Console',
+                            'legend_a'      => $f['date_from'] . ' تا ' . $f['date_to'],
+                            'legend_b'      => $cmp_from . ' تا ' . $cmp_to,
+                            'dual'          => true,
+                            'show_metrics'  => true,
+                            'height'        => 360,
+                        )
+                    );
+                } elseif ( ! empty( $groups ) ) {
+                    $aligned = null;
+                    WAP_Chart::render_gsc_line(
+                        array(
+                            'labels' => array_column( array_values( $groups ), 'label' ),
+                            'a'      => array_map( 'floatval', array_column( array_values( $groups ), 'total' ) ),
+                        ),
+                        array(
+                            'title'    => 'روند فروش بر اساس دوره',
+                            'legend_a' => $f['date_from'] . ' تا ' . $f['date_to'],
+                            'dual'     => false,
+                            'height'   => 300,
+                        )
+                    );
                 }
-                WAP_Chart::render_gsc_line(
-                    $series,
-                    array(
-                        'title'    => $dual ? 'مقایسه فروش هر دوره' : 'روند فروش بر اساس دوره',
-                        'legend_a' => $f['date_from'] . ' تا ' . $f['date_to'],
-                        'legend_b' => $dual ? ( $cmp_from . ' تا ' . $cmp_to ) : '',
-                        'dual'     => $dual,
-                        'height'   => 300,
-                    )
-                );
             endif;
             ?>
 
