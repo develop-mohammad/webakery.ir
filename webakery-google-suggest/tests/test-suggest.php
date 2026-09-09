@@ -98,6 +98,13 @@ require_once dirname( __DIR__ ) . '/includes/class-wbgs-ads.php';
 wbgs_assert( '2303' === WBGS_Ads::geo_id( 'ir' ), 'iran geo constant' );
 wbgs_assert( '1056' === WBGS_Ads::lang_id( 'fa' ), 'persian language constant' );
 
+wbgs_assert( 4 === WBGS_Suggest::word_count( 'خرید کفش اسپرت مردانه' ), 'word count longtail' );
+wbgs_assert( WBGS_Suggest::is_longtail( 'خرید کفش اسپرت مردانه' ), '4 words is longtail' );
+wbgs_assert( ! WBGS_Suggest::is_longtail( 'خرید کفش' ), '2 words is not longtail' );
+$exp = WBGS_Suggest::expand_queries( 'کفش مردانه' );
+wbgs_assert( array( 'کفش مردانه ' ) === $exp, 'expand is trailing space, not invented words' );
+wbgs_assert( array() === WBGS_Suggest::expand_queries( 'کفش' ), 'single word is not expanded' );
+
 require_once dirname( __DIR__ ) . '/includes/class-wbgs-frontend.php';
 wbgs_assert( 'sajest' === WBGS_Frontend::sanitize_slug( '' ), 'empty slug falls back' );
 wbgs_assert( 'sajest' === WBGS_Frontend::sanitize_slug( 'wp-admin' ), 'reserved slug blocked' );

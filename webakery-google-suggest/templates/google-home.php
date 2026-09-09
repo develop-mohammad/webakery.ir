@@ -21,6 +21,7 @@ defined( 'ABSPATH' ) || exit;
 			<label><input type="checkbox" name="wbgs-mode" value="space" checked /> فاصله</label>
 			<label><input type="checkbox" name="wbgs-mode" value="alphabet" checked /> الفبا</label>
 			<label><input type="checkbox" name="wbgs-mode" value="modifiers" checked /> پیشوند رایج</label>
+			<label><input type="checkbox" name="wbgs-mode" value="longtail" checked /> لانگ‌تیل</label>
 			<label><input type="checkbox" name="wbgs-mode" value="latin" /> a–z</label>
 			<label><input type="checkbox" name="wbgs-mode" value="digits" /> ارقام</label>
 		</fieldset>
@@ -36,7 +37,7 @@ defined( 'ABSPATH' ) || exit;
 			<h2>عبارت‌ها</h2>
 			<span class="wbgs-count" id="wbgs-count">۰ عبارت</span>
 		</div>
-		<p class="wbgs-hint">عبارت‌ها فقط از Autocomplete واقعی گوگل هستند. اینتنت از خودِ عبارت خوانده می‌شود. سرچ ماهانه فقط با اتصال Keyword Planner پر می‌شود؛ وگرنه «—» می‌ماند.</p>
+		<p class="wbgs-hint">عبارت‌ها و لانگ‌تیل فقط از Autocomplete واقعی گوگل هستند. اینتنت از خودِ عبارت خوانده می‌شود. سرچ ماهانه فقط با اتصال Keyword Planner پر می‌شود؛ وگرنه «—» می‌ماند.</p>
 		<div class="wbgs-actions">
 			<button type="button" class="button" id="wbgs-view-list" disabled>عبارت‌ها</button>
 			<button type="button" class="button" id="wbgs-view-tree" disabled>درخت کیورد</button>

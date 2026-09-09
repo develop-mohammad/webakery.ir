@@ -63,6 +63,7 @@ class WBGS_Suggest {
 			'latin'     => ! empty( $modes['latin'] ),
 			'digits'    => ! empty( $modes['digits'] ),
 			'modifiers' => ! empty( $modes['modifiers'] ),
+			'longtail'  => ! empty( $modes['longtail'] ),
 		);
 	}
 
@@ -120,6 +121,50 @@ class WBGS_Suggest {
 			$unique[ $q ] = true;
 		}
 		return array_keys( $unique );
+	}
+
+	/**
+	 * تعداد واژه‌های عبارت (برای تشخیص لانگ‌تیل).
+	 *
+	 * @param string $text
+	 * @return int
+	 */
+	public static function word_count( $text ) {
+		$text = self::normalize_seed( $text );
+		if ( $text === '' ) {
+			return 0;
+		}
+		$parts = preg_split( '/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY );
+		return is_array( $parts ) ? count( $parts ) : 0;
+	}
+
+	/**
+	 * لانگ‌تیل: چهار واژه یا بیشتر.
+	 *
+	 * @param string $text
+	 * @return bool
+	 */
+	public static function is_longtail( $text ) {
+		return self::word_count( $text ) >= 4;
+	}
+
+	/**
+	 * کوئری ادامهٔ سجست برای یک عبارت واقعی گوگل (فاصلهٔ بعد).
+	 * خودِ کیورد را نمی‌سازد؛ فقط از گوگل دنباله می‌پرسد.
+	 *
+	 * @param string $phrase
+	 * @return string[]
+	 */
+	public static function expand_queries( $phrase ) {
+		$phrase = self::normalize_seed( $phrase );
+		if ( $phrase === '' ) {
+			return array();
+		}
+		$n = self::word_count( $phrase );
+		if ( $n < 2 || $n > 6 ) {
+			return array();
+		}
+		return array( $phrase . ' ' );
 	}
 
 	/**

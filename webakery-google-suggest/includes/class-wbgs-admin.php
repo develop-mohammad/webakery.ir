@@ -253,7 +253,7 @@ class WBGS_Admin {
 		$who = is_user_logged_in() ? ( 'u' . get_current_user_id() ) : ( 'ip' . md5( isset( $_SERVER['REMOTE_ADDR'] ) ? (string) $_SERVER['REMOTE_ADDR'] : 'x' ) );
 		$key = 'wbgs_rl_' . $who;
 		$n   = (int) get_transient( $key );
-		$cap = is_user_logged_in() ? 250 : 180;
+		$cap = is_user_logged_in() ? 400 : 300;
 		if ( $n >= $cap ) {
 			wp_send_json_error(
 				array(

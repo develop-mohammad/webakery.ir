@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: سجست‌یاب گوگل | Webakery Google Suggest
- * Description: شورت‌کد شبیه گوگل برای استخراج Suggest واقعی، اینتنت، درخت کیورد و پیلار کلاستر — میزان سرچ فقط از Keyword Planner.
- * Version:     1.1.0
+ * Description: شورت‌کد شبیه گوگل برای استخراج Suggest واقعی، لانگ‌تیل، اینتنت، درخت کیورد و پیلار کلاستر — میزان سرچ فقط از Keyword Planner.
+ * Version:     1.1.1
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'WBGS_LOADED' ) ) {
 	return;
 }
 define( 'WBGS_LOADED', true );
-define( 'WBGS_VERSION', '1.1.0' );
+define( 'WBGS_VERSION', '1.1.1' );
 define( 'WBGS_FILE', __FILE__ );
 define( 'WBGS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBGS_URL', plugin_dir_url( __FILE__ ) );

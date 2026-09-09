@@ -121,13 +121,44 @@
 		return tt;
 	}
 
+	function wordCount(text) {
+		return tokens(text).length;
+	}
+
+	function isLongTail(text) {
+		return wordCount(text) >= 4;
+	}
+
 	function visibleItems() {
 		if (intentFilter === 'all') {
 			return items.slice();
 		}
+		if (intentFilter === 'longtail') {
+			return items.filter(function (row) {
+				return isLongTail(row.text);
+			});
+		}
 		return items.filter(function (row) {
 			return row.intent === intentFilter;
 		});
+	}
+
+	function longtailQueries() {
+		var cap = parseInt(cfg.longtailCap, 10) || 50;
+		var ranked = items.slice().sort(function (a, b) {
+			return (b.relevance || 0) - (a.relevance || 0);
+		});
+		var out = [];
+		var used = {};
+		ranked.forEach(function (row) {
+			var n = wordCount(row.text);
+			if (n < 2 || n > 6 || used[row.text]) {
+				return;
+			}
+			used[row.text] = true;
+			out.push(row.text + ' ');
+		});
+		return out.slice(0, cap);
 	}
 
 	function formatNum(n) {
@@ -191,15 +222,24 @@
 		});
 		filtersEl.innerHTML = '';
 		filtersEl.hidden = items.length === 0;
-		var keys = ['all', 'informational', 'commercial', 'transactional', 'navigational'];
+		var longCount = items.filter(function (row) {
+			return isLongTail(row.text);
+		}).length;
+		var keys = ['all', 'longtail', 'informational', 'commercial', 'transactional', 'navigational'];
 		keys.forEach(function (key) {
-			if (key !== 'all' && !counts[key]) {
+			if (key === 'longtail') {
+				if (!longCount) {
+					return;
+				}
+			} else if (key !== 'all' && !counts[key]) {
 				return;
 			}
 			var btn = document.createElement('button');
 			btn.type = 'button';
 			btn.className = key === intentFilter ? 'is-on' : '';
-			btn.textContent = (key === 'all' ? 'همه' : intentLabel(key)) + ' ' + (counts[key] || 0);
+			var label = key === 'all' ? 'همه' : (key === 'longtail' ? 'لانگ‌تیل' : intentLabel(key));
+			var n = key === 'longtail' ? longCount : (counts[key] || 0);
+			btn.textContent = label + ' ' + n;
 			btn.addEventListener('click', function () {
 				intentFilter = key;
 				render();
@@ -218,6 +258,13 @@
 			var kw = document.createElement('span');
 			kw.className = 'wbgs-kw';
 			kw.appendChild(document.createTextNode(row.text));
+			if (isLongTail(row.text)) {
+				var lt = document.createElement('span');
+				lt.className = 'wbgs-intent wbgs-intent-longtail';
+				lt.textContent = 'لانگ‌تیل';
+				kw.appendChild(document.createTextNode(' '));
+				kw.appendChild(lt);
+			}
 			li.appendChild(kw);
 			li.appendChild(intentBadge(row));
 			li.appendChild(searchesCell(row));
@@ -616,6 +663,17 @@
 				return runQueries(out.json.data.queries || []);
 			})
 			.then(function () {
+				if (stopFlag || !items.length || !selectedModes().longtail) {
+					return;
+				}
+				var extra = longtailQueries();
+				if (!extra.length) {
+					return;
+				}
+				setStatus(i18n('longtail'), '');
+				return runQueries(extra);
+			})
+			.then(function () {
 				if (items.length) {
 					view = 'list';
 					return loadVolumes();
@@ -670,11 +728,13 @@
 
 	csvBtn.addEventListener('click', function () {
 		var seed = (seedEl.value || '').trim();
-		var header = ['keyword', 'intent', 'searches', 'branch'];
+		var header = ['keyword', 'intent', 'longtail', 'words', 'searches', 'branch'];
 		var rows = [header.join(',')].concat(items.map(function (row) {
 			return [
 				csvEscape(row.text),
 				csvEscape(intentLabel(row.intent)),
+				isLongTail(row.text) ? '1' : '0',
+				wordCount(row.text),
 				row.searches == null ? '' : row.searches,
 				csvEscape(branchPath(seed, row.text).join(' > '))
 			].join(',');

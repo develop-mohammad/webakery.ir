@@ -17,6 +17,7 @@ defined( 'ABSPATH' ) || exit;
 			<label><input type="checkbox" name="wbgs-mode" value="latin" /> حروف انگلیسی a–z</label>
 			<label><input type="checkbox" name="wbgs-mode" value="digits" /> ارقام ۰–۹</label>
 			<label><input type="checkbox" name="wbgs-mode" value="modifiers" /> پیشوندهای رایج (خرید، قیمت، …)</label>
+			<label><input type="checkbox" name="wbgs-mode" value="longtail" checked /> لانگ‌تیل (ادامهٔ همان عبارت‌ها در گوگل)</label>
 		</fieldset>
 
 		<div class="wbgs-actions">
