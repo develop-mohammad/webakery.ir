@@ -711,6 +711,9 @@ $var_view    = file_get_contents( dirname( __DIR__ ) . '/includes/views/product-
 $bulk_view   = file_get_contents( dirname( __DIR__ ) . '/includes/views/bulk-prices.php' );
 wbe_check( 'ویرایش تکی فیلد SKU ندارد', false === strpos( $single_view, 'name="wbe_sku"' ) && false === strpos( $var_view, '[sku]' ) );
 wbe_check( 'ویرایش تکی فیلد وضعیت ندارد', false === strpos( $single_view, 'name="wbe_status"' ) );
+wbe_check( 'ویرایش تکی فیلد نام ندارد', false === strpos( $single_view, 'name="wbe_name"' ) && false === strpos( $var_view, '[name]' ) );
+wbe_check( 'ویرایش گروهی ستون نام دارد', false !== strpos( $bulk_view, 'نام محصول' ) );
+wbe_check( 'نوار گروهی افزودن رزرو ندارد', false === strpos( $bulk_view, 'افزودن بچ رزرو جدید' ) );
 wbe_check( 'ویرایش گروهی ستون SKU دارد', false !== strpos( $bulk_view, '>SKU<' ) );
 wbe_check( 'ویرایش گروهی ستون وضعیت دارد', false !== strpos( $bulk_view, '>وضعیت<' ) );
 wbe_check( 'تکی فیلد جشنواره تقویم دارد', false !== strpos( $single_view, 'class="wbe-date"' ) );
@@ -759,7 +762,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.2.14' );
+	define( 'WBE_VERSION', '1.2.15' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

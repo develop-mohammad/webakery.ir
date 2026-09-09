@@ -123,7 +123,6 @@ class WBE_Admin_Product {
 		$effective      = WBE_Product::calendar( $pid );
 		$global         = WBE_Settings::calendar();
 		$hide_cd        = (string) get_post_meta( $pid, WBE_Product::META_HIDE_COUNTDOWN, true ) === '1';
-		$product_name = get_the_title( $pid );
 		$wc_price     = '';
 		$wc_sale        = '';
 		$wc_disc        = '';
@@ -205,15 +204,6 @@ class WBE_Admin_Product {
 		$pid      = (int) $product->get_id();
 		$override = isset( $_POST['wbe_calendar'] ) ? sanitize_key( wp_unslash( $_POST['wbe_calendar'] ) ) : '';
 		$cal      = in_array( $override, array( 'jalali', 'gregorian' ), true ) ? $override : WBE_Settings::calendar();
-
-		if ( isset( $_POST['wbe_name'] ) ) {
-			WBE_Product::apply_identity(
-				$pid,
-				array(
-					'name' => sanitize_text_field( wp_unslash( $_POST['wbe_name'] ) ),
-				)
-			);
-		}
 
 		$active  = isset( $_POST['wbe_active'] ) && is_array( $_POST['wbe_active'] ) ? wp_unslash( $_POST['wbe_active'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 		$reserve = isset( $_POST['wbe_reserve'] ) && is_array( $_POST['wbe_reserve'] ) ? wp_unslash( $_POST['wbe_reserve'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput

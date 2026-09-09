@@ -168,14 +168,6 @@ $csv_url     = wp_nonce_url(
 				<input type="checkbox" name="wbe_clear_sale" value="1" />
 				حذف تخفیف و بازه جشنواره
 			</label>
-			<div class="wbe-bulk-field wbe-bulk-add-batch">
-				<label>افزودن بچ رزرو جدید</label>
-				<input type="text" name="wbe_add_price" class="wbe-bulk-value" placeholder="قیمت اصلی" dir="ltr" />
-				<input type="text" name="wbe_add_discount" class="wbe-bulk-value" placeholder="تخفیف ٪" dir="ltr" />
-				<input type="text" name="wbe_add_stock" class="wbe-bulk-value" placeholder="موجودی" dir="ltr" />
-				<input type="text" name="wbe_add_expiry" class="wbe-bulk-value wbe-date" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" />
-				<span class="wbe-muted">تاریخ انقضا + موجودی الزامی است.</span>
-			</div>
 			<div class="wbe-bulk-actions">
 				<button type="submit" class="button button-primary" name="wbe_bulk_mode" value="selected" id="wbe-bulk-apply-selected">اعمال روی انتخاب‌شده‌ها</button>
 				<button type="submit" class="button" name="wbe_bulk_mode" value="rows" id="wbe-bulk-save-dirty">ذخیره سلول‌های تغییرکرده</button>

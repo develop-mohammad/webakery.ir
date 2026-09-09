@@ -435,17 +435,11 @@
 		var round = $('#wbe_round').val();
 		var clear = $('input[name="wbe_clear_sale"]').prop('checked');
 		var setStatus = $('#wbe_set_status').val() || '';
-		var addPrice = $('input[name="wbe_add_price"]').val();
-		var addSale = $('input[name="wbe_add_sale"]').val();
-		var addDisc = $('input[name="wbe_add_discount"]').val();
-		var addStock = $('input[name="wbe_add_stock"]').val();
-		var addExpiry = $('input[name="wbe_add_expiry"]').val();
-		var hasAdd = addExpiry !== '' && addStock !== '';
 		var has = (regularMode !== 'none' && regularVal !== '') ||
 			(saleMode !== 'none' && saleVal !== '') ||
 			disc !== '' || from !== '' || to !== '' ||
 			(stockMode !== 'none' && stockVal !== '') ||
-			expiry !== '' || clear || setStatus !== '' || hasAdd;
+			expiry !== '' || clear || setStatus !== '';
 		if (!has) {
 			showNotice(false, 'حداقل یک فیلد نوار بالا را پر کنید.');
 			return 0;
@@ -496,16 +490,6 @@
 			}
 			if (setStatus !== '') {
 				setField($tr, 'status', setStatus);
-			}
-			if (hasAdd) {
-				$tr.addClass('is-dirty');
-				$tr.data('addBatch', {
-					add_price: addPrice,
-					add_sale: addSale,
-					add_discount: addDisc,
-					add_stock: addStock,
-					add_expiry: addExpiry
-				});
 			}
 		});
 		return n;
