@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.13.0',
+        'version'      => '1.14.0',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۱۳.۰: مقایسه فروش هر دوره و محصول + نمودار خطی/ناحیه‌ای به سبک Google Search Console (آبی/نارنجی، جدول Δ٪).',
+        'changelog'    => 'نسخه ۱.۱۴.۰: بازطراحی UI/UX ساده به سبک گوگل — بدون گرافیک تزئینی، پالت آبی گوگل، هدر و دکمه‌های تخت.',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',
