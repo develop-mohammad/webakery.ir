@@ -31,17 +31,21 @@ defined( 'ABSPATH' ) || exit;
 		<p class="wbgs-status" id="wbgs-status" role="status"></p>
 	</section>
 
-	<section class="wbgs-card">
+			<section class="wbgs-card">
 		<div class="wbgs-results-head">
 			<h2>نتایج</h2>
 			<span class="wbgs-count" id="wbgs-count">۰ عبارت</span>
 		</div>
+		<p class="wbgs-hint">میزان سرچ نسبی از امتیاز و رتبهٔ خودِ سجست گوگل است؛ عدد ماهانهٔ Keyword Planner نیست.</p>
 		<div class="wbgs-actions">
+			<button type="button" class="button" id="wbgs-view-list" disabled>لیست</button>
+			<button type="button" class="button" id="wbgs-view-tree" disabled>درخت محتوا</button>
 			<button type="button" class="button" id="wbgs-copy" disabled>کپی همه</button>
 			<button type="button" class="button" id="wbgs-csv" disabled>دانلود CSV</button>
 			<button type="button" class="button" id="wbgs-txt" disabled>دانلود TXT</button>
 		</div>
 		<ol class="wbgs-list" id="wbgs-list"></ol>
+		<div class="wbgs-tree" id="wbgs-tree" hidden></div>
 		<p class="wbgs-empty" id="wbgs-empty">هنوز چیزی استخراج نشده.</p>
 	</section>
 </div>

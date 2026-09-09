@@ -2,7 +2,7 @@
 /**
  * Plugin Name: سجست‌یاب گوگل | Webakery Google Suggest
  * Description: استخراج پیشنهادهای واقعی Autocomplete گوگل (فاصله قبل/بعد و حرف‌گردانی الفبای فارسی) از پیشخوان.
- * Version:     1.0.1
+ * Version:     1.0.2
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'WBGS_LOADED' ) ) {
 	return;
 }
 define( 'WBGS_LOADED', true );
-define( 'WBGS_VERSION', '1.0.1' );
+define( 'WBGS_VERSION', '1.0.2' );
 define( 'WBGS_FILE', __FILE__ );
 define( 'WBGS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBGS_URL', plugin_dir_url( __FILE__ ) );

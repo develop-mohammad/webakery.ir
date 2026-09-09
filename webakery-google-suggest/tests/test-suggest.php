@@ -44,6 +44,12 @@ $sample = '["کفش",["کفش مردانه","کفش زنانه","خرید کفش
 $parsed = WBGS_Suggest::parse_response( $sample );
 wbgs_assert( array( 'کفش مردانه', 'کفش زنانه', 'خرید کفش' ) === $parsed, 'parse firefox JSON' );
 
+$chrome = '["کفش",["کفش مردانه","کفش زنانه"],["",""],[],{"google:suggestrelevance":[601,560]}]';
+$rich   = WBGS_Suggest::parse_enriched( $chrome );
+wbgs_assert( 2 === count( $rich ), 'parse chrome enriched count' );
+wbgs_assert( 'کفش مردانه' === $rich[0]['text'], 'enriched text' );
+wbgs_assert( 601 === $rich[0]['relevance'], 'real google relevance kept' );
+
 $xssi = ")]}'\n" . $sample;
 wbgs_assert( 3 === count( WBGS_Suggest::parse_response( $xssi ) ), 'strip XSSI prefix' );
 
@@ -52,7 +58,23 @@ wbgs_assert( array() === WBGS_Suggest::parse_response( '["کفش"]' ), 'missing 
 
 $url = WBGS_Suggest::suggest_url( 'کفش ', 'fa', 'ir' );
 wbgs_assert( false !== strpos( $url, 'suggestqueries.google.com' ), 'suggest URL host' );
-wbgs_assert( false !== strpos( $url, 'client=firefox' ), 'suggest URL client' );
+wbgs_assert( false !== strpos( $url, 'client=chrome' ), 'suggest URL client' );
+
+require_once dirname( __DIR__ ) . '/includes/class-wbgs-tree.php';
+wbgs_assert( array( 'مردانه', 'اسپرت' ) === WBGS_Tree::branch_path( 'کفش', 'کفش مردانه اسپرت' ), 'prefix branch path' );
+wbgs_assert( array( 'خرید' ) === WBGS_Tree::branch_path( 'کفش', 'خرید کفش' ), 'suffix branch path' );
+$tree = WBGS_Tree::build(
+	'کفش',
+	array(
+		array( 'text' => 'کفش مردانه', 'relevance' => 601, 'rank' => 1, 'count' => 2 ),
+		array( 'text' => 'کفش مردانه اسپرت', 'relevance' => 500, 'rank' => 3, 'count' => 1 ),
+		array( 'text' => 'خرید کفش', 'relevance' => 400, 'rank' => 4, 'count' => 1 ),
+	)
+);
+wbgs_assert( isset( $tree['children']['مردانه'] ), 'tree has مردانه branch' );
+wbgs_assert( isset( $tree['children']['خرید'] ), 'tree has خرید branch' );
+wbgs_assert( $tree['count'] >= 3, 'tree counts leaves' );
+wbgs_assert( $tree['children']['مردانه']['volume'] >= $tree['children']['خرید']['volume'], 'higher google score ranks higher' );
 
 require_once dirname( __DIR__ ) . '/includes/class-wbgs-frontend.php';
 wbgs_assert( 'sajest' === WBGS_Frontend::sanitize_slug( '' ), 'empty slug falls back' );

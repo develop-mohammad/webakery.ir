@@ -67,6 +67,7 @@ class WBGS_Plugin {
 		$this->boot_license();
 
 		require_once WBGS_PATH . 'includes/class-wbgs-suggest.php';
+		require_once WBGS_PATH . 'includes/class-wbgs-tree.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-frontend.php';
 		WBGS_Frontend::instance();
 
@@ -91,6 +92,7 @@ class WBGS_Plugin {
 					'استخراج پیشنهادهای واقعی Autocomplete گوگل',
 					'حرف‌گردانی الفبای فارسی و فاصله قبل/بعد',
 					'صفحهٔ جدا روی سایت با ورود موبایل یا جیمیل',
+					'درخت محتوا و میزان سرچ نسبی از سجست گوگل',
 					'خروجی CSV و کپی یکجا',
 					'به‌روزرسانی خودکار از webakery.ir',
 				),

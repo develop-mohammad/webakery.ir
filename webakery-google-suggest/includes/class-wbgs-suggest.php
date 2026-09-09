@@ -127,6 +127,20 @@ class WBGS_Suggest {
 	 * @return string[]
 	 */
 	public static function parse_response( $body ) {
+		$out = array();
+		foreach ( self::parse_enriched( $body ) as $row ) {
+			$out[] = $row['text'];
+		}
+		return $out;
+	}
+
+	/**
+	 * متن + امتیاز واقعی google:suggestrelevance (اگر گوگل فرستاده باشد).
+	 *
+	 * @param string $body
+	 * @return array<int,array{text:string,relevance:int,rank:int}>
+	 */
+	public static function parse_enriched( $body ) {
 		$body = is_string( $body ) ? $body : '';
 		$body = preg_replace( '/^\xEF\xBB\xBF/', '', $body );
 		$body = preg_replace( '/^\)\]\}\'\s*/', '', $body );
@@ -135,8 +149,18 @@ class WBGS_Suggest {
 			return array();
 		}
 
+		$rel = array();
+		foreach ( $data as $part ) {
+			if ( is_array( $part ) && isset( $part['google:suggestrelevance'] ) && is_array( $part['google:suggestrelevance'] ) ) {
+				$rel = $part['google:suggestrelevance'];
+				break;
+			}
+		}
+
+		$seen  = array();
 		$items = array();
-		foreach ( $data[1] as $row ) {
+		$rank  = 0;
+		foreach ( $data[1] as $i => $row ) {
 			$phrase = '';
 			if ( is_string( $row ) ) {
 				$phrase = $row;
@@ -144,16 +168,18 @@ class WBGS_Suggest {
 				$phrase = $row[0];
 			}
 			$phrase = trim( $phrase );
-			if ( $phrase !== '' ) {
-				$items[] = $phrase;
+			if ( $phrase === '' || isset( $seen[ $phrase ] ) ) {
+				continue;
 			}
+			$seen[ $phrase ] = true;
+			$rank++;
+			$items[] = array(
+				'text'       => $phrase,
+				'relevance'  => isset( $rel[ $i ] ) ? (int) $rel[ $i ] : 0,
+				'rank'       => $rank,
+			);
 		}
-
-		$unique = array();
-		foreach ( $items as $phrase ) {
-			$unique[ $phrase ] = true;
-		}
-		return array_keys( $unique );
+		return $items;
 	}
 
 	/**
@@ -173,7 +199,7 @@ class WBGS_Suggest {
 
 		return 'https://suggestqueries.google.com/complete/search?' . http_build_query(
 			array(
-				'client' => 'firefox',
+				'client' => 'chrome',
 				'hl'     => $hl,
 				'gl'     => $gl,
 				'q'      => (string) $query,
@@ -235,7 +261,7 @@ class WBGS_Suggest {
 		return array(
 			'ok'     => true,
 			'error'  => '',
-			'items'  => self::parse_response( $body ),
+			'items'  => self::parse_enriched( $body ),
 			'status' => $status,
 		);
 	}

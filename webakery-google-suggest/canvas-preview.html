@@ -99,7 +99,7 @@
 
     <div id="view-app" hidden>
     <div class="wrap wbgs-wrap" dir="rtl">
-      <h1 class="wbgs-h1">سجست‌یاب گوگل <span class="wbgs-ver">v1.0.1</span></h1>
+      <h1 class="wbgs-h1">سجست‌یاب گوگل <span class="wbgs-ver">v1.0.2</span></h1>
       <p class="wbgs-sub">پیشنهادهای واقعی Autocomplete گوگل — سازنده: webakery.ir</p>
       <nav class="nav-tab-wrapper wbgs-tabs">
         <a class="nav-tab nav-tab-active" href="#">استخراج</a>
@@ -134,19 +134,33 @@
             <h2>نتایج</h2>
             <span class="wbgs-count">۶ عبارت</span>
           </div>
+          <p class="wbgs-hint">میزان سرچ نسبی از سجست گوگل — درخت محتوا از همان کیوردها.</p>
           <div class="wbgs-actions">
-            <button type="button" class="button">کپی همه</button>
+            <button type="button" class="button">لیست</button>
+            <button type="button" class="button wbgs-view-on">درخت محتوا</button>
             <button type="button" class="button">دانلود CSV</button>
-            <button type="button" class="button">دانلود TXT</button>
           </div>
-          <ol class="wbgs-list">
-            <li>کفش مردانه</li>
-            <li>کفش زنانه</li>
-            <li>کفش ورزشی</li>
-            <li>خرید کفش</li>
-            <li>کفش بچگانه</li>
-            <li>کفش مجلسی</li>
-          </ol>
+          <div class="wbgs-tree">
+            <details open>
+              <summary><span>مردانه (۲)</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:100%"></i></span><span class="wbgs-vol-n">100</span></span></summary>
+              <ul class="wbgs-tree-leaves">
+                <li><span class="wbgs-kw">کفش مردانه</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:100%"></i></span><span class="wbgs-vol-n">100</span></span></li>
+                <li><span class="wbgs-kw">کفش مردانه اسپرت</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:72%"></i></span><span class="wbgs-vol-n">72</span></span></li>
+              </ul>
+            </details>
+            <details open>
+              <summary><span>زنانه (۱)</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:81%"></i></span><span class="wbgs-vol-n">81</span></span></summary>
+              <ul class="wbgs-tree-leaves">
+                <li><span class="wbgs-kw">کفش زنانه</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:81%"></i></span><span class="wbgs-vol-n">81</span></span></li>
+              </ul>
+            </details>
+            <details open>
+              <summary><span>خرید (۱)</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:58%"></i></span><span class="wbgs-vol-n">58</span></span></summary>
+              <ul class="wbgs-tree-leaves">
+                <li><span class="wbgs-kw">خرید کفش</span><span class="wbgs-vol"><span class="wbgs-vol-bar"><i style="width:58%"></i></span><span class="wbgs-vol-n">58</span></span></li>
+              </ul>
+            </details>
+          </div>
         </section>
       </div>
     </div>
@@ -161,6 +175,9 @@
   document.getElementById('show-app').onclick = function () {
     document.getElementById('view-login').hidden = true;
     document.getElementById('view-app').hidden = false;
+  };
+  if (/[?&]app=1/.test(location.search)) {
+    document.getElementById('show-app').click();
   };
 </script>
 </body>
