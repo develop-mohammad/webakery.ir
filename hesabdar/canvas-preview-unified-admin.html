@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>پیش‌نمایش ادمین — پنل یکپارچه Hesabdar 1.18</title>
+  <style>
+    body { font-family: Tahoma, "Segoe UI", sans-serif; background: #f0f0f1; margin: 0; color: #1d2327; }
+    .wrap { max-width: 780px; margin: 24px auto; padding: 0 16px 40px; }
+    h1 { font-size: 23px; font-weight: 400; margin: 0 0 12px; }
+    h2 { font-size: 18px; font-weight: 600; margin: 28px 0 10px; }
+    code { background: #fff; border: 1px solid #c3c4c7; padding: 4px 8px; border-radius: 2px; font-size: 13px; }
+    .button { display: inline-block; background: #2271b1; color: #fff; text-decoration: none; padding: 4px 10px; border-radius: 3px; font-size: 13px; margin-right: 6px; }
+    .button-small { font-size: 12px; padding: 2px 8px; }
+    .description { color: #646970; font-size: 13px; }
+    table.widefat { width: 100%; max-width: 640px; border-collapse: collapse; background: #fff; border: 1px solid #c3c4c7; }
+    table.widefat th, table.widefat td { padding: 10px 12px; text-align: right; border-bottom: 1px solid #dcdcde; font-size: 13px; }
+    table.widefat th { background: #f6f7f7; }
+    .notice-box { background: #fff; border: 1px solid #c3c4c7; border-right: 4px solid #72aee6; padding: 12px 14px; margin: 16px 0; font-size: 13px; }
+    .gone { color: #b32d2e; text-decoration: line-through; opacity: .55; margin: 4px 0; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>پرتال حسابدار</h1>
+    <p>آدرس یکپارچه گزارش فروش:</p>
+    <p>
+      <code>https://example.com/accountant-panel/</code>
+      <a class="button button-small" href="#">باز کردن</a>
+    </p>
+    <p class="description">یک پنل واحد برای همهٔ کاربران مجاز (حسابدار و مدیر سایت).</p>
+
+    <div class="notice-box">
+      حذف‌شده در ۱.۱۸:
+      <div class="gone">جدول دو آدرس (حسابدار + مدیر)</div>
+      <div class="gone">فرم افزودن حسابدار</div>
+      <div class="gone">دسترسی بر اساس نقش</div>
+    </div>
+
+    <h2>خروجی Google Sheets</h2>
+    <p style="max-width:720px;line-height:1.8;font-size:14px">
+      <strong>بدون تنظیمات گوگل کلود</strong> (مناسب ایران / تحریم): در پرتال روی
+      «خروجی گوگل شیت» بزنید → فایل CSV دانلود می‌شود و Google Sheets باز می‌شود →
+      از داخل شیت: <strong>File → Import → Upload</strong> همان فایل را انتخاب کنید.
+    </p>
+
+    <h2>لیست حسابداران</h2>
+    <p class="description">برای افزودن حسابدار جدید، از «کاربران» وردپرس نقش <code>wci_accountant</code> را به کاربر بدهید.</p>
+    <table class="widefat">
+      <thead><tr><th>نام</th><th>ایمیل</th><th>عملیات</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>حسابدار نهال</td>
+          <td>Accountant@nahal.website</td>
+          <td><a class="button button-small" href="#" style="background:#fff;color:#2271b1;border:1px solid #2271b1">حذف دسترسی</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
