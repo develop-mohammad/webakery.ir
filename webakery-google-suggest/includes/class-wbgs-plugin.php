@@ -54,8 +54,10 @@ class WBGS_Plugin {
 
 	public static function script_data( $nonce_action ) {
 		$settings = self::settings();
+		$ajax     = admin_url( 'admin-ajax.php' );
+		$path     = wp_parse_url( $ajax, PHP_URL_PATH );
 		return array(
-			'ajax'      => admin_url( 'admin-ajax.php' ),
+			'ajax'      => $path ? $path : $ajax,
 			'nonce'     => wp_create_nonce( $nonce_action ),
 			'delay'     => (int) $settings['delay_ms'],
 			'licensed'  => self::licensed(),

@@ -280,10 +280,10 @@
 			var tog = document.createElement('span');
 			tog.className = 'wbgs-ktree-tog';
 			tog.textContent = open ? '▾' : '▸';
-			row.appendChild(tog);
 			var name = document.createElement('span');
 			name.className = 'wbgs-kw';
-			name.textContent = child.label + ' (' + child.count + ')';
+			name.appendChild(tog);
+			name.appendChild(document.createTextNode(child.label + ' (' + child.count + ')'));
 			row.appendChild(name);
 			var gap = document.createElement('span');
 			gap.className = 'wbgs-intent wbgs-intent-branch';
