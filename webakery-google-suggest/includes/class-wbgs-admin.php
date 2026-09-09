@@ -41,30 +41,9 @@ class WBGS_Admin {
 			return;
 		}
 
-		$settings = WBGS_Plugin::settings();
 		wp_enqueue_style( 'wbgs-admin', WBGS_URL . 'assets/css/admin.css', array(), WBGS_VERSION );
 		wp_enqueue_script( 'wbgs-admin', WBGS_URL . 'assets/js/admin.js', array(), WBGS_VERSION, true );
-		wp_localize_script(
-			'wbgs-admin',
-			'wbgsAdmin',
-			array(
-				'ajax'     => admin_url( 'admin-ajax.php' ),
-				'nonce'    => wp_create_nonce( 'wbgs_admin' ),
-				'delay'    => (int) $settings['delay_ms'],
-				'licensed' => WBGS_Plugin::licensed(),
-				'i18n'     => array(
-					'empty'    => 'عبارت پایه را بنویسید.',
-					'locked'   => 'برای استخراج، لایسنس را فعال کنید یا دوره آزمایشی را استفاده کنید.',
-					'limited'  => 'گوگل درخواست‌ها را محدود کرد. کمی صبر کنید و دوباره تلاش کنید.',
-					'network'  => 'ارتباط با سرور برقرار نشد.',
-					'none'     => 'گوگل برای این عبارت پیشنهادی برنگرداند.',
-					'done'     => 'استخراج تمام شد.',
-					'copy_ok'  => 'کپی شد.',
-					'copy_err' => 'کپی نشد؛ دستی انتخاب کنید.',
-					'stopped'  => 'استخراج متوقف شد.',
-				),
-			)
-		);
+		wp_localize_script( 'wbgs-admin', 'wbgsAdmin', WBGS_Plugin::script_data( 'wbgs_admin' ) );
 	}
 
 	public static function tabs() {
@@ -105,15 +84,22 @@ class WBGS_Admin {
 		$delay = isset( $_POST['delay_ms'] ) ? (int) $_POST['delay_ms'] : 300;
 		$delay = max( 150, min( 2000, $delay ) );
 
+		$slug = isset( $_POST['front_slug'] ) ? wp_unslash( $_POST['front_slug'] ) : 'sajest';
+		$slug = WBGS_Frontend::sanitize_slug( is_string( $slug ) ? $slug : 'sajest' );
+
 		update_option(
 			WBGS_Plugin::OPTION,
 			array(
-				'hl'       => $hl ? $hl : 'fa',
-				'gl'       => $gl ? $gl : 'ir',
-				'delay_ms' => $delay,
+				'hl'            => $hl ? $hl : 'fa',
+				'gl'            => $gl ? $gl : 'ir',
+				'delay_ms'      => $delay,
+				'front_enabled' => ! empty( $_POST['front_enabled'] ) ? 1 : 0,
+				'front_slug'    => $slug,
 			),
 			false
 		);
+
+		flush_rewrite_rules();
 
 		wp_safe_redirect(
 			add_query_arg(
@@ -150,6 +136,7 @@ class WBGS_Admin {
 
 	public function ajax_fetch() {
 		$this->ajax_guard();
+		$this->rate_limit_front();
 
 		$query = isset( $_POST['q'] ) ? wp_unslash( $_POST['q'] ) : '';
 		$query = is_string( $query ) ? $query : '';
@@ -186,16 +173,46 @@ class WBGS_Admin {
 		$url   = admin_url( 'admin.php?page=' . WBGS_MENU );
 		$front = '<a href="' . esc_url( $url ) . '">استخراج</a>';
 		array_unshift( $links, $front );
+		$public = WBGS_Frontend::url();
+		if ( $public ) {
+			array_unshift( $links, '<a href="' . esc_url( $public ) . '" target="_blank" rel="noopener">صفحه سایت</a>' );
+		}
 		return $links;
 	}
 
 	private function ajax_guard() {
-		if ( ! current_user_can( self::CAP ) ) {
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => 'ابتدا وارد شوید.' ), 403 );
+		}
+		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+		$admin = $nonce && wp_verify_nonce( $nonce, 'wbgs_admin' );
+		$front = $nonce && wp_verify_nonce( $nonce, 'wbgs_front' );
+		if ( ! $admin && ! $front ) {
+			wp_send_json_error( array( 'message' => 'نشست نامعتبر است. صفحه را تازه کنید.' ), 403 );
+		}
+		if ( $admin && ! current_user_can( self::CAP ) ) {
 			wp_send_json_error( array( 'message' => 'دسترسی غیرمجاز' ), 403 );
 		}
-		check_ajax_referer( 'wbgs_admin', 'nonce' );
 		if ( ! WBGS_Plugin::licensed() ) {
 			wp_send_json_error( array( 'message' => 'لایسنس یا دوره آزمایشی فعال نیست.' ), 402 );
 		}
+	}
+
+	private function rate_limit_front() {
+		if ( current_user_can( self::CAP ) ) {
+			return;
+		}
+		$key = 'wbgs_rl_' . get_current_user_id();
+		$n   = (int) get_transient( $key );
+		if ( $n >= 90 ) {
+			wp_send_json_error(
+				array(
+					'message' => 'تعداد درخواست در این دقیقه زیاد بود. کمی صبر کنید.',
+					'code'    => 'limited',
+				),
+				429
+			);
+		}
+		set_transient( $key, $n + 1, MINUTE_IN_SECONDS );
 	}
 }

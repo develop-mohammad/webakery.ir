@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>سجست‌یاب گوگل — پیش‌نمایش</title>
 <link rel="stylesheet" href="assets/css/admin.css" />
+<link rel="stylesheet" href="assets/css/front.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -61,13 +62,44 @@
     font-size: 13px;
     line-height: 1.8;
   }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
   <div class="stage">
-    <div class="wp-chrome">پیش‌نمایش ظاهر پیشخوان — استخراج زنده فقط داخل وردپرس کار می‌کند.</div>
+    <div class="wp-chrome">پیش‌نمایش — صفحهٔ جدا روی سایت (اول ورود، بعد استخراج). داده زنده نیست.</div>
+    <p class="note" style="margin:0 0 12px">
+      <button type="button" class="button" id="show-login">نمایش ورود</button>
+      <button type="button" class="button button-primary" id="show-app">بعد از ورود</button>
+    </p>
+
+    <div id="view-login">
+      <div class="wbgs-app-shell" style="padding:0">
+        <header class="wbgs-app-head">
+          <div>
+            <h1>سجست‌یاب گوگل</h1>
+            <p>پیشنهادهای واقعی Autocomplete گوگل · آدرس نمونه: /sajest/</p>
+          </div>
+        </header>
+        <section class="wbgs-login-panel">
+          <h2>ورود برای استفاده از ابزار</h2>
+          <p class="wbgs-hint">با شماره موبایل یا حساب جیمیل وارد شوید.</p>
+          <div class="wbgs-card">
+            <label class="wbgs-label">شماره موبایل</label>
+            <input class="wbgs-input" type="tel" value="۰۹۱۲۳۴۵۶۷۸۹" readonly dir="ltr" />
+            <div class="wbgs-actions">
+              <button type="button" class="button button-primary">دریافت کد</button>
+            </div>
+            <p class="wbgs-hint" style="margin-top:14px">یا ادامه با گوگل / جیمیل</p>
+            <button type="button" class="button">ادامه با گوگل</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div id="view-app" hidden>
     <div class="wrap wbgs-wrap" dir="rtl">
-      <h1 class="wbgs-h1">سجست‌یاب گوگل <span class="wbgs-ver">v1.0.0</span></h1>
+      <h1 class="wbgs-h1">سجست‌یاب گوگل <span class="wbgs-ver">v1.0.1</span></h1>
       <p class="wbgs-sub">پیشنهادهای واقعی Autocomplete گوگل — سازنده: webakery.ir</p>
       <nav class="nav-tab-wrapper wbgs-tabs">
         <a class="nav-tab nav-tab-active" href="#">استخراج</a>
@@ -118,7 +150,18 @@
         </section>
       </div>
     </div>
-    <p class="note">برای استخراج واقعی، افزونه را در وردپرس نصب کنید: پیشخوان ← سجست‌یاب گوگل.</p>
+    </div>
+    <p class="note">نصب: دو ZIP را در وردپرس بارگذاری کنید (سجست‌یاب + ورود آسان). آدرس صفحه را در تنظیمات وارد کنید.</p>
   </div>
+<script>
+  document.getElementById('show-login').onclick = function () {
+    document.getElementById('view-login').hidden = false;
+    document.getElementById('view-app').hidden = true;
+  };
+  document.getElementById('show-app').onclick = function () {
+    document.getElementById('view-login').hidden = true;
+    document.getElementById('view-app').hidden = false;
+  };
+</script>
 </body>
 </html>

@@ -33,53 +33,31 @@ defined( 'ABSPATH' ) || exit;
 	<?php endif; ?>
 
 	<?php if ( 'extract' === $tab ) : ?>
-		<div class="wbgs-grid">
-			<section class="wbgs-card">
-				<h2>عبارت پایه</h2>
-				<p class="wbgs-hint">مثل «کفش». ابزار همان عبارت را با فاصله و حروف الفبا از گوگل می‌پرسد؛ چیزی از خودش نمی‌سازد.</p>
-
-				<label class="wbgs-label" for="wbgs-seed">عبارت</label>
-				<input id="wbgs-seed" class="wbgs-input" type="text" dir="auto" placeholder="کفش" <?php disabled( ! $licensed ); ?> />
-
-				<fieldset class="wbgs-modes" <?php disabled( ! $licensed ); ?>>
-					<legend>روش‌ها</legend>
-					<label><input type="checkbox" name="wbgs-mode" value="space" checked /> فاصله قبل و بعد</label>
-					<label><input type="checkbox" name="wbgs-mode" value="alphabet" checked /> حرف‌گردانی فارسی (ا تا ی)</label>
-					<label><input type="checkbox" name="wbgs-mode" value="latin" /> حروف انگلیسی a–z</label>
-					<label><input type="checkbox" name="wbgs-mode" value="digits" /> ارقام ۰–۹</label>
-					<label><input type="checkbox" name="wbgs-mode" value="modifiers" /> پیشوندهای رایج (خرید، قیمت، …)</label>
-				</fieldset>
-
-				<div class="wbgs-actions">
-					<button type="button" class="button button-primary" id="wbgs-start" <?php disabled( ! $licensed ); ?>>استخراج از گوگل</button>
-					<button type="button" class="button" id="wbgs-stop" hidden>توقف</button>
-				</div>
-
-				<div class="wbgs-progress" id="wbgs-progress" hidden>
-					<div class="wbgs-progress-bar" id="wbgs-progress-bar"></div>
-					<p class="wbgs-progress-text" id="wbgs-progress-text"></p>
-				</div>
-				<p class="wbgs-status" id="wbgs-status" role="status"></p>
-			</section>
-
-			<section class="wbgs-card">
-				<div class="wbgs-results-head">
-					<h2>نتایج</h2>
-					<span class="wbgs-count" id="wbgs-count">۰ عبارت</span>
-				</div>
-				<div class="wbgs-actions">
-					<button type="button" class="button" id="wbgs-copy" disabled>کپی همه</button>
-					<button type="button" class="button" id="wbgs-csv" disabled>دانلود CSV</button>
-					<button type="button" class="button" id="wbgs-txt" disabled>دانلود TXT</button>
-				</div>
-				<ol class="wbgs-list" id="wbgs-list"></ol>
-				<p class="wbgs-empty" id="wbgs-empty">هنوز چیزی استخراج نشده.</p>
-			</section>
-		</div>
+		<?php include WBGS_PATH . 'templates/extract-form.php'; ?>
 	<?php elseif ( 'settings' === $tab ) : ?>
 		<form class="wbgs-card wbgs-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="wbgs_save_settings" />
 			<?php wp_nonce_field( 'wbgs_save_settings' ); ?>
+			<h2>صفحهٔ جدا روی سایت</h2>
+			<p class="wbgs-hint">آدرس را اینجا بگذارید. آن بخش از سایت قالب معمولی را نشان نمی‌دهد؛ اول ورود با موبایل یا جیمیل (افزونه ورود آسان)، بعد استخراج سجست.</p>
+			<p>
+				<label class="wbgs-check">
+					<input type="checkbox" name="front_enabled" value="1" <?php checked( ! empty( $settings['front_enabled'] ) ); ?> />
+					فعال بودن صفحهٔ عمومی
+				</label>
+			</p>
+			<p>
+				<label class="wbgs-label" for="wbgs-slug">آدرس صفحه (اسلاگ)</label>
+				<input id="wbgs-slug" class="wbgs-input wbgs-input-sm" type="text" name="front_slug" value="<?php echo esc_attr( $settings['front_slug'] ); ?>" dir="ltr" />
+			</p>
+			<?php if ( WBGS_Frontend::url() ) : ?>
+				<p class="wbgs-hint">لینک: <a href="<?php echo esc_url( WBGS_Frontend::url() ); ?>" target="_blank" rel="noopener"><code dir="ltr"><?php echo esc_html( WBGS_Frontend::url() ); ?></code></a>
+					— بعد از ذخیره، یک‌بار «پیوندهای یکتا» را در تنظیمات وردپرس ذخیره کنید اگر صفحه ۴۰۴ شد.</p>
+			<?php endif; ?>
+			<?php if ( ! class_exists( 'WBL_Plugin' ) ) : ?>
+				<p class="wbgs-admin-hint">افزونه «ورود آسان» نصب نیست. تا نصب نشود، روی صفحهٔ عمومی فرم ورود معمولی وردپرس می‌آید نه موبایل/جیمیل.</p>
+			<?php endif; ?>
+
 			<h2>زبان و کشور گوگل</h2>
 			<p class="wbgs-hint">این‌ها همان پارامترهای Autocomplete گوگل هستند (مثل سرچ از ایران).</p>
 

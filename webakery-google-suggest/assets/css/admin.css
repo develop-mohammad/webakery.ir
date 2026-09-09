@@ -180,8 +180,19 @@
 	margin: 18px 0 4px;
 }
 
-.wbgs-form .submit {
-	margin-bottom: 0;
+.wbgs-check {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+}
+
+.wbgs-admin-hint {
+	color: #b45309;
+	background: #fffbeb;
+	border-radius: 8px;
+	padding: 8px 12px;
+	font-size: 13px;
 }
 
 @media (max-width: 900px) {

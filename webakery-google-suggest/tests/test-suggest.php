@@ -54,6 +54,11 @@ $url = WBGS_Suggest::suggest_url( 'کفش ', 'fa', 'ir' );
 wbgs_assert( false !== strpos( $url, 'suggestqueries.google.com' ), 'suggest URL host' );
 wbgs_assert( false !== strpos( $url, 'client=firefox' ), 'suggest URL client' );
 
+require_once dirname( __DIR__ ) . '/includes/class-wbgs-frontend.php';
+wbgs_assert( 'sajest' === WBGS_Frontend::sanitize_slug( '' ), 'empty slug falls back' );
+wbgs_assert( 'sajest' === WBGS_Frontend::sanitize_slug( 'wp-admin' ), 'reserved slug blocked' );
+wbgs_assert( 'my-tool' === WBGS_Frontend::sanitize_slug( 'My Tool' ), 'slug sanitized' );
+
 if ( $failed ) {
 	echo "\n$failed failed\n";
 	exit( 1 );
