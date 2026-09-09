@@ -35,6 +35,6 @@ assert_true( strpos( $portal, "home_url( '/accountant-panel/' )" ) !== false, 'p
 
 assert_true( strpos( $boot, "manager-panel/?\$'" ) !== false || strpos( $boot, "^manager-panel" ) !== false, 'boot: legacy manager rewrite redirect' );
 assert_true( strpos( $boot, "wap_panel=accountant" ) !== false, 'boot: manager rewrite → accountant' );
-assert_true( defined( 'WAP_VERSION' ) || preg_match( "/define\(\s*'WAP_VERSION',\s*'1\.19\.0'\s*\)/", $boot ), 'version 1.19.0' );
+assert_true( defined( 'WAP_VERSION' ) || preg_match( "/define\(\s*'WAP_VERSION',\s*'1\.19\.1'\s*\)/", $boot ), 'version 1.19.1' );
 
 exit( $fail > 0 ? 1 : 0 );

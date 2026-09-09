@@ -6,7 +6,7 @@ $files = array(
   $root.'/assets/jalali-calendar.js' => array('setWholeMonth','jcal-months','کل این ماه'),
   $root.'/assets/app.js' => array('wapValidateDateForm','wapSubmitFilters','wapFillSameLastYear','wapFillPreviousMonth','wap_compare_from','data-wap-compare-previous-month'),
   $root.'/assets/style.css' => array('wap-month-bar','jcal-months'),
-  $root.'/hesabdar.php' => array("1.19.0"),
+  $root.'/hesabdar.php' => array("1.19.1"),
 );
 foreach ($files as $file=>$needles) {
   if (!is_readable($file)) { fwrite(STDERR,"FAIL missing $file\n"); exit(1);} 
@@ -35,4 +35,30 @@ if (!$prev2 || $prev2['from']!=='1404/12/01' || $prev2['to']!=='1404/12/29') {
   fwrite(STDERR,"FAIL previous_month_range year wrap\n"); var_export($prev2); exit(1);
 }
 echo "OK normalize+month_bounds+previous_month\n";
+
+// regression: PHP xor precedence must not treat both-filled as partial
+$cmp_from = '1405/05/01';
+$cmp_to   = '1405/05/31';
+$partial  = ( ( $cmp_from !== '' ) xor ( $cmp_to !== '' ) );
+if ( $partial !== false ) {
+  fwrite(STDERR, "FAIL xor partial both-filled\n");
+  exit(1);
+}
+$cmp_to = '';
+$partial = ( ( $cmp_from !== '' ) xor ( $cmp_to !== '' ) );
+if ( $partial !== true ) {
+  fwrite(STDERR, "FAIL xor partial one-filled\n");
+  exit(1);
+}
+// source must use parenthesized xor (assignment vs xor precedence)
+$portal = file_get_contents($root.'/includes/class-wap-portal.php');
+if (strpos($portal, '( ( $cmp_from !== \'\' ) xor ( $cmp_to !== \'\' ) )') === false
+    && strpos($portal, '(( $cmp_from !== \'\' ) xor ( $cmp_to !== \'\' ))') === false) {
+  // accept either spacing of the fixed form
+  if (!preg_match('/\$partial\s*=\s*\(\s*\(\s*\$cmp_from/', $portal)) {
+    fwrite(STDERR, "FAIL portal missing parenthesized xor for \$partial\n");
+    exit(1);
+  }
+}
+echo "OK xor partial precedence\n";
 echo "ALL DATE COMPARE UX CHECKS PASSED\n";

@@ -508,7 +508,7 @@ class WAP_Portal {
         $cmp_from = WAP_Jalali::normalize_digits( sanitize_text_field( wp_unslash( $_GET['compare_from'] ?? $_REQUEST['compare_from'] ?? '' ) ) );
         $cmp_to   = WAP_Jalali::normalize_digits( sanitize_text_field( wp_unslash( $_GET['compare_to'] ?? $_REQUEST['compare_to'] ?? '' ) ) );
         // اگر فقط یکی پر است ولی بازه اصلی کامل است، سعی نکن پیام گمراه‌کننده بده
-        $partial  = ( $cmp_from !== '' ) xor ( $cmp_to !== '' );
+        $partial  = ( ( $cmp_from !== '' ) xor ( $cmp_to !== '' ) );
         $ready    = ( $cmp_from !== '' && $cmp_to !== '' );
 
         if ( $partial ) {
