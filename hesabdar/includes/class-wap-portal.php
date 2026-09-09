@@ -568,10 +568,29 @@ class WAP_Portal {
 
         $currency = class_exists( 'WooCommerce' ) ? get_woocommerce_currency_symbol() : '';
 
+        $cmp_from = sanitize_text_field( wp_unslash( $_GET['compare_from'] ?? '' ) );
+        $cmp_to   = sanitize_text_field( wp_unslash( $_GET['compare_to'] ?? '' ) );
+        $groups2  = array();
+        $gn2      = null;
+        $aligned  = null;
+        if ( $cmp_from && $cmp_to ) {
+            $f2 = array_merge( $f, array( 'date_from' => $cmp_from, 'date_to' => $cmp_to ) );
+            $orders2 = WAP_Data::get_orders( $f2 );
+            $groups2 = WAP_Data::apply_filter( WAP_Data::build_rows( $orders2, $f['period'] ), $f );
+            $gn2     = WAP_Data::gross_vs_net( $orders2 );
+        }
+
         $base_params = array_filter( $f, function( $v ) { return $v !== null && $v !== ''; } );
+        if ( $cmp_from ) {
+            $base_params['compare_from'] = $cmp_from;
+        }
+        if ( $cmp_to ) {
+            $base_params['compare_to'] = $cmp_to;
+        }
         $csv_url = self::export_url( $base_params, 'csv' );
         $xml_url = self::export_url( $base_params, 'xml' );
         $pdf_url = self::export_url( $base_params, 'pdf' );
+        $date_locked = class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::is_date_locked();
         ?>
             <form method="get" action="<?php echo esc_url( self::panel_url() ); ?>" class="wap-filters">
                 <div class="wap-field">
@@ -594,11 +613,19 @@ class WAP_Portal {
                 </div>
                 <div class="wap-field wap-field-date">
                     <label>از تاریخ (شمسی)</label>
-                    <input type="text" id="wap_date_from" name="date_from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off" <?php echo ( class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::is_date_locked() ) ? 'readonly' : ''; ?>>
+                    <input type="text" id="wap_date_from" name="date_from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
                 </div>
                 <div class="wap-field wap-field-date">
                     <label>تا تاریخ (شمسی)</label>
-                    <input type="text" id="wap_date_to" name="date_to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="۱۴۰۳/۱۲/۲۹" autocomplete="off" <?php echo ( class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::is_date_locked() ) ? 'readonly' : ''; ?>>
+                    <input type="text" id="wap_date_to" name="date_to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="۱۴۰۳/۱۲/۲۹" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+                </div>
+                <div class="wap-field wap-field-date">
+                    <label>مقایسه از</label>
+                    <input type="text" name="compare_from" value="<?php echo esc_attr( $cmp_from ); ?>" placeholder="بازه قبلی از" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+                </div>
+                <div class="wap-field wap-field-date">
+                    <label>مقایسه تا</label>
+                    <input type="text" name="compare_to" value="<?php echo esc_attr( $cmp_to ); ?>" placeholder="بازه قبلی تا" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
                 </div>
                 <div class="wap-field">
                     <label>مبلغ فروش دوره (حداقل / حداکثر)</label>
@@ -635,10 +662,6 @@ class WAP_Portal {
             </div>
 
             <div id="wap_capture" class="wap-capture">
-            <?php
-            $cmp_from = sanitize_text_field( wp_unslash( $_GET['compare_from'] ?? '' ) );
-            $cmp_to   = sanitize_text_field( wp_unslash( $_GET['compare_to'] ?? '' ) );
-            ?>
             <div class="wap-cards" data-wap-capture-part="cards">
                 <div class="wap-card">
                     <span class="wap-card-icon">📦</span>
@@ -658,10 +681,7 @@ class WAP_Portal {
                     <span class="wap-card-value"><?php echo esc_html( number_format( $overall_count > 0 ? $overall_total / $overall_count : 0 ) . ' ' . $currency ); ?></span>
                 </div>
             </div>
-            <?php if ( $cmp_from && $cmp_to ) :
-                $f2 = array_merge( $f, array( 'date_from' => $cmp_from, 'date_to' => $cmp_to ) );
-                $gn2 = WAP_Data::gross_vs_net( WAP_Data::get_orders( $f2 ) );
-                ?>
+            <?php if ( $gn2 ) : ?>
             <div class="wap-cards wap-compare-cards" data-wap-capture-part="cards">
                 <div class="wap-card">
                     <span class="wap-card-label">مقایسه ناخالص (<?php echo esc_html( $cmp_from . ' تا ' . $cmp_to ); ?>)</span>
@@ -676,27 +696,55 @@ class WAP_Portal {
             </div>
             <?php endif; ?>
 
-            <?php if ( ! empty( $groups ) ) : $max_total = max( array_column( $groups, 'total' ) ); ?>
-            <div class="wap-chart-card" data-wap-capture-part="chart">
-                <h3 class="wap-section-title">📈 نمودار فروش بر اساس دوره</h3>
-                <div class="wap-chart">
-                    <?php foreach ( $groups as $g ) :
-                        $pct = $max_total > 0 ? round( $g['total'] / $max_total * 100 ) : 0; ?>
-                        <div class="wap-bar-col">
-                            <div class="wap-bar-track">
-                                <div class="wap-bar-fill" style="height:<?php echo (int) $pct; ?>%">
-                                    <span class="wap-bar-tip"><?php echo esc_html( number_format( $g['total'] ) ); ?></span>
-                                </div>
-                            </div>
-                            <span class="wap-bar-label"><?php echo esc_html( $g['label'] ); ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-            <?php endif; ?>
+            <?php
+            if ( ! empty( $groups ) && class_exists( 'WAP_Chart' ) ) :
+                $series = array(
+                    'labels' => array_column( array_values( $groups ), 'label' ),
+                    'a'      => array_map( 'floatval', array_column( array_values( $groups ), 'total' ) ),
+                );
+                $dual = false;
+                $aligned = null;
+                if ( ! empty( $groups2 ) ) {
+                    $aligned = WAP_Chart::align_period_series( $groups, $groups2 );
+                    $series  = array(
+                        'labels' => $aligned['labels'],
+                        'a'      => $aligned['a'],
+                        'b'      => $aligned['b'],
+                    );
+                    $dual = true;
+                }
+                WAP_Chart::render_gsc_line(
+                    $series,
+                    array(
+                        'title'    => $dual ? 'مقایسه فروش هر دوره' : 'روند فروش بر اساس دوره',
+                        'legend_a' => $f['date_from'] . ' تا ' . $f['date_to'],
+                        'legend_b' => $dual ? ( $cmp_from . ' تا ' . $cmp_to ) : '',
+                        'dual'     => $dual,
+                        'height'   => 300,
+                    )
+                );
+            endif;
+            ?>
 
             <div class="wap-table-wrap" data-wap-capture-part="table">
                 <table class="wap-table">
+                    <?php if ( ! empty( $aligned ) && ! empty( $aligned['rows'] ) ) : ?>
+                    <thead><tr><th>دوره (فعلی / مقایسه)</th><th>فروش فعلی</th><th>فروش مقایسه</th><th>Δ مبلغ</th><th>Δ٪</th><th>تعداد فعلی</th><th>تعداد مقایسه</th></tr></thead>
+                    <tbody>
+                    <?php foreach ( $aligned['rows'] as $row ) :
+                        $up = $row['delta_total'] >= 0; ?>
+                        <tr>
+                            <td><?php echo esc_html( $row['label'] ); ?></td>
+                            <td><strong><?php echo esc_html( number_format( $row['total_a'] ) ); ?></strong></td>
+                            <td><?php echo esc_html( number_format( $row['total_b'] ) ); ?></td>
+                            <td class="<?php echo $up ? 'wap-delta-up' : 'wap-delta-down'; ?>"><?php echo esc_html( ( $up ? '+' : '' ) . number_format( $row['delta_total'] ) ); ?></td>
+                            <td class="<?php echo $up ? 'wap-delta-up' : 'wap-delta-down'; ?>"><?php echo esc_html( ( $up ? '+' : '' ) . number_format( $row['delta_pct'], 1 ) . '%' ); ?></td>
+                            <td><?php echo esc_html( number_format( $row['count_a'] ) ); ?></td>
+                            <td><?php echo esc_html( number_format( $row['count_b'] ) ); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                    <?php else : ?>
                     <thead><tr><th>دوره</th><th>تعداد فروش</th><th>مبلغ فروش</th><th>میانگین هر سفارش</th></tr></thead>
                     <tbody>
                     <?php if ( empty( $groups ) ) : ?>
@@ -711,6 +759,7 @@ class WAP_Portal {
                         </tr>
                     <?php endforeach; endif; ?>
                     </tbody>
+                    <?php endif; ?>
                 </table>
             </div>
             </div><!-- #wap_capture -->
@@ -978,7 +1027,15 @@ class WAP_Portal {
         $orders     = WAP_Data::get_orders( $f );
         $presets    = WAP_Data::quick_presets();
         $currency   = get_woocommerce_currency_symbol();
+        $cmp_from   = sanitize_text_field( wp_unslash( $_GET['compare_from'] ?? '' ) );
+        $cmp_to     = sanitize_text_field( wp_unslash( $_GET['compare_to'] ?? '' ) );
         $base_params = array_filter( $f, function( $v ) { return $v !== null && $v !== ''; } );
+        if ( $cmp_from ) {
+            $base_params['compare_from'] = $cmp_from;
+        }
+        if ( $cmp_to ) {
+            $base_params['compare_to'] = $cmp_to;
+        }
         $export_params = array_merge( $base_params, array( 'wap_view' => 'products' ) );
         if ( $product_id ) {
             $export_params['product_id'] = $product_id;
@@ -987,17 +1044,26 @@ class WAP_Portal {
             $export_params,
             $product_id ? 'product_orders_csv' : 'products_csv'
         );
+        $date_locked = class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::is_date_locked();
         ?>
         <form method="get" action="<?php echo esc_url( self::panel_url() ); ?>" class="wap-filters">
             <input type="hidden" name="wap_view" value="products">
             <?php if ( $product_id ) : ?><input type="hidden" name="product_id" value="<?php echo esc_attr( $product_id ); ?>"><?php endif; ?>
             <div class="wap-field wap-field-date">
                 <label>از تاریخ (شمسی)</label>
-                <input type="text" id="wap_date_from" name="date_from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off">
+                <input type="text" id="wap_date_from" name="date_from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="۱۴۰۳/۰۱/۰۱" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
             </div>
             <div class="wap-field wap-field-date">
                 <label>تا تاریخ (شمسی)</label>
-                <input type="text" id="wap_date_to" name="date_to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="۱۴۰۳/۱۲/۲۹" autocomplete="off">
+                <input type="text" id="wap_date_to" name="date_to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="۱۴۰۳/۱۲/۲۹" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+            </div>
+            <div class="wap-field wap-field-date">
+                <label>مقایسه از</label>
+                <input type="text" name="compare_from" value="<?php echo esc_attr( $cmp_from ); ?>" placeholder="بازه قبلی از" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
+            </div>
+            <div class="wap-field wap-field-date">
+                <label>مقایسه تا</label>
+                <input type="text" name="compare_to" value="<?php echo esc_attr( $cmp_to ); ?>" placeholder="بازه قبلی تا" autocomplete="off" <?php echo $date_locked ? 'readonly' : ''; ?>>
             </div>
             <div class="wap-field wap-field-actions">
                 <button type="submit" class="wap-btn wap-btn-primary">اعمال فیلتر</button>
@@ -1060,41 +1126,94 @@ class WAP_Portal {
             $products      = WAP_Data::get_product_sales( $orders );
             $total_qty     = array_sum( array_column( $products, 'qty' ) );
             $total_revenue = array_sum( array_column( $products, 'revenue' ) );
+            $products2     = array();
+            $aligned_prod  = null;
+            if ( $cmp_from && $cmp_to ) {
+                $f2 = array_merge( $f, array( 'date_from' => $cmp_from, 'date_to' => $cmp_to ) );
+                $products2 = WAP_Data::get_product_sales( WAP_Data::get_orders( $f2 ) );
+                if ( class_exists( 'WAP_Chart' ) ) {
+                    $aligned_prod = WAP_Chart::align_product_series( $products, $products2, 15 );
+                }
+            }
             ?>
             <?php self::render_export_bar( $products_csv_url, 'products' ); ?>
             <div id="wap_capture" class="wap-capture">
-            <div class="wap-cards">
+            <div class="wap-cards" data-wap-capture-part="cards">
                 <div class="wap-card"><span class="wap-card-icon">🛍️</span><span class="wap-card-label">تعداد محصولات فروخته‌شده</span><span class="wap-card-value"><?php echo esc_html( number_format( count( $products ) ) ); ?></span></div>
                 <div class="wap-card wap-card-accent"><span class="wap-card-icon">💰</span><span class="wap-card-label">مجموع فروش</span><span class="wap-card-value"><?php echo esc_html( number_format( $total_revenue ) . ' ' . $currency ); ?></span></div>
                 <div class="wap-card wap-card-net"><span class="wap-card-icon">🔢</span><span class="wap-card-label">تعداد کل اقلام</span><span class="wap-card-value"><?php echo esc_html( number_format( $total_qty ) ); ?></span></div>
             </div>
 
-            <?php if ( ! empty( $products ) ) :
-                $top = array_slice( $products, 0, 12 );
-                $max_rev = max( array_column( $top, 'revenue' ) );
-                ?>
-                <div class="wap-chart-card">
-                    <h3 class="wap-section-title">📊 نمودار برترین محصولات (بر اساس درآمد)</h3>
-                    <div class="wap-chart">
-                        <?php foreach ( $top as $p ) :
-                            $pct = $max_rev > 0 ? round( $p['revenue'] / $max_rev * 100 ) : 0;
-                            $url = add_query_arg( array_merge( $base_params, array( 'wap_view' => 'products', 'product_id' => $p['pid'] ) ), self::panel_url() );
-                            ?>
-                            <div class="wap-bar-col">
-                                <div class="wap-bar-track">
-                                    <a href="<?php echo esc_url( $url ); ?>" class="wap-bar-fill" style="height:<?php echo (int) $pct; ?>%">
-                                        <span class="wap-bar-tip"><?php echo esc_html( number_format( $p['revenue'] ) ); ?></span>
-                                    </a>
-                                </div>
-                                <span class="wap-bar-label" title="<?php echo esc_attr( $p['name'] ); ?>"><?php echo esc_html( function_exists( 'mb_strimwidth' ) ? mb_strimwidth( $p['name'], 0, 12, '…' ) : ( strlen( $p['name'] ) > 12 ? substr( $p['name'], 0, 10 ) . '…' : $p['name'] ) ); ?></span>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
+            <?php
+            if ( class_exists( 'WAP_Chart' ) && ! empty( $products ) ) {
+                if ( $aligned_prod ) {
+                    WAP_Chart::render_gsc_product_compare(
+                        $aligned_prod,
+                        array(
+                            'title'    => 'مقایسه فروش محصولات',
+                            'legend_a' => $f['date_from'] . ' تا ' . $f['date_to'],
+                            'legend_b' => $cmp_from . ' تا ' . $cmp_to,
+                        )
+                    );
+                    // روند درآمد محصولات برتر (فعلی در برابر مقایسه) به‌صورت خطی GSC
+                    WAP_Chart::render_gsc_line(
+                        array(
+                            'labels' => array_map( function( $r ) {
+                                return function_exists( 'mb_strimwidth' ) ? mb_strimwidth( $r['name'], 0, 16, '…' ) : substr( $r['name'], 0, 14 );
+                            }, $aligned_prod['rows'] ),
+                            'a' => $aligned_prod['a'],
+                            'b' => $aligned_prod['b'],
+                        ),
+                        array(
+                            'title'    => 'روند مقایسه‌ای درآمد محصولات',
+                            'legend_a' => 'بازه فعلی',
+                            'legend_b' => 'بازه مقایسه',
+                            'dual'     => true,
+                            'height'   => 280,
+                        )
+                    );
+                } else {
+                    $top = array_slice( $products, 0, 12 );
+                    WAP_Chart::render_gsc_line(
+                        array(
+                            'labels' => array_map( function( $p ) {
+                                return function_exists( 'mb_strimwidth' ) ? mb_strimwidth( $p['name'], 0, 16, '…' ) : substr( $p['name'], 0, 14 );
+                            }, $top ),
+                            'a' => array_map( 'floatval', array_column( $top, 'revenue' ) ),
+                        ),
+                        array(
+                            'title'    => 'برترین محصولات بر اساس درآمد',
+                            'legend_a' => $f['date_from'] . ' تا ' . $f['date_to'],
+                            'dual'     => false,
+                            'height'   => 280,
+                        )
+                    );
+                }
+            }
+            ?>
 
-            <div class="wap-table-wrap">
+            <div class="wap-table-wrap" data-wap-capture-part="table">
                 <table class="wap-table">
+                    <?php if ( $aligned_prod ) : ?>
+                    <thead><tr><th>#</th><th>نام محصول</th><th>فروش فعلی</th><th>فروش مقایسه</th><th>Δ مبلغ</th><th>Δ٪</th><th>تعداد فعلی</th><th>تعداد مقایسه</th></tr></thead>
+                    <tbody>
+                    <?php $i = 1; foreach ( $aligned_prod['rows'] as $r ) :
+                        $url = add_query_arg( array_merge( $base_params, array( 'wap_view' => 'products', 'product_id' => $r['pid'] ) ), self::panel_url() );
+                        $up = $r['delta'] >= 0;
+                        ?>
+                        <tr>
+                            <td><?php echo $i++; ?></td>
+                            <td><a href="<?php echo esc_url( $url ); ?>"><strong><?php echo esc_html( $r['name'] ); ?></strong></a></td>
+                            <td><strong><?php echo esc_html( number_format( $r['revenue_a'] ) ); ?></strong></td>
+                            <td><?php echo esc_html( number_format( $r['revenue_b'] ) ); ?></td>
+                            <td class="<?php echo $up ? 'wap-delta-up' : 'wap-delta-down'; ?>"><?php echo esc_html( ( $up ? '+' : '' ) . number_format( $r['delta'] ) ); ?></td>
+                            <td class="<?php echo $up ? 'wap-delta-up' : 'wap-delta-down'; ?>"><?php echo esc_html( ( $up ? '+' : '' ) . number_format( $r['delta_pct'], 1 ) . '%' ); ?></td>
+                            <td><?php echo esc_html( number_format( $r['qty_a'] ) ); ?></td>
+                            <td><?php echo esc_html( number_format( $r['qty_b'] ) ); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                    <?php else : ?>
                     <thead><tr><th>#</th><th>نام محصول</th><th>SKU</th><th>تعداد فروخته‌شده</th><th>تعداد سفارشات</th><th>درآمد کل</th></tr></thead>
                     <tbody>
                     <?php if ( empty( $products ) ) : ?>
@@ -1111,6 +1230,7 @@ class WAP_Portal {
                         </tr>
                     <?php endforeach; endif; ?>
                     </tbody>
+                    <?php endif; ?>
                 </table>
             </div>
             </div><!-- #wap_capture -->
@@ -1363,24 +1483,28 @@ class WAP_Portal {
             </section>
         </div>
 
+        <?php if ( class_exists( 'WAP_Chart' ) && ! empty( $data['top_products'] ) ) :
+            $top10 = array_slice( $data['top_products'], 0, 10 );
+            WAP_Chart::render_gsc_line(
+                array(
+                    'labels' => array_map( function( $p ) {
+                        return function_exists( 'mb_strimwidth' ) ? mb_strimwidth( $p['name'], 0, 16, '…' ) : substr( $p['name'], 0, 14 );
+                    }, $top10 ),
+                    'a' => array_map( 'floatval', array_column( $top10, 'revenue' ) ),
+                ),
+                array(
+                    'title'    => 'پرفروش‌ترین محصولات',
+                    'legend_a' => 'درآمد',
+                    'dual'     => false,
+                    'height'   => 280,
+                )
+            );
+        else : ?>
         <section class="wap-chart-card">
             <h3 class="wap-section-title">پرفروش‌ترین محصولات</h3>
-            <div class="wap-chart">
-                <?php if ( empty( $data['top_products'] ) ) : ?>
-                    <div class="wap-empty">محصولی نیست.</div>
-                <?php else : foreach ( array_slice( $data['top_products'], 0, 10 ) as $p ) :
-                    $pct = (int) round( $p['revenue'] / $max_prod * 100 ); ?>
-                    <div class="wap-bar-col">
-                        <div class="wap-bar-track">
-                            <div class="wap-bar-fill" style="height:<?php echo $pct; ?>%">
-                                <span class="wap-bar-tip"><?php echo esc_html( number_format( $p['revenue'] ) ); ?></span>
-                            </div>
-                        </div>
-                        <span class="wap-bar-label" title="<?php echo esc_attr( $p['name'] ); ?>"><?php echo esc_html( function_exists( 'mb_strimwidth' ) ? mb_strimwidth( $p['name'], 0, 14, '…' ) : substr( $p['name'], 0, 12 ) ); ?></span>
-                    </div>
-                <?php endforeach; endif; ?>
-            </div>
+            <div class="wap-empty">محصولی نیست.</div>
         </section>
+        <?php endif; ?>
 
         <div class="wap-analytics-grid">
             <section class="wap-chart-card">
@@ -1389,24 +1513,31 @@ class WAP_Portal {
                     <?php foreach ( $data['peak_hours'] as $h ) :
                         $intensity = $h['count'] / $max_hour;
                         $alpha = 0.12 + $intensity * 0.88; ?>
-                        <div class="wap-heat-cell" style="background:rgba(5,150,105,<?php echo esc_attr( number_format( $alpha, 2, '.', '' ) ); ?>)" title="<?php echo esc_attr( $h['hour'] . ':00 — ' . $h['count'] . ' سفارش' ); ?>">
+                        <div class="wap-heat-cell" style="background:rgba(26,115,232,<?php echo esc_attr( number_format( $alpha, 2, '.', '' ) ); ?>);color:#174ea6" title="<?php echo esc_attr( $h['hour'] . ':00 — ' . $h['count'] . ' سفارش' ); ?>">
                             <span><?php echo esc_html( sprintf( '%02d', $h['hour'] ) ); ?></span>
                             <strong><?php echo esc_html( (string) $h['count'] ); ?></strong>
                         </div>
                     <?php endforeach; ?>
                 </div>
             </section>
-            <section class="wap-chart-card">
-                <h3 class="wap-section-title">پیک خرید — روز هفته</h3>
-                <?php foreach ( $data['peak_days'] as $d ) :
-                    $pct = (int) round( $d['count'] / $max_day * 100 ); ?>
-                    <div class="wap-hbar">
-                        <div class="wap-hbar-label"><?php echo esc_html( $d['label'] ); ?></div>
-                        <div class="wap-hbar-track"><div class="wap-hbar-fill wap-hbar-day" style="width:<?php echo $pct; ?>%"></div></div>
-                        <div class="wap-hbar-val"><?php echo esc_html( number_format( $d['count'] ) ); ?> سفارش — <?php echo esc_html( number_format( $d['total'] ) ); ?></div>
-                    </div>
-                <?php endforeach; ?>
-            </section>
+            <div>
+                <?php
+                if ( class_exists( 'WAP_Chart' ) && ! empty( $data['peak_days'] ) ) {
+                    WAP_Chart::render_gsc_line(
+                        array(
+                            'labels' => array_column( $data['peak_days'], 'label' ),
+                            'a'      => array_map( 'floatval', array_column( $data['peak_days'], 'total' ) ),
+                        ),
+                        array(
+                            'title'    => 'فروش بر اساس روز هفته',
+                            'legend_a' => 'مبلغ',
+                            'dual'     => false,
+                            'height'   => 220,
+                        )
+                    );
+                }
+                ?>
+            </div>
         </div>
 
         <section class="wap-chart-card">

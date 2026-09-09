@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.12.0',
+        'version'      => '1.13.0',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۱۲.۰: خروجی تصویری پیشرفته — واترمارک بازه، کپی کلیپ‌بورد، محدوده/کیفیت/چندصفحه، یادداشت، مقایسه دو بازه، آرشیو رسانه، ارسال روزانه تلگرام/ایمیل، قفل بازه و محدودیت نقش حسابدار.',
+        'changelog'    => 'نسخه ۱.۱۳.۰: مقایسه فروش هر دوره و محصول + نمودار خطی/ناحیه‌ای به سبک Google Search Console (آبی/نارنجی، جدول Δ٪).',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hesabdar
  * Description: مدیریت کامل مشتریان و فروش ووکامرس (سفارش‌ها، ایجاد/ویرایش سفارش، محصولات، گزارش مالی، فاکتور) از داخل پیشخوان + پرتال مستقل و مینیمال ورود حسابدار بدون دسترسی به پیشخوان.
- * Version:     1.12.0
+ * Version:     1.13.0
  * Plugin URI:  https://webakery.ir
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,7 +22,7 @@ if ( defined( 'HESABDAR_LOADED' ) ) {
 }
 define( 'HESABDAR_LOADED', true );
 
-define( 'WAP_VERSION', '1.12.0' );
+define( 'WAP_VERSION', '1.13.0' );
 define( 'WAP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WAP_URL', plugin_dir_url( __FILE__ ) );
 
@@ -90,6 +90,7 @@ function hesabdar_bootstrap_core() {
 		'class-wap-traffic.php',
 		'class-wap-analytics.php',
 		'class-wap-report-image.php',
+		'class-wap-chart.php',
 	);
 	foreach ( $required as $file ) {
 		if ( ! hesabdar_require_include( $file ) ) {
