@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>سجست‌یاب گوگل — پیش‌نمایش</title>
+<link rel="stylesheet" href="assets/css/admin.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Vazirmatn, Tahoma, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 28px 16px 48px;
+  }
+  .stage { max-width: 1100px; margin: 0 auto; }
+  .wp-chrome {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 8px 16px;
+    margin-bottom: 16px;
+    color: #64748b;
+    font-size: 13px;
+  }
+  .nav-tab-wrapper { border-bottom: 1px solid #c3c4c7; }
+  .nav-tab {
+    display: inline-block;
+    padding: 8px 14px;
+    margin-left: 4px;
+    text-decoration: none;
+    color: #1d2327;
+    background: #dcdcde;
+    border: 1px solid #c3c4c7;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+  }
+  .nav-tab-active { background: #f1f5f9; font-weight: 700; }
+  .button {
+    display: inline-block;
+    border: 1px solid #8c8f94;
+    background: #f6f7f7;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font: inherit;
+    cursor: default;
+  }
+  .button-primary {
+    background: #0f766e;
+    border-color: #0f766e;
+    color: #fff;
+  }
+  .note {
+    margin-top: 16px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="wp-chrome">پیش‌نمایش ظاهر پیشخوان — استخراج زنده فقط داخل وردپرس کار می‌کند.</div>
+    <div class="wrap wbgs-wrap" dir="rtl">
+      <h1 class="wbgs-h1">سجست‌یاب گوگل <span class="wbgs-ver">v1.0.0</span></h1>
+      <p class="wbgs-sub">پیشنهادهای واقعی Autocomplete گوگل — سازنده: webakery.ir</p>
+      <nav class="nav-tab-wrapper wbgs-tabs">
+        <a class="nav-tab nav-tab-active" href="#">استخراج</a>
+        <a class="nav-tab" href="#">تنظیمات</a>
+        <a class="nav-tab" href="#">لایسنس</a>
+      </nav>
+      <div class="wbgs-grid">
+        <section class="wbgs-card">
+          <h2>عبارت پایه</h2>
+          <p class="wbgs-hint">مثل «کفش». ابزار همان عبارت را با فاصله و حروف الفبا از گوگل می‌پرسد.</p>
+          <label class="wbgs-label" for="demo-seed">عبارت</label>
+          <input id="demo-seed" class="wbgs-input" type="text" value="کفش" readonly />
+          <fieldset class="wbgs-modes">
+            <legend>روش‌ها</legend>
+            <label><input type="checkbox" checked disabled /> فاصله قبل و بعد</label>
+            <label><input type="checkbox" checked disabled /> حرف‌گردانی فارسی (ا تا ی)</label>
+            <label><input type="checkbox" disabled /> حروف انگلیسی a–z</label>
+            <label><input type="checkbox" disabled /> ارقام ۰–۹</label>
+            <label><input type="checkbox" disabled /> پیشوندهای رایج (خرید، قیمت، …)</label>
+          </fieldset>
+          <div class="wbgs-actions">
+            <button type="button" class="button button-primary">استخراج از گوگل</button>
+          </div>
+          <div class="wbgs-progress">
+            <div class="wbgs-progress-bar" style="width:70%"></div>
+          </div>
+          <p class="wbgs-progress-text">۹۱ از ۱۳۰ کوئری</p>
+          <p class="wbgs-status is-ok">نمونهٔ ظاهری — داده زنده نیست</p>
+        </section>
+        <section class="wbgs-card">
+          <div class="wbgs-results-head">
+            <h2>نتایج</h2>
+            <span class="wbgs-count">۶ عبارت</span>
+          </div>
+          <div class="wbgs-actions">
+            <button type="button" class="button">کپی همه</button>
+            <button type="button" class="button">دانلود CSV</button>
+            <button type="button" class="button">دانلود TXT</button>
+          </div>
+          <ol class="wbgs-list">
+            <li>کفش مردانه</li>
+            <li>کفش زنانه</li>
+            <li>کفش ورزشی</li>
+            <li>خرید کفش</li>
+            <li>کفش بچگانه</li>
+            <li>کفش مجلسی</li>
+          </ol>
+        </section>
+      </div>
+    </div>
+    <p class="note">برای استخراج واقعی، افزونه را در وردپرس نصب کنید: پیشخوان ← سجست‌یاب گوگل.</p>
+  </div>
+</body>
+</html>

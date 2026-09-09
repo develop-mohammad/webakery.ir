@@ -1,0 +1,191 @@
+/* سجست‌یاب گوگل — webakery.ir | استایل پیشخوان (RTL) */
+
+.wbgs-wrap {
+	direction: rtl;
+	max-width: 1100px;
+}
+
+.wbgs-wrap [hidden] {
+	display: none !important;
+}
+
+.wbgs-h1 {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 4px;
+}
+
+.wbgs-ver {
+	font-size: 12px;
+	font-weight: 600;
+	color: #64748b;
+	background: #f1f5f9;
+	border-radius: 99px;
+	padding: 2px 10px;
+}
+
+.wbgs-sub {
+	color: #64748b;
+	margin: 0 0 14px;
+	font-size: 13px;
+}
+
+.wbgs-tabs {
+	margin-bottom: 16px;
+}
+
+.wbgs-grid {
+	display: grid;
+	grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+	gap: 16px;
+	align-items: start;
+}
+
+.wbgs-card {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 18px 20px;
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.wbgs-card h2 {
+	margin: 0 0 8px;
+	font-size: 15px;
+}
+
+.wbgs-hint {
+	color: #64748b;
+	font-size: 12.5px;
+	line-height: 1.8;
+	margin: 0 0 14px;
+}
+
+.wbgs-label {
+	display: block;
+	font-size: 12.5px;
+	font-weight: 700;
+	color: #334155;
+	margin-bottom: 5px;
+}
+
+.wbgs-input {
+	width: 100%;
+	max-width: 100%;
+	padding: 8px 10px;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	font-size: 14px;
+}
+
+.wbgs-input-sm {
+	max-width: 220px;
+}
+
+.wbgs-modes {
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	padding: 10px 12px;
+	margin: 14px 0;
+}
+
+.wbgs-modes legend {
+	font-size: 12.5px;
+	font-weight: 700;
+	padding: 0 6px;
+}
+
+.wbgs-modes label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 7px 0;
+	font-size: 13px;
+	color: #334155;
+}
+
+.wbgs-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 12px 0 4px;
+}
+
+.wbgs-progress {
+	margin-top: 14px;
+	background: #f1f5f9;
+	border-radius: 99px;
+	overflow: hidden;
+	height: 10px;
+	position: relative;
+}
+
+.wbgs-progress-bar {
+	height: 100%;
+	width: 0;
+	background: #0f766e;
+	transition: width 0.2s ease;
+}
+
+.wbgs-progress-text,
+.wbgs-status {
+	font-size: 12.5px;
+	color: #475569;
+	margin: 8px 0 0;
+}
+
+.wbgs-status.is-error {
+	color: #b91c1c;
+}
+
+.wbgs-status.is-ok {
+	color: #15803d;
+}
+
+.wbgs-results-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.wbgs-count {
+	font-size: 12px;
+	font-weight: 700;
+	color: #0f766e;
+	background: #ecfdf5;
+	border-radius: 99px;
+	padding: 3px 10px;
+}
+
+.wbgs-list {
+	margin: 12px 0 0;
+	padding: 0 20px 0 0;
+	max-height: 560px;
+	overflow: auto;
+	line-height: 1.9;
+	font-size: 13.5px;
+}
+
+.wbgs-list li {
+	padding: 2px 0;
+	border-bottom: 1px solid #f1f5f9;
+}
+
+.wbgs-empty {
+	color: #94a3b8;
+	font-size: 13px;
+	margin: 18px 0 4px;
+}
+
+.wbgs-form .submit {
+	margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+	.wbgs-grid {
+		grid-template-columns: 1fr;
+	}
+}
