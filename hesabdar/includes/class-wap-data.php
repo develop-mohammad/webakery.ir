@@ -10,8 +10,8 @@ class WAP_Data {
         if ( $src === null ) {
             $src = $_GET;
         }
-        $date_from = sanitize_text_field( $src['date_from'] ?? '' );
-        $date_to   = sanitize_text_field( $src['date_to'] ?? '' );
+        $date_from = WAP_Jalali::normalize_digits( sanitize_text_field( $src['date_from'] ?? '' ) );
+        $date_to   = WAP_Jalali::normalize_digits( sanitize_text_field( $src['date_to'] ?? '' ) );
 
         // بدون بازه → پیش‌فرض امسال (جلوگیری از واکشی همه سفارش‌ها و OOM)
         if ( $date_from === '' && $date_to === '' ) {

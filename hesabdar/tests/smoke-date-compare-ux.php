@@ -2,11 +2,11 @@
 $root = dirname(__DIR__);
 $files = array(
   $root.'/includes/class-wap-jalali.php' => array('normalize_range','recent_months','month_bounds','shift_year'),
-  $root.'/includes/class-wap-portal.php' => array('prepare_date_ranges','render_month_pickers','wap_compare_from','ماه مشابه پارسال'),
+  $root.'/includes/class-wap-portal.php' => array('prepare_date_ranges','render_month_pickers','wap_compare_from','ماه مشابه پارسال','مقایسه فعال است'),
   $root.'/assets/jalali-calendar.js' => array('setWholeMonth','jcal-months','کل این ماه'),
-  $root.'/assets/app.js' => array('wapValidateDateForm','data-wap-compare-same-last-year','wap_compare_from'),
+  $root.'/assets/app.js' => array('wapValidateDateForm','wapSubmitFilters','wapFillSameLastYear','wap_compare_from'),
   $root.'/assets/style.css' => array('wap-month-bar','jcal-months'),
-  $root.'/hesabdar.php' => array("1.15.0"),
+  $root.'/hesabdar.php' => array("1.16.2"),
 );
 foreach ($files as $file=>$needles) {
   if (!is_readable($file)) { fwrite(STDERR,"FAIL missing $file\n"); exit(1);} 

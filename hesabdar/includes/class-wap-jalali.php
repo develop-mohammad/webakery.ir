@@ -67,15 +67,22 @@ class WAP_Jalali {
         return array( 'y' => $jy, 'm' => $jm, 'd' => $jd );
     }
 
-    // تبدیل رشته تاریخ (شمسی ۱۴۰۳/۰۱/۰۱ یا میلادی) به timestamp
-    public static function str_to_timestamp( $date_str, $end_of_day = false ) {
-        $date_str = trim( $date_str );
-        if ( empty( $date_str ) ) return 0;
-        $normalized = strtr( $date_str, array(
+    /** ارقام فارسی/عربی → لاتین و trim. */
+    public static function normalize_digits( $str ): string {
+        $str = trim( (string) $str );
+        return strtr( $str, array(
             '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4',
             '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9',
+            '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4',
+            '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9',
         ) );
-        if ( preg_match( '/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/', $normalized, $m ) && (int) $m[1] > 1200 ) {
+    }
+
+    // تبدیل رشته تاریخ (شمسی ۱۴۰۳/۰۱/۰۱ یا میلادی) به timestamp
+    public static function str_to_timestamp( $date_str, $end_of_day = false ) {
+        $date_str = self::normalize_digits( $date_str );
+        if ( $date_str === '' ) return 0;
+        if ( preg_match( '/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/', $date_str, $m ) && (int) $m[1] > 1200 ) {
             $greg = self::to_gregorian( $m[1], $m[2], $m[3] );
             $h = $end_of_day ? 23 : 0; $i = $end_of_day ? 59 : 0; $s = $end_of_day ? 59 : 0;
             return mktime( $h, $i, $s, $greg[1], $greg[2], $greg[0] );
@@ -121,14 +128,10 @@ class WAP_Jalali {
 
     /** پارس تاریخ شمسی YYYY/MM/DD — null اگر نامعتبر. */
     public static function parse( $date_str ): ?array {
-        $date_str = trim( (string) $date_str );
-        if ( $date_str === '' ) {
+        $normalized = self::normalize_digits( $date_str );
+        if ( $normalized === '' ) {
             return null;
         }
-        $normalized = strtr( $date_str, array(
-            '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4',
-            '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9',
-        ) );
         if ( ! preg_match( '/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/', $normalized, $m ) ) {
             return null;
         }

@@ -16,7 +16,7 @@ $checks = array(
 	$root . '/includes/class-wap-analytics.php' => array( 'peak_calendar', 'heat_tone', 'weekdays' ),
 	$root . '/includes/class-wap-portal.php' => array( 'wap-peak-cal', 'wap-peak-dayview', 'wap-peak-weekcal', 'پیک خرید — تقویم شمسی' ),
 	$root . '/assets/style.css' => array( 'wap-peak-cal__grid', 'wap-peak-dayview__fill', 'wap-peak-weekcal__cell', 'is-l5' ),
-	$root . '/hesabdar.php' => array( '1.16.1' ),
+	$root . '/hesabdar.php' => array( '1.16.2' ),
 );
 foreach ( $checks as $file => $needles ) {
 	$c = file_get_contents( $file );

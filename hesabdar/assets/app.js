@@ -64,7 +64,35 @@
     }
     wapAttachCalendars();
 
-    // چیپ‌های بازه سریع (بازه اصلی)
+    function wapSubmitFilters() {
+        var form = document.querySelector('form.wap-filters');
+        if (!form) return;
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            form.submit();
+        }
+    }
+
+    function wapFillSameLastYear() {
+        var f = wapDateFields();
+        if (!f.from || !f.to || !f.cmpFrom || !f.cmpTo) return false;
+        var pf = wapParseJalali(f.from.value);
+        var pt = wapParseJalali(f.to.value);
+        if (!pf || !pt) return false;
+        var lenFn = (window.WAP_JalaliCal && WAP_JalaliCal.monthLength)
+            ? WAP_JalaliCal.monthLength
+            : function (y, m) { return m <= 6 ? 31 : (m <= 11 ? 30 : 29); };
+        var y1 = pf.y - 1;
+        var y2 = pt.y - 1;
+        var d1 = Math.min(pf.d, lenFn(y1, pf.m));
+        var d2 = Math.min(pt.d, lenFn(y2, pt.m));
+        f.cmpFrom.value = wapFmtJalali(y1, pf.m, d1);
+        f.cmpTo.value = wapFmtJalali(y2, pt.m, d2);
+        return true;
+    }
+
+    // چیپ‌های بازه سریع (بازه اصلی) — بلافاصله اعمال + مقایسه پارسال
     document.querySelectorAll('#wap_presets .wap-chip').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var from = document.getElementById('wap_date_from');
@@ -75,10 +103,12 @@
                 c.classList.remove('is-active');
             });
             btn.classList.add('is-active');
+            wapFillSameLastYear();
+            wapSubmitFilters();
         });
     });
 
-    // چیپ‌های انتخاب ماه (اصلی / مقایسه)
+    // چیپ‌های انتخاب ماه (اصلی / مقایسه) — بلافاصله اعمال
     document.querySelectorAll('[data-wap-month-target]').forEach(function (wrap) {
         var target = wrap.getAttribute('data-wap-month-target');
         wrap.querySelectorAll('.wap-chip-month').forEach(function (btn) {
@@ -93,31 +123,22 @@
                     c.classList.remove('is-active');
                 });
                 btn.classList.add('is-active');
+                if (target === 'primary') {
+                    wapFillSameLastYear();
+                }
+                wapSubmitFilters();
             });
         });
     });
 
-    // یک‌کلیک: ماه مشابه پارسال بر اساس بازه اصلی
+    // یک‌کلیک: ماه مشابه پارسال + اعمال فیلتر
     document.querySelectorAll('[data-wap-compare-same-last-year]').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            var f = wapDateFields();
-            if (!f.from || !f.to || !f.cmpFrom || !f.cmpTo) return;
-            var pf = wapParseJalali(f.from.value);
-            var pt = wapParseJalali(f.to.value);
-            if (!pf || !pt) {
+            if (!wapFillSameLastYear()) {
                 wapToast('ابتدا بازه اصلی (از/تا) را انتخاب کنید، بعد «ماه مشابه پارسال» را بزنید.');
                 return;
             }
-            var lenFn = (window.WAP_JalaliCal && WAP_JalaliCal.monthLength)
-                ? WAP_JalaliCal.monthLength
-                : function (y, m) { return m <= 6 ? 31 : (m <= 11 ? 30 : 29); };
-            var y1 = pf.y - 1;
-            var y2 = pt.y - 1;
-            var d1 = Math.min(pf.d, lenFn(y1, pf.m));
-            var d2 = Math.min(pt.d, lenFn(y2, pt.m));
-            f.cmpFrom.value = wapFmtJalali(y1, pf.m, d1);
-            f.cmpTo.value = wapFmtJalali(y2, pt.m, d2);
-            wapToast('بازه مقایسه روی ماه مشابه پارسال تنظیم شد. «اعمال فیلتر» را بزنید.');
+            wapSubmitFilters();
         });
     });
 
@@ -162,7 +183,16 @@
 
     document.querySelectorAll('form.wap-filters').forEach(function (form) {
         form.addEventListener('submit', function (e) {
+            // فیلدهای عددی خالی را نفرست تا فیلتر اشتباه اعمال نشود
+            form.querySelectorAll('input[type="number"]').forEach(function (inp) {
+                if (String(inp.value || '').trim() === '') {
+                    inp.disabled = true;
+                }
+            });
             if (!wapValidateDateForm(form)) {
+                form.querySelectorAll('input[type="number"]').forEach(function (inp) {
+                    inp.disabled = false;
+                });
                 e.preventDefault();
             }
         });

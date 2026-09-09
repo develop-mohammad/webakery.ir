@@ -566,14 +566,22 @@ class WAP_Portal {
             $f['date_to']   = $primary['to'];
         }
 
-        $cmp_from = sanitize_text_field( wp_unslash( $_GET['compare_from'] ?? '' ) );
-        $cmp_to   = sanitize_text_field( wp_unslash( $_GET['compare_to'] ?? '' ) );
+        $cmp_from = WAP_Jalali::normalize_digits( sanitize_text_field( wp_unslash( $_GET['compare_from'] ?? $_REQUEST['compare_from'] ?? '' ) ) );
+        $cmp_to   = WAP_Jalali::normalize_digits( sanitize_text_field( wp_unslash( $_GET['compare_to'] ?? $_REQUEST['compare_to'] ?? '' ) ) );
+        // اگر فقط یکی پر است ولی بازه اصلی کامل است، سعی نکن پیام گمراه‌کننده بده
         $partial  = ( $cmp_from !== '' ) xor ( $cmp_to !== '' );
         $ready    = ( $cmp_from !== '' && $cmp_to !== '' );
 
         if ( $partial ) {
-            $notices[] = 'برای مقایسه، هر دو فیلد «مقایسه از» و «مقایسه تا» را پر کنید (یا یک ماه را از لیست ماه‌ها انتخاب کنید).';
+            $notices[] = 'برای مقایسه، هر دو فیلد «مقایسه از» و «مقایسه تا» لازم است. از «ماه مقایسه» یک ماه را انتخاب کنید یا «ماه مشابه پارسال» را بزنید.';
             $ready     = false;
+            // فیلد ناقص را خالی نگه می‌داریم تا در UI مشخص باشد
+            if ( $cmp_from === '' ) {
+                $cmp_from = '';
+            }
+            if ( $cmp_to === '' ) {
+                $cmp_to = '';
+            }
         }
 
         if ( $ready ) {
@@ -604,7 +612,13 @@ class WAP_Portal {
 
     private static function render_filter_notices( array $notices, string $type = 'wap-alert' ): void {
         foreach ( $notices as $msg ) {
-            echo '<div class="' . esc_attr( $type ) . '" role="status">' . esc_html( $msg ) . '</div>';
+            $cls = $type;
+            if ( strpos( $msg, 'مقایسه فعال است' ) !== false ) {
+                $cls = 'wap-alert wap-alert-success';
+            } elseif ( strpos( $msg, 'خودکار اصلاح' ) !== false ) {
+                $cls = 'wap-alert';
+            }
+            echo '<div class="' . esc_attr( $cls ) . '" role="status">' . esc_html( $msg ) . '</div>';
         }
     }
 
@@ -633,7 +647,7 @@ class WAP_Portal {
                 </div>
                 <button type="button" class="wap-btn wap-btn-ghost wap-btn-sm" data-wap-compare-same-last-year>ماه مشابه پارسال</button>
             </div>
-            <p class="wap-month-bar__hint">روی فیلد تاریخ کلیک کنید تا تقویم باز شود؛ روی نام ماه در تقویم بزنید تا کل آن ماه انتخاب شود.</p>
+            <p class="wap-month-bar__hint">با انتخاب ماه، فیلتر خودکار اعمال می‌شود. برای مقایسه سریع، «ماه مشابه پارسال» را بزنید.</p>
         </div>
         <?php
     }
@@ -667,12 +681,23 @@ class WAP_Portal {
         }
 
         if ( ! $prepared['primary_invalid'] && empty( $orders ) ) {
-            $notices[] = 'در بازه «' . $f['date_from'] . '» تا «' . $f['date_to'] . '» هیچ سفارشی پیدا نشد. ماه را از لیست زیر انتخاب کنید یا بازه را عوض کنید.';
-        } elseif ( ! empty( $orders ) && empty( $groups ) ) {
-            $notices[] = 'سفارش در این بازه هست، ولی با فیلتر مبلغ/تعداد هیچ دوره‌ای باقی نماند. حداقل/حداکثر را خالی کنید.';
+            $notices[] = 'در بازه «' . $f['date_from'] . '» تا «' . $f['date_to'] . '» هیچ سفارشی پیدا نشد. ماه دیگری را انتخاب کنید.';
+        } elseif ( ! empty( $orders ) && empty( $groups_all ) ) {
+            $paid_n = count( WAP_Data::filter_paid_orders( $orders ) );
+            $notices[] = 'در این بازه ' . number_format( count( $orders ) ) . ' سفارش هست، ولی سفارش موفق/پرداخت‌شده برای گزارش نیست'
+                . ( $paid_n === 0 ? ' (همه لغو/ناموفق/در انتظار هستند).' : '.' );
+        } elseif ( ! empty( $groups_all ) && empty( $groups ) ) {
+            $has_amt = ( $f['min_total'] !== null || $f['max_total'] !== null || $f['min_count'] !== null || $f['max_count'] !== null );
+            if ( $has_amt ) {
+                $notices[] = 'با فیلتر حداقل/حداکثر مبلغ یا تعداد، هیچ دوره‌ای باقی نماند. این فیلدها را خالی کنید و دوباره «اعمال فیلتر» بزنید.';
+            } else {
+                $notices[] = 'داده‌ای برای نمایش دوره‌ها نیست. بازه تاریخ یا وضعیت سفارش را عوض کنید.';
+            }
         }
         if ( $prepared['compare_ready'] && empty( $orders2 ) ) {
-            $notices[] = 'بازه مقایسه («' . $cmp_from . '» تا «' . $cmp_to . '») سفارشی ندارد؛ نمودار مقایسه فقط بازه فعلی را نشان می‌دهد.';
+            $notices[] = 'بازه مقایسه («' . $cmp_from . '» تا «' . $cmp_to . '») سفارشی ندارد؛ فقط بازه فعلی نمایش داده می‌شود.';
+        } elseif ( $prepared['compare_ready'] && ! empty( $groups ) ) {
+            $notices[] = 'مقایسه فعال است: «' . $f['date_from'] . ' تا ' . $f['date_to'] . '» در برابر «' . $cmp_from . ' تا ' . $cmp_to . '».';
         }
 
         $base_params = array_filter( $f, function( $v ) { return $v !== null && $v !== ''; } );
