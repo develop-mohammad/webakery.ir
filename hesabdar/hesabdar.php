@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hesabdar
  * Description: مدیریت کامل مشتریان و فروش ووکامرس (سفارش‌ها، ایجاد/ویرایش سفارش، محصولات، گزارش مالی، فاکتور) از داخل پیشخوان + پرتال مستقل و مینیمال ورود حسابدار بدون دسترسی به پیشخوان.
- * Version:     1.17.0
+ * Version:     1.18.0
  * Plugin URI:  https://webakery.ir
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,7 +22,7 @@ if ( defined( 'HESABDAR_LOADED' ) ) {
 }
 define( 'HESABDAR_LOADED', true );
 
-define( 'WAP_VERSION', '1.17.0' );
+define( 'WAP_VERSION', '1.18.0' );
 define( 'WAP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WAP_URL', plugin_dir_url( __FILE__ ) );
 
@@ -475,7 +475,8 @@ function hesabdar_register_wci_hooks() {
 if ( ! function_exists( 'wap_register_rewrite' ) ) {
 function wap_register_rewrite() {
     add_rewrite_rule( '^accountant-panel/?$', 'index.php?wap_panel=accountant', 'top' );
-    add_rewrite_rule( '^manager-panel/?$', 'index.php?wap_panel=manager', 'top' );
+    // سازگاری: آدرس قدیمی پنل مدیر → همان پنل یکپارچه
+    add_rewrite_rule( '^manager-panel/?$', 'index.php?wap_panel=accountant', 'top' );
 }
 }
 add_action( 'init', 'wap_register_rewrite' );
@@ -498,14 +499,14 @@ add_action( 'template_redirect', function() {
             array( 'response' => 503 )
         );
     }
-    if ( $panel === '1' ) {
+    if ( $panel === '1' || $panel === 'manager' ) {
         $panel = WAP_Portal::PANEL_ACCOUNTANT;
     }
-    if ( ! in_array( $panel, array( WAP_Portal::PANEL_ACCOUNTANT, WAP_Portal::PANEL_MANAGER ), true ) ) {
+    if ( $panel !== WAP_Portal::PANEL_ACCOUNTANT ) {
         return;
     }
     try {
-        WAP_Portal::render( $panel );
+        WAP_Portal::render();
     } catch ( Throwable $e ) {
         $detail = $e->getMessage() . ' @ ' . basename( $e->getFile() ) . ':' . $e->getLine();
         error_log( 'Hesabdar portal error: ' . $detail );
@@ -550,22 +551,11 @@ function wap_handle_login() {
         'remember'      => true,
     );
     $user = wp_signon( $creds, is_ssl() );
-
-    $panel_type = sanitize_key( $_POST['wap_panel'] ?? WAP_Portal::PANEL_ACCOUNTANT );
-    if ( ! in_array( $panel_type, array( WAP_Portal::PANEL_ACCOUNTANT, WAP_Portal::PANEL_MANAGER ), true ) ) {
-        $panel_type = WAP_Portal::PANEL_ACCOUNTANT;
-    }
-    $panel_url = WAP_Portal::panel_url( $panel_type );
+    $panel_url = WAP_Portal::panel_url();
 
     if ( is_wp_error( $user ) || ! WAP_Portal::user_has_access( $user ) ) {
         if ( ! is_wp_error( $user ) ) { wp_logout(); }
         wp_safe_redirect( add_query_arg( 'wap_error', '1', $panel_url ) );
-        exit;
-    }
-
-    if ( $panel_type === WAP_Portal::PANEL_MANAGER && ! WAP_Portal::user_has_manager_access( $user ) ) {
-        wp_logout();
-        wp_safe_redirect( add_query_arg( 'wap_error', '1', WAP_Portal::panel_url( WAP_Portal::PANEL_ACCOUNTANT ) ) );
         exit;
     }
 
@@ -579,11 +569,7 @@ add_action( 'admin_post_wap_logout', function() {
         wp_die( 'درخواست نامعتبر است.' );
     }
     wp_logout();
-    $panel_type = sanitize_key( $_POST['wap_panel'] ?? WAP_Portal::PANEL_ACCOUNTANT );
-    if ( ! in_array( $panel_type, array( WAP_Portal::PANEL_ACCOUNTANT, WAP_Portal::PANEL_MANAGER ), true ) ) {
-        $panel_type = WAP_Portal::PANEL_ACCOUNTANT;
-    }
-    wp_safe_redirect( WAP_Portal::panel_url( $panel_type ) );
+    wp_safe_redirect( WAP_Portal::panel_url() );
     exit;
 } );
 
@@ -615,8 +601,8 @@ add_filter( 'login_redirect', function( $redirect_to, $requested_redirect_to, $u
         return $redirect_to;
     }
     $roles = (array) $user->roles;
-    if ( in_array( WAP_Portal::ROLE, $roles, true ) && ! in_array( 'administrator', $roles, true ) && ! WAP_Portal::user_has_manager_access( $user ) ) {
-        return WAP_Portal::panel_url( WAP_Portal::PANEL_ACCOUNTANT );
+    if ( in_array( WAP_Portal::ROLE, $roles, true ) && ! in_array( 'administrator', $roles, true ) ) {
+        return WAP_Portal::panel_url();
     }
     return $redirect_to;
 }, 10, 3 );

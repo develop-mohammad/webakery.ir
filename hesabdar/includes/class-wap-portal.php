@@ -10,24 +10,12 @@ class WAP_Portal {
     const CAP  = 'wap_view_reports';
 
     const PANEL_ACCOUNTANT = 'accountant';
-    const PANEL_MANAGER    = 'manager';
 
     public static function panel_url( $type = null ) {
-        if ( $type === null ) {
-            $type = self::current_panel_type();
-        }
-        return home_url( $type === self::PANEL_MANAGER ? '/manager-panel/' : '/accountant-panel/' );
-    }
-
-    public static function manager_panel_url() {
-        return self::panel_url( self::PANEL_MANAGER );
+        return home_url( '/accountant-panel/' );
     }
 
     public static function current_panel_type() {
-        $panel = get_query_var( 'wap_panel' );
-        if ( $panel === self::PANEL_MANAGER || $panel === 'manager' ) {
-            return self::PANEL_MANAGER;
-        }
         return self::PANEL_ACCOUNTANT;
     }
 
@@ -142,32 +130,24 @@ class WAP_Portal {
         }
         @ini_set( 'max_execution_time', '120' );
 
-        $panel_type = $panel_type ?: self::current_panel_type();
-        if ( ! in_array( $panel_type, array( self::PANEL_ACCOUNTANT, self::PANEL_MANAGER ), true ) ) {
-            $panel_type = self::PANEL_ACCOUNTANT;
-        }
+        $panel_type = self::PANEL_ACCOUNTANT;
 
         if ( ! is_user_logged_in() ) {
-            self::render_login( $panel_type );
+            self::render_login();
             return;
         }
 
-        if ( $panel_type === self::PANEL_MANAGER && ! self::user_has_manager_access() ) {
-            wp_safe_redirect( self::panel_url( self::PANEL_ACCOUNTANT ) );
-            exit;
-        }
-
         if ( ! self::user_has_access() ) {
-            self::render_login( $panel_type );
+            self::render_login();
             return;
         }
 
         if ( ! wap_is_active() ) {
-            self::render_license_locked( $panel_type );
+            self::render_license_locked();
             return;
         }
 
-        self::render_dashboard( $panel_type );
+        self::render_dashboard();
     }
 
     /**
@@ -232,12 +212,11 @@ class WAP_Portal {
     }
 
     private static function render_license_locked( $panel_type = self::PANEL_ACCOUNTANT ) {
-        self::head( 'لایسنس لازم است', $panel_type );
-        $title = $panel_type === self::PANEL_MANAGER ? 'پرتال مدیر' : 'پرتال حسابدار';
+        self::head( 'لایسنس لازم است' );
         ?>
         <div class="wap-login-wrap">
             <div class="wap-login-box">
-                <div class="wap-logo"><div class="wap-logo-title"><?php echo esc_html( $title ); ?></div></div>
+                <div class="wap-logo"><div class="wap-logo-title">پرتال حسابدار</div></div>
                 <div class="wap-alert">دوره‌ی آزمایشی این افزونه تمام شده — برای ادامه‌ی استفاده، لایسنس را از پیشخوان وردپرس (مدیر سایت) فعال کنید.</div>
             </div>
         </div>
@@ -249,23 +228,8 @@ class WAP_Portal {
         return self::user_has_access( wp_get_current_user() );
     }
 
-    // آیا این کاربر (نقش اختصاصی حسابدار، مدیر سایت، یا یکی از نقش‌های مجاز انتخاب‌شده) دسترسی به پرتال دارد؟
+    // آیا این کاربر (نقش حسابدار یا مدیر سایت) دسترسی به پرتال دارد؟
     public static function user_has_access( $user = null ) {
-        if ( ! $user ) {
-            $user = wp_get_current_user();
-        }
-        if ( ! $user || ! $user->exists() ) return false;
-        $roles = (array) $user->roles;
-        if ( in_array( self::ROLE, $roles, true ) || in_array( 'administrator', $roles, true ) ) return true;
-        $allowed = get_option( 'wap_allowed_roles', array() );
-        if ( ! is_array( $allowed ) ) {
-            $allowed = array();
-        }
-        return (bool) array_intersect( $roles, $allowed );
-    }
-
-    /** مدیر سایت یا نقش‌های مجاز در تنظیمات — دسترسی به پنل مدیر */
-    public static function user_has_manager_access( $user = null ) {
         if ( ! $user ) {
             $user = wp_get_current_user();
         }
@@ -273,9 +237,10 @@ class WAP_Portal {
             return false;
         }
         $roles = (array) $user->roles;
-        if ( in_array( 'administrator', $roles, true ) ) {
+        if ( in_array( self::ROLE, $roles, true ) || in_array( 'administrator', $roles, true ) ) {
             return true;
         }
+        // سازگاری با نقش‌های مجاز ذخیره‌شده قبلی
         $allowed = get_option( 'wap_allowed_roles', array() );
         if ( ! is_array( $allowed ) ) {
             $allowed = array();
@@ -387,23 +352,21 @@ class WAP_Portal {
     }
 
     private static function render_login( $panel_type = self::PANEL_ACCOUNTANT ) {
-        $is_manager = $panel_type === self::PANEL_MANAGER;
-        self::head( $is_manager ? 'ورود مدیر' : 'ورود حسابدار', $panel_type );
+        self::head( 'ورود حسابدار' );
         $error = isset( $_GET['wap_error'] );
-        $title = $is_manager ? 'پرتال مدیر' : 'پرتال حسابدار';
         ?>
         <div class="wap-login-wrap">
             <div class="wap-login-box">
                 <div class="wap-logo">
-                    <div class="wap-logo-title"><?php echo esc_html( $title ); ?></div>
-                    <div class="wap-logo-sub"><?php echo $is_manager ? 'مدیریت فروش، گزارش‌ها و دسترسی پیشخوان' : 'گزارش مالی، سفارش‌ها و خروجی حسابداری'; ?></div>
+                    <div class="wap-logo-title">پرتال حسابدار</div>
+                    <div class="wap-logo-sub">گزارش مالی، سفارش‌ها و خروجی حسابداری</div>
                 </div>
                 <?php if ( $error ) : ?>
                     <div class="wap-alert">نام کاربری، رمز عبور یا دسترسی نامعتبر است.</div>
                 <?php endif; ?>
                 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
                     <input type="hidden" name="action" value="wap_login">
-                    <input type="hidden" name="wap_panel" value="<?php echo esc_attr( $panel_type ); ?>">
+                    <input type="hidden" name="wap_panel" value="<?php echo esc_attr( self::PANEL_ACCOUNTANT ); ?>">
                     <?php wp_nonce_field( 'wap_login_action', 'wap_login_nonce' ); ?>
                     <label>نام کاربری یا ایمیل</label>
                     <input type="text" name="wap_user" required autofocus>
@@ -411,11 +374,6 @@ class WAP_Portal {
                     <input type="password" name="wap_pass" required>
                     <button type="submit" class="wap-btn wap-btn-primary">ورود</button>
                 </form>
-                <?php if ( $is_manager ) : ?>
-                    <p class="wap-login-alt"><a href="<?php echo esc_url( self::panel_url( self::PANEL_ACCOUNTANT ) ); ?>">ورود از پنل حسابدار</a></p>
-                <?php else : ?>
-                    <p class="wap-login-alt"><a href="<?php echo esc_url( self::manager_panel_url() ); ?>">ورود از پنل مدیر</a></p>
-                <?php endif; ?>
             </div>
         </div>
         <?php
@@ -447,15 +405,13 @@ class WAP_Portal {
 
     private static function render_dashboard( $panel_type = self::PANEL_ACCOUNTANT ) {
         self::maybe_save_formula();
-        $is_manager = $panel_type === self::PANEL_MANAGER;
-        self::head( $is_manager ? 'پنل مدیر' : 'گزارش فروش', $panel_type );
+        self::head( 'گزارش فروش' );
         $view = self::current_view();
-        $brand = $is_manager ? 'پرتال مدیر' : 'پرتال حسابدار';
         ?>
-        <div class="wap-wrap wap-panel-<?php echo esc_attr( $panel_type ); ?>">
+        <div class="wap-wrap wap-panel-accountant">
             <header class="wap-header" id="wap-header">
                 <div class="wap-brand-wrap">
-                    <div class="wap-brand"><?php echo esc_html( $brand ); ?></div>
+                    <div class="wap-brand">پرتال حسابدار</div>
                     <div class="wap-brand-sub"><?php
                         if ( $view === 'orders' ) {
                             echo 'لیست و جزئیات سفارش‌های پرداخت‌شده';
@@ -472,32 +428,15 @@ class WAP_Portal {
                 </div>
                 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wap-logout-form">
                     <input type="hidden" name="action" value="wap_logout">
-                    <input type="hidden" name="wap_panel" value="<?php echo esc_attr( $panel_type ); ?>">
+                    <input type="hidden" name="wap_panel" value="<?php echo esc_attr( self::PANEL_ACCOUNTANT ); ?>">
                     <?php wp_nonce_field( 'wap_logout_action', 'wap_logout_nonce' ); ?>
                     <span class="wap-user"><?php echo esc_html( wp_get_current_user()->display_name ); ?></span>
+                    <?php if ( current_user_can( 'manage_options' ) ) : ?>
+                        <a href="<?php echo esc_url( admin_url() ); ?>" class="wap-btn wap-btn-ghost" target="_blank">پیشخوان</a>
+                    <?php endif; ?>
                     <button type="submit" class="wap-btn wap-btn-ghost">خروج</button>
                 </form>
             </header>
-
-            <?php if ( self::user_has_manager_access() ) : ?>
-            <nav class="wap-panel-switch" aria-label="انتخاب پنل">
-                <a href="<?php echo esc_url( self::panel_url( self::PANEL_ACCOUNTANT ) ); ?>" class="wap-panel-switch-link<?php echo ! $is_manager ? ' is-active' : ''; ?>">پنل حسابدار</a>
-                <a href="<?php echo esc_url( self::manager_panel_url() ); ?>" class="wap-panel-switch-link<?php echo $is_manager ? ' is-active' : ''; ?>">پنل مدیر</a>
-            </nav>
-            <?php endif; ?>
-
-            <?php if ( $is_manager ) : ?>
-            <div class="wap-manager-bar">
-                <?php if ( current_user_can( 'manage_options' ) ) : ?>
-                    <a class="wap-btn wap-btn-ghost" href="<?php echo esc_url( admin_url() ); ?>" target="_blank">پیشخوان وردپرس</a>
-                    <a class="wap-btn wap-btn-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=wap-accountants' ) ); ?>" target="_blank">مدیریت حسابداران</a>
-                    <a class="wap-btn wap-btn-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=wci-order-edit' ) ); ?>" target="_blank">سفارش جدید</a>
-                    <a class="wap-btn wap-btn-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=wci-reports' ) ); ?>" target="_blank">گزارش مالی (پیشخوان)</a>
-                <?php else : ?>
-                    <a class="wap-btn wap-btn-ghost" href="<?php echo esc_url( add_query_arg( 'wap_view', 'sales', self::panel_url() ) ); ?>">گزارش مالی</a>
-                <?php endif; ?>
-            </div>
-            <?php endif; ?>
 
             <?php if ( ! class_exists( 'WooCommerce' ) ) : ?>
                 <div class="wap-alert">ووکامرس روی این سایت فعال نیست.</div>

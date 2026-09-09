@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.17.0',
+        'version'      => '1.18.0',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۱۷.۰: مقایسه دقیقاً مثل Search Console — دو خط روزانه آبی/نارنجی روی‌هم با متریک Δ٪.',
+        'changelog'    => 'نسخه ۱.۱۸.۰: پنل یکپارچه — حذف پنل مدیر، فرم افزودن حسابدار و دسترسی نقش‌ها؛ فقط یک آدرس /accountant-panel/.',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',

@@ -123,7 +123,7 @@ class WAP_Report_Image {
         if ( ! $user || ! $user->ID ) {
             return false;
         }
-        if ( user_can( $user, 'manage_options' ) || WAP_Portal::user_has_manager_access( $user ) ) {
+        if ( user_can( $user, 'manage_options' ) ) {
             return false;
         }
         return in_array( WAP_Portal::ROLE, (array) $user->roles, true );
