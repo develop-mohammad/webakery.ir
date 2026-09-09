@@ -1617,38 +1617,129 @@ class WAP_Portal {
         </section>
         <?php endif; ?>
 
+        <div class="wap-peak-calendar-wrap">
+            <section class="wap-chart-card wap-peak-cal-section">
+                <h3 class="wap-section-title">پیک خرید — تقویم شمسی</h3>
+                <p class="wap-hint">هر خانه یک روز است؛ رنگ پررنگ‌تر یعنی خرید بیشتر در آن روز.</p>
+                <?php
+                $cal = $data['peak_calendar'] ?? array( 'months' => array(), 'max_count' => 1, 'weekdays' => array( 'ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج' ) );
+                $cal_max = max( 1, (int) ( $cal['max_count'] ?? 1 ) );
+                if ( empty( $cal['months'] ) ) :
+                    ?>
+                    <div class="wap-empty">در این بازه سفارشی برای تقویم نیست.</div>
+                <?php else : ?>
+                    <div class="wap-peak-cal-months">
+                        <?php foreach ( $cal['months'] as $month ) : ?>
+                            <div class="wap-peak-cal">
+                                <div class="wap-peak-cal__head"><?php echo esc_html( $month['label'] ); ?></div>
+                                <div class="wap-peak-cal__weekdays">
+                                    <?php foreach ( $cal['weekdays'] as $wd ) : ?>
+                                        <span><?php echo esc_html( $wd ); ?></span>
+                                    <?php endforeach; ?>
+                                </div>
+                                <div class="wap-peak-cal__grid">
+                                    <?php foreach ( $month['days'] as $cell ) :
+                                        if ( ! empty( $cell['blank'] ) ) : ?>
+                                            <div class="wap-peak-cal__cell is-blank"></div>
+                                        <?php else :
+                                            $cnt = (int) ( $cell['count'] ?? 0 );
+                                            $intensity = $cnt > 0 ? ( 0.14 + ( $cnt / $cal_max ) * 0.86 ) : 0;
+                                            $cls = 'wap-peak-cal__cell';
+                                            if ( empty( $cell['in_range'] ) ) {
+                                                $cls .= ' is-out';
+                                            }
+                                            if ( ! empty( $cell['is_today'] ) ) {
+                                                $cls .= ' is-today';
+                                            }
+                                            if ( $cnt > 0 ) {
+                                                $cls .= ' has-orders';
+                                            }
+                                            $title = sprintf(
+                                                '%d/%02d/%02d — %s سفارش — %s',
+                                                (int) $cell['y'],
+                                                (int) $cell['m'],
+                                                (int) $cell['d'],
+                                                number_format( $cnt ),
+                                                number_format( (float) ( $cell['total'] ?? 0 ) )
+                                            );
+                                            ?>
+                                            <div class="<?php echo esc_attr( $cls ); ?>"
+                                                 style="<?php echo $cnt > 0 ? 'background:rgba(26,115,232,' . esc_attr( number_format( $intensity, 2, '.', '' ) ) . ');' : ''; ?>"
+                                                 title="<?php echo esc_attr( $title ); ?>">
+                                                <span class="wap-peak-cal__day"><?php echo esc_html( (string) (int) $cell['d'] ); ?></span>
+                                                <?php if ( $cnt > 0 ) : ?>
+                                                    <strong class="wap-peak-cal__count"><?php echo esc_html( (string) $cnt ); ?></strong>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endif;
+                                    endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="wap-peak-cal-legend">
+                        <span>کم</span>
+                        <span class="wap-peak-cal-legend__bar"></span>
+                        <span>زیاد</span>
+                    </div>
+                <?php endif; ?>
+            </section>
+        </div>
+
         <div class="wap-analytics-grid">
             <section class="wap-chart-card">
                 <h3 class="wap-section-title">پیک خرید — ساعت روز</h3>
-                <div class="wap-heat-hours">
-                    <?php foreach ( $data['peak_hours'] as $h ) :
+                <p class="wap-hint">نمای شبانه‌روزی مثل تقویم روزانه؛ ستون پررنگ‌تر = ساعت شلوغ‌تر.</p>
+                <div class="wap-peak-dayview">
+                    <?php
+                    $best_h = 0;
+                    $best_c = -1;
+                    foreach ( $data['peak_hours'] as $h ) {
+                        if ( (int) $h['count'] > $best_c ) {
+                            $best_c = (int) $h['count'];
+                            $best_h = (int) $h['hour'];
+                        }
+                    }
+                    foreach ( $data['peak_hours'] as $h ) :
                         $intensity = $h['count'] / $max_hour;
-                        $alpha = 0.12 + $intensity * 0.88; ?>
-                        <div class="wap-heat-cell" style="background:rgba(26,115,232,<?php echo esc_attr( number_format( $alpha, 2, '.', '' ) ); ?>);color:#174ea6" title="<?php echo esc_attr( $h['hour'] . ':00 — ' . $h['count'] . ' سفارش' ); ?>">
-                            <span><?php echo esc_html( sprintf( '%02d', $h['hour'] ) ); ?></span>
-                            <strong><?php echo esc_html( (string) $h['count'] ); ?></strong>
+                        $pct = (int) round( $intensity * 100 );
+                        $is_peak = (int) $h['hour'] === $best_h && $best_c > 0;
+                        ?>
+                        <div class="wap-peak-dayview__row<?php echo $is_peak ? ' is-peak' : ''; ?>" title="<?php echo esc_attr( sprintf( '%02d:00 — %d سفارش — %s', $h['hour'], $h['count'], number_format( $h['total'] ) ) ); ?>">
+                            <span class="wap-peak-dayview__hour"><?php echo esc_html( sprintf( '%02d:00', $h['hour'] ) ); ?></span>
+                            <div class="wap-peak-dayview__track">
+                                <div class="wap-peak-dayview__fill" style="width:<?php echo esc_attr( (string) $pct ); ?>%"></div>
+                            </div>
+                            <span class="wap-peak-dayview__count"><?php echo esc_html( (string) $h['count'] ); ?></span>
                         </div>
                     <?php endforeach; ?>
                 </div>
             </section>
-            <div>
-                <?php
-                if ( class_exists( 'WAP_Chart' ) && ! empty( $data['peak_days'] ) ) {
-                    WAP_Chart::render_gsc_line(
-                        array(
-                            'labels' => array_column( $data['peak_days'], 'label' ),
-                            'a'      => array_map( 'floatval', array_column( $data['peak_days'], 'total' ) ),
-                        ),
-                        array(
-                            'title'    => 'فروش بر اساس روز هفته',
-                            'legend_a' => 'مبلغ',
-                            'dual'     => false,
-                            'height'   => 220,
-                        )
-                    );
-                }
-                ?>
-            </div>
+            <section class="wap-chart-card">
+                <h3 class="wap-section-title">پیک خرید — روزهای هفته</h3>
+                <p class="wap-hint">هفتهٔ تقویمی ایران (از شنبه).</p>
+                <div class="wap-peak-weekcal">
+                    <div class="wap-peak-weekcal__head">
+                        <?php foreach ( $data['peak_days'] as $d ) : ?>
+                            <span><?php echo esc_html( mb_substr( $d['label'], 0, 1 ) ); ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="wap-peak-weekcal__body">
+                        <?php foreach ( $data['peak_days'] as $d ) :
+                            $intensity = $d['count'] / $max_day;
+                            $alpha = $d['count'] > 0 ? ( 0.14 + $intensity * 0.86 ) : 0;
+                            ?>
+                            <div class="wap-peak-weekcal__cell<?php echo $d['count'] > 0 ? ' has-orders' : ''; ?>"
+                                 style="<?php echo $d['count'] > 0 ? 'background:rgba(26,115,232,' . esc_attr( number_format( $alpha, 2, '.', '' ) ) . ');' : ''; ?>"
+                                 title="<?php echo esc_attr( $d['label'] . ' — ' . $d['count'] . ' سفارش — ' . number_format( $d['total'] ) ); ?>">
+                                <span class="wap-peak-weekcal__label"><?php echo esc_html( $d['label'] ); ?></span>
+                                <strong><?php echo esc_html( (string) $d['count'] ); ?></strong>
+                                <small><?php echo esc_html( number_format( $d['total'] ) ); ?></small>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </section>
         </div>
 
         <section class="wap-chart-card">

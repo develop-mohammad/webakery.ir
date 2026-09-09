@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.15.0',
+        'version'      => '1.16.0',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۱۵.۰: انتخاب آسان ماه در تقویم، دکمه ماه مشابه پارسال، اصلاح خودکار بازه برعکس و پیام راهنما وقتی داده نیست.',
+        'changelog'    => 'نسخه ۱.۱۶.۰: نمایش پیک خریدها به‌صورت تقویم شمسی (heatmap ماهانه)، نمای ساعتی روزانه و هفتهٔ تقویمی.',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',

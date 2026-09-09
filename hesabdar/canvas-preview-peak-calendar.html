@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>پیش‌نمایش پیک خرید تقویمی</title>
+<link rel="stylesheet" href="https://fonts.bunny.net/css?family=vazirmatn:400,500,600,700&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="wap-body">
+<div class="wap-wrap">
+  <header class="wap-header"><div class="wap-brand">پرتال حسابدار — تحلیل‌ها</div></header>
+  <section class="wap-chart-card wap-peak-cal-section">
+    <h3 class="wap-section-title">پیک خرید — تقویم شمسی</h3>
+    <p class="wap-hint">هر خانه یک روز است؛ رنگ پررنگ‌تر یعنی خرید بیشتر در آن روز.</p>
+    <div class="wap-peak-cal-months">
+      <div class="wap-peak-cal">
+        <div class="wap-peak-cal__head">شهریور ۱۴۰۵</div>
+        <div class="wap-peak-cal__weekdays"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+        <div class="wap-peak-cal__grid" id="grid"></div>
+      </div>
+    </div>
+    <div class="wap-peak-cal-legend"><span>کم</span><span class="wap-peak-cal-legend__bar"></span><span>زیاد</span></div>
+  </section>
+  <div class="wap-analytics-grid">
+    <section class="wap-chart-card">
+      <h3 class="wap-section-title">پیک خرید — ساعت روز</h3>
+      <div class="wap-peak-dayview" id="hours"></div>
+    </section>
+    <section class="wap-chart-card">
+      <h3 class="wap-section-title">پیک خرید — روزهای هفته</h3>
+      <div class="wap-peak-weekcal">
+        <div class="wap-peak-weekcal__head"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+        <div class="wap-peak-weekcal__body" id="week"></div>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+(function(){
+  var grid=document.getElementById('grid');
+  // pad blanks: assume 1st is Monday-ish -> 2 blanks for Sat-first if Wed start; use 2 blanks
+  for(var i=0;i<2;i++){ var b=document.createElement('div'); b.className='wap-peak-cal__cell is-blank'; grid.appendChild(b); }
+  var counts={1:2,2:0,3:5,4:1,5:8,6:3,7:0,8:4,9:12,10:2,11:1,12:0,13:6,14:4,15:3,16:7,17:2,18:9,19:1,20:0,21:5,22:3,23:2,24:4,25:1,26:0,27:3,28:2,29:1,30:0,31:2};
+  var max=12;
+  for(var d=1;d<=31;d++){
+    var c=counts[d]||0, cell=document.createElement('div');
+    cell.className='wap-peak-cal__cell'+(c?' has-orders':'')+(d===18?' is-today':'');
+    if(c){ cell.style.background='rgba(26,115,232,'+(0.14+(c/max)*0.86).toFixed(2)+')'; }
+    cell.innerHTML='<span class="wap-peak-cal__day">'+d+'</span>'+(c?'<strong class="wap-peak-cal__count">'+c+'</strong>':'');
+    grid.appendChild(cell);
+  }
+  var hours=document.getElementById('hours'), hc=[0,0,0,0,1,2,3,5,8,12,10,7,6,5,4,6,9,11,8,5,3,2,1,0], hm=12;
+  hc.forEach(function(c,h){
+    var row=document.createElement('div'); row.className='wap-peak-dayview__row'+(c===hm?' is-peak':'');
+    row.innerHTML='<span class="wap-peak-dayview__hour">'+(h<10?'0':'')+h+':00</span><div class="wap-peak-dayview__track"><div class="wap-peak-dayview__fill" style="width:'+Math.round(c/hm*100)+'%"></div></div><span class="wap-peak-dayview__count">'+c+'</span>';
+    hours.appendChild(row);
+  });
+  var week=document.getElementById('week'), labels=['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'], wc=[10,6,8,12,9,4,3], wm=12;
+  labels.forEach(function(l,i){
+    var c=wc[i], a=c?(0.14+(c/wm)*0.86):0, cell=document.createElement('div');
+    cell.className='wap-peak-weekcal__cell'+(c?' has-orders':'');
+    if(c) cell.style.background='rgba(26,115,232,'+a.toFixed(2)+')';
+    cell.innerHTML='<span class="wap-peak-weekcal__label">'+l+'</span><strong>'+c+'</strong><small>'+(c*250000).toLocaleString('fa-IR')+'</small>';
+    week.appendChild(cell);
+  });
+})();
+</script>
+</body>
+</html>

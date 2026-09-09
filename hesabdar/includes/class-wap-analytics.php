@@ -24,6 +24,7 @@ class WAP_Analytics {
 			'top_products' => array_slice( WAP_Data::get_product_sales( $paid ), 0, 10 ),
 			'peak_hours'=> self::peak_hours( $paid ),
 			'peak_days' => self::peak_days( $paid ),
+			'peak_calendar' => self::peak_calendar( $paid, $f ),
 			'fees'      => self::fee_breakdown( $paid ),
 		);
 	}
@@ -158,6 +159,130 @@ class WAP_Analytics {
 			$out[] = $days[ $i ];
 		}
 		return $out;
+	}
+
+	/**
+	 * تقویم شمسی پیک خرید — روزبه‌روز در ماه‌های بازه.
+	 *
+	 * @param array<int,\WC_Order> $orders
+	 * @param array                $f      فیلتر با date_from / date_to
+	 * @return array{months:array<int,array>,max_count:int,total_orders:int}
+	 */
+	public static function peak_calendar( array $orders, array $f = array() ): array {
+		$by_day = array();
+		foreach ( $orders as $order ) {
+			$created = $order->get_date_created();
+			if ( ! $created ) {
+				continue;
+			}
+			list( $jy, $jm, $jd ) = WAP_Jalali::to_jalali(
+				(int) $created->date( 'Y' ),
+				(int) $created->date( 'n' ),
+				(int) $created->date( 'j' )
+			);
+			$key = sprintf( '%04d-%02d-%02d', $jy, $jm, $jd );
+			if ( ! isset( $by_day[ $key ] ) ) {
+				$by_day[ $key ] = array(
+					'y'     => $jy,
+					'm'     => $jm,
+					'd'     => $jd,
+					'count' => 0,
+					'total' => 0.0,
+				);
+			}
+			$by_day[ $key ]['count']++;
+			$by_day[ $key ]['total'] += (float) $order->get_total();
+		}
+
+		$today = WAP_Jalali::today();
+		$from  = ! empty( $f['date_from'] ) ? WAP_Jalali::parse( (string) $f['date_from'] ) : null;
+		$to    = ! empty( $f['date_to'] ) ? WAP_Jalali::parse( (string) $f['date_to'] ) : null;
+		if ( ! $from && ! empty( $by_day ) ) {
+			$first = reset( $by_day );
+			$from  = array( 'y' => $first['y'], 'm' => $first['m'], 'd' => 1 );
+		}
+		if ( ! $to && ! empty( $by_day ) ) {
+			$last = end( $by_day );
+			$to   = array( 'y' => $last['y'], 'm' => $last['m'], 'd' => $last['d'] );
+		}
+		if ( ! $from ) {
+			$from = array( 'y' => $today['y'], 'm' => $today['m'], 'd' => 1 );
+		}
+		if ( ! $to ) {
+			$to = array( 'y' => $today['y'], 'm' => $today['m'], 'd' => $today['d'] );
+		}
+
+		$names  = WAP_Jalali::month_names();
+		$months = array();
+		$y      = (int) $from['y'];
+		$m      = (int) $from['m'];
+		$end_y  = (int) $to['y'];
+		$end_m  = (int) $to['m'];
+		$max_count = 0;
+		$guard  = 0;
+		while ( ( $y < $end_y || ( $y === $end_y && $m <= $end_m ) ) && $guard < 6 ) {
+			$guard++;
+			$len = WAP_Jalali::month_length( $y, $m );
+			// weekday of 1st: convert to Sat=0..Fri=6
+			$g1  = WAP_Jalali::to_gregorian( $y, $m, 1 );
+			$ts  = mktime( 12, 0, 0, $g1[1], $g1[2], $g1[0] );
+			$w   = (int) date( 'w', $ts ); // 0=Sun
+			$sat0 = ( $w + 1 ) % 7; // Sat=0
+			$days = array();
+			for ( $i = 0; $i < $sat0; $i++ ) {
+				$days[] = array( 'blank' => true );
+			}
+			for ( $d = 1; $d <= $len; $d++ ) {
+				$key = sprintf( '%04d-%02d-%02d', $y, $m, $d );
+				$cell = isset( $by_day[ $key ] ) ? $by_day[ $key ] : array(
+					'y'     => $y,
+					'm'     => $m,
+					'd'     => $d,
+					'count' => 0,
+					'total' => 0.0,
+				);
+				$cell['blank']   = false;
+				$cell['is_today'] = ( $y === $today['y'] && $m === $today['m'] && $d === $today['d'] );
+				$in_range = true;
+				if ( $from ) {
+					$a = $y * 10000 + $m * 100 + $d;
+					$b = $from['y'] * 10000 + $from['m'] * 100 + $from['d'];
+					if ( $a < $b ) {
+						$in_range = false;
+					}
+				}
+				if ( $to ) {
+					$a = $y * 10000 + $m * 100 + $d;
+					$b = $to['y'] * 10000 + $to['m'] * 100 + $to['d'];
+					if ( $a > $b ) {
+						$in_range = false;
+					}
+				}
+				$cell['in_range'] = $in_range;
+				if ( $cell['count'] > $max_count ) {
+					$max_count = $cell['count'];
+				}
+				$days[] = $cell;
+			}
+			$months[] = array(
+				'y'     => $y,
+				'm'     => $m,
+				'label' => $names[ $m - 1 ] . ' ' . $y,
+				'days'  => $days,
+			);
+			$m++;
+			if ( $m > 12 ) {
+				$m = 1;
+				$y++;
+			}
+		}
+
+		return array(
+			'months'       => $months,
+			'max_count'    => max( 1, $max_count ),
+			'total_orders' => count( $orders ),
+			'weekdays'     => array( 'ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج' ),
+		);
 	}
 
 	/** @param array<int,\WC_Order> $orders */
