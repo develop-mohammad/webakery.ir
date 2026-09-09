@@ -34,9 +34,9 @@ if ( ! class_exists( 'WAP_Data' ) ) {
 
 $checks = array(
 	$root . '/includes/class-wap-chart.php' => array( 'build_date_overlay', 'daily_sequence', 'wap-gsc-metrics', 'is-dual' ),
-	$root . '/includes/class-wap-portal.php' => array( 'build_date_overlay', 'مقایسه فروش — سبک Search Console' ),
+	$root . '/includes/class-wap-portal.php' => array( 'build_date_overlay', 'ماه جدید', 'ماه قدیم' ),
 	$root . '/assets/style.css' => array( 'wap-gsc-metrics', 'wap-gsc-footnote', 'is-dual' ),
-	$root . '/hesabdar.php' => array( '1.18.0' ),
+	$root . '/hesabdar.php' => array( '1.19.0' ),
 );
 foreach ( $checks as $file => $needles ) {
 	$c = file_get_contents( $file );

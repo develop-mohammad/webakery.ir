@@ -398,7 +398,7 @@ class WAP_Chart {
                 </svg>
             </div>
             <?php if ( $dual ) : ?>
-                <p class="wap-gsc-footnote">دو خط روی یک محور هم‌تراز شده‌اند (روز ۱ با روز ۱) — مثل Compare در Google Search Console. آبی = بازه فعلی، نارنجی = بازه مقایسه.</p>
+                <p class="wap-gsc-footnote">دو خط روی یک محور هم‌تراز شده‌اند (روز ۱ با روز ۱). آبی توپر = ماه جدید، نارنجی خط‌چین = ماه قدیم.</p>
             <?php endif; ?>
         </div>
         <?php

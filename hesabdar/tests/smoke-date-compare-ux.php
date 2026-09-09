@@ -1,12 +1,12 @@
 <?php
 $root = dirname(__DIR__);
 $files = array(
-  $root.'/includes/class-wap-jalali.php' => array('normalize_range','recent_months','month_bounds','shift_year'),
-  $root.'/includes/class-wap-portal.php' => array('prepare_date_ranges','render_month_pickers','wap_compare_from','ماه مشابه پارسال','مقایسه فعال است'),
+  $root.'/includes/class-wap-jalali.php' => array('normalize_range','recent_months','month_bounds','shift_year','shift_month','previous_month_range'),
+  $root.'/includes/class-wap-portal.php' => array('prepare_date_ranges','render_month_pickers','wap_compare_from','ماه قبل','ماه مشابه پارسال','مقایسه فعال است','ماه جدید'),
   $root.'/assets/jalali-calendar.js' => array('setWholeMonth','jcal-months','کل این ماه'),
-  $root.'/assets/app.js' => array('wapValidateDateForm','wapSubmitFilters','wapFillSameLastYear','wap_compare_from'),
+  $root.'/assets/app.js' => array('wapValidateDateForm','wapSubmitFilters','wapFillSameLastYear','wapFillPreviousMonth','wap_compare_from','data-wap-compare-previous-month'),
   $root.'/assets/style.css' => array('wap-month-bar','jcal-months'),
-  $root.'/hesabdar.php' => array("1.18.0"),
+  $root.'/hesabdar.php' => array("1.19.0"),
 );
 foreach ($files as $file=>$needles) {
   if (!is_readable($file)) { fwrite(STDERR,"FAIL missing $file\n"); exit(1);} 
@@ -26,5 +26,13 @@ $b = WAP_Jalali::month_bounds(1404,6);
 if ($b['from']!=='1404/06/01' || $b['to']!=='1404/06/31') {
   fwrite(STDERR,"FAIL month_bounds\n"); var_export($b); exit(1);
 }
-echo "OK normalize+month_bounds\n";
+$prev = WAP_Jalali::previous_month_range('1405/06/01','1405/06/31');
+if (!$prev || $prev['from']!=='1405/05/01' || $prev['to']!=='1405/05/31') {
+  fwrite(STDERR,"FAIL previous_month_range full month\n"); var_export($prev); exit(1);
+}
+$prev2 = WAP_Jalali::previous_month_range('1405/01/01','1405/01/31');
+if (!$prev2 || $prev2['from']!=='1404/12/01' || $prev2['to']!=='1404/12/29') {
+  fwrite(STDERR,"FAIL previous_month_range year wrap\n"); var_export($prev2); exit(1);
+}
+echo "OK normalize+month_bounds+previous_month\n";
 echo "ALL DATE COMPARE UX CHECKS PASSED\n";

@@ -205,6 +205,57 @@ class WAP_Jalali {
         return self::format( $y, $p['m'], $d );
     }
 
+    /** شیفت ماه شمسی (مثلاً ماه قبل). روز به طول ماه مقصد محدود می‌شود. */
+    public static function shift_month( string $date_str, int $months ): string {
+        $p = self::parse( $date_str );
+        if ( ! $p ) {
+            return '';
+        }
+        $y = $p['y'];
+        $m = $p['m'] + $months;
+        while ( $m < 1 ) {
+            $m += 12;
+            $y--;
+        }
+        while ( $m > 12 ) {
+            $m -= 12;
+            $y++;
+        }
+        $d = min( $p['d'], self::month_length( $y, $m ) );
+        return self::format( $y, $m, $d );
+    }
+
+    /**
+     * بازهٔ ماه قبل نسبت به بازهٔ اصلی.
+     * اگر بازهٔ اصلی یک ماه کامل باشد، کل ماه قبل برمی‌گردد؛ وگرنه هر دو سر بازه یک ماه جابه‌جا می‌شوند.
+     *
+     * @return array{from:string,to:string}|null
+     */
+    public static function previous_month_range( string $from, string $to ): ?array {
+        $pf = self::parse( $from );
+        $pt = self::parse( $to );
+        if ( ! $pf || ! $pt ) {
+            return null;
+        }
+        $full_month = ( $pf['y'] === $pt['y'] && $pf['m'] === $pt['m']
+            && $pf['d'] === 1 && $pt['d'] === self::month_length( $pt['y'], $pt['m'] ) );
+        if ( $full_month ) {
+            $y = $pf['y'];
+            $m = $pf['m'] - 1;
+            if ( $m < 1 ) {
+                $m = 12;
+                $y--;
+            }
+            return self::month_bounds( $y, $m );
+        }
+        $prev_from = self::shift_month( $from, -1 );
+        $prev_to   = self::shift_month( $to, -1 );
+        if ( $prev_from === '' || $prev_to === '' ) {
+            return null;
+        }
+        return array( 'from' => $prev_from, 'to' => $prev_to );
+    }
+
     /**
      * لیست ماه‌های اخیر برای انتخاب سریع.
      *

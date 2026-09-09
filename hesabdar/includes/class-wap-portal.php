@@ -512,7 +512,7 @@ class WAP_Portal {
         $ready    = ( $cmp_from !== '' && $cmp_to !== '' );
 
         if ( $partial ) {
-            $notices[] = 'برای مقایسه، هر دو فیلد «مقایسه از» و «مقایسه تا» لازم است. از «ماه مقایسه» یک ماه را انتخاب کنید یا «ماه مشابه پارسال» را بزنید.';
+            $notices[] = 'برای مقایسه، هر دو فیلد «مقایسه از» و «مقایسه تا» لازم است. از «ماه مقایسه» یک ماه را انتخاب کنید یا «ماه قبل» / «ماه مشابه پارسال» را بزنید.';
             $ready     = false;
             // فیلد ناقص را خالی نگه می‌داریم تا در UI مشخص باشد
             if ( $cmp_from === '' ) {
@@ -561,7 +561,7 @@ class WAP_Portal {
         }
     }
 
-    /** نوار انتخاب سریع ماه + دکمه ماه مشابه پارسال. */
+    /** نوار انتخاب سریع ماه + دکمه ماه قبل / ماه مشابه پارسال. */
     private static function render_month_pickers( bool $date_locked = false ): void {
         if ( $date_locked ) {
             return;
@@ -584,9 +584,10 @@ class WAP_Portal {
                         <button type="button" class="wap-chip wap-chip-month" data-from="<?php echo esc_attr( $m['from'] ); ?>" data-to="<?php echo esc_attr( $m['to'] ); ?>"><?php echo esc_html( $m['label'] ); ?></button>
                     <?php endforeach; ?>
                 </div>
+                <button type="button" class="wap-btn wap-btn-sm" data-wap-compare-previous-month>ماه قبل</button>
                 <button type="button" class="wap-btn wap-btn-ghost wap-btn-sm" data-wap-compare-same-last-year>ماه مشابه پارسال</button>
             </div>
-            <p class="wap-month-bar__hint">با انتخاب ماه، فیلتر خودکار اعمال می‌شود. برای مقایسه سریع، «ماه مشابه پارسال» را بزنید.</p>
+            <p class="wap-month-bar__hint">با انتخاب ماه، مقایسه با «ماه قبل» خودکار پر می‌شود و دو خط رنگی روی‌هم رسم می‌شود (ماه جدید آبی، ماه قدیم نارنجی).</p>
         </div>
         <?php
     }
@@ -773,9 +774,9 @@ class WAP_Portal {
                     WAP_Chart::render_gsc_line(
                         $overlay,
                         array(
-                            'title'         => 'مقایسه فروش — سبک Search Console',
-                            'legend_a'      => $f['date_from'] . ' تا ' . $f['date_to'],
-                            'legend_b'      => $cmp_from . ' تا ' . $cmp_to,
+                            'title'         => 'مقایسه فروش روزانه — ماه جدید / ماه قدیم',
+                            'legend_a'      => 'ماه جدید (' . $f['date_from'] . ' تا ' . $f['date_to'] . ')',
+                            'legend_b'      => 'ماه قدیم (' . $cmp_from . ' تا ' . $cmp_to . ')',
                             'dual'          => true,
                             'show_metrics'  => true,
                             'height'        => 360,

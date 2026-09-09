@@ -74,25 +74,60 @@
         }
     }
 
+    function wapMonthLength(y, m) {
+        if (window.WAP_JalaliCal && WAP_JalaliCal.monthLength) {
+            return WAP_JalaliCal.monthLength(y, m);
+        }
+        return m <= 6 ? 31 : (m <= 11 ? 30 : 29);
+    }
+
+    function wapShiftMonthParts(p, delta) {
+        var y = p.y;
+        var m = p.m + delta;
+        while (m < 1) { m += 12; y--; }
+        while (m > 12) { m -= 12; y++; }
+        var d = Math.min(p.d, wapMonthLength(y, m));
+        return { y: y, m: m, d: d };
+    }
+
     function wapFillSameLastYear() {
         var f = wapDateFields();
         if (!f.from || !f.to || !f.cmpFrom || !f.cmpTo) return false;
         var pf = wapParseJalali(f.from.value);
         var pt = wapParseJalali(f.to.value);
         if (!pf || !pt) return false;
-        var lenFn = (window.WAP_JalaliCal && WAP_JalaliCal.monthLength)
-            ? WAP_JalaliCal.monthLength
-            : function (y, m) { return m <= 6 ? 31 : (m <= 11 ? 30 : 29); };
         var y1 = pf.y - 1;
         var y2 = pt.y - 1;
-        var d1 = Math.min(pf.d, lenFn(y1, pf.m));
-        var d2 = Math.min(pt.d, lenFn(y2, pt.m));
+        var d1 = Math.min(pf.d, wapMonthLength(y1, pf.m));
+        var d2 = Math.min(pt.d, wapMonthLength(y2, pt.m));
         f.cmpFrom.value = wapFmtJalali(y1, pf.m, d1);
         f.cmpTo.value = wapFmtJalali(y2, pt.m, d2);
         return true;
     }
 
-    // چیپ‌های بازه سریع (بازه اصلی) — بلافاصله اعمال + مقایسه پارسال
+    /** پر کردن بازه مقایسه با ماه قبلِ بازه اصلی (دو خط روی‌هم). */
+    function wapFillPreviousMonth() {
+        var f = wapDateFields();
+        if (!f.from || !f.to || !f.cmpFrom || !f.cmpTo) return false;
+        var pf = wapParseJalali(f.from.value);
+        var pt = wapParseJalali(f.to.value);
+        if (!pf || !pt) return false;
+        var fullMonth = pf.y === pt.y && pf.m === pt.m
+            && pf.d === 1 && pt.d === wapMonthLength(pt.y, pt.m);
+        if (fullMonth) {
+            var prev = wapShiftMonthParts({ y: pf.y, m: pf.m, d: 1 }, -1);
+            f.cmpFrom.value = wapFmtJalali(prev.y, prev.m, 1);
+            f.cmpTo.value = wapFmtJalali(prev.y, prev.m, wapMonthLength(prev.y, prev.m));
+            return true;
+        }
+        var a = wapShiftMonthParts(pf, -1);
+        var b = wapShiftMonthParts(pt, -1);
+        f.cmpFrom.value = wapFmtJalali(a.y, a.m, a.d);
+        f.cmpTo.value = wapFmtJalali(b.y, b.m, b.d);
+        return true;
+    }
+
+    // چیپ‌های بازه سریع (بازه اصلی) — بلافاصله اعمال + مقایسه ماه قبل
     document.querySelectorAll('#wap_presets .wap-chip').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var from = document.getElementById('wap_date_from');
@@ -103,7 +138,7 @@
                 c.classList.remove('is-active');
             });
             btn.classList.add('is-active');
-            wapFillSameLastYear();
+            wapFillPreviousMonth();
             wapSubmitFilters();
         });
     });
@@ -124,10 +159,21 @@
                 });
                 btn.classList.add('is-active');
                 if (target === 'primary') {
-                    wapFillSameLastYear();
+                    wapFillPreviousMonth();
                 }
                 wapSubmitFilters();
             });
+        });
+    });
+
+    // یک‌کلیک: ماه قبل + اعمال فیلتر (دو خط روی‌هم)
+    document.querySelectorAll('[data-wap-compare-previous-month]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (!wapFillPreviousMonth()) {
+                wapToast('ابتدا بازه اصلی (از/تا) را انتخاب کنید، بعد «ماه قبل» را بزنید.');
+                return;
+            }
+            wapSubmitFilters();
         });
     });
 
