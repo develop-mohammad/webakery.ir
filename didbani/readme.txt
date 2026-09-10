@@ -4,7 +4,7 @@ Tags: seo, rank, bing, google, competitor, crawl
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 
 رصد صفحات عمومی رقبا و رتبه در گوگل و بینگ از طریق API — بدون اسکرپ HTML موتور جستجو.
@@ -27,6 +27,10 @@ License: GPLv2 or later
 3. پروژه بسازید و کلید API را در تنظیمات وارد کنید
 
 == Changelog ==
+
+= 1.1.0 =
+* رتبهٔ موبایل به‌تفکیک شهرهای ایران
+* نمایش رشد و افت نسبت به بررسی قبلی
 
 = 1.0.0 =
 * نسخه اولیه

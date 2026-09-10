@@ -51,6 +51,38 @@ defined( 'ABSPATH' ) || exit;
 		</tr>
 	</table>
 
+	<h2 class="did-h2">موبایل و شهرهای ایران</h2>
+	<table class="form-table" role="presentation">
+		<tr>
+			<th><label for="rank_device">دیوایس نتایج</label></th>
+			<td>
+				<select id="rank_device" name="settings[rank_device]">
+					<option value="mobile" <?php selected( $s['rank_device'], 'mobile' ); ?>>موبایل</option>
+					<option value="desktop" <?php selected( $s['rank_device'], 'desktop' ); ?>>دسکتاپ</option>
+				</select>
+				<p class="description">برای دیدن رشد/افت در گوشی، روی موبایل بگذارید. گوگل با SerpAPI/DataForSEO دقیق است؛ بینگ با موقعیت جغرافیایی Azure.</p>
+			</td>
+		</tr>
+		<tr>
+			<th>شهرها</th>
+			<td>
+				<input type="hidden" name="settings[rank_cities][]" value="" />
+				<div class="did-cities">
+					<?php
+					$selected = DID_Settings::cities();
+					foreach ( DID_Geo::cities() as $slug => $info ) :
+						?>
+						<label class="did-city-check">
+							<input type="checkbox" name="settings[rank_cities][]" value="<?php echo esc_attr( $slug ); ?>" <?php checked( in_array( $slug, $selected, true ) ); ?> />
+							<?php echo esc_html( $info['fa'] ); ?>
+						</label>
+					<?php endforeach; ?>
+				</div>
+				<p class="description">هر شهر یک درخواست API جدا برای هر کیورد است. شهرهای زیاد یعنی هزینهٔ بیشتر.</p>
+			</td>
+		</tr>
+	</table>
+
 	<h2 class="did-h2">کرول و زمان‌بندی</h2>
 	<table class="form-table" role="presentation">
 		<tr>

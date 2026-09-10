@@ -20,6 +20,7 @@ $tables = array(
 	$wpdb->prefix . 'did_pages',
 	$wpdb->prefix . 'did_ranks',
 	$wpdb->prefix . 'did_jobs',
+	$wpdb->prefix . 'did_rank_history',
 );
 foreach ( $tables as $t ) {
 	$wpdb->query( "DROP TABLE IF EXISTS {$t}" ); // phpcs:ignore

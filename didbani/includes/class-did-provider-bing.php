@@ -15,7 +15,7 @@ class DID_Provider_Bing {
 	 * @param string $mkt
 	 * @return array{ok:bool,error:string,results:array,raw:mixed}
 	 */
-	public static function search( $keyword, $depth, $api_key, $mkt = 'fa-IR' ) {
+	public static function search( $keyword, $depth, $api_key, $mkt = 'fa-IR', $opts = array() ) {
 		$keyword = trim( (string) $keyword );
 		$api_key = trim( (string) $api_key );
 		if ( '' === $api_key ) {
@@ -35,14 +35,27 @@ class DID_Provider_Bing {
 				'textDecorations' => 'false',
 			)
 		);
+		$headers = array(
+			'Ocp-Apim-Subscription-Key' => $api_key,
+			'Accept'                    => 'application/json',
+		);
+		$ua = DID_UA;
+		if ( ! empty( $opts['device'] ) && 'mobile' === $opts['device'] ) {
+			$ua = DID_Geo::mobile_ua();
+		}
+		if ( ! empty( $opts['lat'] ) && ! empty( $opts['lng'] ) ) {
+			$headers['X-Search-Location'] = sprintf(
+				'lat:%.4f;long:%.4f;re:20000',
+				(float) $opts['lat'],
+				(float) $opts['lng']
+			);
+		}
 		$res = DID_Http::get(
 			$url,
 			array(
-				'timeout' => 20,
-				'headers' => array(
-					'Ocp-Apim-Subscription-Key' => $api_key,
-					'Accept'                    => 'application/json',
-				),
+				'timeout'     => 20,
+				'headers'     => $headers,
+				'user-agent'  => $ua,
 			)
 		);
 		if ( ! $res['ok'] ) {

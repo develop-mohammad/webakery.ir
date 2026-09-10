@@ -195,6 +195,91 @@
 	font-size: 12.5px;
 }
 
+.did-city-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0 0 16px;
+}
+
+.did-city-chip {
+	display: inline-block;
+	padding: 4px 12px;
+	border-radius: 99px;
+	background: #fff;
+	border: 1px solid #cbd5e1;
+	text-decoration: none;
+	color: #334155;
+	font-size: 13px;
+}
+
+.did-city-chip.did-city-on,
+.did-city-on {
+	background: #0f766e;
+	border-color: #0f766e;
+	color: #fff;
+}
+
+.did-delta {
+	font-size: 11px;
+	font-weight: 700;
+}
+
+.did-delta-up,
+.did-delta-enter {
+	color: #047857;
+}
+
+.did-delta-down,
+.did-delta-exit {
+	color: #b91c1c;
+}
+
+.did-delta-same {
+	color: #64748b;
+}
+
+.did-split {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+	margin: 16px 0;
+}
+
+@media (max-width: 800px) {
+	.did-split {
+		grid-template-columns: 1fr;
+	}
+}
+
+.did-movers {
+	margin: 0;
+	padding: 0 18px 0 0;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	padding: 12px 16px 12px 12px;
+}
+
+.did-movers li {
+	margin: 6px 0;
+	font-size: 13px;
+}
+
+.did-cities {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 14px;
+	max-width: 640px;
+}
+
+.did-city-check {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 13px;
+}
+
 .did-wrap [hidden] {
 	display: none !important;
 }

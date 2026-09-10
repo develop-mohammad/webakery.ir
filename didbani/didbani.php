@@ -2,7 +2,7 @@
 /**
  * Plugin Name: دیدبانی | رصد رقبا و رتبهٔ کلیدواژه
  * Description: کرول صفحات عمومی رقبا و رصد حضور/رتبه در گوگل و بینگ از طریق API رسمی — بدون اسکرپ HTML موتور جستجو.
- * Version:     1.0.0
+ * Version:     1.1.0
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'DID_LOADED' ) ) {
 	return;
 }
 define( 'DID_LOADED', true );
-define( 'DID_VERSION', '1.0.0' );
+define( 'DID_VERSION', '1.1.0' );
 define( 'DID_FILE', __FILE__ );
 define( 'DID_PATH', plugin_dir_path( __FILE__ ) );
 define( 'DID_URL', plugin_dir_url( __FILE__ ) );
@@ -30,6 +30,7 @@ require_once DID_PATH . 'includes/class-did-text.php';
 require_once DID_PATH . 'includes/class-did-url.php';
 require_once DID_PATH . 'includes/class-did-html.php';
 require_once DID_PATH . 'includes/class-did-robots.php';
+require_once DID_PATH . 'includes/class-did-geo.php';
 require_once DID_PATH . 'includes/class-did-settings.php';
 require_once DID_PATH . 'includes/class-did-db.php';
 require_once DID_PATH . 'includes/class-did-http.php';

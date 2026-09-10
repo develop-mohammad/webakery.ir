@@ -7,6 +7,7 @@
 define( 'ABSPATH', __DIR__ . '/' );
 define( 'DID_UA', 'Didbani/1.0 (+https://webakery.ir)' );
 
+require_once dirname( __DIR__ ) . '/includes/class-did-geo.php';
 require_once dirname( __DIR__ ) . '/includes/class-did-text.php';
 require_once dirname( __DIR__ ) . '/includes/class-did-url.php';
 require_once dirname( __DIR__ ) . '/includes/class-did-html.php';
@@ -148,6 +149,21 @@ did_assert( ! empty( $pack['ok'] ) && isset( $pack['results'][0] ), 'bing search
 
 $empty = DID_Provider_Bing::search( 'خرید فرش', 10, '', 'fa-IR' );
 did_assert( empty( $empty['ok'] ), 'bing without key fails' );
+
+/* رشد/افت و شهر */
+$up = DID_Rank::delta( 8, 3 );
+did_assert( 'up' === $up['kind'] && 5 === $up['steps'], 'rank improved is growth' );
+$down = DID_Rank::delta( 2, 9 );
+did_assert( 'down' === $down['kind'] && 7 === $down['steps'], 'rank worse is drop' );
+did_assert( 'enter' === DID_Rank::delta( 0, 4 )['kind'], 'new ranking is enter' );
+did_assert( 'exit' === DID_Rank::delta( 6, 0 )['kind'], 'lost ranking is exit' );
+did_assert( 'same' === DID_Rank::delta( 4, 4 )['kind'], 'unchanged rank' );
+did_assert( isset( DID_Geo::cities()['mashhad'] ), 'mashhad in iran cities' );
+did_assert( 'تهران' === DID_Geo::label( 'tehran' ), 'tehran label' );
+did_assert( array( 'tehran' ) === DID_Geo::sanitize_slugs( array( 'nope', '' ) ), 'invalid cities fallback tehran' );
+did_assert( 'mobile' === DID_Geo::sanitize_device( 'tablet' ), 'unknown device becomes mobile' );
+$qp = DID_Provider_Serp::query_params( 'خرید فرش', 10, 'k', 'fa', 'ir', array( 'device' => 'mobile', 'location' => 'Mashhad, Razavi Khorasan, Iran' ) );
+did_assert( 'mobile' === $qp['device'] && false !== strpos( $qp['location'], 'Mashhad' ), 'serpapi mobile mashhad params' );
 
 echo "\n{$pass} passed, {$fails} failed\n";
 exit( $fails ? 1 : 0 );

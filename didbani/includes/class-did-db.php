@@ -12,6 +12,8 @@ class DID_Db {
 	const PAGES    = 'did_pages';
 	const RANKS    = 'did_ranks';
 	const JOBS     = 'did_jobs';
+	const HISTORY  = 'did_rank_history';
+	const SCHEMA   = 2;
 
 	public static function table( $name ) {
 		global $wpdb;
@@ -29,6 +31,7 @@ class DID_Db {
 		$pages    = self::table( self::PAGES );
 		$ranks    = self::table( self::RANKS );
 		$jobs     = self::table( self::JOBS );
+		$history  = self::table( self::HISTORY );
 
 		dbDelta(
 			"CREATE TABLE {$projects} (
@@ -94,13 +97,33 @@ class DID_Db {
 				domain_id bigint(20) unsigned NOT NULL,
 				engine varchar(20) NOT NULL DEFAULT '',
 				provider varchar(30) NOT NULL DEFAULT '',
+				device varchar(16) NOT NULL DEFAULT 'mobile',
+				city varchar(40) NOT NULL DEFAULT 'tehran',
 				position smallint NOT NULL DEFAULT 0,
+				prev_position smallint NOT NULL DEFAULT 0,
 				result_url text NULL,
 				result_title text NULL,
 				approximate tinyint(1) NOT NULL DEFAULT 0,
 				checked_at datetime DEFAULT NULL,
 				PRIMARY KEY  (id),
-				KEY lookup (project_id, keyword_id, domain_id, engine)
+				KEY lookup (project_id, keyword_id, domain_id, engine),
+				KEY lookup_geo (project_id, keyword_id, domain_id, engine, device, city)
+			) {$charset};\n"
+		);
+
+		dbDelta(
+			"CREATE TABLE {$history} (
+				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				project_id bigint(20) unsigned NOT NULL,
+				keyword_id bigint(20) unsigned NOT NULL,
+				domain_id bigint(20) unsigned NOT NULL,
+				engine varchar(20) NOT NULL DEFAULT '',
+				device varchar(16) NOT NULL DEFAULT 'mobile',
+				city varchar(40) NOT NULL DEFAULT 'tehran',
+				position smallint NOT NULL DEFAULT 0,
+				checked_at datetime DEFAULT NULL,
+				PRIMARY KEY  (id),
+				KEY slice (project_id, keyword_id, domain_id, engine, device, city, id)
 			) {$charset};\n"
 		);
 
@@ -118,6 +141,17 @@ class DID_Db {
 				KEY project_status (project_id, status)
 			) {$charset};\n"
 		);
+	}
+
+	public static function maybe_upgrade() {
+		if ( ! function_exists( 'get_option' ) ) {
+			return;
+		}
+		$v = (int) get_option( 'did_db_version', 0 );
+		if ( $v < self::SCHEMA ) {
+			self::install();
+			update_option( 'did_db_version', self::SCHEMA, false );
+		}
 	}
 
 	public static function now() {
@@ -169,6 +203,7 @@ class DID_Db {
 		$wpdb->delete( self::table( self::KEYWORDS ), array( 'project_id' => $id ) );
 		$wpdb->delete( self::table( self::PAGES ), array( 'project_id' => $id ) );
 		$wpdb->delete( self::table( self::RANKS ), array( 'project_id' => $id ) );
+		$wpdb->delete( self::table( self::HISTORY ), array( 'project_id' => $id ) );
 		$wpdb->delete( self::table( self::JOBS ), array( 'project_id' => $id ) );
 	}
 
@@ -344,31 +379,124 @@ class DID_Db {
 
 	/* ─── رتبه ─── */
 
-	public static function ranks( $project_id ) {
+	public static function ranks( $project_id, $city = '', $device = '' ) {
 		global $wpdb;
 		$t = self::table( self::RANKS );
+		if ( '' !== $city && '' !== $device ) {
+			return $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM {$t} WHERE project_id = %d AND city = %s AND device = %s",
+					(int) $project_id,
+					$city,
+					$device
+				),
+				ARRAY_A
+			); // phpcs:ignore
+		}
+		if ( '' !== $device ) {
+			return $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM {$t} WHERE project_id = %d AND device = %s",
+					(int) $project_id,
+					$device
+				),
+				ARRAY_A
+			); // phpcs:ignore
+		}
+		if ( '' !== $city ) {
+			return $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT * FROM {$t} WHERE project_id = %d AND city = %s",
+					(int) $project_id,
+					$city
+				),
+				ARRAY_A
+			); // phpcs:ignore
+		}
 		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$t} WHERE project_id = %d", (int) $project_id ), ARRAY_A ); // phpcs:ignore
 	}
 
 	public static function upsert_rank( array $row ) {
 		global $wpdb;
-		$t   = self::table( self::RANKS );
-		$ex  = $wpdb->get_var(
+		$t      = self::table( self::RANKS );
+		$device = isset( $row['device'] ) ? DID_Geo::sanitize_device( $row['device'] ) : 'mobile';
+		$city   = isset( $row['city'] ) ? $row['city'] : 'tehran';
+		if ( ! DID_Geo::city( $city ) ) {
+			$city = 'tehran';
+		}
+		$row['device'] = $device;
+		$row['city']   = $city;
+
+		$ex = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT id FROM {$t} WHERE project_id = %d AND keyword_id = %d AND domain_id = %d AND engine = %s",
+				"SELECT id, position FROM {$t} WHERE project_id = %d AND keyword_id = %d AND domain_id = %d AND engine = %s AND device = %s AND city = %s",
 				(int) $row['project_id'],
 				(int) $row['keyword_id'],
 				(int) $row['domain_id'],
-				$row['engine']
+				$row['engine'],
+				$device,
+				$city
+			),
+			ARRAY_A
+		); // phpcs:ignore
+
+		$prev = $ex ? (int) $ex['position'] : 0;
+		$row['prev_position'] = $prev;
+		$row['checked_at']    = self::now();
+
+		if ( $ex ) {
+			$wpdb->update( $t, $row, array( 'id' => (int) $ex['id'] ) );
+			$id = (int) $ex['id'];
+		} else {
+			$wpdb->insert( $t, $row );
+			$id = (int) $wpdb->insert_id;
+		}
+
+		self::append_history( $row );
+		return $id;
+	}
+
+	private static function append_history( array $row ) {
+		global $wpdb;
+		$h = self::table( self::HISTORY );
+		$wpdb->insert(
+			$h,
+			array(
+				'project_id' => (int) $row['project_id'],
+				'keyword_id' => (int) $row['keyword_id'],
+				'domain_id'  => (int) $row['domain_id'],
+				'engine'     => $row['engine'],
+				'device'     => $row['device'],
+				'city'       => $row['city'],
+				'position'   => (int) $row['position'],
+				'checked_at' => self::now(),
+			)
+		);
+		$keep = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT id FROM {$h} WHERE project_id = %d AND keyword_id = %d AND domain_id = %d AND engine = %s AND device = %s AND city = %s ORDER BY id DESC LIMIT 40",
+				(int) $row['project_id'],
+				(int) $row['keyword_id'],
+				(int) $row['domain_id'],
+				$row['engine'],
+				$row['device'],
+				$row['city']
 			)
 		); // phpcs:ignore
-		$row['checked_at'] = self::now();
-		if ( $ex ) {
-			$wpdb->update( $t, $row, array( 'id' => (int) $ex ) );
-			return (int) $ex;
+		if ( $keep ) {
+			$in = implode( ',', array_map( 'intval', $keep ) );
+			$wpdb->query(
+				$wpdb->prepare(
+					"DELETE FROM {$h} WHERE project_id = %d AND keyword_id = %d AND domain_id = %d AND engine = %s AND device = %s AND city = %s AND id NOT IN ({$in})",
+					(int) $row['project_id'],
+					(int) $row['keyword_id'],
+					(int) $row['domain_id'],
+					$row['engine'],
+					$row['device'],
+					$row['city']
+				)
+			); // phpcs:ignore
 		}
-		$wpdb->insert( $t, $row );
-		return (int) $wpdb->insert_id;
 	}
 
 	/* ─── صف ─── */

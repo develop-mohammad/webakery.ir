@@ -16,7 +16,7 @@ class DID_Provider_Serp {
 	 * @param string $gl
 	 * @return array{ok:bool,error:string,results:array,raw:mixed}
 	 */
-	public static function search( $keyword, $depth, $api_key, $hl = 'fa', $gl = 'ir' ) {
+	public static function search( $keyword, $depth, $api_key, $hl = 'fa', $gl = 'ir', $opts = array() ) {
 		$keyword = trim( (string) $keyword );
 		$api_key = trim( (string) $api_key );
 		if ( '' === $api_key ) {
@@ -26,16 +26,7 @@ class DID_Provider_Serp {
 			return self::fail( 'کلیدواژه خالی است.' );
 		}
 		$num = min( 20, max( 10, (int) $depth ) );
-		$url = self::ENDPOINT . '?' . http_build_query(
-			array(
-				'engine'  => 'google',
-				'q'       => $keyword,
-				'hl'      => $hl ? $hl : 'fa',
-				'gl'      => $gl ? $gl : 'ir',
-				'num'     => $num,
-				'api_key' => $api_key,
-			)
-		);
+		$url = self::ENDPOINT . '?' . http_build_query( self::query_params( $keyword, $num, $api_key, $hl, $gl, $opts ) );
 		$res = DID_Http::get( $url, array( 'timeout' => 25, 'headers' => array( 'Accept' => 'application/json' ) ) );
 		if ( ! $res['ok'] ) {
 			return self::fail( $res['error'] ? $res['error'] : 'پاسخ SerpAPI نامعتبر بود.' );
@@ -79,6 +70,26 @@ class DID_Provider_Serp {
 		return $out;
 	}
 
+	/**
+	 * @param array $opts
+	 * @return array
+	 */
+	public static function query_params( $keyword, $num, $api_key, $hl, $gl, $opts = array() ) {
+		$q = array(
+			'engine'  => 'google',
+			'q'       => $keyword,
+			'hl'      => $hl ? $hl : 'fa',
+			'gl'      => $gl ? $gl : 'ir',
+			'num'     => (int) $num,
+			'api_key' => $api_key,
+			'device'  => ! empty( $opts['device'] ) ? $opts['device'] : 'mobile',
+		);
+		if ( ! empty( $opts['location'] ) ) {
+			$q['location'] = (string) $opts['location'];
+		}
+		return $q;
+	}
+
 	private static function fail( $message ) {
 		return array(
 			'ok'      => false,
@@ -96,7 +107,7 @@ class DID_Provider_DataForSeo {
 
 	const ENDPOINT = 'https://api.dataforseo.com/v3/serp/google/organic/live/regular';
 
-	public static function search( $keyword, $depth, $login, $password ) {
+	public static function search( $keyword, $depth, $login, $password, $opts = array() ) {
 		$keyword  = trim( (string) $keyword );
 		$login    = trim( (string) $login );
 		$password = (string) $password;
@@ -107,12 +118,16 @@ class DID_Provider_DataForSeo {
 			return self::fail( 'کلیدواژه خالی است.' );
 		}
 		$depth = min( 50, max( 10, (int) $depth ) );
+		$loc   = ! empty( $opts['location_name'] ) ? (string) $opts['location_name'] : 'Iran';
+		$dev   = ! empty( $opts['device'] ) ? $opts['device'] : 'mobile';
 		$body  = wp_json_encode(
 			array(
 				array(
 					'keyword'       => $keyword,
-					'location_name' => 'Iran',
+					'location_name' => $loc,
 					'language_code' => 'fa',
+					'device'        => 'desktop' === $dev ? 'desktop' : 'mobile',
+					'os'            => 'desktop' === $dev ? 'windows' : 'android',
 					'depth'         => $depth,
 				),
 			)

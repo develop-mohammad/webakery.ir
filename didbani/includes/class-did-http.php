@@ -37,7 +37,7 @@ class DID_Http {
 		$req = array(
 			'timeout'     => isset( $args['timeout'] ) ? (int) $args['timeout'] : 15,
 			'redirection' => 4,
-			'user-agent'  => DID_UA,
+			'user-agent'  => ! empty( $args['user-agent'] ) ? (string) $args['user-agent'] : DID_UA,
 			'headers'     => $headers,
 			'sslverify'   => true,
 		);

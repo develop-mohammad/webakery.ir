@@ -153,6 +153,12 @@ class DID_Admin {
 		$keywords = $pid ? DID_Db::keywords( $pid ) : array();
 		$s        = DID_Settings::all();
 		$usable   = DID_Plugin::is_usable();
+		$device   = DID_Settings::device();
+		$cities   = DID_Settings::cities();
+		$city     = isset( $_GET['city'] ) ? sanitize_key( wp_unslash( $_GET['city'] ) ) : ''; // phpcs:ignore
+		if ( ! in_array( $city, $cities, true ) ) {
+			$city = $cities ? $cities[0] : 'tehran';
+		}
 
 		include DID_PATH . 'templates/layout.php';
 	}
@@ -200,16 +206,42 @@ class DID_Admin {
 		}
 		$pos = (int) $row['position'];
 		if ( $pos < 1 ) {
-			return '<span class="did-pill did-pill-off">نیست</span>';
+			$html = '<span class="did-pill did-pill-off">نیست</span>';
+		} else {
+			$html = '<span class="did-pill did-pill-on">' . (int) $pos . '</span>';
+		}
+		$chg = DID_Rank::delta( isset( $row['prev_position'] ) ? $row['prev_position'] : 0, $pos );
+		if ( $chg['label'] ) {
+			$html .= ' <span class="did-delta did-delta-' . esc_attr( $chg['kind'] ) . '">' . esc_html( $chg['label'] ) . '</span>';
+		}
+		if ( ! empty( $row['approximate'] ) ) {
+			$html .= ' <span class="did-approx" title="نتیجهٔ CSE تقریبی است">تقریبی</span>';
 		}
 		$url = ! empty( $row['result_url'] ) ? $row['result_url'] : '';
-		$tag = '<span class="did-pill did-pill-on">' . (int) $pos . '</span>';
-		if ( ! empty( $row['approximate'] ) ) {
-			$tag .= ' <span class="did-approx" title="نتیجهٔ CSE تقریبی است">تقریبی</span>';
+		if ( $url && $pos >= 1 ) {
+			return '<a class="did-rank-link" href="' . esc_url( $url ) . '" target="_blank" rel="noopener">' . $html . '</a>';
 		}
-		if ( $url ) {
-			return '<a class="did-rank-link" href="' . esc_url( $url ) . '" target="_blank" rel="noopener">' . $tag . '</a>';
+		return $html;
+	}
+
+	public static function city_nav( $tab, $pid, $cities, $current ) {
+		if ( count( $cities ) < 2 ) {
+			return;
 		}
-		return $tag;
+		echo '<div class="did-city-nav">';
+		foreach ( $cities as $slug ) {
+			$url = add_query_arg(
+				array(
+					'page'    => 'didbani',
+					'tab'     => $tab,
+					'project' => $pid,
+					'city'    => $slug,
+				),
+				admin_url( 'admin.php' )
+			);
+			$cls = $slug === $current ? ' did-city-on' : '';
+			echo '<a class="did-city-chip' . esc_attr( $cls ) . '" href="' . esc_url( $url ) . '">' . esc_html( DID_Geo::label( $slug ) ) . '</a>';
+		}
+		echo '</div>';
 	}
 }

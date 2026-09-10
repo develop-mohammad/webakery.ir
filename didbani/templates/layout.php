@@ -12,6 +12,9 @@ defined( 'ABSPATH' ) || exit;
 /** @var array $keywords */
 /** @var array $s */
 /** @var bool $usable */
+/** @var string $device */
+/** @var array $cities */
+/** @var string $city */
 ?>
 <div class="wrap did-wrap" dir="rtl">
 	<h1 class="did-h1">

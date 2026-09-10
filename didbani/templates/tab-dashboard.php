@@ -1,6 +1,6 @@
 <?php
 defined( 'ABSPATH' ) || exit;
-$matrix   = $pid ? DID_Rank::matrix( $pid ) : array();
+$matrix   = $pid ? DID_Rank::matrix( $pid, $city, $device ) : array();
 $crawl_job = $pid ? DID_Db::latest_job( $pid, 'crawl' ) : null;
 $rank_job  = $pid ? DID_Db::latest_job( $pid, 'rank' ) : null;
 $pages_n   = 0;
@@ -41,11 +41,15 @@ if ( $pid ) {
 	</div>
 
 	<p class="did-note">
-		رتبه از API است نه اسکرپ گوگل. بدون کلید Bing یا SerpAPI/DataForSEO عدد رتبه خالی می‌ماند.
+		رتبهٔ فعلی برای <strong><?php echo esc_html( DID_Geo::device_label( $device ) ); ?></strong>
+		در <strong><?php echo esc_html( DID_Geo::label( $city ) ); ?></strong>.
+		رشد/افت و مقایسهٔ شهرها در تب «رتبه‌ها» است.
+		رتبه از API است نه اسکرپ گوگل.
 		<?php if ( $crawl_job ) : ?>
 			<br />آخرین کرول: <?php echo esc_html( $crawl_job['status'] . ' — ' . $crawl_job['message'] ); ?>
 		<?php endif; ?>
 	</p>
+	<?php DID_Admin::city_nav( 'dashboard', $pid, $cities, $city ); ?>
 
 	<?php if ( $keywords && $domains ) : ?>
 		<div class="did-table-wrap">

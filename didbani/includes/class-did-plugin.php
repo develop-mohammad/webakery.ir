@@ -15,6 +15,7 @@ class DID_Plugin {
 
 	public static function activate() {
 		DID_Db::install();
+		DID_Db::maybe_upgrade();
 		if ( ! get_option( DID_Settings::OPTION ) ) {
 			add_option( DID_Settings::OPTION, DID_Settings::defaults(), '', false );
 		}
@@ -26,6 +27,7 @@ class DID_Plugin {
 	}
 
 	private function __construct() {
+		DID_Db::maybe_upgrade();
 		$this->license();
 		DID_Ajax::hooks();
 		DID_Admin::hooks();
@@ -51,6 +53,7 @@ class DID_Plugin {
 					'کرول صفحات عمومی رقبا (robots و sitemap)',
 					'رصد رتبه در بینگ با Azure API',
 					'رصد رتبه در گوگل با SerpAPI / DataForSEO',
+					'رصد رتبه موبایل در شهرهای ایران و نمایش رشد/افت',
 					'ماتریس کیورد × دامنه × موتور جستجو',
 					'به‌روزرسانی خودکار از webakery.ir',
 				),

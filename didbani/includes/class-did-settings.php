@@ -21,6 +21,8 @@ class DID_Settings {
 			'country'              => 'ir',
 			'schedule'             => 'off',
 			'active_project'       => 0,
+			'rank_device'          => 'mobile',
+			'rank_cities'          => array( 'tehran' ),
 		);
 	}
 
@@ -89,7 +91,40 @@ class DID_Settings {
 			$out['country'] = 'ir';
 		}
 
+		if ( array_key_exists( 'rank_device', $input ) ) {
+			$out['rank_device'] = DID_Geo::sanitize_device( $input['rank_device'] );
+		}
+
+		if ( array_key_exists( 'rank_cities', $input ) ) {
+			$raw = $input['rank_cities'];
+			if ( is_string( $raw ) ) {
+				$raw = preg_split( '/[\s,]+/', $raw );
+			}
+			if ( ! is_array( $raw ) ) {
+				$raw = array();
+			}
+			$out['rank_cities'] = DID_Geo::sanitize_slugs( $raw );
+		}
+
 		update_option( self::OPTION, $out, false );
 		return $out;
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public static function cities() {
+		$raw = self::get( 'rank_cities', array( 'tehran' ) );
+		if ( is_string( $raw ) ) {
+			$raw = preg_split( '/[\s,]+/', $raw );
+		}
+		if ( ! is_array( $raw ) ) {
+			$raw = array();
+		}
+		return DID_Geo::sanitize_slugs( $raw );
+	}
+
+	public static function device() {
+		return DID_Geo::sanitize_device( (string) self::get( 'rank_device', 'mobile' ) );
 	}
 }

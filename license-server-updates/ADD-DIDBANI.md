@@ -10,13 +10,13 @@
 'didbani' => [
 	'name'         => 'دیدبانی',
 	'price'        => 399000,          // تومان
-	'version'      => '1.0.0',
+	'version'      => '1.1.0',
 	'file'         => 'didbani.zip',
 	'homepage'     => 'https://webakery.ir/product/didbani/',
 	'requires'     => '5.8',
 	'requires_php' => '7.4',
 	'tested'       => '6.7',
-	'changelog'    => '<h4>1.0.0</h4><ul><li>انتشار اولیه: کرول رقبا و رتبه گوگل/بینگ از API</li></ul>',
+	'changelog'    => '<h4>1.1.0</h4><ul><li>رتبه موبایل در شهرهای ایران + رشد/افت</li></ul><h4>1.0.0</h4><ul><li>انتشار اولیه: کرول رقبا و رتبه گوگل/بینگ از API</li></ul>',
 ],
 ```
 
@@ -45,12 +45,12 @@
 
 ```php
 'didbani' => [
-	'version'      => '1.0.0',
+	'version'      => '1.1.0',
 	'package'      => 'https://webakery.ir/license-server/updates/didbani.zip',
 	'requires'     => '5.8',
 	'tested'       => '6.7',
 	'requires_php' => '7.4',
-	'changelog'    => 'نسخه ۱.۰.۰: انتشار اولیه.',
+	'changelog'    => 'نسخه ۱.۱.۰: رتبه موبایل در شهرهای ایران و نمایش رشد/افت.',
 ],
 ```
 
