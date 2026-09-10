@@ -22,6 +22,7 @@ class WBGS_Admin {
 		add_action( 'wp_ajax_wbgs_queries', array( $this, 'ajax_queries' ) );
 		add_action( 'wp_ajax_wbgs_fetch', array( $this, 'ajax_fetch' ) );
 		add_action( 'wp_ajax_wbgs_volumes', array( $this, 'ajax_volumes' ) );
+		add_action( 'wp_ajax_wbgs_trends', array( $this, 'ajax_trends' ) );
 		add_action( 'wp_ajax_wbgs_report_save', array( $this, 'ajax_report_save' ) );
 		add_action( 'wp_ajax_wbgs_report_list', array( $this, 'ajax_report_list' ) );
 		add_action( 'wp_ajax_wbgs_report_get', array( $this, 'ajax_report_get' ) );
@@ -29,6 +30,7 @@ class WBGS_Admin {
 		add_action( 'wp_ajax_nopriv_wbgs_queries', array( $this, 'ajax_queries' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_fetch', array( $this, 'ajax_fetch' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_volumes', array( $this, 'ajax_volumes' ) );
+		add_action( 'wp_ajax_nopriv_wbgs_trends', array( $this, 'ajax_trends' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_report_save', array( $this, 'ajax_report_save' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_report_list', array( $this, 'ajax_report_list' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_report_get', array( $this, 'ajax_report_get' ) );
@@ -227,6 +229,29 @@ class WBGS_Admin {
 					'volumes'     => $out['volumes'],
 				),
 				$out['configured'] ? 502 : 400
+			);
+		}
+		wp_send_json_success( $out );
+	}
+
+	public function ajax_trends() {
+		$this->ajax_guard();
+		$this->rate_limit_front();
+
+		$settings = WBGS_Plugin::settings();
+		$seed     = isset( $_POST['seed'] ) ? wp_unslash( $_POST['seed'] ) : '';
+		$seed     = is_string( $seed ) ? $seed : '';
+		$out      = WBGS_Trends::payload( $settings['gl'], $settings['hl'], $seed );
+		if ( ! $out['ok'] ) {
+			wp_send_json_error(
+				array(
+					'message'  => 'خواندن ترند ایران ناموفق بود. لینک رسمی گوگل ترند را باز کنید.',
+					'explore'  => $out['explore'],
+					'trending' => $out['trending'],
+					'geo_fa'   => $out['geo_fa'],
+					'note'     => $out['note'],
+				),
+				502
 			);
 		}
 		wp_send_json_success( $out );

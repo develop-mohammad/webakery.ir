@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit;
 			<h2>عبارت‌ها</h2>
 			<span class="wbgs-count" id="wbgs-count">۰ عبارت</span>
 		</div>
-		<p class="wbgs-hint">دسته‌بندی از عبارت واقعی گوگل: طول و حجم، قصد جستجو، جغرافیا و زمان، مفهوم و ارتباط (خرید، قیمت، سوالی، ترین، شهر…)، برند، و پیشوند/پسوند ساختواژی. سرچ ماهانه فقط با Keyword Planner.</p>
+		<p class="wbgs-hint">ترند ایران از فید رسمی گوگل ترند (کشور IR) خوانده می‌شود؛ عدد آن حجم ماهانه نیست. سرچ ماهانه فقط با Keyword Planner.</p>
 		<?php
 		$empty_text = 'عبارت را بنویسید و دکمه را بزنید.';
 		include WBGS_PATH . 'templates/results-chrome.php';

@@ -189,6 +189,7 @@
 .wbgs-intent-seasonal { background: #fce7f3; color: #be185d; }
 .wbgs-intent-lsi { background: #e0e7ff; color: #3730a3; }
 .wbgs-intent-affix { background: #ecfeff; color: #0e7490; }
+.wbgs-intent-trend { background: #dcfce7; color: #166534; }
 .wbgs-intent-branded { background: #fef9c3; color: #854d0e; }
 .wbgs-intent-unbranded { background: #f1f5f9; color: #475569; }
 
@@ -550,6 +551,45 @@
 
 .wbgs-g .wbgs-tax-empty {
 	color: #9aa0a6;
+}
+
+.wbgs-g .wbgs-trends {
+	margin-top: 10px;
+}
+
+.wbgs-g .wbgs-trends-head h2 {
+	margin: 0 0 6px;
+	font-size: 16px;
+}
+
+.wbgs-g .wbgs-trends-links a,
+.wbgs-g .wbgs-trends-more {
+	color: #1a73e8;
+	text-decoration: none;
+	font-size: 13px;
+}
+
+.wbgs-g .wbgs-trends-hit {
+	background: #dcfce7;
+	color: #166534;
+	padding: 8px 10px;
+	border-radius: 8px;
+	font-size: 13px;
+}
+
+.wbgs-g .wbgs-trends-list {
+	margin: 10px 0 0;
+	padding: 0 18px 0 0;
+}
+
+.wbgs-g .wbgs-trends-list li {
+	margin: 0 0 10px;
+	line-height: 1.7;
+}
+
+.wbgs-g .wbgs-trends-news {
+	font-size: 12px;
+	color: #5f6368;
 }
 
 @media (max-width: 640px) {

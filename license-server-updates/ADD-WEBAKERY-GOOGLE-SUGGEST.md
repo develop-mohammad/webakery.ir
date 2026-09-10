@@ -10,13 +10,13 @@
 'webakery-google-suggest' => [
 	'name'         => 'سجست‌یاب گوگل',
 	'price'        => 199000,          // تومان
-	'version'      => '1.2.4',
+	'version'      => '1.2.5',
 	'file'         => 'webakery-google-suggest.zip',
 	'homepage'     => 'https://webakery.ir/product/webakery-google-suggest/',
 	'requires'     => '5.8',
 	'requires_php' => '7.4',
 	'tested'       => '6.7',
-	'changelog'    => '<h4>1.2.4</h4><ul><li>پیشوند و پسوند رایج (خرید، قیمت، چیست، ترین، شهر) و تحویل طبقه‌بندی‌شده</li></ul><h4>1.2.3</h4><ul><li>شورت‌کد [webakery_suggest] برای قرار دادن در هر برگه</li><li>استفاده مهمان به‌طور پیش‌فرض</li></ul>',
+	'changelog'    => '<h4>1.2.5</h4><ul><li>ترند روزانه گوگل برای ایران از فید رسمی RSS</li></ul><h4>1.2.4</h4><ul><li>پیشوند و پسوند رایج و تحویل طبقه‌بندی‌شده</li></ul>',
 ],
 ```
 

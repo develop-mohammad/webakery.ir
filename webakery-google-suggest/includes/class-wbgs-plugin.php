@@ -91,6 +91,8 @@ class WBGS_Plugin {
 				'comp_note'=> 'امتیاز رقابت نسبی از سجست است؛ KD اهرفس نیست.',
 				'need_b'   => 'گزارش دوم را از تاریخچه انتخاب کنید یا عبارت دوم را استخراج کنید.',
 				'usage'    => 'امروز %s درخواست به گوگل',
+				'trends'   => 'در حال خواندن ترند گوگل برای ایران…',
+				'trends_off' => 'ترند ایران از فید رسمی گوگل خوانده نشد. از لینک ترند باز کنید.',
 			),
 			'longtailCap' => 50,
 			'canSave'     => function_exists( 'is_user_logged_in' ) && is_user_logged_in(),
@@ -110,6 +112,7 @@ class WBGS_Plugin {
 		require_once WBGS_PATH . 'includes/class-wbgs-work.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-reports.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-ads.php';
+		require_once WBGS_PATH . 'includes/class-wbgs-trends.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-frontend.php';
 		WBGS_Frontend::instance();
 
@@ -140,6 +143,7 @@ class WBGS_Plugin {
 					'درخت محتوا، اینتنت و پیلار کلاستر',
 					'فیلتر سوالی، بریف محتوا و عنوان/متا از عبارت‌های واقعی',
 					'امتیاز رقابت نسبی (نه KD ساختگی)',
+					'ترند روزانه گوگل برای ایران (فید رسمی RSS، geo=IR)',
 					'تاریخچه گزارش، مقایسه دو عبارت، CSV اکسل',
 					'میزان سرچ ماهانه از Google Ads Keyword Planner',
 					'خروجی CSV و کپی یکجا',

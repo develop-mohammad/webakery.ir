@@ -26,6 +26,8 @@
 	var viewTreeBtn = document.getElementById('wbgs-view-tree');
 	var viewClusterBtn = document.getElementById('wbgs-view-cluster');
 	var viewTaxBtn = document.getElementById('wbgs-view-tax');
+	var viewTrendsBtn = document.getElementById('wbgs-view-trends');
+	var trendsEl = document.getElementById('wbgs-trends');
 	var viewBriefBtn = document.getElementById('wbgs-view-brief');
 	var viewCompareBtn = document.getElementById('wbgs-view-compare');
 	var filtersEl = document.getElementById('wbgs-intent-filters');
@@ -52,6 +54,8 @@
 	var lastSeedA = '';
 	var lastSeedB = '';
 	var lastCompare = null;
+	var iranTrends = [];
+	var trendsMeta = null;
 
 	var INTENT_RULES = {
 		navigational: ['دیجی کالا', 'دیجیکالا', 'آمازون', 'دیوار', 'اینستاگرام', 'ترب', 'amazon', 'digikala', 'instagram', '.com', '.ir'],
@@ -364,6 +368,33 @@
 		return false;
 	}
 
+	function trendHit(text) {
+		var t = String(text || '').replace(/\s+/g, ' ').trim();
+		if (!t) {
+			return null;
+		}
+		for (var i = 0; i < iranTrends.length; i++) {
+			var title = String(iranTrends[i].title || '').replace(/\s+/g, ' ').trim();
+			if (!title) {
+				continue;
+			}
+			if (t === title) {
+				return iranTrends[i];
+			}
+			if (title.length >= 2 && t.indexOf(title) !== -1) {
+				return iranTrends[i];
+			}
+			if (t.length >= 3 && title.indexOf(t) !== -1) {
+				return iranTrends[i];
+			}
+		}
+		return null;
+	}
+
+	function isIranTrend(text) {
+		return !!trendHit(text);
+	}
+
 	function rowAffixIds(text) {
 		return affixIds().filter(function (id) {
 			return textHasAffix(text, id);
@@ -403,6 +434,11 @@
 		if (intentFilter === 'branded') {
 			return items.filter(function (row) {
 				return isBranded(row.text);
+			});
+		}
+		if (intentFilter === 'iran_trend') {
+			return items.filter(function (row) {
+				return isIranTrend(row.text);
 			});
 		}
 		if (intentFilter === 'unbranded') {
@@ -498,6 +534,9 @@
 		if (compareEl) {
 			compareEl.hidden = view !== 'compare';
 		}
+		if (trendsEl) {
+			trendsEl.hidden = view !== 'trends';
+		}
 		if (viewListBtn) {
 			viewListBtn.classList.toggle('wbgs-view-on', view === 'list');
 		}
@@ -515,6 +554,9 @@
 		}
 		if (viewCompareBtn) {
 			viewCompareBtn.classList.toggle('wbgs-view-on', view === 'compare');
+		}
+		if (viewTrendsBtn) {
+			viewTrendsBtn.classList.toggle('wbgs-view-on', view === 'trends');
 		}
 	}
 
@@ -543,15 +585,20 @@
 				return;
 			}
 			any = true;
-			var label = key === 'all' ? 'همه' : (
-				key === 'short' || key === 'mid' || key === 'longtail'
-					? lengthLabel(key === 'longtail' ? 'long' : key)
-					: (key.indexOf('affix_') === 0
-						? affixTitle(key.slice(6))
-						: (key === 'question' ? 'سوالی' : (
-							(cfg.extras && cfg.extras[key]) || intentLabel(key)
-						)))
-			);
+			var label = 'همه';
+			if (key !== 'all') {
+				if (key === 'short' || key === 'mid' || key === 'longtail') {
+					label = lengthLabel(key === 'longtail' ? 'long' : key);
+				} else if (key.indexOf('affix_') === 0) {
+					label = affixTitle(key.slice(6));
+				} else if (key === 'question') {
+					label = 'سوالی';
+				} else if (key === 'iran_trend') {
+					label = 'ترند ایران';
+				} else {
+					label = (cfg.extras && cfg.extras[key]) || intentLabel(key);
+				}
+			}
 			var btn = document.createElement('button');
 			btn.type = 'button';
 			btn.className = key === intentFilter ? 'is-on' : '';
@@ -584,6 +631,7 @@
 		addFilterGroup(axisTitle('brand'), ['branded', 'unbranded']);
 		addFilterGroup(axisTitle('affix'), affixKeys('affix'));
 		addFilterGroup('سوالی', ['question']);
+		addFilterGroup('ترند ایران', ['iran_trend']);
 	}
 
 	function renderList() {
@@ -620,6 +668,10 @@
 			rowAffixIds(row.text).slice(0, 3).forEach(function (id) {
 				tag('wbgs-intent-affix', affixTitle(id));
 			});
+			var trend = trendHit(row.text);
+			if (trend) {
+				tag('wbgs-intent-trend', 'ترند ایران' + (trend.traffic ? ' ' + trend.traffic : ''));
+			}
 			tag(isBranded(row.text) ? 'wbgs-intent-branded' : 'wbgs-intent-unbranded', extraLabel(isBranded(row.text) ? 'branded' : 'unbranded'));
 			li.appendChild(kw);
 			li.appendChild(intentBadge(row));
@@ -1238,6 +1290,124 @@
 		taxEl.appendChild(taxAxis('۶', axisTitle('affix'), morphBuckets, true));
 	}
 
+	function renderTrends() {
+		if (!trendsEl) {
+			return;
+		}
+		trendsEl.innerHTML = '';
+		var head = document.createElement('div');
+		head.className = 'wbgs-trends-head';
+		var h = document.createElement('h2');
+		h.textContent = 'ترند گوگل — ' + ((trendsMeta && trendsMeta.geo_fa) || 'ایران');
+		head.appendChild(h);
+		var note = document.createElement('p');
+		note.className = 'wbgs-hint';
+		note.textContent = (trendsMeta && trendsMeta.note) || 'فید رسمی گوگل ترند برای کشور ایران. این عدد حجم ماهانه Keyword Planner نیست.';
+		head.appendChild(note);
+		var links = document.createElement('p');
+		links.className = 'wbgs-trends-links';
+		var seed = (seedEl.value || '').replace(/\s+/g, ' ').trim();
+		var explore = (trendsMeta && trendsMeta.explore) || '';
+		var trending = (trendsMeta && trendsMeta.trending) || 'https://trends.google.com/trending?geo=IR&hl=fa';
+		if (explore) {
+			var a1 = document.createElement('a');
+			a1.href = explore;
+			a1.target = '_blank';
+			a1.rel = 'noopener';
+			a1.textContent = seed ? ('نمودار علاقه برای «' + seed + '» در ایران') : 'باز کردن گوگل ترند ایران';
+			links.appendChild(a1);
+			links.appendChild(document.createTextNode(' · '));
+		}
+		var a2 = document.createElement('a');
+		a2.href = trending;
+		a2.target = '_blank';
+		a2.rel = 'noopener';
+		a2.textContent = 'ترندهای زنده ایران';
+		links.appendChild(a2);
+		head.appendChild(links);
+		if (trendsMeta && trendsMeta.seed_hit) {
+			var hit = document.createElement('p');
+			hit.className = 'wbgs-trends-hit';
+			hit.textContent = 'عبارت پایه الان در ترند ایران است' + (trendsMeta.seed_hit.traffic ? ' (' + trendsMeta.seed_hit.traffic + ')' : '');
+			head.appendChild(hit);
+		}
+		trendsEl.appendChild(head);
+		if (!iranTrends.length) {
+			var empty = document.createElement('p');
+			empty.className = 'wbgs-hint';
+			empty.textContent = 'هنوز ترند ایران بارگذاری نشده. دکمه «ترند ایران» را بزنید.';
+			trendsEl.appendChild(empty);
+			return;
+		}
+		var ol = document.createElement('ol');
+		ol.className = 'wbgs-trends-list';
+		iranTrends.forEach(function (row) {
+			var li = document.createElement('li');
+			var name = document.createElement('strong');
+			name.textContent = row.title;
+			li.appendChild(name);
+			if (row.traffic) {
+				var traf = document.createElement('span');
+				traf.className = 'wbgs-intent wbgs-intent-trend';
+				traf.textContent = row.traffic;
+				traf.title = 'تقریب جستجوی ترند گوگل، نه حجم ماهانه';
+				li.appendChild(document.createTextNode(' '));
+				li.appendChild(traf);
+			}
+			if (row.explore) {
+				var more = document.createElement('a');
+				more.href = row.explore;
+				more.target = '_blank';
+				more.rel = 'noopener';
+				more.className = 'wbgs-trends-more';
+				more.textContent = 'نمودار ایران';
+				li.appendChild(document.createTextNode(' '));
+				li.appendChild(more);
+			}
+			if (row.news && row.news.length && row.news[0].title) {
+				var news = document.createElement('div');
+				news.className = 'wbgs-trends-news';
+				news.textContent = row.news[0].title;
+				li.appendChild(news);
+			}
+			ol.appendChild(li);
+		});
+		trendsEl.appendChild(ol);
+	}
+
+	function loadIranTrends() {
+		if (!cfg.licensed) {
+			return Promise.resolve();
+		}
+		setStatus(i18n('trends'), '');
+		return post('wbgs_trends', { seed: (seedEl.value || '').trim() }).then(function (out) {
+			if (!out.json || !out.json.success || !out.json.data) {
+				var fail = (out.json && out.json.data) || {};
+				trendsMeta = {
+					note: fail.note || i18n('trends_off'),
+					explore: fail.explore || '',
+					trending: fail.trending || 'https://trends.google.com/trending?geo=IR&hl=fa',
+					geo_fa: fail.geo_fa || 'ایران',
+					seed_hit: null
+				};
+				iranTrends = [];
+				renderTrends();
+				setStatus(fail.message || i18n('trends_off'), 'error');
+				return;
+			}
+			trendsMeta = out.json.data;
+			iranTrends = trendsMeta.items || [];
+			renderTrends();
+			if (items.length) {
+				renderFilters();
+				renderList();
+			}
+			setStatus(i18n('done'), 'ok');
+		}).catch(function () {
+			setStatus(i18n('trends_off'), 'error');
+		});
+	}
+
 	function setButtons() {
 		var empty = items.length === 0;
 		[copyBtn, csvBtn, txtBtn, briefTxtBtn, viewListBtn, viewTreeBtn, viewClusterBtn, viewTaxBtn, viewBriefBtn, saveBtn].forEach(function (btn) {
@@ -1253,6 +1423,9 @@
 		}
 		if (compareSavedBtn) {
 			compareSavedBtn.disabled = empty || !(historyEl && historyEl.value);
+		}
+		if (viewTrendsBtn) {
+			viewTrendsBtn.disabled = !cfg.licensed;
 		}
 	}
 
@@ -1272,6 +1445,7 @@
 		renderTree();
 		renderCluster();
 		renderTaxonomy();
+		renderTrends();
 		renderBrief();
 		renderCompare();
 		setView(view);
@@ -1424,7 +1598,7 @@
 	}
 
 	function excelCsv(seed, rows) {
-		var header = ['keyword', 'words', 'length', 'intent', 'longtail', 'question', 'geo', 'seasonal', 'lsi', 'branded', 'cluster', 'pillar', 'suggest_relevance', 'suggest_rank', 'suggest_score', 'relative_competition', 'competition_band', 'monthly_searches', 'title', 'meta'];
+		var header = ['keyword', 'words', 'length', 'intent', 'longtail', 'question', 'geo', 'seasonal', 'lsi', 'branded', 'iran_trend', 'trend_traffic', 'cluster', 'pillar', 'suggest_relevance', 'suggest_rank', 'suggest_score', 'relative_competition', 'competition_band', 'monthly_searches', 'title', 'meta'];
 		var briefs = briefMap(seed, rows);
 		var pillar = buildBriefs(seed, rows)[0] || { title: '', meta: '' };
 		var lines = [header.join(',')];
@@ -1443,6 +1617,8 @@
 				isSeasonal(row.text) ? '1' : '0',
 				isLsi(row.text) ? '1' : '0',
 				isBranded(row.text) ? '1' : '0',
+				isIranTrend(row.text) ? '1' : '0',
+				csvEscape((trendHit(row.text) && trendHit(row.text).traffic) || ''),
 				csvEscape(cluster),
 				csvEscape(seed),
 				row.relevance || 0,
@@ -1820,7 +1996,9 @@
 				if (items.length) {
 					view = lastCompare ? 'compare' : 'list';
 					persistLocalAuto();
-					return loadVolumes();
+					return loadIranTrends().then(function () {
+						return loadVolumes();
+					});
 				}
 			})
 			.catch(function (err) {
@@ -1867,6 +2045,17 @@
 	if (viewCompareBtn) {
 		viewCompareBtn.addEventListener('click', function () {
 			setView('compare');
+		});
+	}
+	if (viewTrendsBtn) {
+		viewTrendsBtn.addEventListener('click', function () {
+			view = 'trends';
+			setView(view);
+			if (!iranTrends.length) {
+				loadIranTrends();
+			} else {
+				renderTrends();
+			}
 		});
 	}
 	if (saveBtn) {
@@ -1926,4 +2115,7 @@
 
 	showUsage(cfg.usage);
 	refreshHistory();
+	if (cfg.licensed) {
+		loadIranTrends();
+	}
 })();

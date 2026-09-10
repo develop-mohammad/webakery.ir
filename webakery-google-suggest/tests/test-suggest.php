@@ -106,8 +106,22 @@ $names = array_column( $clusters['clusters'], 'name' );
 wbgs_assert( in_array( 'مردانه', $names, true ) && in_array( 'خرید', $names, true ), 'cluster names from google phrases' );
 
 require_once dirname( __DIR__ ) . '/includes/class-wbgs-ads.php';
+require_once dirname( __DIR__ ) . '/includes/class-wbgs-trends.php';
 wbgs_assert( '2303' === WBGS_Ads::geo_id( 'ir' ), 'iran geo constant' );
 wbgs_assert( '1056' === WBGS_Ads::lang_id( 'fa' ), 'persian language constant' );
+wbgs_assert( 'IR' === WBGS_Trends::geo( 'ir' ), 'trends geo IR' );
+wbgs_assert( 'ایران' === WBGS_Trends::geo_label( 'IR' ), 'trends geo label Iran' );
+wbgs_assert( false !== strpos( WBGS_Trends::rss_url( 'ir' ), 'geo=IR' ), 'official Iran RSS' );
+wbgs_assert( false !== strpos( WBGS_Trends::explore_url( 'کفش', 'ir', 'fa' ), 'geo=IR' ), 'explore locked to Iran' );
+wbgs_assert( false !== strpos( WBGS_Trends::explore_url( 'کفش', 'ir', 'fa' ), 'q=' ), 'explore has query' );
+$trend_xml = file_get_contents( dirname( __DIR__ ) . '/tests/fixtures/trends-ir.rss' );
+$trend_rows = WBGS_Trends::parse_rss( $trend_xml );
+wbgs_assert( 2 === count( $trend_rows ), 'parse two real RSS items' );
+wbgs_assert( 'خرید کفش' === $trend_rows[0]['title'], 'rss title kept' );
+wbgs_assert( '200+' === $trend_rows[0]['traffic'], 'rss traffic kept, not invented' );
+wbgs_assert( WBGS_Trends::phrase_matches( 'خرید کفش مردانه', $trend_rows[0] ), 'extracted phrase matches Iran trend' );
+wbgs_assert( ! WBGS_Trends::phrase_matches( 'لپ تاپ استوک', $trend_rows[0] ), 'unrelated phrase is not a trend hit' );
+wbgs_assert( 'برانکو' === WBGS_Trends::match_one( 'برانکو', $trend_rows )['title'], 'exact trend match' );
 
 wbgs_assert( 4 === WBGS_Suggest::word_count( 'خرید کفش اسپرت مردانه' ), 'word count longtail' );
 wbgs_assert( WBGS_Suggest::is_longtail( 'خرید کفش اسپرت مردانه' ), '4 words is longtail' );
@@ -233,6 +247,7 @@ wbgs_assert( false !== strpos( $csv, 'question' ), 'csv has question column' );
 wbgs_assert( false !== strpos( $csv, 'length' ), 'csv has length column' );
 wbgs_assert( false !== strpos( $csv, 'branded' ), 'csv has branded column' );
 wbgs_assert( false !== strpos( $csv, 'affixes' ), 'csv has affixes column' );
+wbgs_assert( false !== strpos( $csv, 'iran_trend' ), 'csv has iran_trend column' );
 wbgs_assert( false !== strpos( $csv, 'cluster' ), 'csv has cluster column' );
 
 $briefs = WBGS_Work::briefs( 'کفش', $work_rows );

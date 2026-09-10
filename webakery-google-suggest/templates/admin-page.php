@@ -75,7 +75,7 @@ defined( 'ABSPATH' ) || exit;
 			<?php endif; ?>
 
 			<h2>زبان و کشور گوگل</h2>
-			<p class="wbgs-hint">این‌ها همان پارامترهای Autocomplete گوگل هستند (مثل سرچ از ایران).</p>
+			<p class="wbgs-hint">کشور پیش‌فرض <code dir="ltr">ir</code> است: سجست و ترند گوگل هر دو برای ایران خوانده می‌شوند.</p>
 
 			<p>
 				<label class="wbgs-label" for="wbgs-hl">زبان (hl)</label>
