@@ -35,12 +35,13 @@ class WBGS_Taxonomy {
 	}
 
 	/**
-	 * پنج محور دسته‌بندی سئو (عنوان فیلتر و نمای دسته‌بندی).
+	 * محورهای دسته‌بندی سئو (عنوان فیلتر و نمای دسته‌بندی).
 	 *
 	 * @return array<string,string>
 	 */
 	public static function axis_titles() {
 		return array(
+			'entity'   => 'دسته محصول، محصول و برند',
 			'length'   => 'طول و حجم جستجو',
 			'intent'   => 'قصد کاربر از جستجو',
 			'geo_time' => 'موقعیت جغرافیایی و زمان',
@@ -97,6 +98,9 @@ class WBGS_Taxonomy {
 	 * @return string[]
 	 */
 	public static function brand_markers() {
+		if ( class_exists( 'WBGS_Entity' ) ) {
+			return WBGS_Entity::brand_tokens();
+		}
 		return array(
 			'دیجی کالا', 'دیجیکالا', 'آمازون', 'دیوار', 'اینستاگرام', 'اسنپ',
 			'ترب', 'بامیلو', 'نایک', 'آدیداس', 'پوما', 'جردن', 'ونس', 'هامتو',
@@ -179,9 +183,13 @@ class WBGS_Taxonomy {
 		$brand  = self::is_branded( $text );
 		$lsi    = self::is_lsi( $seed, $text );
 		$affix  = class_exists( 'WBGS_Affixes' ) ? WBGS_Affixes::classify( $text ) : array( 'affixes' => array(), 'affix_fa' => '' );
+		$entity = class_exists( 'WBGS_Entity' ) ? WBGS_Entity::classify( $text ) : '';
+		$elabel = class_exists( 'WBGS_Entity' ) ? WBGS_Entity::label( $text ) : '';
 		return array(
 			'length'       => $length,
 			'length_fa'    => isset( $labels[ $length ] ) ? $labels[ $length ] : '',
+			'entity'       => $entity,
+			'entity_fa'    => $elabel,
 			'geo'          => $geo,
 			'seasonal'     => $season,
 			'lsi'          => $lsi,

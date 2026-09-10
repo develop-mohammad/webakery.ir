@@ -61,13 +61,7 @@
 	var iranTrends = [];
 	var trendsMeta = null;
 
-	var INTENT_RULES = {
-		navigational: ['دیجی کالا', 'دیجیکالا', 'آمازون', 'دیوار', 'اینستاگرام', 'ترب', 'amazon', 'digikala', 'instagram', '.com', '.ir'],
-		transactional: ['خرید', 'فروش', 'سفارش', 'ارزان', 'تخفیف', 'قیمت', 'اینترنتی', 'آنلاین', 'buy', 'price', 'cheap', 'order', 'shop'],
-		informational: ['چیست', 'چیه', 'چگونه', 'چطور', 'چرا', 'یعنی', 'آموزش', 'راهنما', 'معنی', 'how', 'what', 'why'],
-		commercial: ['بهترین', 'مقایسه', 'بررسی', 'انواع', 'مدل', 'تفاوت', 'best', 'review', 'compare']
-	};
-
+	var LEX = cfg.lexicon || {};
 	var QUESTION_MARKS = ['چیست', 'چیه', 'چگونه', 'چطور', 'چرا', 'یعنی', 'معنی', 'تعریف', 'آیا', 'what', 'how', 'why', 'which', 'when', 'where'];
 	var GEO_MARKS = cfg.geo || [];
 	var SEASON_MARKS = cfg.seasonal || [];
@@ -79,6 +73,7 @@
 	}
 
 	var AXIS_TITLES = {
+		entity: 'دسته محصول، محصول و برند',
 		length: 'طول و حجم جستجو',
 		intent: 'قصد کاربر از جستجو',
 		geo_time: 'موقعیت جغرافیایی و زمان',
@@ -100,27 +95,176 @@
 		transactional: 'تراکنشی',
 		navigational: 'ناوبری/راهبری'
 	};
+	var ENTITY_FALLBACK = {
+		category: 'دسته محصول',
+		product: 'محصول',
+		brand: 'برند',
+		other: 'سایر'
+	};
 
 	function intentLabel(key) {
 		return (cfg.intents && cfg.intents[key]) || INTENT_FALLBACK[key] || key;
+	}
+
+	function entityLabel(key) {
+		return (cfg.entities && cfg.entities[key]) || ENTITY_FALLBACK[key] || key;
 	}
 
 	function axisTitle(key) {
 		return (cfg.axes && cfg.axes[key]) || AXIS_TITLES[key] || key;
 	}
 
-	function classifyIntent(text) {
+	function foldText(text) {
 		var t = String(text || '');
-		var groups = ['navigational', 'transactional', 'informational', 'commercial'];
-		for (var g = 0; g < groups.length; g++) {
-			var key = groups[g];
-			for (var i = 0; i < INTENT_RULES[key].length; i++) {
-				if (t.toLowerCase().indexOf(INTENT_RULES[key][i].toLowerCase()) !== -1) {
-					return key;
-				}
+		var from = 'يىك۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩';
+		var to = 'ییک01234567890123456789';
+		var out = '';
+		for (var i = 0; i < t.length; i++) {
+			var idx = from.indexOf(t.charAt(i));
+			out += idx === -1 ? t.charAt(i) : to.charAt(idx);
+		}
+		return out.replace(/[\u200c\u200e\u200f]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+	}
+
+	function lexHas(text, list) {
+		var t = foldText(text);
+		if (!t) {
+			return false;
+		}
+		list = list || [];
+		for (var i = 0; i < list.length; i++) {
+			var n = foldText(list[i]);
+			if (n && t.indexOf(n) !== -1) {
+				return true;
 			}
 		}
+		return false;
+	}
+
+	function stripLex(text, lists) {
+		var t = foldText(text);
+		var needles = [];
+		lists.forEach(function (list) {
+			(list || []).forEach(function (item) {
+				needles.push(foldText(item));
+			});
+		});
+		needles.sort(function (a, b) {
+			return b.length - a.length;
+		});
+		needles.forEach(function (n) {
+			if (!n) {
+				return;
+			}
+			var parts = t.split(n);
+			t = parts.join(' ');
+		});
+		return t.replace(/\s+/g, ' ').trim();
+	}
+
+	function hasModel(text, hasMaker, hasLine) {
+		if (!hasMaker && !hasLine) {
+			return false;
+		}
+		var t = foldText(text);
+		if (lexHas(t, LEX.modelWords)) {
+			return true;
+		}
+		if (/[a-z]{1,3}\s*-?\s*[0-9]{1,4}/.test(t)) {
+			return true;
+		}
+		var nums = t.match(/[0-9]{1,4}/g) || [];
+		for (var i = 0; i < nums.length; i++) {
+			var n = parseInt(nums[i], 10);
+			if (n >= 1300 && n <= 1410) {
+				continue;
+			}
+			if (n >= 1990 && n <= 2035) {
+				continue;
+			}
+			if (n > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function inspectEntity(text) {
+		var t = foldText(text);
+		var flags = {
+			has_category: lexHas(t, LEX.categories),
+			has_maker: lexHas(t, LEX.makers),
+			has_market: lexHas(t, LEX.markets),
+			has_line: lexHas(t, LEX.lines),
+			has_model: false,
+			is_dest: lexHas(t, LEX.dest),
+			has_info: lexHas(t, LEX.info),
+			has_trans: lexHas(t, LEX.trans),
+			has_comm: lexHas(t, LEX.comm),
+			has_tld: lexHas(t, LEX.tlds),
+			is_brand_only: false
+		};
+		flags.has_model = hasModel(t, flags.has_maker, flags.has_line);
+		if (!flags.has_category && !flags.has_line && !flags.has_model && (flags.has_maker || flags.has_market || flags.has_tld)) {
+			flags.is_brand_only = stripLex(t, [LEX.stop, LEX.dest, LEX.info, LEX.trans, LEX.comm, LEX.quality, LEX.makers, LEX.markets, LEX.tlds]) === '';
+		}
+		return flags;
+	}
+
+	function classifyEntity(text) {
+		var t = foldText(text);
+		if (!t) {
+			return 'other';
+		}
+		var f = inspectEntity(t);
+		if (f.is_dest && (f.has_maker || f.has_market || f.has_tld) && !f.has_category && !f.has_model && !f.has_line) {
+			return 'brand';
+		}
+		if (f.is_brand_only) {
+			return 'brand';
+		}
+		if (f.has_line || f.has_model || (f.has_maker && f.has_category)) {
+			return 'product';
+		}
+		if (f.has_category) {
+			return 'category';
+		}
+		if (f.has_maker || f.has_market || f.has_tld) {
+			return 'brand';
+		}
+		return 'other';
+	}
+
+	function classifyIntent(text) {
+		var t = foldText(text);
+		if (!t) {
+			return 'commercial';
+		}
+		var f = inspectEntity(t);
+		var entity = classifyEntity(t);
+		if (f.has_info) {
+			return 'informational';
+		}
+		if (f.has_trans) {
+			return 'transactional';
+		}
+		if (f.has_comm) {
+			return 'commercial';
+		}
+		if (f.is_dest && (f.has_maker || f.has_market || f.has_tld)) {
+			return 'navigational';
+		}
+		if (entity === 'brand' && !f.has_category && !f.has_model && !f.has_line) {
+			return 'navigational';
+		}
 		return 'commercial';
+	}
+
+	function entityKey(row) {
+		if (row && row.entity) {
+			return row.entity;
+		}
+		return classifyEntity(row && row.text);
 	}
 
 	function isQuestion(text) {
@@ -461,6 +605,12 @@
 				return textHasAffix(row.text, affixId);
 			});
 		}
+		if (intentFilter.indexOf('entity_') === 0) {
+			var wantEntity = intentFilter.slice(7);
+			return items.filter(function (row) {
+				return entityKey(row) === wantEntity;
+			});
+		}
 		return items.filter(function (row) {
 			return row.intent === intentFilter;
 		});
@@ -606,6 +756,8 @@
 					label = lengthLabel(key === 'longtail' ? 'long' : key);
 				} else if (key.indexOf('affix_') === 0) {
 					label = affixTitle(key.slice(6));
+				} else if (key.indexOf('entity_') === 0) {
+					label = entityLabel(key.slice(7));
 				} else if (key === 'question') {
 					label = 'سوالی';
 				} else if (key === 'iran_trend') {
@@ -639,6 +791,7 @@
 			return;
 		}
 		addFilterGroup('همه', ['all']);
+		addFilterGroup(axisTitle('entity'), ['entity_category', 'entity_product', 'entity_brand', 'entity_other']);
 		addFilterGroup(axisTitle('length'), ['short', 'mid', 'longtail']);
 		addFilterGroup(axisTitle('intent'), ['informational', 'navigational', 'commercial', 'transactional']);
 		addFilterGroup(axisTitle('geo_time'), ['geo', 'seasonal']);
@@ -666,6 +819,8 @@
 				kw.appendChild(document.createTextNode(' '));
 				kw.appendChild(el);
 			}
+			var ek = entityKey(row);
+			tag('wbgs-intent-entity-' + ek, entityLabel(ek));
 			var lk = lengthKey(row.text);
 			tag('wbgs-intent-len-' + lk, lengthLabel(lk));
 			if (isQuestion(row.text)) {
@@ -1308,6 +1463,10 @@
 		var seededR = [];
 		var brandedR = [];
 		var unbrandedR = [];
+		var catR = [];
+		var prodR = [];
+		var brandEntR = [];
+		var otherEntR = [];
 		rows.forEach(function (row) {
 			var lk = lengthKey(row.text);
 			if (lk === 'short') {
@@ -1347,19 +1506,35 @@
 			} else {
 				unbrandedR.push(row);
 			}
+			var ek = entityKey(row);
+			if (ek === 'category') {
+				catR.push(row);
+			} else if (ek === 'product') {
+				prodR.push(row);
+			} else if (ek === 'brand') {
+				brandEntR.push(row);
+			} else {
+				otherEntR.push(row);
+			}
 		});
-		taxEl.appendChild(taxAxis('۱', axisTitle('length'), [
+		taxEl.appendChild(taxAxis('۱', axisTitle('entity'), [
+			{ title: entityLabel('category'), sub: 'کلاس کالا مثل کفش یا گوشی', rows: catR },
+			{ title: entityLabel('product'), sub: 'مدل یا برند سازنده + دسته', rows: prodR },
+			{ title: entityLabel('brand'), sub: 'فروشگاه، اپ یا نام برند', rows: brandEntR },
+			{ title: entityLabel('other'), sub: 'خدمت یا عبارت غیرکالا', rows: otherEntR }
+		]));
+		taxEl.appendChild(taxAxis('۲', axisTitle('length'), [
 			{ title: 'کوتاه (۱–۲ کلمه)', sub: 'حجم بالا', rows: shortR },
 			{ title: 'میان‌رده (۳ کلمه)', sub: 'رقابت متوسط', rows: midR },
 			{ title: 'طولانی (۴+ کلمه)', sub: 'تبدیل بالا', rows: longR }
 		]));
-		taxEl.appendChild(taxAxis('۲', axisTitle('intent'), [
+		taxEl.appendChild(taxAxis('۳', axisTitle('intent'), [
 			{ title: intentLabel('informational'), rows: infoR },
 			{ title: intentLabel('navigational'), rows: navR },
 			{ title: intentLabel('commercial'), rows: commR },
 			{ title: intentLabel('transactional'), rows: transR }
 		]));
-		taxEl.appendChild(taxAxis('۳', axisTitle('geo_time'), [
+		taxEl.appendChild(taxAxis('۴', axisTitle('geo_time'), [
 			{ title: extraLabel('geo'), rows: geoR },
 			{ title: extraLabel('seasonal'), rows: seasonR },
 			{ title: 'بدون نشانه جغرافیایی یا زمانی', rows: neitherR }
@@ -1384,12 +1559,12 @@
 				semanticBuckets.push(bucket);
 			}
 		});
-		taxEl.appendChild(taxAxis('۴', axisTitle('semantic'), semanticBuckets, true));
-		taxEl.appendChild(taxAxis('۵', axisTitle('brand'), [
+		taxEl.appendChild(taxAxis('۵', axisTitle('semantic'), semanticBuckets, true));
+		taxEl.appendChild(taxAxis('۶', axisTitle('brand'), [
 			{ title: extraLabel('branded'), rows: brandedR },
 			{ title: extraLabel('unbranded'), rows: unbrandedR }
 		]));
-		taxEl.appendChild(taxAxis('۶', axisTitle('affix'), morphBuckets, true));
+		taxEl.appendChild(taxAxis('۷', axisTitle('affix'), morphBuckets, true));
 	}
 
 	function renderTrends() {
@@ -1560,6 +1735,7 @@
 			var relevance = 0;
 			var rank = idx + 1;
 			var intent = '';
+			var entity = '';
 			var searches = null;
 			var count = 1;
 			if (typeof raw === 'string') {
@@ -1570,6 +1746,7 @@
 				rank = parseInt(raw.rank, 10) || rank;
 				count = parseInt(raw.count, 10) || 1;
 				intent = raw.intent || '';
+				entity = raw.entity || '';
 				if (raw.searches != null && raw.searches !== '') {
 					searches = parseInt(raw.searches, 10);
 					if (isNaN(searches)) {
@@ -1598,6 +1775,7 @@
 				rank: rank,
 				count: count,
 				intent: intent || classifyIntent(text),
+				entity: entity || classifyEntity(text),
 				searches: searches
 			};
 			seen[text] = row;
@@ -1701,7 +1879,7 @@
 	}
 
 	function excelCsv(seed, rows) {
-		var header = ['keyword', 'words', 'length', 'intent', 'longtail', 'question', 'geo', 'seasonal', 'lsi', 'branded', 'iran_trend', 'trend_traffic', 'cluster', 'pillar', 'suggest_relevance', 'suggest_rank', 'suggest_score', 'relative_competition', 'competition_band', 'monthly_searches', 'title', 'meta'];
+		var header = ['keyword', 'words', 'length', 'intent', 'entity', 'longtail', 'question', 'geo', 'seasonal', 'lsi', 'branded', 'iran_trend', 'trend_traffic', 'cluster', 'pillar', 'suggest_relevance', 'suggest_rank', 'suggest_score', 'relative_competition', 'competition_band', 'monthly_searches', 'title', 'meta'];
 		var briefs = briefMap(seed, rows);
 		var pillar = buildBriefs(seed, rows)[0] || { title: '', meta: '' };
 		var lines = [header.join(',')];
@@ -1714,6 +1892,7 @@
 				wordCount(row.text),
 				csvEscape(lengthLabel(lengthKey(row.text))),
 				csvEscape(intentLabel(row.intent)),
+				csvEscape(entityLabel(entityKey(row))),
 				isLongTail(row.text) ? '1' : '0',
 				isQuestion(row.text) ? '1' : '0',
 				isGeo(row.text) ? '1' : '0',

@@ -3,6 +3,9 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * اینتنت جستجو از خودِ عبارت (قانونی، نه حدس حجم).
+ *
+ * اولویت: اطلاعاتی → تراکنشی → تجاری مقایسه‌ای → ناوبری فقط برای مقصد/برندِ تنها.
+ * ذکر مارکت‌پلیس کنار دسته (مثل «کفش دیجی کالا») ناوبری نیست.
  */
 class WBGS_Intent {
 
@@ -33,32 +36,23 @@ class WBGS_Intent {
 			return self::COMMERCIAL;
 		}
 
-		$nav = array( 'دیجی کالا', 'دیجیکالا', 'آمازون', 'دیوار', 'اینستاگرام', 'ترب', 'بامیلو', 'اسنپ', 'گوگل', 'youtube', 'amazon', 'digikala', 'instagram', '.com', '.ir' );
-		foreach ( $nav as $n ) {
-			if ( false !== mb_stripos( $text, $n ) ) {
-				return self::NAVIGATIONAL;
-			}
-		}
+		$flags  = class_exists( 'WBGS_Entity' ) ? WBGS_Entity::inspect( $text ) : array();
+		$entity = class_exists( 'WBGS_Entity' ) ? WBGS_Entity::classify( $text ) : '';
 
-		$trans = array( 'خرید', 'فروش', 'سفارش', 'ارزان', 'تخفیف', 'قیمت', 'پرداخت', 'فروشگاه', 'اینترنتی', 'آنلاین', 'buy', 'price', 'cheap', 'order', 'shop' );
-		foreach ( $trans as $n ) {
-			if ( self::has_word( $text, $n ) ) {
-				return self::TRANSACTIONAL;
-			}
+		if ( ! empty( $flags['has_info'] ) ) {
+			return self::INFORMATIONAL;
 		}
-
-		$info = array( 'چیست', 'چیه', 'چگونه', 'چطور', 'چرا', 'یعنی', 'آموزش', 'راهنما', 'معنی', 'تعریف', 'روش', 'نحوه', 'what', 'how', 'why', 'tutorial' );
-		foreach ( $info as $n ) {
-			if ( self::has_word( $text, $n ) ) {
-				return self::INFORMATIONAL;
-			}
+		if ( ! empty( $flags['has_trans'] ) ) {
+			return self::TRANSACTIONAL;
 		}
-
-		$comm = array( 'بهترین', 'مقایسه', 'بررسی', 'انواع', 'مدل', 'تفاوت', 'کدام', 'بهتره', 'review', 'best', 'vs', 'compare' );
-		foreach ( $comm as $n ) {
-			if ( self::has_word( $text, $n ) ) {
-				return self::COMMERCIAL;
-			}
+		if ( ! empty( $flags['has_comm'] ) ) {
+			return self::COMMERCIAL;
+		}
+		if ( ! empty( $flags['is_dest'] ) && ( ! empty( $flags['has_maker'] ) || ! empty( $flags['has_market'] ) || ! empty( $flags['has_tld'] ) ) ) {
+			return self::NAVIGATIONAL;
+		}
+		if ( class_exists( 'WBGS_Entity' ) && WBGS_Entity::BRAND === $entity && empty( $flags['has_category'] ) && empty( $flags['has_model'] ) && empty( $flags['has_line'] ) ) {
+			return self::NAVIGATIONAL;
 		}
 
 		return self::COMMERCIAL;
@@ -81,22 +75,15 @@ class WBGS_Intent {
 	public static function attach( $rows ) {
 		$out = array();
 		foreach ( (array) $rows as $row ) {
-			$text            = isset( $row['text'] ) ? (string) $row['text'] : '';
-			$row['intent']   = self::classify( $text );
+			$text             = isset( $row['text'] ) ? (string) $row['text'] : '';
+			$row['intent']    = self::classify( $text );
 			$row['intent_fa'] = self::label( $text );
-			$out[]           = $row;
+			if ( class_exists( 'WBGS_Entity' ) ) {
+				$row['entity']    = WBGS_Entity::classify( $text );
+				$row['entity_fa'] = WBGS_Entity::label( $text );
+			}
+			$out[] = $row;
 		}
 		return $out;
-	}
-
-	/**
-	 * @param string $text
-	 * @param string $needle
-	 */
-	private static function has_word( $text, $needle ) {
-		if ( false !== strpos( $needle, '.' ) ) {
-			return false !== mb_stripos( $text, $needle );
-		}
-		return (bool) preg_match( '/' . preg_quote( $needle, '/' ) . '/ui', $text );
 	}
 }

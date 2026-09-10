@@ -64,6 +64,8 @@ class WBGS_Plugin {
 			'licensed'  => self::licensed(),
 			'ads'       => WBGS_Ads::configured(),
 			'intents'   => WBGS_Intent::labels(),
+			'entities'  => WBGS_Entity::labels(),
+			'lexicon'   => WBGS_Entity::public_lexicon(),
 			'lengths'   => WBGS_Taxonomy::length_labels(),
 			'extras'    => WBGS_Taxonomy::extra_labels(),
 			'axes'      => WBGS_Taxonomy::axis_titles(),
@@ -110,6 +112,7 @@ class WBGS_Plugin {
 
 		require_once WBGS_PATH . 'includes/class-wbgs-suggest.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-affixes.php';
+		require_once WBGS_PATH . 'includes/class-wbgs-entity.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-tree.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-intent.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-taxonomy.php';
@@ -144,6 +147,7 @@ class WBGS_Plugin {
 					'حرف‌گردانی الفبای فارسی و فاصله قبل/بعد',
 					'شورت‌کد [webakery_suggest] برای قرار دادن در هر برگه',
 					'صفحهٔ جدا روی سایت با ورود موبایل یا جیمیل',
+					'دسته‌بندی دسته محصول / محصول / برند جدا از اینتنت',
 					'دسته‌بندی پنج‌محوره به‌همراه پیشوند و پسوند رایج (خرید، قیمت، چیست، ترین، شهر…)',
 					'درخت محتوا، اینتنت و پیلار کلاستر',
 					'فیلتر سوالی، بریف محتوا و عنوان/متا از عبارت‌های واقعی',

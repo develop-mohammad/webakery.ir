@@ -37,9 +37,9 @@
     <div class="wbgs-g-stage">
       <div class="wbgs-results-head">
         <h2>عبارت‌ها</h2>
-        <span class="wbgs-count" id="wbgs-count">۱۲ عبارت</span>
+        <span class="wbgs-count" id="wbgs-count">۱۴ عبارت</span>
       </div>
-      <p class="wbgs-hint">دسته‌بندی پنج‌محوره: طول و حجم جستجو، قصد کاربر از جستجو، موقعیت جغرافیایی و زمان، مفهوم و ارتباط، نام برند. سرچ ماهانه در این پیش‌نمایش «—» است چون Keyword Planner وصل نیست.</p>
+      <p class="wbgs-hint">اول دسته محصول / محصول / برند؛ بعد اینتنت. «کفش دیجی کالا» دسته محصول و تجاری است، نه ناوبری. سرچ ماهانه در این پیش‌نمایش «—» است چون Keyword Planner وصل نیست.</p>
       <p class="wbgs-usage">امروز ۱۲ درخواست به گوگل · سقف ۴۰۰</p>
       <div class="wbgs-desk">
         <label class="wbgs-desk-label">گزارش‌های ذخیره‌شده</label>
@@ -57,11 +57,11 @@
         <button type="button" class="button" id="tab-compare">مقایسه</button>
       </div>
       <div class="wbgs-intent-filters">
-        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">طول و حجم جستجو</span><button type="button">کوتاه ۱۰</button><button type="button">میان‌رده ۱</button><button type="button">طولانی ۱</button></div>
-        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">قصد کاربر از جستجو</span><button type="button">اطلاعاتی ۲</button><button type="button">ناوبری/راهبری ۱</button><button type="button">تجاری ۷</button><button type="button">تراکنشی ۲</button></div>
+        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">دسته محصول، محصول و برند</span><button type="button" class="is-on">دسته محصول ۹</button><button type="button">محصول ۳</button><button type="button">برند ۲</button></div>
+        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">طول و حجم جستجو</span><button type="button">کوتاه ۱۱</button><button type="button">میان‌رده ۲</button><button type="button">طولانی ۱</button></div>
+        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">قصد کاربر از جستجو</span><button type="button">اطلاعاتی ۲</button><button type="button">ناوبری/راهبری ۲</button><button type="button">تجاری ۸</button><button type="button">تراکنشی ۲</button></div>
         <div class="wbgs-filter-group"><span class="wbgs-filter-cap">موقعیت جغرافیایی و زمان</span><button type="button">محلی ۰</button><button type="button">فصلی یا موقت ۰</button></div>
-        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">مفهوم و ارتباط</span><button type="button">LSI / ارتباط معنایی ۰</button></div>
-        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">نام برند</span><button type="button">برند شده ۴</button><button type="button">بدون برند ۸</button></div>
+        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">نام برند</span><button type="button">برند شده ۶</button><button type="button">بدون برند ۸</button></div>
       </div>
       <ol class="wbgs-list" id="wbgs-list"></ol>
       <div class="wbgs-ktree" id="wbgs-tree" hidden></div>
@@ -74,18 +74,20 @@
 <script>
 (function () {
   var rows = [
-    { text: 'کفش مردانه', intent: 'commercial', intent_fa: 'تجاری', comp: 66, band: 'متوسط' },
-    { text: 'کفش زنانه', intent: 'commercial', intent_fa: 'تجاری', comp: 64, band: 'متوسط' },
-    { text: 'خرید کفش', intent: 'transactional', intent_fa: 'تراکنشی', comp: 84, band: 'بالا' },
-    { text: 'کفش نایک', intent: 'commercial', intent_fa: 'تجاری', comp: 62, band: 'متوسط' },
-    { text: 'قیمت کفش', intent: 'transactional', intent_fa: 'تراکنشی', comp: 80, band: 'بالا' },
-    { text: 'کفش چیست', intent: 'informational', intent_fa: 'اطلاعاتی', comp: 28, band: 'پایین', q: 1 },
-    { text: 'چگونه کفش مناسب بخریم', intent: 'informational', intent_fa: 'اطلاعاتی', comp: 22, band: 'پایین', q: 1, lt: 1 },
-    { text: 'کفش دیجی کالا', intent: 'navigational', intent_fa: 'ناوبری/راهبری', comp: 52, band: 'متوسط' },
-    { text: 'کفش جردن', intent: 'commercial', intent_fa: 'تجاری', comp: 60, band: 'متوسط' },
-    { text: 'کفش مجلسی', intent: 'commercial', intent_fa: 'تجاری', comp: 58, band: 'متوسط' },
-    { text: 'کفش کالج', intent: 'commercial', intent_fa: 'تجاری', comp: 56, band: 'متوسط' },
-    { text: 'کفش ونس', intent: 'commercial', intent_fa: 'تجاری', comp: 54, band: 'متوسط' }
+    { text: 'کفش مردانه', intent: 'commercial', intent_fa: 'تجاری', entity: 'category', entity_fa: 'دسته محصول', comp: 66, band: 'متوسط' },
+    { text: 'کفش زنانه', intent: 'commercial', intent_fa: 'تجاری', entity: 'category', entity_fa: 'دسته محصول', comp: 64, band: 'متوسط' },
+    { text: 'خرید کفش', intent: 'transactional', intent_fa: 'تراکنشی', entity: 'category', entity_fa: 'دسته محصول', comp: 84, band: 'بالا' },
+    { text: 'کفش نایک', intent: 'commercial', intent_fa: 'تجاری', entity: 'product', entity_fa: 'محصول', comp: 62, band: 'متوسط' },
+    { text: 'قیمت کفش', intent: 'transactional', intent_fa: 'تراکنشی', entity: 'category', entity_fa: 'دسته محصول', comp: 80, band: 'بالا' },
+    { text: 'کفش چیست', intent: 'informational', intent_fa: 'اطلاعاتی', entity: 'category', entity_fa: 'دسته محصول', comp: 28, band: 'پایین', q: 1 },
+    { text: 'چگونه کفش مناسب بخریم', intent: 'informational', intent_fa: 'اطلاعاتی', entity: 'category', entity_fa: 'دسته محصول', comp: 22, band: 'پایین', q: 1, lt: 1 },
+    { text: 'کفش دیجی کالا', intent: 'commercial', intent_fa: 'تجاری', entity: 'category', entity_fa: 'دسته محصول', comp: 52, band: 'متوسط' },
+    { text: 'کفش جردن', intent: 'commercial', intent_fa: 'تجاری', entity: 'product', entity_fa: 'محصول', comp: 60, band: 'متوسط' },
+    { text: 'کفش مجلسی', intent: 'commercial', intent_fa: 'تجاری', entity: 'category', entity_fa: 'دسته محصول', comp: 58, band: 'متوسط' },
+    { text: 'کفش کالج', intent: 'commercial', intent_fa: 'تجاری', entity: 'category', entity_fa: 'دسته محصول', comp: 56, band: 'متوسط' },
+    { text: 'کفش ونس', intent: 'commercial', intent_fa: 'تجاری', entity: 'product', entity_fa: 'محصول', comp: 54, band: 'متوسط' },
+    { text: 'دیجی کالا', intent: 'navigational', intent_fa: 'ناوبری/راهبری', entity: 'brand', entity_fa: 'برند', comp: 40, band: 'متوسط' },
+    { text: 'پشتیبانی دیجی کالا', intent: 'navigational', intent_fa: 'ناوبری/راهبری', entity: 'brand', entity_fa: 'برند', comp: 36, band: 'متوسط' }
   ];
   var list = document.getElementById('wbgs-list');
   var tree = document.getElementById('wbgs-tree');
@@ -99,6 +101,7 @@
     var n = String(row.text).replace(/\s+/g, ' ').trim().split(' ').filter(Boolean).length;
     var lk = n >= 4 ? 'long' : (n === 3 ? 'mid' : 'short');
     var lf = { short: 'کوتاه', mid: 'میان‌رده', long: 'طولانی' };
+    badges += ' <span class="wbgs-intent wbgs-intent-entity-' + row.entity + '">' + row.entity_fa + '</span>';
     badges += ' <span class="wbgs-intent wbgs-intent-len-' + lk + '">' + lf[lk] + '</span>';
     if (row.q) badges += ' <span class="wbgs-intent wbgs-intent-question">سوالی</span>';
     var branded = ['نایک', 'جردن', 'ونس', 'دیجی کالا'].some(function (b) { return row.text.indexOf(b) !== -1; });
@@ -125,13 +128,13 @@
     '<article class="wbgs-mmap-card"><h3>خرید <span class="wbgs-intent wbgs-intent-transactional">تراکنشی</span></h3><p class="wbgs-hint">۱ عبارت</p><ul><li><span>خرید کفش</span><span class="wbgs-searches is-empty">—</span></li></ul></article>' +
     '</div></div>';
   brief.innerHTML = '<article class="wbgs-brief-card is-pillar"><h3>پیلار: کفش <span class="wbgs-intent wbgs-intent-commercial">تجاری</span></h3>' +
-    '<p class="wbgs-hint">۱۲ عبارت · رقابت نسبی ۵۸ (متوسط) — KD اهرفس نیست</p>' +
+    '<p class="wbgs-hint">۱۴ عبارت · رقابت نسبی ۵۸ (متوسط) — KD اهرفس نیست</p>' +
     '<p><strong>H1: </strong>کفش مردانه</p><p><strong>عنوان: </strong>کفش مردانه</p>' +
     '<p><strong>متا: </strong>کفش زنانه، خرید کفش، کفش چیست</p>' +
     '<p><strong>H2</strong></p><ul><li>کفش چیست</li><li>چگونه کفش مناسب بخریم</li><li>خرید کفش</li></ul></article>' +
     '<article class="wbgs-brief-card"><h3>کلاستر: چیست <span class="wbgs-intent wbgs-intent-informational">اطلاعاتی</span></h3>' +
     '<p><strong>H1: </strong>کفش چیست</p><p><strong>عنوان: </strong>کفش چیست</p></article>';
-  compare.innerHTML = '<p class="wbgs-hint">کفش (۱۲) در برابر کتانی (۸) — مشترک ۳ · فقط اولی ۹ · فقط دومی ۵</p>' +
+  compare.innerHTML = '<p class="wbgs-hint">کفش (۱۴) در برابر کتانی (۸) — مشترک ۳ · فقط اولی ۱۱ · فقط دومی ۵</p>' +
     '<article class="wbgs-compare-card"><h3>مشترک (۳)</h3><ul><li>خرید کفش</li><li>قیمت کفش</li><li>کفش مردانه</li></ul></article>' +
     '<article class="wbgs-compare-card"><h3>فقط «کفش» (۹)</h3><ul><li>کفش چیست</li><li>کفش جردن</li></ul></article>' +
     '<article class="wbgs-compare-card"><h3>فقط «کتانی» (۵)</h3><ul><li>کتانی مردانه</li><li>کتانی رانینگ</li></ul></article>';
@@ -151,34 +154,42 @@
   var texts = rows.map(function (r) { return r.text; });
   var byLen = { short: [], mid: [], long: [] };
   var byIntent = { informational: [], navigational: [], commercial: [], transactional: [] };
+  var byEntity = { category: [], product: [], brand: [], other: [] };
   var branded = [], unbranded = [];
   rows.forEach(function (r) {
     byLen[lengthOf(r.text)].push(r.text);
     byIntent[r.intent].push(r.text);
+    byEntity[r.entity].push(r.text);
     (isBrand(r.text) ? branded : unbranded).push(r.text);
   });
   tax.innerHTML =
-    axisHtml('۱', 'طول و حجم جستجو', [
+    axisHtml('۱', 'دسته محصول، محصول و برند', [
+      { title: 'دسته محصول', sub: 'کلاس کالا مثل کفش یا گوشی', items: byEntity.category },
+      { title: 'محصول', sub: 'مدل یا برند سازنده + دسته', items: byEntity.product },
+      { title: 'برند', sub: 'فروشگاه، اپ یا نام برند', items: byEntity.brand },
+      { title: 'سایر', sub: 'خدمت یا عبارت غیرکالا', items: byEntity.other }
+    ]) +
+    axisHtml('۲', 'طول و حجم جستجو', [
       { title: 'کوتاه (۱–۲ کلمه)', sub: 'حجم بالا', items: byLen.short },
       { title: 'میان‌رده (۳ کلمه)', sub: 'رقابت متوسط', items: byLen.mid },
       { title: 'طولانی (۴+ کلمه)', sub: 'تبدیل بالا', items: byLen.long }
     ]) +
-    axisHtml('۲', 'قصد کاربر از جستجو', [
+    axisHtml('۳', 'قصد کاربر از جستجو', [
       { title: 'اطلاعاتی', items: byIntent.informational },
       { title: 'ناوبری/راهبری', items: byIntent.navigational },
       { title: 'تجاری', items: byIntent.commercial },
       { title: 'تراکنشی', items: byIntent.transactional }
     ]) +
-    axisHtml('۳', 'موقعیت جغرافیایی و زمان', [
+    axisHtml('۴', 'موقعیت جغرافیایی و زمان', [
       { title: 'محلی', items: [] },
       { title: 'فصلی یا موقت', items: [] },
       { title: 'بدون نشانه جغرافیایی یا زمانی', items: texts }
     ]) +
-    axisHtml('۴', 'مفهوم و ارتباط', [
+    axisHtml('۵', 'مفهوم و ارتباط', [
       { title: 'LSI (عبارات مرتبط بدون کیورد پایه)', items: [] },
       { title: 'حاوی کیورد پایه', items: texts }
     ]) +
-    axisHtml('۵', 'نام برند', [
+    axisHtml('۶', 'نام برند', [
       { title: 'برند شده', items: branded },
       { title: 'بدون برند', items: unbranded }
     ]);

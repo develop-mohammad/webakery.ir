@@ -95,12 +95,30 @@ wbgs_assert( isset( $tree['children']['خرید'] ), 'tree has خرید branch' 
 wbgs_assert( $tree['count'] >= 3, 'tree counts leaves' );
 wbgs_assert( $tree['children']['مردانه']['volume'] >= $tree['children']['خرید']['volume'], 'higher google score ranks higher' );
 
+require_once dirname( __DIR__ ) . '/includes/class-wbgs-entity.php';
 require_once dirname( __DIR__ ) . '/includes/class-wbgs-intent.php';
 wbgs_assert( WBGS_Intent::INFORMATIONAL === WBGS_Intent::classify( 'کفش چیست' ), 'intent informational' );
 wbgs_assert( WBGS_Intent::TRANSACTIONAL === WBGS_Intent::classify( 'خرید کفش' ), 'intent transactional' );
 wbgs_assert( WBGS_Intent::COMMERCIAL === WBGS_Intent::classify( 'بهترین کفش' ), 'intent commercial' );
-wbgs_assert( WBGS_Intent::NAVIGATIONAL === WBGS_Intent::classify( 'کفش دیجی کالا' ), 'intent navigational' );
+wbgs_assert( WBGS_Intent::COMMERCIAL === WBGS_Intent::classify( 'کفش دیجی کالا' ), 'marketplace + category is commercial, not nav' );
+wbgs_assert( WBGS_Intent::TRANSACTIONAL === WBGS_Intent::classify( 'خرید کفش دیجی کالا' ), 'buy + marketplace stays transactional' );
+wbgs_assert( WBGS_Intent::NAVIGATIONAL === WBGS_Intent::classify( 'دیجی کالا' ), 'marketplace alone is navigational' );
+wbgs_assert( WBGS_Intent::NAVIGATIONAL === WBGS_Intent::classify( 'پشتیبانی دیجی کالا' ), 'support + brand is navigational' );
+wbgs_assert( WBGS_Intent::NAVIGATIONAL === WBGS_Intent::classify( 'نایک' ), 'maker alone is navigational' );
 wbgs_assert( 'ناوبری/راهبری' === WBGS_Intent::labels()[ WBGS_Intent::NAVIGATIONAL ], 'navigational label is ناوبری/راهبری' );
+
+wbgs_assert( WBGS_Entity::CATEGORY === WBGS_Entity::classify( 'کفش' ), 'entity کفش is category' );
+wbgs_assert( WBGS_Entity::CATEGORY === WBGS_Entity::classify( 'کفش ورزشی' ), 'entity کفش ورزشی is category' );
+wbgs_assert( WBGS_Entity::CATEGORY === WBGS_Entity::classify( 'کفش دیجی کالا' ), 'entity کفش دیجی کالا is category' );
+wbgs_assert( WBGS_Entity::PRODUCT === WBGS_Entity::classify( 'کفش نایک' ), 'entity کفش نایک is product' );
+wbgs_assert( WBGS_Entity::PRODUCT === WBGS_Entity::classify( 'آیفون ۱۶' ), 'entity آیفون ۱۶ is product' );
+wbgs_assert( WBGS_Entity::PRODUCT === WBGS_Entity::classify( 'گوشی سامسونگ' ), 'entity گوشی سامسونگ is product' );
+wbgs_assert( WBGS_Entity::BRAND === WBGS_Entity::classify( 'نایک' ), 'entity نایک is brand' );
+wbgs_assert( WBGS_Entity::BRAND === WBGS_Entity::classify( 'دیجی کالا' ), 'entity دیجی کالا is brand' );
+wbgs_assert( WBGS_Entity::BRAND === WBGS_Entity::classify( 'پشتیبانی دیجی کالا' ), 'entity پشتیبانی دیجی کالا is brand' );
+wbgs_assert( 'دسته محصول' === WBGS_Entity::labels()[ WBGS_Entity::CATEGORY ], 'category label' );
+wbgs_assert( 'محصول' === WBGS_Entity::labels()[ WBGS_Entity::PRODUCT ], 'product label' );
+wbgs_assert( 'برند' === WBGS_Entity::labels()[ WBGS_Entity::BRAND ], 'brand label' );
 
 $clusters = WBGS_Tree::clusters(
 	'کفش',
@@ -167,6 +185,7 @@ if ( ! function_exists( 'get_option' ) ) {
 	}
 }
 
+require_once dirname( __DIR__ ) . '/includes/class-wbgs-entity.php';
 require_once dirname( __DIR__ ) . '/includes/class-wbgs-taxonomy.php';
 wbgs_assert( WBGS_Taxonomy::SHORT === WBGS_Taxonomy::length( 'خرید کفش' ), '2 words is short-tail' );
 wbgs_assert( WBGS_Taxonomy::MID === WBGS_Taxonomy::length( 'خرید کفش ورزشی' ), '3 words is mid-tail' );
@@ -181,12 +200,17 @@ wbgs_assert( 'طولانی' === WBGS_Taxonomy::length_labels()[ WBGS_Taxonomy::L
 wbgs_assert( 'کوتاه' === WBGS_Taxonomy::length_labels()[ WBGS_Taxonomy::SHORT ], 'length label short is کوتاه' );
 wbgs_assert( 'میان‌رده' === WBGS_Taxonomy::length_labels()[ WBGS_Taxonomy::MID ], 'length label mid is میان‌رده' );
 wbgs_assert( 'فصلی یا موقت' === WBGS_Taxonomy::extra_labels()['seasonal'], 'seasonal label is فصلی یا موقت' );
-wbgs_assert( 'طول و حجم جستجو' === WBGS_Taxonomy::axis_titles()['length'], 'axis 1 title' );
-wbgs_assert( 'قصد کاربر از جستجو' === WBGS_Taxonomy::axis_titles()['intent'], 'axis 2 title' );
-wbgs_assert( 'موقعیت جغرافیایی و زمان' === WBGS_Taxonomy::axis_titles()['geo_time'], 'axis 3 title' );
-wbgs_assert( 'مفهوم و ارتباط' === WBGS_Taxonomy::axis_titles()['semantic'], 'axis 4 title' );
-wbgs_assert( 'نام برند' === WBGS_Taxonomy::axis_titles()['brand'], 'axis 5 title' );
-wbgs_assert( 'پیشوند و پسوند' === WBGS_Taxonomy::axis_titles()['affix'], 'axis 6 title' );
+wbgs_assert( 'دسته محصول، محصول و برند' === WBGS_Taxonomy::axis_titles()['entity'], 'axis entity title' );
+wbgs_assert( 'طول و حجم جستجو' === WBGS_Taxonomy::axis_titles()['length'], 'axis length title' );
+wbgs_assert( 'قصد کاربر از جستجو' === WBGS_Taxonomy::axis_titles()['intent'], 'axis intent title' );
+wbgs_assert( 'موقعیت جغرافیایی و زمان' === WBGS_Taxonomy::axis_titles()['geo_time'], 'axis geo title' );
+wbgs_assert( 'مفهوم و ارتباط' === WBGS_Taxonomy::axis_titles()['semantic'], 'axis semantic title' );
+wbgs_assert( 'نام برند' === WBGS_Taxonomy::axis_titles()['brand'], 'axis brand title' );
+wbgs_assert( 'پیشوند و پسوند' === WBGS_Taxonomy::axis_titles()['affix'], 'axis affix title' );
+$ent_tax = WBGS_Taxonomy::classify( 'کفش', 'کفش نایک' );
+wbgs_assert( 'محصول' === $ent_tax['entity_fa'], 'taxonomy attaches محصول' );
+$cat_tax = WBGS_Taxonomy::classify( 'کفش', 'کفش ورزشی' );
+wbgs_assert( 'دسته محصول' === $cat_tax['entity_fa'], 'taxonomy attaches دسته محصول' );
 $long_tax = WBGS_Taxonomy::classify( 'کفش', 'خرید کفش ورزشی مردانه نایک' );
 wbgs_assert( 'طولانی' === $long_tax['length_fa'], 'classify length_fa is طولانی' );
 wbgs_assert( in_array( 'buy', $long_tax['affixes'], true ), 'خرید tagged as buy affix' );
@@ -255,6 +279,7 @@ wbgs_assert( false !== strpos( $csv, 'relative_competition' ), 'csv has competit
 wbgs_assert( false !== strpos( $csv, 'question' ), 'csv has question column' );
 wbgs_assert( false !== strpos( $csv, 'length' ), 'csv has length column' );
 wbgs_assert( false !== strpos( $csv, 'branded' ), 'csv has branded column' );
+wbgs_assert( false !== strpos( $csv, 'entity' ), 'csv has entity column' );
 wbgs_assert( false !== strpos( $csv, 'affixes' ), 'csv has affixes column' );
 wbgs_assert( false !== strpos( $csv, 'iran_trend' ), 'csv has iran_trend column' );
 wbgs_assert( false !== strpos( $csv, 'cluster' ), 'csv has cluster column' );

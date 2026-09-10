@@ -201,8 +201,13 @@ class WBGS_Admin {
 
 		$items = array();
 		foreach ( $result['items'] as $row ) {
-			$row['source'] = WBGS_Suggest::normalize_source( $source );
-			$items[]       = $row;
+			$text            = isset( $row['text'] ) ? (string) $row['text'] : '';
+			$row['source']   = WBGS_Suggest::normalize_source( $source );
+			$row['intent']   = WBGS_Intent::classify( $text );
+			$row['intent_fa']= WBGS_Intent::label( $text );
+			$row['entity']   = WBGS_Entity::classify( $text );
+			$row['entity_fa']= WBGS_Entity::label( $text );
+			$items[]         = $row;
 		}
 
 		wp_send_json_success(
