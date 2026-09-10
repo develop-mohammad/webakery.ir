@@ -9,6 +9,7 @@ class NCK_Frontend {
 	public static function hooks() {
 		add_shortcode( 'nahal_contract', array( __CLASS__, 'shortcode_contract' ) );
 		add_shortcode( 'nahal_hall', array( __CLASS__, 'shortcode_hall' ) );
+		add_shortcode( 'nahal_admission', array( __CLASS__, 'shortcode_learner' ) );
 		add_shortcode( 'nahal_portal', array( __CLASS__, 'shortcode_portal' ) );
 		add_shortcode( 'nahal_cowork', array( __CLASS__, 'shortcode_both' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ), 5 );
@@ -49,7 +50,7 @@ class NCK_Frontend {
 					'slot'  => $slot,
 					'org'   => $s['org_name'],
 					'i18n'  => array(
-						'signing'  => 'در حال ثبت قرارداد…',
+						'signing'  => 'در حال ثبت…',
 						'looking'  => 'در حال جستجو…',
 						'checking' => 'در حال ثبت حضور…',
 						'error'    => 'خطایی رخ داد. دوباره تلاش کنید.',
@@ -70,6 +71,7 @@ class NCK_Frontend {
 		}
 		return has_shortcode( $post->post_content, 'nahal_contract' )
 			|| has_shortcode( $post->post_content, 'nahal_hall' )
+			|| has_shortcode( $post->post_content, 'nahal_admission' )
 			|| has_shortcode( $post->post_content, 'nahal_portal' )
 			|| has_shortcode( $post->post_content, 'nahal_cowork' );
 	}
@@ -99,6 +101,14 @@ class NCK_Frontend {
 		return (string) ob_get_clean();
 	}
 
+	public static function shortcode_learner( $atts = array() ) {
+		self::enqueue();
+		$atts = shortcode_atts( array( 'title' => '' ), $atts, 'nahal_admission' );
+		ob_start();
+		include NCK_PATH . 'templates/learner.php';
+		return (string) ob_get_clean();
+	}
+
 	public static function shortcode_portal( $atts = array() ) {
 		self::enqueue();
 		$atts = shortcode_atts( array( 'title' => '' ), $atts, 'nahal_portal' );
@@ -112,6 +122,9 @@ class NCK_Frontend {
 		$atts = shortcode_atts( array( 'view' => 'contract' ), $atts, 'nahal_cowork' );
 		if ( 'hall' === $atts['view'] ) {
 			return self::shortcode_hall( $atts );
+		}
+		if ( 'admission' === $atts['view'] || 'learner' === $atts['view'] ) {
+			return self::shortcode_learner( $atts );
 		}
 		if ( 'portal' === $atts['view'] ) {
 			return self::shortcode_portal( $atts );

@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: قرارداد نهال | فضای کار و اجاره سالن
- * Description: قرارداد دیجیتال فضای کار اشتراکی و اجاره سالن مجموعه نهال، سهمیه ۲۶ شیفت، حضور صبح و عصر، چاپ و امضا.
- * Version:     1.0.0
+ * Plugin Name: قرارداد نهال | فضای کار، سالن و پذیرش
+ * Description: قرارداد دیجیتال فضای کار اشتراکی و اجاره سالن، فرم پذیرش فراگیر مرحله‌ای، سهمیه ۲۶ شیفت، حضور صبح و عصر، چاپ و امضا.
+ * Version:     1.1.0
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'NCK_LOADED' ) ) {
 	return;
 }
 define( 'NCK_LOADED', true );
-define( 'NCK_VERSION', '1.0.0' );
+define( 'NCK_VERSION', '1.1.0' );
 define( 'NCK_FILE', __FILE__ );
 define( 'NCK_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NCK_URL', plugin_dir_url( __FILE__ ) );
@@ -32,6 +32,7 @@ require_once NCK_PATH . 'includes/class-nck-holidays.php';
 require_once NCK_PATH . 'includes/class-nck-shifts.php';
 require_once NCK_PATH . 'includes/class-nck-contract.php';
 require_once NCK_PATH . 'includes/class-nck-hall.php';
+require_once NCK_PATH . 'includes/class-nck-learner.php';
 require_once NCK_PATH . 'includes/class-nck-contracts.php';
 require_once NCK_PATH . 'includes/class-nck-settings.php';
 require_once NCK_PATH . 'includes/class-nck-install.php';

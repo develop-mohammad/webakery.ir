@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 class NCK_Ajax {
 
 	public static function hooks() {
-		$front = array( 'nck_sign', 'nck_sign_hall', 'nck_lookup', 'nck_checkin' );
+		$front = array( 'nck_sign', 'nck_sign_hall', 'nck_sign_learner', 'nck_lookup', 'nck_checkin' );
 		foreach ( $front as $action ) {
 			add_action( 'wp_ajax_' . $action, array( __CLASS__, $action ) );
 			add_action( 'wp_ajax_nopriv_' . $action, array( __CLASS__, $action ) );
@@ -115,6 +115,78 @@ class NCK_Ajax {
 				'name'    => $result['member']['full_name'],
 			)
 		);
+	}
+
+	public static function nck_sign_learner() {
+		self::nonce_front();
+		self::licensed();
+		self::rate( 'sign_learner', 12 );
+
+		$input = array(
+			'heard'          => self::post_list( 'heard' ),
+			'payment'        => self::post_text( 'payment' ),
+			'pay_date'       => self::post_text( 'pay_date' ),
+			'pay_ref'        => self::post_text( 'pay_ref' ),
+			'learner_code'   => self::post_text( 'learner_code' ),
+			'admit_date'     => self::post_text( 'admit_date' ),
+			'staff_name'     => self::post_text( 'staff_name' ),
+			'class_limit'    => self::post_text( 'class_limit' ),
+			'name'           => self::post_text( 'name' ),
+			'birth_date'     => self::post_text( 'birth_date' ),
+			'national_id'    => self::post_text( 'national_id' ),
+			'grade'          => self::post_text( 'grade' ),
+			'school'         => self::post_text( 'school' ),
+			'phone'          => self::post_text( 'phone' ),
+			'address'        => self::post_text( 'address' ),
+			'father_name'    => self::post_text( 'father_name' ),
+			'father_job'     => self::post_text( 'father_job' ),
+			'father_phone'    => self::post_text( 'father_phone' ),
+			'mother_name'    => self::post_text( 'mother_name' ),
+			'mother_job'     => self::post_text( 'mother_job' ),
+			'mother_phone'    => self::post_text( 'mother_phone' ),
+			'term'           => self::post_list( 'term' ),
+			'seasonal'       => self::post_list( 'seasonal' ),
+			'medical'        => self::post_list( 'medical' ),
+			'medical_notes'  => self::post_text( 'medical_notes' ),
+			'group_work'     => self::post_text( 'group_work' ),
+			'problem'        => self::post_text( 'problem' ),
+			'learning'       => self::post_text( 'learning' ),
+			'goals'          => self::post_list( 'goals' ),
+			'agree_rules'    => ! empty( $_POST['agree_rules'] ), // phpcs:ignore
+			'agree_contact'  => ! empty( $_POST['agree_contact'] ), // phpcs:ignore
+			'agree_photo'    => ! empty( $_POST['agree_photo'] ), // phpcs:ignore
+			'sign_date'      => self::post_text( 'sign_date' ),
+		);
+		$signature = isset( $_POST['signature'] ) ? wp_unslash( $_POST['signature'] ) : ''; // phpcs:ignore
+		$ip        = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+
+		$result = NCK_Contracts::sign_learner_flow( $input, $signature, $ip );
+		if ( empty( $result['ok'] ) ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => $result['message'],
+				'print'   => $result['print'],
+				'name'    => $result['member']['full_name'],
+			)
+		);
+	}
+
+	private static function post_text( $key ) {
+		if ( ! isset( $_POST[ $key ] ) ) { // phpcs:ignore
+			return '';
+		}
+		return wp_unslash( $_POST[ $key ] ); // phpcs:ignore
+	}
+
+	private static function post_list( $key ) {
+		if ( ! isset( $_POST[ $key ] ) ) { // phpcs:ignore
+			return array();
+		}
+		$v = wp_unslash( $_POST[ $key ] ); // phpcs:ignore
+		return is_array( $v ) ? $v : array( $v );
 	}
 
 	public static function nck_lookup() {

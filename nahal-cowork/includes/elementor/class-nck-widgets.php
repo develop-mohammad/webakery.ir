@@ -75,6 +75,41 @@ class NCK_Hall_Widget extends \Elementor\Widget_Base {
 	}
 }
 
+class NCK_Learner_Widget extends \Elementor\Widget_Base {
+
+	public function get_name() {
+		return 'nck-learner';
+	}
+
+	public function get_title() {
+		return 'فرم پذیرش فراگیر نهال';
+	}
+
+	public function get_icon() {
+		return 'eicon-form-horizontal';
+	}
+
+	public function get_categories() {
+		return array( 'webakery', 'general' );
+	}
+
+	public function get_keywords() {
+		return array( 'نهال', 'پذیرش', 'فراگیر', 'ثبت‌نام' );
+	}
+
+	public function get_style_depends() {
+		return array( 'nck-frontend' );
+	}
+
+	public function get_script_depends() {
+		return array( 'nck-frontend' );
+	}
+
+	protected function render() {
+		echo NCK_Frontend::shortcode_learner(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+}
+
 class NCK_Portal_Widget extends \Elementor\Widget_Base {
 
 	public function get_name() {

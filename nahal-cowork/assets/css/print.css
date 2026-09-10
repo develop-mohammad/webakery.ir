@@ -43,6 +43,20 @@
 	font-weight: 700;
 	color: #3f5d45;
 }
+.nck-print-row{
+	display: grid;
+	grid-template-columns: 11rem 1fr;
+	gap: 8px;
+	padding: .28rem 0;
+	border-bottom: 1px dotted #e4d8bf;
+}
+.nck-print-row span{ color: #5c5a52; }
+.nck-print-row strong{ font-weight: 600; }
+.nck-slogan{
+	text-align: center;
+	color: #3f5d45;
+	font-weight: 700;
+}
 
 @media print{
 	.nck-print-bar{ display: none !important; }
@@ -53,4 +67,7 @@
 		margin: 0;
 		max-width: none;
 	}
+}
+@media (max-width: 640px){
+	.nck-print-row{ grid-template-columns: 1fr; }
 }

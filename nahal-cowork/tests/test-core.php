@@ -11,6 +11,7 @@ require_once dirname( __DIR__ ) . '/includes/class-nck-holidays.php';
 require_once dirname( __DIR__ ) . '/includes/class-nck-shifts.php';
 require_once dirname( __DIR__ ) . '/includes/class-nck-contract.php';
 require_once dirname( __DIR__ ) . '/includes/class-nck-hall.php';
+require_once dirname( __DIR__ ) . '/includes/class-nck-learner.php';
 
 $pass = 0;
 $fail = 0;
@@ -118,6 +119,62 @@ $check( 'بدون کد ملی رد می‌شود', empty( $no_nid['ok'] ) );
 $plans = NCK_Shifts::plan_types( 'both' );
 $check( 'پلن هر دو دو اشتراک می‌سازد', array( 'morning', 'evening' ) === $plans );
 $check( 'پلن سالن شیفت فضای کار نیست', array() === NCK_Shifts::plan_types( 'hall' ) );
+
+echo "\n=== پذیرش فراگیر ===\n";
+$learner_ok = array(
+	'name'          => 'آوا محمدی',
+	'national_id'  => $nid,
+	'birth_date'    => '1392/06/15',
+	'grade'         => 'هشتم',
+	'school'        => 'نمونه دولتی',
+	'phone'         => '',
+	'address'       => 'تهران، خیابان نهال',
+	'father_name'   => 'علی محمدی',
+	'father_phone'  => '۰۹۱۲۱۲۳۴۵۶۷',
+	'payment'       => 'site',
+	'term'          => array( 'ai', 'english' ),
+	'seasonal'      => array( 'bogus' ),
+	'heard'         => array( 'instagram', 'unknown' ),
+	'group_work'    => 'coop',
+	'problem'       => 'tries',
+	'learning'      => 'mixed',
+	'goals'         => array( 'ai', 'confidence' ),
+	'agree_rules'   => 1,
+	'agree_contact' => 1,
+	'agree_photo'   => 1,
+);
+$lr = NCK_Learner::validate( $learner_ok );
+$check( 'فرم پذیرش کامل قبول می‌شود', ! empty( $lr['ok'] ), isset( $lr['message'] ) ? $lr['message'] : '' );
+$check( 'تلفن تماس از پدر گرفته می‌شود', ! empty( $lr['payload']['contact_phone'] ) && '09121234567' === $lr['payload']['contact_phone'] );
+$check( 'گزینه ناشناس آشنایی حذف می‌شود', array( 'instagram' ) === $lr['payload']['heard'] );
+$check( 'دوره فصلی نامعتبر حذف می‌شود', array() === $lr['payload']['seasonal'] );
+$check( 'دو دوره ترمی می‌ماند', 2 === count( $lr['payload']['term'] ) );
+
+$no_course = $learner_ok;
+$no_course['term'] = array();
+$no_course['seasonal'] = array();
+$check( 'بدون دوره رد می‌شود', empty( NCK_Learner::validate( $no_course )['ok'] ) );
+
+$no_parent = $learner_ok;
+$no_parent['father_name'] = '';
+$no_parent['mother_name'] = '';
+$check( 'بدون نام والدین رد می‌شود', empty( NCK_Learner::validate( $no_parent )['ok'] ) );
+
+$no_pay = $learner_ok;
+$no_pay['payment'] = '';
+$check( 'بدون وضعیت پرداخت رد می‌شود', empty( NCK_Learner::validate( $no_pay )['ok'] ) );
+
+$no_goal = $learner_ok;
+$no_goal['goals'] = array();
+$check( 'بدون هدف رد می‌شود', empty( NCK_Learner::validate( $no_goal )['ok'] ) );
+
+$no_pledge = $learner_ok;
+$no_pledge['agree_photo'] = '';
+$check( 'بدون موافقت تصویر رد می‌شود', empty( NCK_Learner::validate( $no_pledge )['ok'] ) );
+
+$check( 'هشت گزینه آشنایی', 8 === count( NCK_Learner::heard_options() ) );
+$check( 'پنج دوره ترمی', 5 === count( NCK_Learner::term_options() ) );
+$check( 'برچسب ADHD در پزشکی هست', isset( NCK_Learner::medical_options()['adhd'] ) );
 
 echo "\n--- {$pass} موفق، {$fail} ناموفق ---\n";
 exit( $fail ? 1 : 0 );

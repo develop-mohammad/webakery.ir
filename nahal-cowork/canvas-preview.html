@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>نهال — پیش‌نمایش قراردادها</title>
-<link rel="stylesheet" href="assets/css/frontend.css?v=100" />
+<title>نهال — پیش‌نمایش فرم‌ها</title>
+<link rel="stylesheet" href="assets/css/frontend.css?v=110" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
   body{
@@ -27,51 +27,265 @@
 </head>
 <body>
   <div class="toolbar">
-    <button type="button" id="btn-cowork" class="is-on">فضای کار اشتراکی</button>
+    <button type="button" id="btn-learner" class="is-on">پذیرش فراگیر</button>
+    <button type="button" id="btn-cowork">فضای کار</button>
     <button type="button" id="btn-hall">اجاره سالن</button>
     <button type="button" id="btn-portal">پورتال عضو</button>
   </div>
   <div class="stage">
 
-    <div id="view-cowork">
+    <div id="view-learner">
+      <div class="nck-root" dir="rtl" data-nck="learner">
+        <form class="nck-form nck-wizard" data-nck-sign-learner data-nck-wizard novalidate>
+          <header class="nck-paper-head nck-wizard-brand">
+            <div>
+              <p class="nck-kicker">مرکز توسعه مهارت‌های آینده، هوش مصنوعی و نوآوری نهال</p>
+              <h2 class="nck-title">فرم پذیرش و شناخت فراگیر</h2>
+              <p class="nck-tag">توسعه سرمایه انسانی آینده با تلفیق مهارت‌های انسانی، هوش مصنوعی و نوآوری</p>
+            </div>
+          </header>
+          <div class="nck-wizard-head" data-nck-wizard-head>
+            <div class="nck-wizard-frac-wrap">
+              <p class="nck-wizard-frac" dir="ltr"><strong data-nck-step-now>۱</strong><span class="nck-wizard-slash">/</span><span data-nck-step-all>۵</span></p>
+              <p class="nck-wizard-caption">مرحله <span data-nck-step-now>۱</span> از <span data-nck-step-all>۵</span> — <span data-nck-step-title></span></p>
+            </div>
+            <div class="nck-wizard-track"><span class="nck-wizard-fill" data-nck-step-fill></span></div>
+            <ol class="nck-wizard-dots" data-nck-step-dots></ol>
+          </div>
+          <div class="nck-alert nck-alert-error" data-nck-error hidden></div>
+          <div class="nck-alert nck-alert-ok" data-nck-ok hidden></div>
+
+          <section class="nck-step" data-nck-step data-nck-step-label="آشنایی و پرداخت">
+            <fieldset class="nck-fieldset">
+              <legend>نحوه آشنایی با نهال</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="checkbox" name="heard[]" value="instagram" /> اینستاگرام</label>
+                <label class="nck-chip"><input type="checkbox" name="heard[]" value="website" /> وب‌سایت</label>
+                <label class="nck-chip"><input type="checkbox" name="heard[]" value="google" /> گوگل</label>
+                <label class="nck-chip"><input type="checkbox" name="heard[]" value="friends" /> دوستان و آشنایان</label>
+                <label class="nck-chip"><input type="checkbox" name="heard[]" value="school" /> مدرسه</label>
+                <label class="nck-chip"><input type="checkbox" name="heard[]" value="city_ads" /> تبلیغات شهری</label>
+                <label class="nck-chip"><input type="checkbox" name="heard[]" value="events" /> شرکت در رویدادهای نهال</label>
+                <label class="nck-chip"><input type="checkbox" name="heard[]" value="returning" /> قبلاً مخاطب نهال بوده‌ام</label>
+              </div>
+            </fieldset>
+            <fieldset class="nck-fieldset">
+              <legend>وضعیت پرداخت</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="radio" name="payment" value="site" required /> سایت</label>
+                <label class="nck-chip"><input type="radio" name="payment" value="card" /> کارت به کارت</label>
+                <label class="nck-chip"><input type="radio" name="payment" value="onsite" /> در محل کارت کشیده شد</label>
+              </div>
+              <div class="nck-grid nck-grid-hall" style="margin-top:12px">
+                <div class="nck-field"><label>تاریخ پرداخت</label><input name="pay_date" type="text" dir="ltr" placeholder="1404/06/20" /></div>
+                <div class="nck-field"><label>شماره پیگیری</label><input name="pay_ref" type="text" dir="ltr" /></div>
+              </div>
+            </fieldset>
+            <fieldset class="nck-fieldset">
+              <legend>اطلاعات پذیرش</legend>
+              <div class="nck-grid nck-grid-hall">
+                <div class="nck-field"><label>کد فراگیر</label><input name="learner_code" type="text" /></div>
+                <div class="nck-field"><label>تاریخ پذیرش</label><input name="admit_date" type="text" dir="ltr" value="1404/06/20" /></div>
+                <div class="nck-field"><label>مسئول پذیرش</label><input name="staff_name" type="text" /></div>
+                <div class="nck-field nck-field-wide"><label>محدودیت سنی روز و ساعت کلاس</label><input name="class_limit" type="text" /></div>
+              </div>
+            </fieldset>
+          </section>
+
+          <section class="nck-step" data-nck-step data-nck-step-label="اطلاعات فراگیر" hidden>
+            <fieldset class="nck-fieldset">
+              <legend>اطلاعات فراگیر</legend>
+              <div class="nck-grid nck-grid-hall">
+                <div class="nck-field nck-field-wide"><label>نام و نام خانوادگی</label><input name="name" type="text" required /></div>
+                <div class="nck-field"><label>تاریخ تولد</label><input name="birth_date" type="text" dir="ltr" required placeholder="1392/06/20" /></div>
+                <div class="nck-field"><label>کد ملی</label><input name="national_id" type="text" dir="ltr" required maxlength="10" placeholder="0010000003" /></div>
+                <div class="nck-field"><label>پایه تحصیلی</label><input name="grade" type="text" required /></div>
+                <div class="nck-field"><label>مدرسه</label><input name="school" type="text" required /></div>
+                <div class="nck-field"><label>شماره تماس</label><input name="phone" type="tel" dir="ltr" placeholder="09123456789" /></div>
+                <div class="nck-field nck-field-wide"><label>آدرس</label><input name="address" type="text" required /></div>
+              </div>
+            </fieldset>
+          </section>
+
+          <section class="nck-step" data-nck-step data-nck-step-label="اطلاعات والدین" hidden>
+            <div class="nck-parents">
+              <fieldset class="nck-fieldset">
+                <legend>پدر</legend>
+                <div class="nck-field"><label>نام و نام خانوادگی</label><input name="father_name" type="text" /></div>
+                <div class="nck-field"><label>شغل</label><input name="father_job" type="text" /></div>
+                <div class="nck-field"><label>شماره تماس</label><input name="father_phone" type="tel" dir="ltr" placeholder="09123456789" /></div>
+              </fieldset>
+              <fieldset class="nck-fieldset">
+                <legend>مادر</legend>
+                <div class="nck-field"><label>نام و نام خانوادگی</label><input name="mother_name" type="text" /></div>
+                <div class="nck-field"><label>شغل</label><input name="mother_job" type="text" /></div>
+                <div class="nck-field"><label>شماره تماس</label><input name="mother_phone" type="tel" dir="ltr" placeholder="09123456789" /></div>
+              </fieldset>
+            </div>
+            <p class="nck-form-help">نام حداقل یکی از والدین و یک شماره تماس معتبر لازم است.</p>
+          </section>
+
+          <section class="nck-step" data-nck-step data-nck-step-label="دوره و شناخت" data-nck-require-one="term,seasonal" data-nck-require-msg="حداقل یک دوره ترمی یا فصلی را انتخاب کنید." hidden>
+            <fieldset class="nck-fieldset">
+              <legend>دوره‌های ترمی</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="checkbox" name="term[]" value="english" /> زبان انگلیسی</label>
+                <label class="nck-chip"><input type="checkbox" name="term[]" value="lego" /> لگوی آموزشی و رباتیک</label>
+                <label class="nck-chip"><input type="checkbox" name="term[]" value="ai" /> برنامه‌نویسی و هوش مصنوعی</label>
+                <label class="nck-chip"><input type="checkbox" name="term[]" value="painting" /> نقاشی</label>
+                <label class="nck-chip"><input type="checkbox" name="term[]" value="sport_club" /> باشگاه ورزشی</label>
+              </div>
+            </fieldset>
+            <fieldset class="nck-fieldset">
+              <legend>دوره‌های فصلی</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="checkbox" name="seasonal[]" value="summer_camp" /> کمپ تابستان</label>
+                <label class="nck-chip"><input type="checkbox" name="seasonal[]" value="mehr_boarding" /> پانسیون مهر</label>
+                <label class="nck-chip"><input type="checkbox" name="seasonal[]" value="summer_boarding" /> پانسیون تابستان</label>
+                <label class="nck-chip"><input type="checkbox" name="seasonal[]" value="teen_club" /> باشگاه کارآفرینان نوجوان</label>
+              </div>
+            </fieldset>
+            <fieldset class="nck-fieldset">
+              <legend>اطلاعات پزشکی</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="checkbox" name="medical[]" value="allergy" /> آلرژی</label>
+                <label class="nck-chip"><input type="checkbox" name="medical[]" value="food" /> حساسیت غذایی</label>
+                <label class="nck-chip"><input type="checkbox" name="medical[]" value="adhd" /> ADHD</label>
+                <label class="nck-chip"><input type="checkbox" name="medical[]" value="special" /> بیماری خاص</label>
+                <label class="nck-chip"><input type="checkbox" name="medical[]" value="asthma" /> آسم</label>
+                <label class="nck-chip"><input type="checkbox" name="medical[]" value="medicine" /> مصرف دارو</label>
+                <label class="nck-chip"><input type="checkbox" name="medical[]" value="autism" /> اوتیسم</label>
+                <label class="nck-chip"><input type="checkbox" name="medical[]" value="other" /> مورد دیگر</label>
+              </div>
+              <div class="nck-field" style="margin-top:12px"><label>توضیحات</label><textarea name="medical_notes" rows="3"></textarea></div>
+            </fieldset>
+            <fieldset class="nck-fieldset">
+              <legend>در کار گروهی معمولاً…</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="radio" name="group_work" value="leader" required /> رهبر گروه می‌شود.</label>
+                <label class="nck-chip"><input type="radio" name="group_work" value="coop" /> همکاری خوبی دارد.</label>
+                <label class="nck-chip"><input type="radio" name="group_work" value="independent" /> ترجیح می‌دهد مستقل کار کند.</label>
+                <label class="nck-chip"><input type="radio" name="group_work" value="withdraw" /> معمولاً مشارکت نمی‌کند.</label>
+              </div>
+            </fieldset>
+            <fieldset class="nck-fieldset">
+              <legend>وقتی با مسئله جدید روبه‌رو می‌شود معمولاً…</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="radio" name="problem" value="tries" required /> خودش امتحان می‌کند.</label>
+                <label class="nck-chip"><input type="radio" name="problem" value="asks" /> از دیگران کمک می‌خواهد.</label>
+                <label class="nck-chip"><input type="radio" name="problem" value="waits" /> منتظر راهنمایی می‌ماند.</label>
+                <label class="nck-chip"><input type="radio" name="problem" value="quits" /> زود منصرف می‌شود.</label>
+              </div>
+            </fieldset>
+            <fieldset class="nck-fieldset">
+              <legend>سبک یادگیری</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="radio" name="learning" value="mixed" required /> ترکیبی</label>
+                <label class="nck-chip"><input type="radio" name="learning" value="practical" /> عملی</label>
+                <label class="nck-chip"><input type="radio" name="learning" value="auditory" /> شنیداری</label>
+                <label class="nck-chip"><input type="radio" name="learning" value="visual" /> دیداری</label>
+              </div>
+            </fieldset>
+          </section>
+
+          <section class="nck-step" data-nck-step data-nck-step-label="اهداف و امضا" data-nck-require-one="goals" data-nck-require-msg="حداقل یک هدف ثبت‌نام را انتخاب کنید." hidden>
+            <fieldset class="nck-fieldset">
+              <legend>هدف شما از ثبت‌نام در نهال</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="checkbox" name="goals[]" value="problem_solving" /> حل مسئله</label>
+                <label class="nck-chip"><input type="checkbox" name="goals[]" value="future_ready" /> آمادگی برای آینده</label>
+                <label class="nck-chip"><input type="checkbox" name="goals[]" value="entrepreneur" /> کارآفرینی</label>
+                <label class="nck-chip"><input type="checkbox" name="goals[]" value="coding" /> برنامه‌نویسی</label>
+                <label class="nck-chip"><input type="checkbox" name="goals[]" value="ai" /> هوش مصنوعی</label>
+                <label class="nck-chip"><input type="checkbox" name="goals[]" value="responsibility" /> مسئولیت‌پذیری</label>
+                <label class="nck-chip"><input type="checkbox" name="goals[]" value="social" /> تقویت مهارت‌های اجتماعی</label>
+                <label class="nck-chip"><input type="checkbox" name="goals[]" value="focus" /> افزایش تمرکز</label>
+                <label class="nck-chip"><input type="checkbox" name="goals[]" value="creativity" /> خلاقیت</label>
+                <label class="nck-chip"><input type="checkbox" name="goals[]" value="confidence" /> اعتمادبه‌نفس</label>
+              </div>
+            </fieldset>
+            <fieldset class="nck-fieldset">
+              <legend>قوانین و تعهدات</legend>
+              <label class="nck-agree"><input type="checkbox" name="agree_rules" value="1" required /> قوانین آموزشی و انضباطی نهال را مطالعه و می‌پذیرم.</label>
+              <label class="nck-agree"><input type="checkbox" name="agree_contact" value="1" required /> مسئولیت به‌روزرسانی اطلاعات تماس و تغییرات را بر عهده می‌گیرم.</label>
+              <label class="nck-agree"><input type="checkbox" name="agree_photo" value="1" required /> استفاده از تصاویر فرزندم (عکس و فیلم) در کلاس‌ها توسط مجموعه نهال موافقم.</label>
+            </fieldset>
+            <div class="nck-sign-wrap">
+              <div class="nck-sign-head"><span>امضای والدین / سرپرست</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
+              <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+            </div>
+            <div class="nck-field"><label>تاریخ</label><input name="sign_date" type="text" dir="ltr" value="1404/06/20" /></div>
+            <p class="nck-slogan">هوای رشدت رو داریم</p>
+          </section>
+
+          <nav class="nck-wizard-nav">
+            <button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
+            <button type="button" class="nck-btn" data-nck-next>مرحله بعد</button>
+            <button type="submit" class="nck-btn" data-nck-submit hidden>ثبت فرم پذیرش</button>
+          </nav>
+        </form>
+        <div class="nck-done" data-nck-done hidden>
+          <p class="nck-done-title">فرم پذیرش ثبت شد.</p>
+          <p data-nck-done-msg></p>
+          <p><a class="nck-btn" data-nck-print-link href="#">مشاهده و چاپ فرم</a></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-cowork" hidden>
       <div class="nck-root" dir="rtl" data-nck="contract">
-        <article class="nck-paper">
-          <header class="nck-paper-head">
+        <form class="nck-form nck-wizard" data-nck-sign data-nck-wizard novalidate>
+          <header class="nck-paper-head nck-wizard-brand">
             <div>
               <p class="nck-kicker">مجموعه فرهنگی نهال</p>
               <h2 class="nck-title">قرارداد فضای کار اشتراکی</h2>
               <p class="nck-tag">فضای کار، تمرکز و رشد</p>
             </div>
           </header>
-          <p class="nck-intro">خواستیم که «نهال» را برای کار، تمرکز و رشد خود انتخاب کرده‌اید.</p>
-          <p class="nck-preamble" data-nck-preamble data-tpl="این قرارداد بین «{{org}}» و «{{title}} {{name}}» با شماره تماس {{phone}} منعقد می‌گردد.">این قرارداد بین «مجموعه فرهنگی نهال» و «آقای/خانم …………………..» با شماره تماس ………………….. منعقد می‌گردد.</p>
-          <section class="nck-section"><h3>موضوع قرارداد</h3><p>ارائه خدمات فضای کار اشتراکی در محیط مشخص و از پیش تعیین‌شده در مجموعه نهال، جهت انجام فعالیت‌های کاری، مطالعاتی و فردی.</p></section>
-          <section class="nck-section"><h3>انتخاب شیفت استفاده</h3><p>هر اشتراک شامل ۲۶ شیفت استفاده در ماه می‌باشد. هر حضور در شیفت صبح یا عصر، به عنوان یک شیفت استفاده محاسبه می‌گردد.</p></section>
-          <section class="nck-section"><h3>ساعات کاری مجموعه</h3><p>شیفت صبح: ۸:۰۰ الی ۱۳:۰۰ — شیفت عصر: ۱۶:۳۰ الی ۲۲:۰۰</p><p>مجموعه در تعطیلات رسمی در شیفت صبح تعطیل می‌باشد.</p></section>
-        </article>
-        <form class="nck-form" data-nck-sign novalidate>
-          <h3 class="nck-form-title">ثبت و امضای قرارداد</h3>
+          <div class="nck-wizard-head" data-nck-wizard-head>
+            <div class="nck-wizard-frac-wrap">
+              <p class="nck-wizard-frac" dir="ltr"><strong data-nck-step-now>۱</strong><span class="nck-wizard-slash">/</span><span data-nck-step-all>۳</span></p>
+              <p class="nck-wizard-caption">مرحله <span data-nck-step-now>۱</span> از <span data-nck-step-all>۳</span> — <span data-nck-step-title></span></p>
+            </div>
+            <div class="nck-wizard-track"><span class="nck-wizard-fill" data-nck-step-fill></span></div>
+            <ol class="nck-wizard-dots" data-nck-step-dots></ol>
+          </div>
           <div class="nck-alert nck-alert-error" data-nck-error hidden></div>
-          <div class="nck-alert nck-alert-ok" data-nck-ok hidden></div>
-          <div class="nck-grid">
-            <div class="nck-field"><label>عنوان</label><select name="honorific"><option value="mr">آقای</option><option value="ms">خانم</option></select></div>
-            <div class="nck-field nck-field-wide"><label>نام و نام خانوادگی</label><input name="name" type="text" required /></div>
-            <div class="nck-field"><label>شماره تماس</label><input name="phone" type="tel" dir="ltr" required placeholder="09123456789" /></div>
-            <div class="nck-field nck-field-wide">
-              <span class="nck-label">نوع اشتراک</span>
-              <div class="nck-plans">
-                <label class="nck-plan"><input type="radio" name="plan" value="morning" required /> شیفت صبح</label>
-                <label class="nck-plan"><input type="radio" name="plan" value="evening" /> شیفت عصر</label>
-                <label class="nck-plan"><input type="radio" name="plan" value="both" /> هر دو شیفت</label>
+          <section class="nck-step" data-nck-step data-nck-step-label="متن قرارداد">
+            <article class="nck-paper nck-paper-nested">
+              <p class="nck-intro">خواستیم که «نهال» را برای کار، تمرکز و رشد خود انتخاب کرده‌اید.</p>
+              <p class="nck-preamble" data-nck-preamble data-tpl="این قرارداد بین «{{org}}» و «{{title}} {{name}}» با شماره تماس {{phone}} منعقد می‌گردد.">این قرارداد بین «مجموعه فرهنگی نهال» و «آقای/خانم …………………..» با شماره تماس ………………….. منعقد می‌گردد.</p>
+              <section class="nck-section"><h3>موضوع قرارداد</h3><p>ارائه خدمات فضای کار اشتراکی در محیط مشخص و از پیش تعیین‌شده در مجموعه نهال.</p></section>
+              <section class="nck-section"><h3>انتخاب شیفت استفاده</h3><p>هر اشتراک شامل ۲۶ شیفت استفاده در ماه می‌باشد.</p></section>
+            </article>
+          </section>
+          <section class="nck-step" data-nck-step data-nck-step-label="مشخصات و اشتراک" hidden>
+            <div class="nck-grid">
+              <div class="nck-field"><label>عنوان</label><select name="honorific"><option value="mr">آقای</option><option value="ms">خانم</option></select></div>
+              <div class="nck-field nck-field-wide"><label>نام و نام خانوادگی</label><input name="name" type="text" required /></div>
+              <div class="nck-field"><label>شماره تماس</label><input name="phone" type="tel" dir="ltr" required placeholder="09123456789" /></div>
+              <div class="nck-field nck-field-wide">
+                <span class="nck-label">نوع اشتراک</span>
+                <div class="nck-plans">
+                  <label class="nck-plan"><input type="radio" name="plan" value="morning" required /> شیفت صبح</label>
+                  <label class="nck-plan"><input type="radio" name="plan" value="evening" /> شیفت عصر</label>
+                  <label class="nck-plan"><input type="radio" name="plan" value="both" /> هر دو شیفت</label>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="nck-sign-wrap">
-            <div class="nck-sign-head"><span>امضا</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
-            <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
-          </div>
-          <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
-          <button type="submit" class="nck-btn" data-nck-submit>ثبت قرارداد</button>
+          </section>
+          <section class="nck-step" data-nck-step data-nck-step-label="امضا" hidden>
+            <div class="nck-sign-wrap">
+              <div class="nck-sign-head"><span>امضا</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
+              <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+            </div>
+            <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
+          </section>
+          <nav class="nck-wizard-nav">
+            <button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
+            <button type="button" class="nck-btn" data-nck-next>مرحله بعد</button>
+            <button type="submit" class="nck-btn" data-nck-submit hidden>ثبت قرارداد</button>
+          </nav>
         </form>
         <div class="nck-done" data-nck-done hidden>
           <p class="nck-done-title">قرارداد شما ثبت شد.</p>
@@ -83,63 +297,60 @@
 
     <div id="view-hall" hidden>
       <div class="nck-root" dir="rtl" data-nck="hall" data-ms-label="سرکارخانم">
-        <article class="nck-paper">
-          <header class="nck-paper-head">
+        <form class="nck-form nck-wizard" data-nck-sign-hall data-nck-wizard novalidate>
+          <header class="nck-paper-head nck-wizard-brand">
             <div>
               <p class="nck-kicker">بسمه تعالی</p>
               <h2 class="nck-title">قرارداد اجاره سالن</h2>
               <p class="nck-tag">موسسه فرهنگی آموزشی نهال</p>
             </div>
           </header>
-          <p class="nck-preamble">
-            این قرارداد بین «موسسه فرهنگی آموزشی نهال» به عنوان طرف اول و
-            <span class="nck-blank" data-nck-live="title" data-blank="آقای/سرکارخانم">آقای/سرکارخانم</span>
-            <span class="nck-blank" data-nck-live="name" data-blank="…………………….">…………………….</span>
-            به شماره ملی <span class="nck-blank" data-nck-live="national_id" data-blank="…………………….">…………………….</span>
-            و شماره تماس <span class="nck-blank" data-nck-live="phone" data-blank="…………………….">…………………….</span>
-            به عنوان طرف دوم منعقد می‌گردد.
-          </p>
-          <section class="nck-section">
-            <h3>۱- موضوع قرارداد:</h3>
-            <p>این قرارداد جهت اجاره سالن <span class="nck-blank" data-nck-live="hall_name" data-blank="…………………….">…………………….</span> با رعایت مقررات داخلی اتاق به مبلغ <span class="nck-blank" data-nck-live="amount" data-blank="…………………….">…………………….</span> منعقد گردید.</p>
-          </section>
-          <section class="nck-section">
-            <h3>۲- مدت قرارداد:</h3>
-            <p>مدت قرارداد از تاریخ <span class="nck-blank" data-nck-live="event_date" data-blank="…. / …. / ….">…. / …. / ….</span> ساعت <span class="nck-blank" data-nck-live="start_hour" data-blank="….">….</span> الی ساعت <span class="nck-blank" data-nck-live="end_hour" data-blank="….">….</span> می‌باشد.</p>
-            <p>توضیح: هزینه استفاده از ویدئو پروژکتور به ازای ۹۰ دقیقه، ۵۰۰,۰۰۰ تومان می‌باشد.</p>
-          </section>
-          <section class="nck-section">
-            <h3>۴- سایر موارد:</h3>
-            <p>۴-۱ امکانات سالن به تعداد <span class="nck-blank" data-nck-live="chairs" data-blank="….">….</span> عدد صندلی باشد.</p>
-            <p>۴-۲ تهیه مواد مصرفی، پذیرایی به عهده برگزار کننده مراسم می‌باشد که در صورت نیاز با هماهنگی قبلی توسط کافه شاپ مجموعه قابل پیش‌بینی است.</p>
-            <p>۴-۳ پس از اخذ مبلغ ورودی تا ۳ روز قبل برگزاری، چنانچه برنامه کنسل گردد، ۱۳ درصد به عنوان خسارت و مالیات کسر خواهد شد.</p>
-            <p>۴-۶ برگزار کننده بایستی کلیه شئونات را طبق قوانین جمهوری اسلامی حفظ و از بحث‌های سیاسی و مذهبی اجتناب نماید.</p>
-            <p>۴-۷ امضاء کننده ذیل این قرارداد برگزار کننده مراسم بوده و حق واگذاری سالن را ندارد.</p>
-          </section>
-        </article>
-        <form class="nck-form" data-nck-sign-hall novalidate>
-          <h3 class="nck-form-title">ثبت قرارداد اجاره سالن</h3>
+          <div class="nck-wizard-head" data-nck-wizard-head>
+            <div class="nck-wizard-frac-wrap">
+              <p class="nck-wizard-frac" dir="ltr"><strong data-nck-step-now>۱</strong><span class="nck-wizard-slash">/</span><span data-nck-step-all>۴</span></p>
+              <p class="nck-wizard-caption">مرحله <span data-nck-step-now>۱</span> از <span data-nck-step-all>۴</span> — <span data-nck-step-title></span></p>
+            </div>
+            <div class="nck-wizard-track"><span class="nck-wizard-fill" data-nck-step-fill></span></div>
+            <ol class="nck-wizard-dots" data-nck-step-dots></ol>
+          </div>
           <div class="nck-alert nck-alert-error" data-nck-error hidden></div>
-          <div class="nck-alert nck-alert-ok" data-nck-ok hidden></div>
-          <div class="nck-grid nck-grid-hall">
-            <div class="nck-field"><label>عنوان</label><select name="honorific"><option value="mr">آقای</option><option value="ms">سرکارخانم</option></select></div>
-            <div class="nck-field nck-field-wide"><label>نام برگزارکننده</label><input name="name" type="text" required /></div>
-            <div class="nck-field"><label>شماره ملی</label><input name="national_id" type="text" dir="ltr" required maxlength="10" placeholder="0010000003" /></div>
-            <div class="nck-field"><label>شماره تماس</label><input name="phone" type="tel" dir="ltr" required placeholder="09123456789" /></div>
-            <div class="nck-field nck-field-wide"><label>سالن</label><input name="hall_name" type="text" list="nck-halls" required /><datalist id="nck-halls"><option value="سالن اصلی"></option><option value="سالن همایش"></option></datalist></div>
-            <div class="nck-field"><label>مبلغ (تومان)</label><input name="amount" type="text" dir="ltr" required placeholder="5000000" /></div>
-            <div class="nck-field"><label>تعداد صندلی</label><input name="chairs" type="number" min="1" required /></div>
-            <div class="nck-field"><label>تاریخ برگزاری</label><input name="event_date" type="text" dir="ltr" required value="1404/06/20" /></div>
-            <div class="nck-field"><label>از ساعت</label><input name="start_hour" type="text" dir="ltr" required placeholder="16:00" /></div>
-            <div class="nck-field"><label>تا ساعت</label><input name="end_hour" type="text" dir="ltr" required placeholder="20:00" /></div>
-            <div class="nck-field nck-field-wide"><label class="nck-agree" style="margin:0"><input type="checkbox" name="projector" value="1" /> نیاز به ویدئو پروژکتور</label></div>
-          </div>
-          <div class="nck-sign-wrap">
-            <div class="nck-sign-head"><span>امضای برگزارکننده مراسم</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
-            <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
-          </div>
-          <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
-          <button type="submit" class="nck-btn" data-nck-submit>ثبت قرارداد سالن</button>
+          <section class="nck-step" data-nck-step data-nck-step-label="متن قرارداد">
+            <article class="nck-paper nck-paper-nested">
+              <p class="nck-preamble">این قرارداد بین «موسسه فرهنگی آموزشی نهال» به عنوان طرف اول و <span class="nck-blank" data-nck-live="title" data-blank="آقای/سرکارخانم">آقای/سرکارخانم</span> <span class="nck-blank" data-nck-live="name" data-blank="…………………….">…………………….</span> منعقد می‌گردد.</p>
+              <section class="nck-section"><h3>۱- موضوع قرارداد:</h3><p>اجاره سالن <span class="nck-blank" data-nck-live="hall_name" data-blank="…………………….">…………………….</span> به مبلغ <span class="nck-blank" data-nck-live="amount" data-blank="…………………….">…………………….</span></p></section>
+              <section class="nck-section"><h3>۴- سایر موارد</h3><p>۴-۷ امضاء کننده برگزارکننده مراسم بوده و حق واگذاری سالن را ندارد.</p></section>
+            </article>
+          </section>
+          <section class="nck-step" data-nck-step data-nck-step-label="برگزارکننده" hidden>
+            <div class="nck-grid nck-grid-hall">
+              <div class="nck-field"><label>عنوان</label><select name="honorific"><option value="mr">آقای</option><option value="ms">سرکارخانم</option></select></div>
+              <div class="nck-field nck-field-wide"><label>نام برگزارکننده</label><input name="name" type="text" required /></div>
+              <div class="nck-field"><label>شماره ملی</label><input name="national_id" type="text" dir="ltr" required maxlength="10" placeholder="0010000003" /></div>
+              <div class="nck-field"><label>شماره تماس</label><input name="phone" type="tel" dir="ltr" required placeholder="09123456789" /></div>
+            </div>
+          </section>
+          <section class="nck-step" data-nck-step data-nck-step-label="سالن و زمان" hidden>
+            <div class="nck-grid nck-grid-hall">
+              <div class="nck-field nck-field-wide"><label>سالن</label><input name="hall_name" type="text" required /></div>
+              <div class="nck-field"><label>مبلغ (تومان)</label><input name="amount" type="text" dir="ltr" required /></div>
+              <div class="nck-field"><label>تعداد صندلی</label><input name="chairs" type="number" min="1" required /></div>
+              <div class="nck-field"><label>تاریخ</label><input name="event_date" type="text" dir="ltr" required value="1404/06/20" /></div>
+              <div class="nck-field"><label>از ساعت</label><input name="start_hour" type="text" dir="ltr" required placeholder="16:00" /></div>
+              <div class="nck-field"><label>تا ساعت</label><input name="end_hour" type="text" dir="ltr" required placeholder="20:00" /></div>
+            </div>
+          </section>
+          <section class="nck-step" data-nck-step data-nck-step-label="امضا" hidden>
+            <div class="nck-sign-wrap">
+              <div class="nck-sign-head"><span>امضای برگزارکننده</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
+              <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+            </div>
+            <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
+          </section>
+          <nav class="nck-wizard-nav">
+            <button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
+            <button type="button" class="nck-btn" data-nck-next>مرحله بعد</button>
+            <button type="submit" class="nck-btn" data-nck-submit hidden>ثبت قرارداد سالن</button>
+          </nav>
         </form>
         <div class="nck-done" data-nck-done hidden>
           <p class="nck-done-title">قرارداد اجاره سالن ثبت شد.</p>
@@ -212,6 +423,23 @@
           if (!data.chairs) return err('تعداد صندلی را وارد کنید.');
           return ok({ message: 'قرارداد اجاره سالن ثبت شد.', print: '#print-hall', name: data.name });
         }
+        if (action === 'nck_sign_learner') {
+          if (!data.name || data.name.length < 3) return err('نام فراگیر را کامل وارد کنید.');
+          if (String(data.national_id || '').replace(/\D+/g, '').length !== 10) return err('کد ملی باید ۱۰ رقم باشد.');
+          if (!data.birth_date) return err('تاریخ تولد را وارد کنید.');
+          if (!data.grade || !data.school || !data.address) return err('اطلاعات فراگیر را کامل کنید.');
+          if (!data.father_name && !data.mother_name) return err('نام حداقل یکی از والدین را وارد کنید.');
+          var contact = phone(data.phone) || phone(data.father_phone) || phone(data.mother_phone);
+          if (!contact) return err('حداقل یک شماره تماس معتبر لازم است.');
+          if (!data.payment) return err('وضعیت پرداخت را انتخاب کنید.');
+          var terms = data.term || [];
+          var seas = data.seasonal || [];
+          if (!terms.length && !seas.length) return err('حداقل یک دوره را انتخاب کنید.');
+          if (!data.group_work || !data.problem || !data.learning) return err('بخش شناخت را کامل کنید.');
+          if (!(data.goals || []).length) return err('حداقل یک هدف را انتخاب کنید.');
+          if (!data.agree_rules || !data.agree_contact || !data.agree_photo) return err('تعهدات را بپذیرید.');
+          return ok({ message: 'فرم پذیرش فراگیر ثبت شد.', print: '#print-learner', name: data.name });
+        }
         if (action === 'nck_lookup' || action === 'nck_checkin') {
           var p = phone(data.phone);
           var rec = store[p];
@@ -239,16 +467,17 @@
         return err('اقدام ناشناخته');
       }
     };
+    document.getElementById('btn-learner').onclick = function () { toggle('learner'); };
     document.getElementById('btn-cowork').onclick = function () { toggle('cowork'); };
     document.getElementById('btn-hall').onclick = function () { toggle('hall'); };
     document.getElementById('btn-portal').onclick = function () { toggle('portal'); };
     function toggle(which) {
-      ['cowork', 'hall', 'portal'].forEach(function (k) {
+      ['learner', 'cowork', 'hall', 'portal'].forEach(function (k) {
         document.getElementById('view-' + k).hidden = k !== which;
         document.getElementById('btn-' + k).classList.toggle('is-on', k === which);
       });
     }
   </script>
-  <script src="assets/js/frontend.js?v=100"></script>
+  <script src="assets/js/frontend.js?v=110"></script>
 </body>
 </html>

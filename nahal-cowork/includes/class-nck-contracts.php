@@ -57,14 +57,20 @@ class NCK_Contracts {
 
 	public static function kind_of( array $row ) {
 		$kind = isset( $row['kind'] ) ? $row['kind'] : '';
-		if ( 'hall' === $kind ) {
-			return 'hall';
+		if ( in_array( $kind, array( 'hall', 'learner' ), true ) ) {
+			return $kind;
 		}
 		return 'cowork';
 	}
 
 	public static function kind_label( $kind ) {
-		return 'hall' === $kind ? 'اجاره سالن' : 'فضای کار اشتراکی';
+		if ( 'hall' === $kind ) {
+			return 'اجاره سالن';
+		}
+		if ( 'learner' === $kind ) {
+			return 'پذیرش فراگیر';
+		}
+		return 'فضای کار اشتراکی';
 	}
 
 	public static function payload( array $row ) {
@@ -76,10 +82,24 @@ class NCK_Contracts {
 	}
 
 	public static function plan_label( array $row ) {
-		if ( 'hall' === self::kind_of( $row ) ) {
+		$kind = self::kind_of( $row );
+		if ( 'hall' === $kind ) {
 			$p = self::payload( $row );
 			$hall = isset( $p['hall_name'] ) ? $p['hall_name'] : 'سالن';
 			return 'اجاره سالن — ' . $hall;
+		}
+		if ( 'learner' === $kind ) {
+			$p    = self::payload( $row );
+			$term = NCK_Learner::join_labels( isset( $p['term'] ) ? (array) $p['term'] : array(), NCK_Learner::term_options() );
+			$sea  = NCK_Learner::join_labels( isset( $p['seasonal'] ) ? (array) $p['seasonal'] : array(), NCK_Learner::seasonal_options() );
+			$bits = array();
+			if ( $term && '—' !== $term ) {
+				$bits[] = $term;
+			}
+			if ( $sea && '—' !== $sea ) {
+				$bits[] = $sea;
+			}
+			return $bits ? implode( '، ', $bits ) : 'پذیرش فراگیر';
 		}
 		$plans = NCK_Shifts::plan_labels();
 		$plan  = isset( $row['plan'] ) ? $row['plan'] : '';
@@ -128,7 +148,10 @@ class NCK_Contracts {
 	public static function create_signed( $member, $plan, $signature, $ip, $extra = array() ) {
 		$token = bin2hex( random_bytes( 16 ) );
 		$now   = current_time( 'mysql' );
-		$kind  = isset( $extra['kind'] ) && 'hall' === $extra['kind'] ? 'hall' : 'cowork';
+		$kind = isset( $extra['kind'] ) ? (string) $extra['kind'] : 'cowork';
+		if ( ! in_array( $kind, array( 'cowork', 'hall', 'learner' ), true ) ) {
+			$kind = 'cowork';
+		}
 		$nid   = isset( $extra['national_id'] ) ? (string) $extra['national_id'] : '';
 		$json  = '';
 		if ( ! empty( $extra['payload'] ) && is_array( $extra['payload'] ) ) {
@@ -269,6 +292,46 @@ class NCK_Contracts {
 		return array(
 			'ok'       => true,
 			'message'  => 'قرارداد اجاره سالن ثبت شد.',
+			'member'   => $member,
+			'contract' => $contract,
+			'print'    => self::print_url( $contract['print_token'] ),
+		);
+	}
+
+	public static function sign_learner_flow( array $input, $signature, $ip ) {
+		$check = NCK_Learner::validate( $input );
+		if ( empty( $check['ok'] ) ) {
+			return $check;
+		}
+		$sig = NCK_Contract::validate_signature( $signature );
+		if ( ! $sig['ok'] ) {
+			return $sig;
+		}
+
+		$p      = $check['payload'];
+		$member = NCK_Members::upsert( $p['name'], 'mr', $p['contact_phone'], $p['national_id'] );
+		if ( ! $member ) {
+			return array( 'ok' => false, 'message' => 'ثبت فراگیر انجام نشد.' );
+		}
+
+		$contract = self::create_signed(
+			$member,
+			'learner',
+			$signature,
+			$ip,
+			array(
+				'kind'        => 'learner',
+				'national_id' => $p['national_id'],
+				'payload'     => $p,
+			)
+		);
+		if ( ! $contract ) {
+			return array( 'ok' => false, 'message' => 'ذخیره فرم پذیرش انجام نشد.' );
+		}
+
+		return array(
+			'ok'       => true,
+			'message'  => 'فرم پذیرش فراگیر ثبت شد.',
 			'member'   => $member,
 			'contract' => $contract,
 			'print'    => self::print_url( $contract['print_token'] ),

@@ -26,6 +26,7 @@ class NCK_Elementor {
 		require_once NCK_PATH . 'includes/elementor/class-nck-widgets.php';
 		$widgets_manager->register( new NCK_Contract_Widget() );
 		$widgets_manager->register( new NCK_Hall_Widget() );
+		$widgets_manager->register( new NCK_Learner_Widget() );
 		$widgets_manager->register( new NCK_Portal_Widget() );
 	}
 
@@ -39,6 +40,7 @@ class NCK_Elementor {
 		if ( method_exists( $widgets_manager, 'register_widget_type' ) ) {
 			$widgets_manager->register_widget_type( new NCK_Contract_Widget() );
 			$widgets_manager->register_widget_type( new NCK_Hall_Widget() );
+			$widgets_manager->register_widget_type( new NCK_Learner_Widget() );
 			$widgets_manager->register_widget_type( new NCK_Portal_Widget() );
 		}
 	}

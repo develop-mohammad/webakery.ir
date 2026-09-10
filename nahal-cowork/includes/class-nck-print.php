@@ -16,8 +16,11 @@ class NCK_Print {
 		if ( ! $contract || 'signed' !== $contract['status'] ) {
 			wp_die( 'قرارداد پیدا نشد.', 'نهال', array( 'response' => 404 ) );
 		}
-		if ( 'hall' === NCK_Contracts::kind_of( $contract ) ) {
+		$kind = NCK_Contracts::kind_of( $contract );
+		if ( 'hall' === $kind ) {
 			self::render_hall( $contract );
+		} elseif ( 'learner' === $kind ) {
+			self::render_learner( $contract );
 		} else {
 			self::render( $contract );
 		}
@@ -60,5 +63,11 @@ class NCK_Print {
 		$clauses = NCK_Hall::filled_clauses( $vars );
 		$note    = NCK_Hall::projector_note( (int) $s['projector_price'], (int) $s['projector_minutes'] );
 		include NCK_PATH . 'templates/print-hall.php';
+	}
+
+	public static function render_learner( array $contract ) {
+		$s = NCK_Settings::all();
+		$p = NCK_Contracts::payload( $contract );
+		include NCK_PATH . 'templates/print-learner.php';
 	}
 }

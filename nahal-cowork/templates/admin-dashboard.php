@@ -27,6 +27,10 @@ $export = wp_nonce_url( admin_url( 'admin.php?page=' . NCK_MENU . '&nck_export=a
 			<strong><?php echo esc_html( NCK_Jalali::fa_digits( NCK_Contracts::count_month( $t['y'], $t['m'], 'hall' ) ) ); ?></strong>
 		</div>
 		<div class="nck-card">
+			<span>پذیرش فراگیر این ماه</span>
+			<strong><?php echo esc_html( NCK_Jalali::fa_digits( NCK_Contracts::count_month( $t['y'], $t['m'], 'learner' ) ) ); ?></strong>
+		</div>
+		<div class="nck-card">
 			<span>حضور صبح امروز</span>
 			<strong><?php echo esc_html( NCK_Jalali::fa_digits( $counts[ NCK_Shifts::MORNING ] ) ); ?></strong>
 		</div>
