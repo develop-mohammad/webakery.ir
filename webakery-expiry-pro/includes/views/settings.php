@@ -6,7 +6,7 @@ $sms_msg = isset( $_GET['wbe_sms'] ) ? sanitize_key( wp_unslash( $_GET['wbe_sms'
 ?>
 <div class="wrap wbe-wrap" dir="rtl">
 	<h1>تنظیمات انقضای کالا <span class="wbe-ver"><?php echo esc_html( WBE_VERSION . ' — ' . $edition ); ?></span></h1>
-	<p class="wbe-sub">سازنده: <a href="https://webakery.ir" target="_blank" rel="noopener">webakery.ir</a> — محمد حاجی مهدیخانی</p>
+	<p class="wbe-sub">سازنده: <a href="https://webakery.ir" target="_blank" rel="noopener">webakery.ir</a> — محمد حاجی مهدیخانی — رایگان و پرو امکانات یکسان دارند.</p>
 
 	<?php if ( 'sms_ok' === $sms_msg ) : ?>
 		<div class="notice notice-success is-dismissible"><p>پیامک آزمایشی ارسال شد.</p></div>

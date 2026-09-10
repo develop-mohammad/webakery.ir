@@ -102,8 +102,10 @@ class WBE_Plugin {
 				'trial_days'    => 3,
 				'server'        => 'https://webakery.ir/license-server',
 				'register_menu' => true,
+				'lock_features' => false,
 				'page'          => 'admin.php?page=webakery-expiry-license',
 				'features'      => array(
+					'امکانات با نسخه رایگان یکسان است؛ لایسنس افزونه را قفل نمی‌کند',
 					'بچ قیمت، موجودی و تاریخ انقضا بدون سقف',
 					'درصد تخفیف روی هر قیمت بچ',
 					'ویرایش گروهی سریع قیمت، تخفیف، جشنواره، موجودی و انقضا',
@@ -113,20 +115,17 @@ class WBE_Plugin {
 					'نمایش شمسی یا میلادی روی صفحه محصول',
 					'گزارش و خروجی اکسل فارسی راست‌چین',
 					'هشدار پیشخوان و پیامک انقضای نزدیک',
-					'به‌روزرسانی از webakery.ir',
+					'به‌روزرسانی از webakery.ir با لایسنس',
 				),
 			)
 		);
 	}
 
+	/**
+	 * رایگان و پرو امکانات یکسان دارند. لایسنس پرو فقط به‌روزرسانی است.
+	 */
 	public static function licensed() {
-		if ( ! defined( 'WBE_EDITION' ) || 'pro' !== WBE_EDITION ) {
-			return true;
-		}
-		if ( ! class_exists( 'WB_License', false ) ) {
-			return true;
-		}
-		return WB_License::is_active( WBE_PRODUCT );
+		return true;
 	}
 
 	public static function woo_available() {

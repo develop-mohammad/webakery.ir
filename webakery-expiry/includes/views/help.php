@@ -7,6 +7,7 @@ $tg_url  = class_exists( 'WBE_Support' ) ? WBE_Support::telegram_chat_url() : 'h
 <div class="wrap wbe-wrap wbe-help-wrap" dir="rtl">
 	<h1>راهنمای انقضای کالا <span class="wbe-ver"><?php echo esc_html( WBE_VERSION . ' — ' . $edition ); ?></span></h1>
 	<p class="wbe-sub">سازنده: <a href="https://webakery.ir" target="_blank" rel="noopener">webakery.ir</a> — اگر باگی دیدید با دکمهٔ گزارش باگ برای <a href="<?php echo esc_url( $tg_url ); ?>" target="_blank" rel="noopener">@<?php echo esc_html( $tg ); ?></a> بفرستید.</p>
+	<p class="wbe-sub">نسخه رایگان و پرو <strong>امکانات یکسان</strong> دارند. نسخه پرو فقط لایسنس و به‌روزرسانی از webakery.ir دارد.</p>
 
 	<p>
 		<button type="button" class="button button-primary wbe-bug-open">گزارش باگ با اسکرین و توضیح</button>

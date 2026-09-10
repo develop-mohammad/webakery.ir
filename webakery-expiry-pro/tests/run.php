@@ -786,6 +786,7 @@ $help = file_get_contents( dirname( __DIR__ ) . '/includes/views/help.php' );
 $bug  = file_get_contents( dirname( __DIR__ ) . '/includes/views/bug-report.php' );
 wbe_check( 'راهنما صفحه دارد', false !== strpos( $help, 'رفع کندی' ) && false !== strpos( $help, 'موجودی رزرو' ) );
 wbe_check( 'راهنما تقویم و کپی تنوع دارد', false !== strpos( $help, 'کپی بچ‌ها به همه تنوع‌ها' ) );
+wbe_check( 'راهنما رایگان و پرو را یکسان می‌گوید', false !== strpos( $help, 'امکانات یکسان' ) );
 wbe_check( 'فرم گزارش باگ تلگرام دارد', false !== strpos( $bug, 't.me' ) && false !== strpos( $bug, 'wbe-bug-capture' ) && false !== strpos( $bug, 'wbe-bug-desc' ) );
 
 echo "\n=== پشتیبانی / تلگرام ===\n";
@@ -803,7 +804,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.2.16' );
+	define( 'WBE_VERSION', '1.2.17' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {
@@ -835,6 +836,15 @@ try {
 	wbe_check( 'فعال‌سازی کلاس تنظیمات را لود می‌کند', class_exists( 'WBE_Settings', false ) );
 	wbe_check( 'تنظیمات پیش‌فرض نوشته می‌شود', isset( $GLOBALS['wbe_added_options']['wbe_settings'] ) && is_array( $GLOBALS['wbe_added_options']['wbe_settings'] ) );
 	wbe_check( 'کرون روزانه ثبت می‌شود', ! empty( $GLOBALS['wbe_cron_set'] ) );
+	wbe_check( 'رایگان و پرو امکانات یکسان — licensed همیشه فعال', true === WBE_Plugin::licensed() );
+	$plugin_src = file_get_contents( dirname( __DIR__ ) . '/includes/class-wbe-plugin.php' );
+	wbe_check( 'licensed به وضعیت لایسنس وابسته نیست', false === strpos( $plugin_src, 'WB_License::is_active' ) );
+	wbe_check( 'پرو امکانات را قفل نمی‌کند', false !== strpos( $plugin_src, "'lock_features' => false" ) );
+	$lic_file = dirname( __DIR__ ) . '/includes/class-wb-license.php';
+	if ( is_file( $lic_file ) ) {
+		$lic_src = file_get_contents( $lic_file );
+		wbe_check( 'کلاینت لایسنس قفل امکانات اختیاری است', false !== strpos( $lic_src, 'locks_features' ) && false !== strpos( $lic_src, 'امکانات افزونه فعال می‌ماند' ) );
+	}
 } catch ( Throwable $e ) {
 	wbe_check( 'فعال‌سازی بدون fatal', false, $e->getMessage() );
 }

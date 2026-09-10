@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: انقضای کالا | Webakery Expiry
- * Description: بچ قیمت، موجودی و تاریخ انقضای ووکامرس با سوییچ خودکار رزرو — نسخه رایگان بدون لایسنس.
- * Version:     1.2.16
+ * Description: بچ قیمت، موجودی و تاریخ انقضای ووکامرس با سوییچ خودکار رزرو — امکانات با نسخه پرو یکسان است.
+ * Version:     1.2.17
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir — محمد حاجی مهدیخانی
  * Author URI:  https://webakery.ir
@@ -20,7 +20,7 @@ if ( defined( 'WBE_LOADED' ) ) {
 	return;
 }
 define( 'WBE_LOADED', true );
-define( 'WBE_VERSION', '1.2.16' );
+define( 'WBE_VERSION', '1.2.17' );
 define( 'WBE_FILE', __FILE__ );
 define( 'WBE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WBE_URL', plugin_dir_url( __FILE__ ) );

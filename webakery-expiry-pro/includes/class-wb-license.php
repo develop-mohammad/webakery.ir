@@ -31,6 +31,7 @@ class WB_License {
             'trial_days'    => 3,
             'server'        => self::SERVER_DEFAULT,
             'register_menu' => true,   // منوی مرکزی «لایسنس افزونه‌ها»
+            'lock_features' => true,  // false = امکانات قفل نمی‌شود (فقط به‌روزرسانی)
             'page'          => '',     // صفحه بازگشت اختصاصی (مثلاً admin.php?page=xxx&tab=license)
             'features'      => [ 'به‌روزرسانی خودکار', 'پشتیبانی فنی', 'فعال‌سازی روی ۱ دامنه' ],
         ], $cfg );
@@ -90,6 +91,16 @@ class WB_License {
     /** آیا افزونه قابل استفاده است؟ (لایسنس معتبر یا دوره آزمایشی) */
     public static function is_active( $slug ) {
         return self::is_valid( $slug ) || self::trial_active( $slug );
+    }
+
+    /**
+     * آیا بدون لایسنس امکانات افزونه باید قفل شود.
+     */
+    public static function locks_features( $slug ) {
+        if ( ! isset( self::$products[ $slug ] ) ) {
+            return true;
+        }
+        return (bool) ( self::$products[ $slug ]['lock_features'] ?? true );
     }
 
     /* ─── فعال‌سازی / اعتبارسنجی ───────────────────────────────── */
@@ -190,8 +201,12 @@ class WB_License {
                     . $d . ' روز از دوره آزمایشی باقی مانده — '
                     . '<a href="' . $url . '"><strong>فعال‌سازی لایسنس</strong></a></p></div>';
             } else {
+                $lock_msg = self::locks_features( $slug )
+                    ? 'تمام شد و افزونه قفل شده است — '
+                    : 'تمام شد. امکانات افزونه فعال می‌ماند؛ لایسنس برای به‌روزرسانی است — ';
                 echo '<div class="notice notice-error"><p>'
-                    . '🔒 دوره آزمایشی <strong>' . esc_html( $cfg['name'] ?: $slug ) . '</strong> تمام شد و افزونه قفل شده است — '
+                    . '🔒 دوره آزمایشی <strong>' . esc_html( $cfg['name'] ?: $slug ) . '</strong> '
+                    . $lock_msg
                     . '<a href="' . $url . '"><strong>تهیه لایسنس</strong></a></p></div>';
             }
         }
@@ -269,7 +284,7 @@ class WB_License {
                         <?php elseif ( $trial ) : ?>
                             <span class="wbl-pill wbl-pill-trial">⏳ دوره آزمایشی</span>
                         <?php else : ?>
-                            <span class="wbl-pill wbl-pill-lock">🔒 قفل شده</span>
+                            <span class="wbl-pill wbl-pill-lock"><?php echo ! empty( $cfg['lock_features'] ) ? '🔒 قفل شده' : 'به‌روزرسانی با لایسنس'; ?></span>
                         <?php endif; ?>
                     </div>
                     <?php if ( ! $valid ) : ?>
