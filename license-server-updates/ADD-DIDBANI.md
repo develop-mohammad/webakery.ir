@@ -10,13 +10,13 @@
 'didbani' => [
 	'name'         => 'دیدبانی',
 	'price'        => 399000,          // تومان
-	'version'      => '1.1.0',
+	'version'      => '1.2.0',
 	'file'         => 'didbani.zip',
 	'homepage'     => 'https://webakery.ir/product/didbani/',
 	'requires'     => '5.8',
 	'requires_php' => '7.4',
 	'tested'       => '6.7',
-	'changelog'    => '<h4>1.1.0</h4><ul><li>رتبه موبایل در شهرهای ایران + رشد/افت</li></ul><h4>1.0.0</h4><ul><li>انتشار اولیه: کرول رقبا و رتبه گوگل/بینگ از API</li></ul>',
+	'changelog'    => '<h4>1.2.0</h4><ul><li>جدول رتبه گوگل/بینگ بدون شهر؛ رقبا اختیاری</li><li>رصد بک‌لینک و انکر تکست با DataForSEO</li></ul><h4>1.1.0</h4><ul><li>رتبه موبایل در شهرهای ایران + رشد/افت</li></ul><h4>1.0.0</h4><ul><li>انتشار اولیه: کرول رقبا و رتبه گوگل/بینگ از API</li></ul>',
 ],
 ```
 
@@ -29,7 +29,7 @@
 `LS_PLUGIN_LABELS`:
 
 ```php
-'didbani' => 'دیدبانی — رصد رقبا و رتبهٔ کلیدواژه',
+'didbani' => 'دیدبانی — رتبهٔ کلیدواژه و بک‌لینک رقبا',
 ```
 
 `LS_PLUGIN_META`:
@@ -37,7 +37,7 @@
 ```php
 'didbani' => [
 	'icon' => '👁',
-	'desc' => 'کرول صفحات عمومی رقبا و رصد رتبه در گوگل و بینگ',
+	'desc' => 'رتبه در گوگل و بینگ + رصد بک‌لینک رقبا',
 ],
 ```
 
@@ -45,12 +45,12 @@
 
 ```php
 'didbani' => [
-	'version'      => '1.1.0',
+	'version'      => '1.2.0',
 	'package'      => 'https://webakery.ir/license-server/updates/didbani.zip',
 	'requires'     => '5.8',
 	'tested'       => '6.7',
 	'requires_php' => '7.4',
-	'changelog'    => 'نسخه ۱.۱.۰: رتبه موبایل در شهرهای ایران و نمایش رشد/افت.',
+	'changelog'    => 'نسخه ۱.۲.۰: جدول گوگل/بینگ بدون شهر، رتبه بدون رقیب، رصد بک‌لینک و انکر.',
 ],
 ```
 
@@ -67,7 +67,7 @@ POST https://webakery.ir/license-server/api/?action=update
 { "product": "didbani", "version": "0.9.0", "domain": "example.com" }
 ```
 
-پاسخ باید `success: true` و `version: 1.0.0` و `package` (لینک ZIP) داشته باشد.
+پاسخ باید `success: true` و `version: 1.2.0` و `package` (لینک ZIP) داشته باشد.
 
 ## نکات
 

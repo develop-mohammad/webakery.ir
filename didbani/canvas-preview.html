@@ -17,26 +17,26 @@
   .wp { display: grid; grid-template-columns: 160px 1fr; min-height: 100vh; }
   .side { background: #1d2327; color: #fff; padding: 18px 12px; }
   .side h2 { font-size: 14px; margin: 0 0 16px; font-weight: 700; }
-  .side a { display: block; color: #c3c4c7; text-decoration: none; padding: 8px 10px; border-radius: 6px; font-size: 13px; }
-  .side a.on { background: #0ea5a0; color: #fff; }
+  .side a { display: block; color: #c3c4c7; text-decoration: none; padding: 8px 10px; border-radius: 2px; font-size: 13px; }
+  .side a.on { background: #2271b1; color: #fff; }
   .main { padding: 8px 18px 40px; }
   .nav-tab-wrapper { border-bottom: 1px solid #c3c4c7; margin: 12px 0 16px; padding: 0; }
-  .nav-tab { display: inline-block; padding: 8px 14px; margin: 0 4px -1px 0; background: #dcdcde; border: 1px solid #c3c4c7; border-bottom: none; text-decoration: none; color: #2c3338; border-radius: 6px 6px 0 0; font-size: 13px; }
+  .nav-tab { display: inline-block; padding: 8px 14px; margin: 0 4px -1px 0; background: #dcdcde; border: 1px solid #c3c4c7; border-bottom: none; text-decoration: none; color: #2c3338; border-radius: 2px 2px 0 0; font-size: 13px; }
   .nav-tab-active { background: #fff; font-weight: 700; }
-  .button { font: inherit; border-radius: 4px; padding: 6px 12px; border: 1px solid #2271b1; background: #f6f7f7; cursor: pointer; }
+  .button { font: inherit; border-radius: 2px; padding: 6px 12px; border: 1px solid #2271b1; background: #f6f7f7; cursor: pointer; }
   .button-primary { background: #2271b1; color: #fff; }
   .widefat { width: 100%; border-collapse: collapse; background: #fff; }
-  .widefat th, .widefat td { border-bottom: 1px solid #e2e8f0; padding: 10px 12px; text-align: right; font-size: 13px; }
-  .widefat thead th { background: #f8fafc; }
-  .form-table th { width: 220px; text-align: right; padding: 10px 0; }
+  .widefat th, .widefat td { border-bottom: 1px solid #dcdcde; padding: 10px 12px; text-align: right; font-size: 13px; }
+  .widefat thead th { background: #f6f7f7; }
+  .form-table th { width: 200px; text-align: right; padding: 10px 0; }
   .form-table td { padding: 8px 0; }
   input[type=text], input[type=password], input[type=number], select, textarea {
-    font: inherit; padding: 6px 8px; border: 1px solid #8c8f94; border-radius: 4px; width: min(420px, 100%);
+    font: inherit; padding: 6px 8px; border: 1px solid #8c8f94; border-radius: 2px; width: min(420px, 100%);
   }
   textarea.large-text, input.large-text { width: min(640px, 100%); }
   .panel { display: none; }
   .panel.on { display: block; }
-  .hint { margin-top: 18px; text-align: center; color: #64748b; font-size: 12px; }
+  .hint { margin-top: 18px; text-align: center; color: #646970; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -48,74 +48,51 @@
   </aside>
   <div class="main">
     <div class="did-wrap wrap">
-		<h1 class="did-h1">دیدبانی <span class="did-ver">v1.1.0</span></h1>
-      <p class="did-sub">رصد صفحات عمومی رقبا و رتبهٔ موبایل در شهرهای ایران · سازنده: webakery.ir</p>
+		<h1 class="did-h1">دیدبانی <span class="did-ver">v1.2.0</span></h1>
+      <p class="did-sub">رتبهٔ کلیدواژه در گوگل و بینگ · بک‌لینک رقبا · webakery.ir</p>
       <nav class="nav-tab-wrapper did-tabs" id="tabs">
         <a class="nav-tab nav-tab-active" data-tab="dash" href="#">داشبورد</a>
         <a class="nav-tab" data-tab="project" href="#">پروژه</a>
-        <a class="nav-tab" data-tab="crawl" href="#">کرول</a>
         <a class="nav-tab" data-tab="ranks" href="#">رتبه‌ها</a>
+        <a class="nav-tab" data-tab="backlinks" href="#">بک‌لینک</a>
         <a class="nav-tab" data-tab="settings" href="#">تنظیمات</a>
       </nav>
 
       <section class="panel on" id="tab-dash">
-        <div class="did-grid">
-          <div class="did-card"><div class="did-k">کلیدواژه</div><div class="did-v">۳</div></div>
-          <div class="did-card"><div class="did-k">دامنهٔ رصد</div><div class="did-v">۳</div></div>
-          <div class="did-card"><div class="did-k">صفحات کرول‌شده</div><div class="did-v">۴۲</div></div>
-          <div class="did-card"><div class="did-k">آخرین رتبه</div><div class="did-v">۱۴۰۵/۰۶/۱۹</div></div>
-        </div>
         <div class="did-actions">
-          <button type="button" class="button button-primary" id="demo-rank">بررسی رتبه الان</button>
-          <button type="button" class="button" id="demo-crawl">شروع کرول</button>
+          <button type="button" class="button button-primary" id="demo-rank">بررسی رتبه</button>
           <p class="did-job-msg" id="demo-msg" hidden></p>
         </div>
-        <p class="did-note">رتبهٔ فعلی برای <strong>موبایل</strong> در <strong>تهران</strong>. رشد/افت و مقایسهٔ شهرها در تب رتبه‌ها.</p>
-        <div class="did-city-nav">
-          <a class="did-city-chip did-city-on" href="#">تهران</a>
-          <a class="did-city-chip" href="#">مشهد</a>
-          <a class="did-city-chip" href="#">اصفهان</a>
-        </div>
         <div class="did-table-wrap">
-          <table class="widefat striped did-matrix">
+          <table class="widefat striped did-ranks">
             <thead>
               <tr>
-                <th>کلیدواژه</th>
-                <th>myshop.ir <span class="did-pill did-pill-info">خودم</span></th>
-                <th>rival-a.ir</th>
-                <th>rival-b.ir</th>
+                <th class="did-kw">کلمه کلیدی</th>
+                <th colspan="2"><span dir="ltr">myshop.ir</span> <span class="did-tag">سایت</span></th>
+                <th colspan="2"><span dir="ltr">rival-a.ir</span></th>
+              </tr>
+              <tr class="did-subhead">
+                <th></th>
+                <th>گوگل</th>
+                <th>بینگ</th>
+                <th>گوگل</th>
+                <th>بینگ</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <th>خرید فرش</th>
-                <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-on">۴</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-on">۶</span></div>
-                </td>
-                <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-on">۱</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-on">۲</span></div>
-                </td>
-                <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-off">نیست</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-on">۹</span></div>
-                </td>
+                <th class="did-kw">خرید فرش</th>
+                <td><span class="did-rank-num">۴</span> <span class="did-delta did-delta-up">رشد ۳</span></td>
+                <td><span class="did-rank-num">۶</span></td>
+                <td><span class="did-rank-num">۱</span></td>
+                <td><span class="did-rank-num">۲</span></td>
               </tr>
               <tr>
-                <th>فرش دستباف کاشان</th>
-                <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-on">۱۲</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-off">نیست</span></div>
-                </td>
-                <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-on">۳</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-on">۵</span></div>
-                </td>
-                <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-on">۸</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-on">۷</span></div>
-                </td>
+                <th class="did-kw">فرش دستباف کاشان</th>
+                <td><span class="did-rank-num">۱۲</span></td>
+                <td><span class="did-rank-miss">نیست</span></td>
+                <td><span class="did-rank-num">۳</span></td>
+                <td><span class="did-rank-num">۵</span></td>
               </tr>
             </tbody>
           </table>
@@ -127,118 +104,96 @@
           <table class="form-table">
             <tr><th>نام پروژه</th><td><input type="text" value="فروشگاه فرش" /></td></tr>
             <tr><th>سایت خودم</th><td><input type="text" dir="ltr" value="myshop.ir" /></td></tr>
-            <tr><th>دامنهٔ رقبا</th><td><textarea class="large-text" rows="4" dir="ltr">rival-a.ir
-rival-b.ir</textarea></td></tr>
-            <tr><th>کلیدواژه‌ها</th><td><textarea class="large-text" rows="4">خرید فرش
-فرش دستباف کاشان
-قیمت فرش ماشینی</textarea></td></tr>
+            <tr><th>رقبا (اختیاری)</th><td><textarea class="large-text" rows="3" dir="ltr">rival-a.ir</textarea></td></tr>
+            <tr><th>کلمات کلیدی</th><td><textarea class="large-text" rows="4">خرید فرش
+فرش دستباف کاشان</textarea></td></tr>
           </table>
           <p><button class="button button-primary" type="button">ذخیره تغییرات</button></p>
         </form>
       </section>
 
-      <section class="panel" id="tab-crawl">
-        <div class="did-note">
-          <ul>
-            <li>فقط GET صفحات عمومی؛ robots.txt رعایت می‌شود.</li>
-            <li>کرول از سرور وردپرس مشتری اجرا می‌شود.</li>
-          </ul>
-        </div>
-        <table class="widefat striped">
-          <thead><tr><th>دامنه</th><th>نقش</th><th>وضعیت</th><th>صفحات</th></tr></thead>
-          <tbody>
-            <tr><td dir="ltr">myshop.ir</td><td>سایت خودم</td><td>ok</td><td>۱۸</td></tr>
-            <tr><td dir="ltr">rival-a.ir</td><td>رقیب</td><td>ok</td><td>۱۴</td></tr>
-            <tr><td dir="ltr">rival-b.ir</td><td>رقیب</td><td>ok</td><td>۱۰</td></tr>
-          </tbody>
-        </table>
-        <h2 class="did-h2">صفحات و حضور کلیدواژه</h2>
-        <table class="widefat striped did-pages">
-          <thead><tr><th>دامنه</th><th>عنوان</th><th>کلیدواژه در صفحه</th></tr></thead>
-          <tbody>
-            <tr><td dir="ltr">rival-a.ir</td><td>خرید فرش دستباف</td><td>خرید فرش (عنوان، H1)</td></tr>
-            <tr><td dir="ltr">myshop.ir</td><td>فروشگاه فرش کاشان</td><td>فرش دستباف کاشان (متن)</td></tr>
-          </tbody>
-        </table>
-      </section>
-
       <section class="panel" id="tab-ranks">
-        <p class="did-note">دیوایس: <strong>موبایل</strong> · شهر این جدول: <strong>تهران</strong> · رشد یعنی عدد رتبه کمتر شده.</p>
-        <div class="did-city-nav">
-          <a class="did-city-chip did-city-on" href="#">تهران</a>
-          <a class="did-city-chip" href="#">مشهد</a>
-          <a class="did-city-chip" href="#">اصفهان</a>
+        <div class="did-actions">
+          <button type="button" class="button button-primary" id="demo-rank-2">بررسی رتبه</button>
         </div>
-        <h2 class="did-h2">سایت خودم در شهرهای ایران (موبایل)</h2>
+        <p class="did-muted" style="margin-bottom:10px">بدون رقیب هم فقط رتبهٔ سایت در گوگل و بینگ ثبت می‌شود.</p>
         <div class="did-table-wrap">
-          <table class="widefat striped did-matrix">
+          <table class="widefat striped did-ranks">
             <thead>
               <tr>
-                <th>کلیدواژه</th>
-                <th>تهران</th>
-                <th>مشهد</th>
-                <th>اصفهان</th>
+                <th class="did-kw">کلمه کلیدی</th>
+                <th colspan="2"><span dir="ltr">myshop.ir</span> <span class="did-tag">سایت</span></th>
+              </tr>
+              <tr class="did-subhead">
+                <th></th>
+                <th>گوگل</th>
+                <th>بینگ</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <th>خرید فرش</th>
+                <th class="did-kw">خرید فرش</th>
+                <td><span class="did-rank-num">۴</span></td>
+                <td><span class="did-rank-num">۶</span></td>
+              </tr>
+              <tr>
+                <th class="did-kw">فرش دستباف کاشان</th>
+                <td><span class="did-rank-num">۱۲</span></td>
+                <td><span class="did-rank-miss">نیست</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="tab-backlinks">
+        <div class="did-actions">
+          <button type="button" class="button button-primary" id="demo-backlinks">بررسی بک‌لینک</button>
+        </div>
+        <div class="did-table-wrap">
+          <table class="widefat striped did-backlinks">
+            <thead>
+              <tr>
+                <th>دامنه</th>
+                <th>نقش</th>
+                <th>بک‌لینک</th>
+                <th>دامنهٔ ارجاع</th>
+                <th>انکر تکست</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td dir="ltr">myshop.ir</td>
+                <td>سایت</td>
+                <td>۱٬۲۴۰</td>
+                <td>۸۹</td>
                 <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-on">۴</span> <span class="did-delta did-delta-up">رشد ۳</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-on">۶</span> <span class="did-delta did-delta-down">افت ۲</span></div>
-                </td>
-                <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-on">۷</span> <span class="did-delta did-delta-up">رشد ۱</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-on">۹</span> <span class="did-delta did-delta-same">ثابت</span></div>
-                </td>
-                <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-off">نیست</span> <span class="did-delta did-delta-exit">خروج</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-on">۱۱</span> <span class="did-delta did-delta-enter">ورود</span></div>
+                  <span class="did-anchor">خرید فرش <em>۴۰</em></span>
+                  <span class="did-anchor">فرش کاشان <em>۱۲</em></span>
                 </td>
               </tr>
               <tr>
-                <th>فرش دستباف کاشان</th>
+                <td dir="ltr">rival-a.ir</td>
+                <td>رقیب</td>
+                <td>۸٬۳۱۰</td>
+                <td>۴۲۰</td>
                 <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-on">۱۲</span> <span class="did-delta did-delta-up">رشد ۴</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-off">نیست</span></div>
-                </td>
-                <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-on">۸</span> <span class="did-delta did-delta-down">افت ۲</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-on">۵</span></div>
-                </td>
-                <td>
-                  <div class="did-cell"><span class="did-eng">گوگل</span><span class="did-pill did-pill-on">۱۵</span> <span class="did-delta did-delta-same">ثابت</span></div>
-                  <div class="did-cell"><span class="did-eng">بینگ</span><span class="did-pill did-pill-on">۱۰</span></div>
+                  <span class="did-anchor">فرش دستباف <em>۲۱۰</em></span>
+                  <span class="did-anchor">rival a <em>۹۸</em></span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="did-split">
-          <div>
-            <h2 class="did-h2">بیشترین رشد — تهران</h2>
-            <ul class="did-movers">
-              <li><span class="did-delta did-delta-up">رشد ۴</span> فرش دستباف کاشان · myshop.ir · گوگل</li>
-              <li><span class="did-delta did-delta-up">رشد ۳</span> خرید فرش · myshop.ir · گوگل</li>
-            </ul>
-          </div>
-          <div>
-            <h2 class="did-h2">بیشترین افت — تهران</h2>
-            <ul class="did-movers">
-              <li><span class="did-delta did-delta-down">افت ۲</span> خرید فرش · myshop.ir · بینگ</li>
-            </ul>
-          </div>
-        </div>
       </section>
 
       <section class="panel" id="tab-settings">
         <form class="did-form" onsubmit="return false;">
-          <h2 class="did-h2">بینگ</h2>
-          <table class="form-table"><tr><th>کلید Azure Bing Search</th><td><input type="password" dir="ltr" value="••••••••" /></td></tr></table>
-          <h2 class="did-h2">موبایل و شهرهای ایران</h2>
           <table class="form-table">
-            <tr><th>دیوایس نتایج</th><td><select><option>موبایل</option></select></td></tr>
-            <tr><th>شهرها</th><td>تهران · مشهد · اصفهان</td></tr>
+            <tr><th>کلید Bing</th><td><input type="password" dir="ltr" value="••••••••" /></td></tr>
+            <tr><th>گوگل</th><td><select><option>SerpAPI</option></select></td></tr>
+            <tr><th>ورود DataForSEO</th><td><input type="text" dir="ltr" value="login" /></td></tr>
+            <tr><th>نتایج</th><td><select><option>دسکتاپ (گوگل / بینگ)</option></select></td></tr>
           </table>
         </form>
       </section>
@@ -262,7 +217,11 @@ rival-b.ir</textarea></td></tr>
     el.textContent = text;
   }
   document.getElementById('demo-rank').onclick = function () { demo('بررسی رتبه تمام شد. (۱۰۰٪)'); };
-  document.getElementById('demo-crawl').onclick = function () { demo('کرول تمام شد. (۱۰۰٪)'); };
+  document.getElementById('demo-rank-2').onclick = function () {
+    document.querySelector('[data-tab="dash"]').click();
+    demo('بررسی رتبه تمام شد. (۱۰۰٪)');
+  };
+  document.getElementById('demo-backlinks').onclick = function () {};
 </script>
 </body>
 </html>

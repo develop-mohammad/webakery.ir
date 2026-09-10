@@ -82,7 +82,7 @@ class DID_Provider_Serp {
 			'gl'      => $gl ? $gl : 'ir',
 			'num'     => (int) $num,
 			'api_key' => $api_key,
-			'device'  => ! empty( $opts['device'] ) ? $opts['device'] : 'mobile',
+			'device'  => ! empty( $opts['device'] ) ? $opts['device'] : 'desktop',
 		);
 		if ( ! empty( $opts['location'] ) ) {
 			$q['location'] = (string) $opts['location'];
@@ -108,71 +108,73 @@ class DID_Provider_DataForSeo {
 	const ENDPOINT = 'https://api.dataforseo.com/v3/serp/google/organic/live/regular';
 
 	public static function search( $keyword, $depth, $login, $password, $opts = array() ) {
-		$keyword  = trim( (string) $keyword );
-		$login    = trim( (string) $login );
-		$password = (string) $password;
-		if ( '' === $login || '' === $password ) {
-			return self::fail( 'ورود DataForSEO تنظیم نشده.' );
-		}
+		$keyword = trim( (string) $keyword );
 		if ( '' === $keyword ) {
 			return self::fail( 'کلیدواژه خالی است.' );
 		}
 		$depth = min( 50, max( 10, (int) $depth ) );
 		$loc   = ! empty( $opts['location_name'] ) ? (string) $opts['location_name'] : 'Iran';
-		$dev   = ! empty( $opts['device'] ) ? $opts['device'] : 'mobile';
-		$body  = wp_json_encode(
+		$dev   = ! empty( $opts['device'] ) ? $opts['device'] : 'desktop';
+		$pack  = self::request(
+			self::ENDPOINT,
 			array(
 				array(
 					'keyword'       => $keyword,
 					'location_name' => $loc,
 					'language_code' => 'fa',
-					'device'        => 'desktop' === $dev ? 'desktop' : 'mobile',
-					'os'            => 'desktop' === $dev ? 'windows' : 'android',
+					'device'        => 'mobile' === $dev ? 'mobile' : 'desktop',
+					'os'            => 'mobile' === $dev ? 'android' : 'windows',
 					'depth'         => $depth,
 				),
+			),
+			$login,
+			$password,
+			40
+		);
+		if ( empty( $pack['ok'] ) ) {
+			return $pack;
+		}
+		return array(
+			'ok'      => true,
+			'error'   => '',
+			'results' => self::parse( $pack['data'] ),
+			'raw'     => $pack['data'],
+		);
+	}
+
+	/**
+	 * POST JSON به DataForSEO.
+	 *
+	 * @param string $endpoint
+	 * @param array  $tasks
+	 * @param string $login
+	 * @param string $password
+	 * @param int    $timeout
+	 * @return array{ok:bool,error:string,data:array|null,results:array,raw:mixed}
+	 */
+	public static function request( $endpoint, array $tasks, $login, $password, $timeout = 40 ) {
+		$login    = trim( (string) $login );
+		$password = (string) $password;
+		if ( '' === $login || '' === $password ) {
+			return self::fail( 'ورود DataForSEO تنظیم نشده.' );
+		}
+		$body = function_exists( 'wp_json_encode' ) ? wp_json_encode( $tasks ) : json_encode( $tasks );
+		$res  = DID_Http::post(
+			$endpoint,
+			array(
+				'timeout' => (int) $timeout,
+				'headers' => array(
+					'Authorization' => 'Basic ' . base64_encode( $login . ':' . $password ),
+					'Content-Type'  => 'application/json',
+					'Accept'        => 'application/json',
+				),
+				'body'    => $body,
 			)
 		);
-
-		$args = array(
-			'timeout' => 40,
-			'headers' => array(
-				'Authorization' => 'Basic ' . base64_encode( $login . ':' . $password ),
-				'Content-Type'  => 'application/json',
-			),
-			'body'    => $body,
-			'method'  => 'POST',
-		);
-
-		if ( is_callable( DID_Http::$transport ) ) {
-			$res = call_user_func( DID_Http::$transport, self::ENDPOINT, $args );
-			if ( is_array( $res ) && isset( $res['did_http'] ) ) {
-				$http = $res;
-			} else {
-				$http = array(
-					'ok'     => false,
-					'body'   => '',
-					'error'  => 'پاسخ DataForSEO نامعتبر بود.',
-					'status' => 0,
-				);
-			}
-		} else {
-			$post = wp_remote_post( self::ENDPOINT, $args );
-			if ( is_wp_error( $post ) ) {
-				return self::fail( $post->get_error_message() );
-			}
-			$code = (int) wp_remote_retrieve_response_code( $post );
-			$http = array(
-				'ok'     => $code >= 200 && $code < 300,
-				'body'   => (string) wp_remote_retrieve_body( $post ),
-				'error'  => $code >= 200 && $code < 300 ? '' : 'کد پاسخ HTTP: ' . $code,
-				'status' => $code,
-			);
+		if ( empty( $res['ok'] ) ) {
+			return self::fail( ! empty( $res['error'] ) ? $res['error'] : 'پاسخ DataForSEO نامعتبر بود.' );
 		}
-
-		if ( empty( $http['ok'] ) ) {
-			return self::fail( ! empty( $http['error'] ) ? $http['error'] : 'پاسخ DataForSEO نامعتبر بود.' );
-		}
-		$data = json_decode( $http['body'], true );
+		$data = json_decode( $res['body'], true );
 		if ( ! is_array( $data ) ) {
 			return self::fail( 'JSON DataForSEO خوانده نشد.' );
 		}
@@ -180,10 +182,15 @@ class DID_Provider_DataForSeo {
 			$msg = isset( $data['status_message'] ) ? (string) $data['status_message'] : 'خطای DataForSEO';
 			return self::fail( $msg );
 		}
+		if ( isset( $data['tasks'][0]['status_code'] ) && (int) $data['tasks'][0]['status_code'] !== 20000 ) {
+			$msg = isset( $data['tasks'][0]['status_message'] ) ? (string) $data['tasks'][0]['status_message'] : 'خطای DataForSEO';
+			return self::fail( $msg );
+		}
 		return array(
 			'ok'      => true,
 			'error'   => '',
-			'results' => self::parse( $data ),
+			'data'    => $data,
+			'results' => array(),
 			'raw'     => $data,
 		);
 	}

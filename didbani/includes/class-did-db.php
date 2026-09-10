@@ -12,8 +12,9 @@ class DID_Db {
 	const PAGES    = 'did_pages';
 	const RANKS    = 'did_ranks';
 	const JOBS     = 'did_jobs';
-	const HISTORY  = 'did_rank_history';
-	const SCHEMA   = 2;
+	const HISTORY   = 'did_rank_history';
+	const BACKLINKS = 'did_backlinks';
+	const SCHEMA    = 3;
 
 	public static function table( $name ) {
 		global $wpdb;
@@ -30,8 +31,9 @@ class DID_Db {
 		$keywords = self::table( self::KEYWORDS );
 		$pages    = self::table( self::PAGES );
 		$ranks    = self::table( self::RANKS );
-		$jobs     = self::table( self::JOBS );
-		$history  = self::table( self::HISTORY );
+		$jobs      = self::table( self::JOBS );
+		$history   = self::table( self::HISTORY );
+		$backlinks = self::table( self::BACKLINKS );
 
 		dbDelta(
 			"CREATE TABLE {$projects} (
@@ -97,8 +99,8 @@ class DID_Db {
 				domain_id bigint(20) unsigned NOT NULL,
 				engine varchar(20) NOT NULL DEFAULT '',
 				provider varchar(30) NOT NULL DEFAULT '',
-				device varchar(16) NOT NULL DEFAULT 'mobile',
-				city varchar(40) NOT NULL DEFAULT 'tehran',
+				device varchar(16) NOT NULL DEFAULT 'desktop',
+				city varchar(40) NOT NULL DEFAULT '',
 				position smallint NOT NULL DEFAULT 0,
 				prev_position smallint NOT NULL DEFAULT 0,
 				result_url text NULL,
@@ -118,8 +120,8 @@ class DID_Db {
 				keyword_id bigint(20) unsigned NOT NULL,
 				domain_id bigint(20) unsigned NOT NULL,
 				engine varchar(20) NOT NULL DEFAULT '',
-				device varchar(16) NOT NULL DEFAULT 'mobile',
-				city varchar(40) NOT NULL DEFAULT 'tehran',
+				device varchar(16) NOT NULL DEFAULT 'desktop',
+				city varchar(40) NOT NULL DEFAULT '',
 				position smallint NOT NULL DEFAULT 0,
 				checked_at datetime DEFAULT NULL,
 				PRIMARY KEY  (id),
@@ -139,6 +141,23 @@ class DID_Db {
 				finished_at datetime DEFAULT NULL,
 				PRIMARY KEY  (id),
 				KEY project_status (project_id, status)
+			) {$charset};\n"
+		);
+
+		dbDelta(
+			"CREATE TABLE {$backlinks} (
+				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+				project_id bigint(20) unsigned NOT NULL,
+				domain_id bigint(20) unsigned NOT NULL,
+				backlinks int unsigned NOT NULL DEFAULT 0,
+				referring_domains int unsigned NOT NULL DEFAULT 0,
+				referring_pages int unsigned NOT NULL DEFAULT 0,
+				domain_rank int unsigned NOT NULL DEFAULT 0,
+				anchors longtext NULL,
+				error text NULL,
+				checked_at datetime DEFAULT NULL,
+				PRIMARY KEY  (id),
+				KEY lookup (project_id, domain_id)
 			) {$charset};\n"
 		);
 	}
@@ -205,6 +224,47 @@ class DID_Db {
 		$wpdb->delete( self::table( self::RANKS ), array( 'project_id' => $id ) );
 		$wpdb->delete( self::table( self::HISTORY ), array( 'project_id' => $id ) );
 		$wpdb->delete( self::table( self::JOBS ), array( 'project_id' => $id ) );
+		$wpdb->delete( self::table( self::BACKLINKS ), array( 'project_id' => $id ) );
+	}
+
+	/**
+	 * اگر دامنهٔ خود سایت خالی باشد، از آدرس وردپرس پر می‌شود.
+	 *
+	 * @param int    $project_id
+	 * @param string $fallback_host
+	 * @return int domain_id یا ۰
+	 */
+	public static function ensure_own_domain( $project_id, $fallback_host = '' ) {
+		$project_id = (int) $project_id;
+		$domains    = self::domains( $project_id );
+		foreach ( $domains as $d ) {
+			if ( 'own' === $d['kind'] && '' !== $d['host'] ) {
+				return (int) $d['id'];
+			}
+		}
+		$host = DID_Url::host( $fallback_host );
+		if ( '' === $host && function_exists( 'home_url' ) ) {
+			$host = DID_Url::host( home_url() );
+		}
+		if ( '' === $host && function_exists( 'site_url' ) ) {
+			$host = DID_Url::host( site_url() );
+		}
+		if ( '' === $host ) {
+			return 0;
+		}
+		$comps = array();
+		foreach ( $domains as $d ) {
+			if ( 'competitor' === $d['kind'] && '' !== $d['host'] ) {
+				$comps[] = $d['host'];
+			}
+		}
+		self::upsert_domains( $project_id, $host, $comps );
+		foreach ( self::domains( $project_id ) as $d ) {
+			if ( 'own' === $d['kind'] ) {
+				return (int) $d['id'];
+			}
+		}
+		return 0;
 	}
 
 	/* ─── دامنه ─── */
@@ -419,11 +479,8 @@ class DID_Db {
 	public static function upsert_rank( array $row ) {
 		global $wpdb;
 		$t      = self::table( self::RANKS );
-		$device = isset( $row['device'] ) ? DID_Geo::sanitize_device( $row['device'] ) : 'mobile';
-		$city   = isset( $row['city'] ) ? $row['city'] : 'tehran';
-		if ( ! DID_Geo::city( $city ) ) {
-			$city = 'tehran';
-		}
+		$device = isset( $row['device'] ) ? DID_Geo::sanitize_device( $row['device'] ) : 'desktop';
+		$city   = isset( $row['city'] ) ? strtolower( preg_replace( '/[^a-z0-9_]/', '', (string) $row['city'] ) ) : '';
 		$row['device'] = $device;
 		$row['city']   = $city;
 
@@ -552,6 +609,34 @@ class DID_Db {
 	public static function update_job( $id, array $data ) {
 		global $wpdb;
 		$wpdb->update( self::table( self::JOBS ), $data, array( 'id' => (int) $id ) );
+	}
+
+	/* ─── بک‌لینک ─── */
+
+	public static function backlinks( $project_id ) {
+		global $wpdb;
+		$t = self::table( self::BACKLINKS );
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$t} WHERE project_id = %d", (int) $project_id ), ARRAY_A ); // phpcs:ignore
+	}
+
+	public static function upsert_backlink( array $row ) {
+		global $wpdb;
+		$t  = self::table( self::BACKLINKS );
+		$ex = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT id FROM {$t} WHERE project_id = %d AND domain_id = %d",
+				(int) $row['project_id'],
+				(int) $row['domain_id']
+			),
+			ARRAY_A
+		); // phpcs:ignore
+		$row['checked_at'] = self::now();
+		if ( $ex ) {
+			$wpdb->update( $t, $row, array( 'id' => (int) $ex['id'] ) );
+			return (int) $ex['id'];
+		}
+		$wpdb->insert( $t, $row );
+		return (int) $wpdb->insert_id;
 	}
 
 	public static function pending_jobs() {

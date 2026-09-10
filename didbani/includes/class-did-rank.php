@@ -49,13 +49,15 @@ class DID_Rank {
 			$ids[] = (int) $kw['id'];
 		}
 		if ( ! $ids ) {
-			return new WP_Error( 'no_keywords', 'کلیدواژه‌ای ثبت نشده.' );
+			return new WP_Error( 'no_keywords', 'کلیدواژه‌ای ثبت نشده. حداقل یک کلمه کلیدی در تب پروژه بگذارید.' );
+		}
+		if ( ! DID_Db::ensure_own_domain( $project_id ) ) {
+			return new WP_Error( 'no_own', 'دامنهٔ سایت مشخص نیست. آدرس سایت را در تب پروژه بگذارید یا وردپرس را با دامنهٔ معتبر تنظیم کنید.' );
 		}
 		$engines = self::enabled_engines();
 		if ( ! $engines ) {
 			return new WP_Error( 'no_engine', 'هیچ ارائه‌دهندهٔ رتبه‌ای پیکربندی نشده. کلید Bing یا گوگل را در تنظیمات وارد کنید.' );
 		}
-		$cities = DID_Settings::cities();
 		$device = DID_Settings::device();
 		$id     = DID_Db::insert_job(
 			$project_id,
@@ -63,7 +65,6 @@ class DID_Rank {
 			array(
 				'keywords' => $ids,
 				'engines'  => $engines,
-				'cities'   => $cities,
 				'device'   => $device,
 				'index'    => 0,
 			)
@@ -98,15 +99,12 @@ class DID_Rank {
 		$project_id = (int) $job['project_id'];
 		$keywords   = isset( $payload['keywords'] ) ? $payload['keywords'] : array();
 		$engines    = isset( $payload['engines'] ) ? $payload['engines'] : array();
-		$cities     = isset( $payload['cities'] ) && is_array( $payload['cities'] ) ? $payload['cities'] : DID_Settings::cities();
 		$device     = isset( $payload['device'] ) ? DID_Geo::sanitize_device( $payload['device'] ) : DID_Settings::device();
 		$index      = isset( $payload['index'] ) ? (int) $payload['index'] : 0;
 		$combos     = array();
 		foreach ( $keywords as $kw_id ) {
 			foreach ( $engines as $engine ) {
-				foreach ( $cities as $city ) {
-					$combos[] = array( (int) $kw_id, (string) $engine, (string) $city );
-				}
+				$combos[] = array( (int) $kw_id, (string) $engine );
 			}
 		}
 		$total = count( $combos );
@@ -132,20 +130,17 @@ class DID_Rank {
 
 		$kw_id  = $combos[ $index ][0];
 		$engine = $combos[ $index ][1];
-		$city   = $combos[ $index ][2];
 
 		global $wpdb;
 		$kt  = DID_Db::table( DID_Db::KEYWORDS );
 		$kw  = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$kt} WHERE id = %d", $kw_id ), ARRAY_A ); // phpcs:ignore
 		$msg = 'در حال بررسی…';
 		if ( $kw ) {
-			$err = self::check_one( $project_id, $kw, $engine, $city, $device );
+			$err = self::check_one( $project_id, $kw, $engine, $device );
 			$msg = $err ? $err : sprintf(
-				'«%s» در %s %s %s بررسی شد.',
+				'«%s» در %s بررسی شد.',
 				$kw['keyword'],
-				'google' === $engine ? 'گوگل' : 'بینگ',
-				DID_Geo::device_label( $device ),
-				DID_Geo::label( $city )
+				'google' === $engine ? 'گوگل' : 'بینگ'
 			);
 		}
 
@@ -174,9 +169,10 @@ class DID_Rank {
 	 * @param int    $project_id
 	 * @param array  $keyword_row
 	 * @param string $engine
+	 * @param string $device
 	 * @return string خطا یا خالی
 	 */
-	public static function check_one( $project_id, array $keyword_row, $engine, $city = 'tehran', $device = 'mobile' ) {
+	public static function check_one( $project_id, array $keyword_row, $engine, $device = 'desktop' ) {
 		$depth   = (int) DID_Settings::get( 'rank_depth', 20 );
 		$market  = (string) DID_Settings::get( 'market', 'fa-IR' );
 		$country = (string) DID_Settings::get( 'country', 'ir' );
@@ -185,18 +181,10 @@ class DID_Rank {
 			$hl = 'fa';
 		}
 		$device = DID_Geo::sanitize_device( $device );
-		$geo    = DID_Geo::city( $city );
-		if ( ! $geo ) {
-			$city = 'tehran';
-			$geo  = DID_Geo::city( 'tehran' );
-		}
 
 		$opts = array(
 			'device'        => $device,
-			'location'      => $geo['serp'],
-			'location_name' => $geo['dfs'],
-			'lat'           => $geo['lat'],
-			'lng'           => $geo['lng'],
+			'location_name' => 'Iran',
 		);
 
 		$provider_id = '';
@@ -246,8 +234,8 @@ class DID_Rank {
 		$found = self::match( $pack['results'], $hosts );
 
 		foreach ( $domains as $d ) {
-			$did  = (int) $d['id'];
-			$hit  = isset( $found[ $did ] ) ? $found[ $did ] : null;
+			$did = (int) $d['id'];
+			$hit = isset( $found[ $did ] ) ? $found[ $did ] : null;
 			DID_Db::upsert_rank(
 				array(
 					'project_id'   => (int) $project_id,
@@ -256,7 +244,7 @@ class DID_Rank {
 					'engine'       => $engine,
 					'provider'     => $provider_id,
 					'device'       => $device,
-					'city'         => $city,
+					'city'         => '',
 					'position'     => $hit ? (int) $hit['position'] : 0,
 					'result_url'   => $hit ? $hit['url'] : '',
 					'result_title' => $hit ? $hit['title'] : '',
@@ -296,22 +284,33 @@ class DID_Rank {
 	}
 
 	/**
-	 * ماتریس: keyword_id × domain_id × engine برای یک شهر/دیوایس
+	 * ماتریس: keyword_id × domain_id × engine
 	 *
-	 * @param int    $project_id
-	 * @param string $city
-	 * @param string $device
+	 * @param int $project_id
 	 * @return array
 	 */
-	public static function matrix( $project_id, $city = '', $device = '' ) {
-		if ( '' === $city ) {
-			$city = 'tehran';
+	public static function matrix( $project_id ) {
+		$device = DID_Settings::device();
+		$rows   = DID_Db::ranks( $project_id, '', $device );
+		$out    = array();
+		foreach ( $rows as $r ) {
+			if ( '' !== (string) $r['city'] ) {
+				continue;
+			}
+			$k = (int) $r['keyword_id'];
+			$d = (int) $r['domain_id'];
+			$e = $r['engine'];
+			if ( ! isset( $out[ $k ] ) ) {
+				$out[ $k ] = array();
+			}
+			if ( ! isset( $out[ $k ][ $d ] ) ) {
+				$out[ $k ][ $d ] = array();
+			}
+			$out[ $k ][ $d ][ $e ] = $r;
 		}
-		if ( '' === $device ) {
-			$device = DID_Settings::device();
+		if ( $out ) {
+			return $out;
 		}
-		$rows = DID_Db::ranks( $project_id, $city, $device );
-		$out  = array();
 		foreach ( $rows as $r ) {
 			$k = (int) $r['keyword_id'];
 			$d = (int) $r['domain_id'];
@@ -328,49 +327,23 @@ class DID_Rank {
 	}
 
 	/**
-	 * مقایسه شهرها برای یک دامنه: keyword_id × city × engine
-	 *
-	 * @param int    $project_id
-	 * @param int    $domain_id
-	 * @param string $device
-	 * @return array
-	 */
-	public static function city_matrix( $project_id, $domain_id, $device = '' ) {
-		if ( '' === $device ) {
-			$device = DID_Settings::device();
-		}
-		$rows = DID_Db::ranks( $project_id, '', $device );
-		$out  = array();
-		foreach ( $rows as $r ) {
-			if ( (int) $r['domain_id'] !== (int) $domain_id ) {
-				continue;
-			}
-			$k = (int) $r['keyword_id'];
-			$c = $r['city'];
-			$e = $r['engine'];
-			if ( ! isset( $out[ $k ] ) ) {
-				$out[ $k ] = array();
-			}
-			if ( ! isset( $out[ $k ][ $c ] ) ) {
-				$out[ $k ][ $c ] = array();
-			}
-			$out[ $k ][ $c ][ $e ] = $r;
-		}
-		return $out;
-	}
-
-	/**
 	 * لیست رشد/افت مرتب‌شده.
 	 *
-	 * @param int    $project_id
-	 * @param string $city
-	 * @param string $device
+	 * @param int $project_id
 	 * @return array
 	 */
-	public static function movers( $project_id, $city = '', $device = '' ) {
-		$rows = DID_Db::ranks( $project_id, $city, $device );
-		$out  = array();
-		foreach ( $rows as $r ) {
+	public static function movers( $project_id ) {
+		$matrix_rows = array();
+		$mx          = self::matrix( $project_id );
+		foreach ( $mx as $domains ) {
+			foreach ( $domains as $engines ) {
+				foreach ( $engines as $r ) {
+					$matrix_rows[] = $r;
+				}
+			}
+		}
+		$out = array();
+		foreach ( $matrix_rows as $r ) {
 			$chg = self::delta( isset( $r['prev_position'] ) ? $r['prev_position'] : 0, $r['position'] );
 			if ( 'none' === $chg['kind'] || 'same' === $chg['kind'] ) {
 				continue;
@@ -378,20 +351,6 @@ class DID_Rank {
 			$r['change'] = $chg;
 			$out[]       = $r;
 		}
-		usort(
-			$out,
-			function ( $a, $b ) {
-				$as = isset( $a['change']['steps'] ) ? (int) $a['change']['steps'] : 0;
-				$bs = isset( $b['change']['steps'] ) ? (int) $b['change']['steps'] : 0;
-				if ( 'up' === $a['change']['kind'] ) {
-					$as = -$as;
-				}
-				if ( 'up' === $b['change']['kind'] ) {
-					$bs = -$bs;
-				}
-				return $as - $bs;
-			}
-		);
 		return $out;
 	}
 }

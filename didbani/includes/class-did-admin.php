@@ -26,8 +26,9 @@ class DID_Admin {
 		return array(
 			'dashboard' => 'داشبورد',
 			'project'   => 'پروژه',
-			'crawl'     => 'کرول',
 			'ranks'     => 'رتبه‌ها',
+			'backlinks' => 'بک‌لینک',
+			'crawl'     => 'کرول',
 			'settings'  => 'تنظیمات',
 			'license'   => 'لایسنس',
 		);
@@ -81,6 +82,10 @@ class DID_Admin {
 			$comp = isset( $_POST['competitors'] ) ? wp_unslash( $_POST['competitors'] ) : ''; // phpcs:ignore
 			$kws  = isset( $_POST['keywords'] ) ? wp_unslash( $_POST['keywords'] ) : ''; // phpcs:ignore
 			$id   = isset( $_POST['project_id'] ) ? (int) $_POST['project_id'] : 0; // phpcs:ignore
+
+			if ( '' === trim( (string) $own ) ) {
+				$own = self::site_host();
+			}
 
 			$id = DID_Db::save_project( $id, $name );
 			DID_Db::upsert_domains( $id, $own, DID_Text::lines( $comp ) );
@@ -154,11 +159,6 @@ class DID_Admin {
 		$s        = DID_Settings::all();
 		$usable   = DID_Plugin::is_usable();
 		$device   = DID_Settings::device();
-		$cities   = DID_Settings::cities();
-		$city     = isset( $_GET['city'] ) ? sanitize_key( wp_unslash( $_GET['city'] ) ) : ''; // phpcs:ignore
-		if ( ! in_array( $city, $cities, true ) ) {
-			$city = $cities ? $cities[0] : 'tehran';
-		}
 
 		include DID_PATH . 'templates/layout.php';
 	}
@@ -167,6 +167,19 @@ class DID_Admin {
 		$url = admin_url( 'admin.php?page=didbani' );
 		array_unshift( $links, '<a href="' . esc_url( $url ) . '">پیشخوان</a>' );
 		return $links;
+	}
+
+	public static function site_host() {
+		if ( function_exists( 'home_url' ) ) {
+			$host = DID_Url::host( home_url() );
+			if ( $host ) {
+				return $host;
+			}
+		}
+		if ( function_exists( 'site_url' ) ) {
+			return DID_Url::host( site_url() );
+		}
+		return '';
 	}
 
 	public static function own_host( array $domains ) {
@@ -200,18 +213,39 @@ class DID_Admin {
 		return 'google' === $engine ? 'گوگل' : ( 'bing' === $engine ? 'بینگ' : $engine );
 	}
 
+	public static function format_int( $n ) {
+		$n = (int) $n;
+		if ( function_exists( 'number_format_i18n' ) ) {
+			return number_format_i18n( $n );
+		}
+		return number_format( $n );
+	}
+
+	public static function split_domains( array $domains ) {
+		$own  = null;
+		$comp = array();
+		foreach ( $domains as $d ) {
+			if ( 'own' === $d['kind'] ) {
+				$own = $d;
+			} else {
+				$comp[] = $d;
+			}
+		}
+		return array( $own, $comp );
+	}
+
 	public static function position_html( $row ) {
 		if ( ! $row ) {
 			return '<span class="did-muted">—</span>';
 		}
 		$pos = (int) $row['position'];
 		if ( $pos < 1 ) {
-			$html = '<span class="did-pill did-pill-off">نیست</span>';
+			$html = '<span class="did-rank-miss">نیست</span>';
 		} else {
-			$html = '<span class="did-pill did-pill-on">' . (int) $pos . '</span>';
+			$html = '<span class="did-rank-num">' . (int) $pos . '</span>';
 		}
 		$chg = DID_Rank::delta( isset( $row['prev_position'] ) ? $row['prev_position'] : 0, $pos );
-		if ( $chg['label'] ) {
+		if ( $chg['label'] && 'same' !== $chg['kind'] ) {
 			$html .= ' <span class="did-delta did-delta-' . esc_attr( $chg['kind'] ) . '">' . esc_html( $chg['label'] ) . '</span>';
 		}
 		if ( ! empty( $row['approximate'] ) ) {
@@ -224,24 +258,20 @@ class DID_Admin {
 		return $html;
 	}
 
-	public static function city_nav( $tab, $pid, $cities, $current ) {
-		if ( count( $cities ) < 2 ) {
-			return;
+	public static function anchors_html( $json ) {
+		$items = json_decode( (string) $json, true );
+		if ( ! is_array( $items ) || ! $items ) {
+			return '<span class="did-muted">—</span>';
 		}
-		echo '<div class="did-city-nav">';
-		foreach ( $cities as $slug ) {
-			$url = add_query_arg(
-				array(
-					'page'    => 'didbani',
-					'tab'     => $tab,
-					'project' => $pid,
-					'city'    => $slug,
-				),
-				admin_url( 'admin.php' )
-			);
-			$cls = $slug === $current ? ' did-city-on' : '';
-			echo '<a class="did-city-chip' . esc_attr( $cls ) . '" href="' . esc_url( $url ) . '">' . esc_html( DID_Geo::label( $slug ) ) . '</a>';
+		$bits = array();
+		foreach ( array_slice( $items, 0, 8 ) as $a ) {
+			$txt = isset( $a['anchor'] ) ? $a['anchor'] : '';
+			$n   = isset( $a['backlinks'] ) ? (int) $a['backlinks'] : 0;
+			if ( '' === $txt ) {
+				continue;
+			}
+			$bits[] = '<span class="did-anchor">' . esc_html( $txt ) . ' <em>' . esc_html( self::format_int( $n ) ) . '</em></span>';
 		}
-		echo '</div>';
+		return $bits ? implode( ' ', $bits ) : '<span class="did-muted">—</span>';
 	}
 }

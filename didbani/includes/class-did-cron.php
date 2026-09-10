@@ -42,6 +42,8 @@ class DID_Cron {
 				DID_Crawler::step( $job, 4 );
 			} elseif ( 'rank' === $job['type'] ) {
 				DID_Rank::step( $job );
+			} elseif ( 'backlinks' === $job['type'] ) {
+				DID_Backlinks::step( $job );
 			}
 		}
 	}
@@ -65,6 +67,12 @@ class DID_Cron {
 				$job = DID_Rank::start( $pid );
 				if ( ! is_wp_error( $job ) && $job ) {
 					DID_Rank::step( $job );
+				}
+			}
+			if ( DID_Settings::has_dataforseo() && ! DID_Db::active_job( $pid, 'backlinks' ) ) {
+				$job = DID_Backlinks::start( $pid );
+				if ( ! is_wp_error( $job ) && $job ) {
+					DID_Backlinks::step( $job );
 				}
 			}
 		}

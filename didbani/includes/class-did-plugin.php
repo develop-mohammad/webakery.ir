@@ -50,11 +50,10 @@ class DID_Plugin {
 				'register_menu' => true,
 				'page'          => 'admin.php?page=didbani&tab=license',
 				'features'      => array(
+					'رتبهٔ کلیدواژه در گوگل و بینگ حتی بدون رقیب',
+					'رصد بک‌لینک و انکر تکست رقبا (DataForSEO)',
 					'کرول صفحات عمومی رقبا (robots و sitemap)',
-					'رصد رتبه در بینگ با Azure API',
-					'رصد رتبه در گوگل با SerpAPI / DataForSEO',
-					'رصد رتبه موبایل در شهرهای ایران و نمایش رشد/افت',
-					'ماتریس کیورد × دامنه × موتور جستجو',
+					'رتبه بینگ با Azure و گوگل با SerpAPI / DataForSEO',
 					'به‌روزرسانی خودکار از webakery.ir',
 				),
 			)

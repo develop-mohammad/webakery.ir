@@ -15,7 +15,31 @@ class DID_Http {
 	 * @return array{ok:bool,status:int,body:string,error:string,final_url:string,content_type:string}
 	 */
 	public static function get( $url, array $args = array() ) {
-		$url = DID_Url::canonical( $url );
+		$args['method'] = 'GET';
+		return self::request( $url, $args );
+	}
+
+	/**
+	 * @param string $url
+	 * @param array  $args
+	 * @return array{ok:bool,status:int,body:string,error:string,final_url:string,content_type:string}
+	 */
+	public static function post( $url, array $args = array() ) {
+		$args['method'] = 'POST';
+		return self::request( $url, $args );
+	}
+
+	/**
+	 * @param string $url
+	 * @param array  $args
+	 * @return array{ok:bool,status:int,body:string,error:string,final_url:string,content_type:string}
+	 */
+	public static function request( $url, array $args = array() ) {
+		$method = isset( $args['method'] ) ? strtoupper( (string) $args['method'] ) : 'GET';
+		if ( 'POST' !== $method ) {
+			$method = 'GET';
+			$url    = DID_Url::canonical( $url );
+		}
 		$out = array(
 			'ok'           => false,
 			'status'       => 0,
@@ -30,6 +54,10 @@ class DID_Http {
 		}
 
 		$headers = array( 'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' );
+		if ( 'POST' === $method ) {
+			$headers['Accept']       = 'application/json';
+			$headers['Content-Type'] = 'application/json';
+		}
 		if ( ! empty( $args['headers'] ) && is_array( $args['headers'] ) ) {
 			$headers = array_merge( $headers, $args['headers'] );
 		}
@@ -40,10 +68,16 @@ class DID_Http {
 			'user-agent'  => ! empty( $args['user-agent'] ) ? (string) $args['user-agent'] : DID_UA,
 			'headers'     => $headers,
 			'sslverify'   => true,
+			'method'      => $method,
 		);
+		if ( 'POST' === $method && array_key_exists( 'body', $args ) ) {
+			$req['body'] = $args['body'];
+		}
 
 		if ( is_callable( self::$transport ) ) {
 			$res = call_user_func( self::$transport, $url, $req );
+		} elseif ( 'POST' === $method && function_exists( 'wp_remote_post' ) ) {
+			$res = wp_remote_post( $url, $req );
 		} elseif ( function_exists( 'wp_remote_get' ) ) {
 			$res = wp_remote_get( $url, $req );
 		} else {

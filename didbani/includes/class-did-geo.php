@@ -76,7 +76,7 @@ class DID_Geo {
 	 * @return string
 	 */
 	public static function sanitize_device( $device ) {
-		return 'desktop' === $device ? 'desktop' : 'mobile';
+		return 'mobile' === $device ? 'mobile' : 'desktop';
 	}
 
 	public static function device_label( $device ) {

@@ -46,7 +46,7 @@
   }
 
   function disableBtns(on) {
-    ['did-run-crawl', 'did-run-rank'].forEach(function (id) {
+    ['did-run-crawl', 'did-run-rank', 'did-run-backlinks'].forEach(function (id) {
       var b = document.getElementById(id);
       if (b) b.disabled = on || !cfg.licensed;
     });
@@ -102,6 +102,12 @@
   if (rank) {
     rank.addEventListener('click', function () {
       loop('did_rank_step');
+    });
+  }
+  var backlinks = document.getElementById('did-run-backlinks');
+  if (backlinks) {
+    backlinks.addEventListener('click', function () {
+      loop('did_backlinks_step');
     });
   }
 })();

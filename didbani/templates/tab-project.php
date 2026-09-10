@@ -2,10 +2,13 @@
 defined( 'ABSPATH' ) || exit;
 $is_new = ! empty( $_GET['new'] ); // phpcs:ignore
 $form_id = $is_new ? 0 : (int) $pid;
-$own     = $is_new ? '' : DID_Admin::own_host( $domains );
-$comp    = $is_new ? '' : DID_Admin::competitor_text( $domains );
-$kws     = $is_new ? '' : DID_Admin::keyword_text( $keywords );
-$name    = ( $is_new || ! $project ) ? '' : $project['name'];
+$own     = $is_new ? DID_Admin::site_host() : DID_Admin::own_host( $domains );
+if ( '' === $own ) {
+	$own = DID_Admin::site_host();
+}
+$comp = $is_new ? '' : DID_Admin::competitor_text( $domains );
+$kws  = $is_new ? '' : DID_Admin::keyword_text( $keywords );
+$name = ( $is_new || ! $project ) ? '' : $project['name'];
 ?>
 <p>
 	<?php if ( $pid && ! $is_new ) : ?>
@@ -29,22 +32,22 @@ $name    = ( $is_new || ! $project ) ? '' : $project['name'];
 		<tr>
 			<th><label for="own_domain">سایت خودم</label></th>
 			<td>
-				<input id="own_domain" class="regular-text" dir="ltr" type="text" name="own_domain" value="<?php echo esc_attr( $own ); ?>" placeholder="example.ir" />
-				<p class="description">دامنه بدون http هم قبول است. www حذف می‌شود.</p>
+				<input id="own_domain" class="regular-text" dir="ltr" type="text" name="own_domain" value="<?php echo esc_attr( $own ); ?>" placeholder="<?php echo esc_attr( DID_Admin::site_host() ); ?>" />
+				<p class="description">اگر خالی بماند، دامنهٔ همین وردپرس استفاده می‌شود.</p>
 			</td>
 		</tr>
 		<tr>
-			<th><label for="competitors">دامنهٔ رقبا</label></th>
+			<th><label for="competitors">رقبا (اختیاری)</label></th>
 			<td>
-				<textarea id="competitors" name="competitors" class="large-text" rows="6" dir="ltr" placeholder="competitor1.ir"><?php echo esc_textarea( $comp ); ?></textarea>
-				<p class="description">هر خط یک دامنه. فقط صفحات عمومی همین دامنه‌ها کرول می‌شوند.</p>
+				<textarea id="competitors" name="competitors" class="large-text" rows="4" dir="ltr" placeholder="competitor.ir"><?php echo esc_textarea( $comp ); ?></textarea>
+				<p class="description">لازم نیست. بدون رقیب هم رتبهٔ سایت خودتان در گوگل و بینگ ثبت می‌شود. هر خط یک دامنه.</p>
 			</td>
 		</tr>
 		<tr>
-			<th><label for="keywords">کلیدواژه‌ها</label></th>
+			<th><label for="keywords">کلمات کلیدی</label></th>
 			<td>
 				<textarea id="keywords" name="keywords" class="large-text" rows="8" placeholder="خرید فرش"><?php echo esc_textarea( $kws ); ?></textarea>
-				<p class="description">هر خط یک کلیدواژه. ارقام فارسی به لاتین تبدیل می‌شوند.</p>
+				<p class="description">هر خط یک کلمه. رتبهٔ گوگل و بینگ برای همین لیست ساخته می‌شود.</p>
 			</td>
 		</tr>
 	</table>
@@ -52,7 +55,7 @@ $name    = ( $is_new || ! $project ) ? '' : $project['name'];
 	<p>
 		<button type="submit" class="button button-primary" <?php disabled( ! $usable ); ?>><?php echo $form_id ? 'ذخیره تغییرات' : 'ساخت پروژه'; ?></button>
 		<?php if ( $form_id ) : ?>
-			<a class="button button-link-delete" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=didbani&tab=project&did_delete=1&project=' . (int) $form_id ), 'did_delete' ) ); ?>" onclick="return confirm('این پروژه و نتایج کرول/رتبه حذف شود؟');">حذف پروژه</a>
+			<a class="button button-link-delete" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=didbani&tab=project&did_delete=1&project=' . (int) $form_id ), 'did_delete' ) ); ?>" onclick="return confirm('این پروژه و نتایج رتبه حذف شود؟');">حذف پروژه</a>
 		<?php endif; ?>
 	</p>
 </form>

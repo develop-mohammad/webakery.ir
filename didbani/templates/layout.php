@@ -13,18 +13,13 @@ defined( 'ABSPATH' ) || exit;
 /** @var array $s */
 /** @var bool $usable */
 /** @var string $device */
-/** @var array $cities */
-/** @var string $city */
 ?>
 <div class="wrap did-wrap" dir="rtl">
 	<h1 class="did-h1">
 		دیدبانی
 		<span class="did-ver">v<?php echo esc_html( DID_VERSION ); ?></span>
 	</h1>
-	<p class="did-sub">
-		رصد صفحات عمومی رقبا و رتبه در گوگل و بینگ ·
-		سازنده: <a href="https://webakery.ir" target="_blank" rel="noopener">webakery.ir</a>
-	</p>
+	<p class="did-sub">رتبهٔ کلیدواژه در گوگل و بینگ · بک‌لینک رقبا · webakery.ir</p>
 
 	<?php if ( $saved ) : ?>
 		<div class="notice notice-success is-dismissible"><p>ذخیره شد.</p></div>
@@ -36,7 +31,7 @@ defined( 'ABSPATH' ) || exit;
 		<div class="notice notice-error"><p>برای ذخیرهٔ پروژه، لایسنس یا دورهٔ آزمایشی باید فعال باشد.</p></div>
 	<?php endif; ?>
 	<?php if ( ! $usable ) : ?>
-		<div class="notice notice-warning"><p>دوره آزمایشی یا لایسنس فعال نیست. کرول و رتبه‌یابی قفل است. از تب لایسنس کلید را وارد کنید.</p></div>
+		<div class="notice notice-warning"><p>دوره آزمایشی یا لایسنس فعال نیست. رتبه‌یابی قفل است. از تب لایسنس کلید را وارد کنید.</p></div>
 	<?php endif; ?>
 
 	<nav class="nav-tab-wrapper did-tabs">

@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: دیدبانی | رصد رقبا و رتبهٔ کلیدواژه
- * Description: کرول صفحات عمومی رقبا و رصد حضور/رتبه در گوگل و بینگ از طریق API رسمی — بدون اسکرپ HTML موتور جستجو.
- * Version:     1.1.0
+ * Description: رتبهٔ کلیدواژه در گوگل و بینگ (حتی بدون رقیب) و رصد بک‌لینک رقبا از API رسمی — بدون اسکرپ HTML موتور جستجو.
+ * Version:     1.2.0
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'DID_LOADED' ) ) {
 	return;
 }
 define( 'DID_LOADED', true );
-define( 'DID_VERSION', '1.1.0' );
+define( 'DID_VERSION', '1.2.0' );
 define( 'DID_FILE', __FILE__ );
 define( 'DID_PATH', plugin_dir_path( __FILE__ ) );
 define( 'DID_URL', plugin_dir_url( __FILE__ ) );
@@ -38,6 +38,8 @@ require_once DID_PATH . 'includes/class-did-crawler.php';
 require_once DID_PATH . 'includes/class-did-provider-bing.php';
 require_once DID_PATH . 'includes/class-did-provider-serp.php';
 require_once DID_PATH . 'includes/class-did-rank.php';
+require_once DID_PATH . 'includes/class-did-provider-backlinks.php';
+require_once DID_PATH . 'includes/class-did-backlinks.php';
 require_once DID_PATH . 'includes/class-did-cron.php';
 require_once DID_PATH . 'includes/class-did-ajax.php';
 require_once DID_PATH . 'includes/class-did-admin.php';
