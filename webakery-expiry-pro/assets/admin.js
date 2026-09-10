@@ -160,7 +160,12 @@
 		}
 		var price = parseNum($price.val());
 		var disc = parseNum($disc.val());
-		if (!(price > 0) || !(disc > 0) || disc >= 100) {
+		var discEmpty = String($disc.val() || '').trim() === '' || disc === 0 || isNaN(disc);
+		if (!(price > 0)) {
+			return;
+		}
+		if (discEmpty || disc >= 100) {
+			$sale.val('');
 			return;
 		}
 		$sale.val(Math.round((price * (100 - disc)) / 100));
@@ -176,6 +181,9 @@
 		var price = parseNum($price.val());
 		var sale = parseNum($sale.val());
 		if (!(price > 0) || !(sale > 0) || sale >= price) {
+			if (String($sale.val() || '').trim() === '' || sale === 0 || isNaN(sale) || sale >= price) {
+				$disc.val('');
+			}
 			return;
 		}
 		var disc = Math.round((1 - sale / price) * 100);

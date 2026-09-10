@@ -222,21 +222,26 @@ class WBE_Admin_Product {
 		WBE_Product::save_batches( $pid, $batches, $override, false );
 		WBE_Product::save_hide_countdown( $pid, ! empty( $_POST['wbe_hide_countdown'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
-		$date_ops = array();
-		if ( isset( $_POST['wbe_sale_from'] ) && '' !== trim( (string) wp_unslash( $_POST['wbe_sale_from'] ) ) ) {
-			$from = WBE_Jalali::parse_to_ymd( wp_unslash( $_POST['wbe_sale_from'] ), $cal );
-			if ( '' !== $from ) {
-				$date_ops['sale_from'] = $from;
+		$active = $batches ? WBE_Engine::active_index( $batches, class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' ) ) : null;
+		if ( null !== $active && isset( $batches[ $active ] ) && WBE_Engine::discount_of( $batches[ $active ] ) <= 0 ) {
+			WBE_Product::push_wc_sale_dates( $pid, array( 'clear_sale' => true ) );
+		} else {
+			$date_ops = array();
+			if ( isset( $_POST['wbe_sale_from'] ) && '' !== trim( (string) wp_unslash( $_POST['wbe_sale_from'] ) ) ) {
+				$from = WBE_Jalali::parse_to_ymd( wp_unslash( $_POST['wbe_sale_from'] ), $cal );
+				if ( '' !== $from ) {
+					$date_ops['sale_from'] = $from;
+				}
 			}
-		}
-		if ( isset( $_POST['wbe_sale_to'] ) && '' !== trim( (string) wp_unslash( $_POST['wbe_sale_to'] ) ) ) {
-			$to = WBE_Jalali::parse_to_ymd( wp_unslash( $_POST['wbe_sale_to'] ), $cal );
-			if ( '' !== $to ) {
-				$date_ops['sale_to'] = $to;
+			if ( isset( $_POST['wbe_sale_to'] ) && '' !== trim( (string) wp_unslash( $_POST['wbe_sale_to'] ) ) ) {
+				$to = WBE_Jalali::parse_to_ymd( wp_unslash( $_POST['wbe_sale_to'] ), $cal );
+				if ( '' !== $to ) {
+					$date_ops['sale_to'] = $to;
+				}
 			}
-		}
-		if ( $date_ops ) {
-			WBE_Product::push_wc_sale_dates( $pid, $date_ops );
+			if ( $date_ops ) {
+				WBE_Product::push_wc_sale_dates( $pid, $date_ops );
+			}
 		}
 	}
 
@@ -274,21 +279,26 @@ class WBE_Admin_Product {
 		WBE_Product::save_batches( $variation_id, $batches, $override, false );
 		WBE_Product::save_hide_countdown( $variation_id, ! empty( $data['hide_countdown'] ) );
 
-		$date_ops = array();
-		if ( isset( $data['sale_from'] ) && '' !== trim( (string) $data['sale_from'] ) ) {
-			$from = WBE_Jalali::parse_to_ymd( $data['sale_from'], $cal );
-			if ( '' !== $from ) {
-				$date_ops['sale_from'] = $from;
+		$active_i = $batches ? WBE_Engine::active_index( $batches, class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' ) ) : null;
+		if ( null !== $active_i && isset( $batches[ $active_i ] ) && WBE_Engine::discount_of( $batches[ $active_i ] ) <= 0 ) {
+			WBE_Product::push_wc_sale_dates( $variation_id, array( 'clear_sale' => true ) );
+		} else {
+			$date_ops = array();
+			if ( isset( $data['sale_from'] ) && '' !== trim( (string) $data['sale_from'] ) ) {
+				$from = WBE_Jalali::parse_to_ymd( $data['sale_from'], $cal );
+				if ( '' !== $from ) {
+					$date_ops['sale_from'] = $from;
+				}
 			}
-		}
-		if ( isset( $data['sale_to'] ) && '' !== trim( (string) $data['sale_to'] ) ) {
-			$to = WBE_Jalali::parse_to_ymd( $data['sale_to'], $cal );
-			if ( '' !== $to ) {
-				$date_ops['sale_to'] = $to;
+			if ( isset( $data['sale_to'] ) && '' !== trim( (string) $data['sale_to'] ) ) {
+				$to = WBE_Jalali::parse_to_ymd( $data['sale_to'], $cal );
+				if ( '' !== $to ) {
+					$date_ops['sale_to'] = $to;
+				}
 			}
-		}
-		if ( $date_ops ) {
-			WBE_Product::push_wc_sale_dates( $variation_id, $date_ops );
+			if ( $date_ops ) {
+				WBE_Product::push_wc_sale_dates( $variation_id, $date_ops );
+			}
 		}
 		WBE_Product::sync_wc( $variation_id );
 	}

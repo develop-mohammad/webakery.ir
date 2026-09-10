@@ -132,6 +132,47 @@ $over = WBE_Engine::sanitize_batches(
 );
 wbe_check( 'تخفیف بالای ۱۰۰ بریده می‌شود', 100 === (int) $over[0]['discount'] );
 
+$zero_keep_sale = WBE_Engine::sanitize_batches(
+	array(
+		array(
+			'price'    => '1113200',
+			'discount' => '0',
+			'sale'     => '890560',
+			'stock'    => '1',
+			'expiry'   => '2026-12-01',
+		),
+	),
+	'gregorian'
+);
+wbe_check( 'صفر کردن تخفیف جشنواره را برنمی‌گرداند', isset( $zero_keep_sale[0] ) && 0 === (int) $zero_keep_sale[0]['discount'] && ! isset( $zero_keep_sale[0]['sale'] ) );
+$empty_disc = WBE_Engine::sanitize_batches(
+	array(
+		array(
+			'price'    => '1113200',
+			'discount' => '',
+			'sale'     => '890560',
+			'stock'    => '1',
+			'expiry'   => '2026-12-01',
+		),
+	),
+	'gregorian'
+);
+wbe_check( 'خالی کردن تخفیف جشنواره را برنمی‌گرداند', isset( $empty_disc[0] ) && 0 === (int) $empty_disc[0]['discount'] && ! isset( $empty_disc[0]['sale'] ) );
+$infer_sale = WBE_Engine::sanitize_batches(
+	array(
+		array(
+			'price'  => '200000',
+			'sale'   => '160000',
+			'stock'  => '1',
+			'expiry' => '2026-12-01',
+		),
+	),
+	'gregorian'
+);
+wbe_check( 'بدون کلید تخفیف، از جشنواره درصد ساخته می‌شود', isset( $infer_sale[0] ) && 20 === (int) $infer_sale[0]['discount'] );
+$res0 = WBE_Engine::resolve_batch_sale( 1113200, 0, '890560', true );
+wbe_check( 'resolve: درصد صفر فروش را حذف می‌کند', 0 === $res0['discount'] && ! isset( $res0['sale'] ) );
+
 list( $join_sql, $order_sql ) = WBE_Engine::expiry_order_clauses( '', 'post_date DESC', 'wp_posts', 'wp_postmeta', 'ASC' );
 wbe_check( 'سورت به متای انقضا وصل می‌شود', false !== strpos( $join_sql, '_wbe_active_expiry' ) );
 wbe_check( 'نزدیک‌ترین انقضا اول می‌آید', false !== strpos( $order_sql, 'ASC' ) && false !== strpos( $order_sql, 'wbe_exp.meta_value' ) );
@@ -762,7 +803,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.2.15' );
+	define( 'WBE_VERSION', '1.2.16' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

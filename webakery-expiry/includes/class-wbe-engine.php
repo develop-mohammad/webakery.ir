@@ -393,9 +393,10 @@ class WBE_Engine {
 				$discount = WBE_Jalali::fa_to_en( $discount );
 			}
 			$discount = str_replace( array( '%', '٪', ',', '٬', '،', ' ' ), '', $discount );
-			$discount = is_numeric( $discount ) ? (float) $discount : 0;
-			$discount = (int) round( max( 0, min( 100, $discount ) ) );
-			$id       = isset( $row['id'] ) ? preg_replace( '/[^a-zA-Z0-9_\-]/', '', (string) $row['id'] ) : '';
+			$discount_posted = array_key_exists( 'discount', $row );
+			$discount        = is_numeric( $discount ) ? (float) $discount : 0;
+			$discount        = (int) round( max( 0, min( 100, $discount ) ) );
+			$id              = isset( $row['id'] ) ? preg_replace( '/[^a-zA-Z0-9_\-]/', '', (string) $row['id'] ) : '';
 			if ( $id === '' ) {
 				$id = 'b' . sprintf( '%04d', $n ) . substr( md5( $expiry . '|' . $price . '|' . $n ), 0, 8 );
 			}
@@ -406,15 +407,11 @@ class WBE_Engine {
 				'stock'    => max( 0, $stock ),
 				'expiry'   => $expiry,
 			);
-			// مبلغ جشنوارهٔ دستی (اختیاری) — تا با رند درصد از بین نرود.
-			if ( isset( $row['sale'] ) && '' !== $row['sale'] && null !== $row['sale'] ) {
-				$sale = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::number( $row['sale'] ) : (float) $row['sale'];
-				if ( $sale > 0 && $sale < $price ) {
-					$item['sale'] = (string) $sale;
-					if ( $discount <= 0 ) {
-						$item['discount'] = self::discount_from_prices( $price, $sale );
-					}
-				}
+			$sale_raw = array_key_exists( 'sale', $row ) ? $row['sale'] : null;
+			$resolved = self::resolve_batch_sale( $price, $discount, $sale_raw, $discount_posted );
+			$item['discount'] = $resolved['discount'];
+			if ( isset( $resolved['sale'] ) ) {
+				$item['sale'] = $resolved['sale'];
 			}
 			$out[] = $item;
 			$n++;
@@ -561,9 +558,49 @@ class WBE_Engine {
 	}
 
 	/**
+	 * مبلغ جشنواره را با درصد تخفیف جمع کن.
+	 * اگر درصد صفر/خالی در فرم آمده باشد، جشنواره را دور بریز تا تخفیف برنگردد.
+	 * اگر کلید discount اصلاً نباشد، از مبلغ جشنواره درصد بساز (افزودن برنامه‌ای).
+	 *
+	 * @param float      $price
+	 * @param int        $discount
+	 * @param mixed      $sale_raw
+	 * @param bool       $discount_posted
+	 * @return array{discount:int,sale?:string}
+	 */
+	public static function resolve_batch_sale( $price, $discount, $sale_raw, $discount_posted ) {
+		$price    = (float) $price;
+		$discount = max( 0, min( 100, (int) $discount ) );
+		$sale     = null;
+		if ( '' !== $sale_raw && null !== $sale_raw ) {
+			$sale_n = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::number( $sale_raw ) : (float) $sale_raw;
+			if ( $sale_n > 0 && $price > 0 && $sale_n < $price ) {
+				$sale = $sale_n;
+			}
+		}
+		if ( $discount > 0 ) {
+			$out = array( 'discount' => $discount );
+			if ( null !== $sale ) {
+				$out['sale'] = (string) $sale;
+			}
+			return $out;
+		}
+		if ( $discount_posted ) {
+			return array( 'discount' => 0 );
+		}
+		if ( null !== $sale ) {
+			return array(
+				'discount' => self::discount_from_prices( $price, $sale ),
+				'sale'     => (string) $sale,
+			);
+		}
+		return array( 'discount' => 0 );
+	}
+
+	/**
 	 * درصد تخفیف از قیمت اصلی و قیمت فروش ووکامرس.
 	 *
-	 * @param float|string     $regular
+	 * @param float|string      $regular
 	 * @param float|string|null $sale
 	 * @return int
 	 */
