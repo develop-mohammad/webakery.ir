@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once dirname( __DIR__ ) . '/includes/class-wbgs-suggest.php';
+require_once dirname( __DIR__ ) . '/includes/class-wbgs-affixes.php';
 
 $failed = 0;
 
@@ -39,6 +40,15 @@ wbgs_assert( 1 + ( 26 * 2 ) === count( $latin ), 'latin a-z prefix/suffix' );
 
 $mods = WBGS_Suggest::build_queries( 'کفش', array( 'modifiers' => true ) );
 wbgs_assert( in_array( 'خرید کفش', $mods, true ), 'modifier prefix is a Google query, not a fake keyword' );
+wbgs_assert( in_array( 'کفش چیست', $mods, true ), 'question suffix probe' );
+wbgs_assert( in_array( 'چگونه کفش', $mods, true ), 'چگونه prefix probe' );
+wbgs_assert( in_array( 'کفش ترین', $mods, true ), 'ترین suffix probe' );
+wbgs_assert( in_array( 'کفش شهر', $mods, true ), 'شهر suffix probe' );
+wbgs_assert( in_array( 'کفش تهران', $mods, true ), 'city suffix probe' );
+wbgs_assert( in_array( 'بهترین کفش', $mods, true ), 'بهترین prefix probe' );
+wbgs_assert( in_array( 'قیمت کفش', $mods, true ), 'قیمت prefix probe' );
+wbgs_assert( in_array( 'ضد کفش', $mods, true ), 'morph prefix probe' );
+wbgs_assert( ! in_array( 'تهران کفش', $mods, true ), 'city is suffix-only, not invented reverse' );
 
 $sample = '["کفش",["کفش مردانه","کفش زنانه","خرید کفش"]]';
 $parsed = WBGS_Suggest::parse_response( $sample );
@@ -153,8 +163,22 @@ wbgs_assert( 'قصد کاربر از جستجو' === WBGS_Taxonomy::axis_titles(
 wbgs_assert( 'موقعیت جغرافیایی و زمان' === WBGS_Taxonomy::axis_titles()['geo_time'], 'axis 3 title' );
 wbgs_assert( 'مفهوم و ارتباط' === WBGS_Taxonomy::axis_titles()['semantic'], 'axis 4 title' );
 wbgs_assert( 'نام برند' === WBGS_Taxonomy::axis_titles()['brand'], 'axis 5 title' );
+wbgs_assert( 'پیشوند و پسوند' === WBGS_Taxonomy::axis_titles()['affix'], 'axis 6 title' );
 $long_tax = WBGS_Taxonomy::classify( 'کفش', 'خرید کفش ورزشی مردانه نایک' );
 wbgs_assert( 'طولانی' === $long_tax['length_fa'], 'classify length_fa is طولانی' );
+wbgs_assert( in_array( 'buy', $long_tax['affixes'], true ), 'خرید tagged as buy affix' );
+wbgs_assert( in_array( 'audience', $long_tax['affixes'], true ), 'مردانه tagged as audience' );
+$q_tax = WBGS_Taxonomy::classify( 'کفش', 'کفش چیست' );
+wbgs_assert( in_array( 'question', $q_tax['affixes'], true ), 'چیست tagged as question' );
+$best_tax = WBGS_Taxonomy::classify( 'کفش', 'بهترین کفش تهران' );
+wbgs_assert( in_array( 'superlative', $best_tax['affixes'], true ), 'بهترین tagged superlative' );
+wbgs_assert( in_array( 'city', $best_tax['affixes'], true ), 'تهران tagged city' );
+$price_tax = WBGS_Taxonomy::classify( 'کفش', 'قیمت کفش' );
+wbgs_assert( in_array( 'price', $price_tax['affixes'], true ), 'قیمت tagged price' );
+wbgs_assert( in_array( 'buy', WBGS_Affixes::match_ids( 'خرید کفش' ), true ), 'affix match خرید' );
+wbgs_assert( in_array( 'morph_prefix', WBGS_Affixes::match_ids( 'ضد کفش' ), true ), 'first-token morph prefix' );
+wbgs_assert( ! in_array( 'morph_prefix', WBGS_Affixes::match_ids( 'کفش ضدآب' ), true ), 'ضد mid-phrase is not morph prefix' );
+wbgs_assert( in_array( 'morph_suffix', WBGS_Affixes::match_ids( 'کفش ها' ), true ), 'ها last-token morph suffix' );
 
 require_once dirname( __DIR__ ) . '/includes/class-wbgs-work.php';
 wbgs_assert( WBGS_Work::is_question( 'کفش چیست' ), 'question چیست' );
@@ -208,6 +232,7 @@ wbgs_assert( false !== strpos( $csv, 'relative_competition' ), 'csv has competit
 wbgs_assert( false !== strpos( $csv, 'question' ), 'csv has question column' );
 wbgs_assert( false !== strpos( $csv, 'length' ), 'csv has length column' );
 wbgs_assert( false !== strpos( $csv, 'branded' ), 'csv has branded column' );
+wbgs_assert( false !== strpos( $csv, 'affixes' ), 'csv has affixes column' );
 wbgs_assert( false !== strpos( $csv, 'cluster' ), 'csv has cluster column' );
 
 $briefs = WBGS_Work::briefs( 'کفش', $work_rows );

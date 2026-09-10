@@ -70,6 +70,7 @@ class WBGS_Plugin {
 			'geo'       => WBGS_Taxonomy::geo_markers(),
 			'seasonal'  => WBGS_Taxonomy::seasonal_markers(),
 			'brands'    => WBGS_Taxonomy::brand_markers(),
+			'affixes'   => WBGS_Affixes::public_map(),
 			'i18n'      => array(
 				'empty'    => 'عبارت پایه را بنویسید.',
 				'locked'   => 'برای استخراج، لایسنس را فعال کنید یا دوره آزمایشی را استفاده کنید.',
@@ -102,6 +103,7 @@ class WBGS_Plugin {
 		$this->boot_license();
 
 		require_once WBGS_PATH . 'includes/class-wbgs-suggest.php';
+		require_once WBGS_PATH . 'includes/class-wbgs-affixes.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-tree.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-intent.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-taxonomy.php';
@@ -134,7 +136,7 @@ class WBGS_Plugin {
 					'حرف‌گردانی الفبای فارسی و فاصله قبل/بعد',
 					'شورت‌کد [webakery_suggest] برای قرار دادن در هر برگه',
 					'صفحهٔ جدا روی سایت با ورود موبایل یا جیمیل',
-					'دسته‌بندی پنج‌محوره: طول و حجم جستجو، قصد کاربر، جغرافیا و زمان، مفهوم و ارتباط، نام برند',
+					'دسته‌بندی پنج‌محوره به‌همراه پیشوند و پسوند رایج (خرید، قیمت، چیست، ترین، شهر…)',
 					'درخت محتوا، اینتنت و پیلار کلاستر',
 					'فیلتر سوالی، بریف محتوا و عنوان/متا از عبارت‌های واقعی',
 					'امتیاز رقابت نسبی (نه KD ساختگی)',

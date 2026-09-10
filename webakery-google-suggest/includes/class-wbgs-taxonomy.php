@@ -46,6 +46,7 @@ class WBGS_Taxonomy {
 			'geo_time' => 'موقعیت جغرافیایی و زمان',
 			'semantic' => 'مفهوم و ارتباط',
 			'brand'    => 'نام برند',
+			'affix'    => 'پیشوند و پسوند',
 		);
 	}
 
@@ -76,7 +77,7 @@ class WBGS_Taxonomy {
 			'بندرعباس', 'بوشهر', 'زاهدان', 'سنندج', 'اراک', 'قزوین', 'زنجان',
 			'گرگان', 'اردبیل', 'ایلام', 'شهرکرد', 'یاسوج', 'بجنورد', 'سمنان',
 			'خرم آباد', 'خرم‌آباد', 'کیش', 'قشم', 'ایران', 'ایرانی',
-			'شمال', 'جنوب', 'تهرانپارس',
+			'شمال', 'جنوب', 'تهرانپارس', 'شهر',
 		);
 	}
 
@@ -177,6 +178,7 @@ class WBGS_Taxonomy {
 		$season = self::is_seasonal( $text );
 		$brand  = self::is_branded( $text );
 		$lsi    = self::is_lsi( $seed, $text );
+		$affix  = class_exists( 'WBGS_Affixes' ) ? WBGS_Affixes::classify( $text ) : array( 'affixes' => array(), 'affix_fa' => '' );
 		return array(
 			'length'       => $length,
 			'length_fa'    => isset( $labels[ $length ] ) ? $labels[ $length ] : '',
@@ -189,6 +191,8 @@ class WBGS_Taxonomy {
 			'seasonal_fa'  => $season ? $extras['seasonal'] : '',
 			'lsi_fa'       => $lsi ? $extras['lsi'] : '',
 			'brand_fa'     => $brand ? $extras['branded'] : $extras['unbranded'],
+			'affixes'      => $affix['affixes'],
+			'affix_fa'     => $affix['affix_fa'],
 		);
 	}
 

@@ -64,6 +64,7 @@
 	var GEO_MARKS = cfg.geo || [];
 	var SEASON_MARKS = cfg.seasonal || [];
 	var BRAND_MARKS = cfg.brands || [];
+	var AFFIX_GROUPS = cfg.affixes || {};
 
 	function i18n(key) {
 		return (cfg.i18n && cfg.i18n[key]) || key;
@@ -74,7 +75,8 @@
 		intent: 'قصد کاربر از جستجو',
 		geo_time: 'موقعیت جغرافیایی و زمان',
 		semantic: 'مفهوم و ارتباط',
-		brand: 'نام برند'
+		brand: 'نام برند',
+		affix: 'پیشوند و پسوند'
 	};
 	var LENGTH_FALLBACK = { short: 'کوتاه', mid: 'میان‌رده', long: 'طولانی' };
 	var EXTRA_FALLBACK = {
@@ -303,6 +305,71 @@
 		return t.toLowerCase().indexOf(seed.toLowerCase()) === -1;
 	}
 
+	function affixIds() {
+		return Object.keys(AFFIX_GROUPS);
+	}
+
+	function affixTitle(id) {
+		return (AFFIX_GROUPS[id] && AFFIX_GROUPS[id].title) || id;
+	}
+
+	function affixKeys(axis) {
+		return affixIds().filter(function (id) {
+			var group = AFFIX_GROUPS[id] || {};
+			return !axis || group.axis === axis;
+		}).map(function (id) {
+			return 'affix_' + id;
+		});
+	}
+
+	function textHasAffix(text, id) {
+		var group = AFFIX_GROUPS[id];
+		if (!group) {
+			return false;
+		}
+		var marks = group.markers || [];
+		var mode = group.match || 'sub';
+		var t = String(text || '').replace(/\s+/g, ' ').trim();
+		if (!t) {
+			return false;
+		}
+		var parts = t.split(/\s+/);
+		var first = parts[0] || '';
+		var last = parts[parts.length - 1] || '';
+		for (var i = 0; i < marks.length; i++) {
+			var m = String(marks[i] || '');
+			if (!m) {
+				continue;
+			}
+			var ml = m.toLowerCase();
+			if (mode === 'first') {
+				if (first.toLowerCase() === ml) {
+					return true;
+				}
+				continue;
+			}
+			if (mode === 'last') {
+				if (last.toLowerCase() === ml) {
+					return true;
+				}
+				if (m.length >= 3 && last.length > m.length && last.toLowerCase().slice(-m.length) === ml) {
+					return true;
+				}
+				continue;
+			}
+			if (t.toLowerCase().indexOf(ml) !== -1) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function rowAffixIds(text) {
+		return affixIds().filter(function (id) {
+			return textHasAffix(text, id);
+		});
+	}
+
 	function visibleItems() {
 		if (intentFilter === 'all') {
 			return items.slice();
@@ -341,6 +408,12 @@
 		if (intentFilter === 'unbranded') {
 			return items.filter(function (row) {
 				return !isBranded(row.text);
+			});
+		}
+		if (intentFilter.indexOf('affix_') === 0) {
+			var affixId = intentFilter.slice(6);
+			return items.filter(function (row) {
+				return textHasAffix(row.text, affixId);
 			});
 		}
 		return items.filter(function (row) {
@@ -473,9 +546,11 @@
 			var label = key === 'all' ? 'همه' : (
 				key === 'short' || key === 'mid' || key === 'longtail'
 					? lengthLabel(key === 'longtail' ? 'long' : key)
-					: (key === 'question' ? 'سوالی' : (
-						(cfg.extras && cfg.extras[key]) || intentLabel(key)
-					))
+					: (key.indexOf('affix_') === 0
+						? affixTitle(key.slice(6))
+						: (key === 'question' ? 'سوالی' : (
+							(cfg.extras && cfg.extras[key]) || intentLabel(key)
+						)))
 			);
 			var btn = document.createElement('button');
 			btn.type = 'button';
@@ -505,8 +580,9 @@
 		addFilterGroup(axisTitle('length'), ['short', 'mid', 'longtail']);
 		addFilterGroup(axisTitle('intent'), ['informational', 'navigational', 'commercial', 'transactional']);
 		addFilterGroup(axisTitle('geo_time'), ['geo', 'seasonal']);
-		addFilterGroup(axisTitle('semantic'), ['lsi']);
+		addFilterGroup(axisTitle('semantic'), ['lsi'].concat(affixKeys('semantic')));
 		addFilterGroup(axisTitle('brand'), ['branded', 'unbranded']);
+		addFilterGroup(axisTitle('affix'), affixKeys('affix'));
 		addFilterGroup('سوالی', ['question']);
 	}
 
@@ -541,6 +617,9 @@
 			if (isLsi(row.text)) {
 				tag('wbgs-intent-lsi', extraLabel('lsi'));
 			}
+			rowAffixIds(row.text).slice(0, 3).forEach(function (id) {
+				tag('wbgs-intent-affix', affixTitle(id));
+			});
 			tag(isBranded(row.text) ? 'wbgs-intent-branded' : 'wbgs-intent-unbranded', extraLabel(isBranded(row.text) ? 'branded' : 'unbranded'));
 			li.appendChild(kw);
 			li.appendChild(intentBadge(row));
@@ -1024,7 +1103,7 @@
 		return art;
 	}
 
-	function taxAxis(num, title, buckets) {
+	function taxAxis(num, title, buckets, hideEmpty) {
 		var sec = document.createElement('section');
 		sec.className = 'wbgs-tax-axis';
 		var h = document.createElement('h2');
@@ -1033,9 +1112,17 @@
 		sec.appendChild(h);
 		var grid = document.createElement('div');
 		grid.className = 'wbgs-tax-grid';
+		var shown = 0;
 		buckets.forEach(function (b) {
+			if (hideEmpty && !(b.rows && b.rows.length)) {
+				return;
+			}
+			shown += 1;
 			grid.appendChild(taxBucket(b.title, b.sub || '', b.rows));
 		});
+		if (!shown) {
+			grid.appendChild(taxBucket('بدون مورد', '', []));
+		}
 		sec.appendChild(grid);
 		return sec;
 	}
@@ -1123,14 +1210,32 @@
 			{ title: extraLabel('seasonal'), rows: seasonR },
 			{ title: 'بدون نشانه جغرافیایی یا زمانی', rows: neitherR }
 		]));
-		taxEl.appendChild(taxAxis('۴', axisTitle('semantic'), [
+		var semanticBuckets = [
 			{ title: 'LSI (عبارات مرتبط بدون کیورد پایه)', rows: lsiR },
 			{ title: 'حاوی کیورد پایه', rows: seededR }
-		]));
+		];
+		var morphBuckets = [];
+		affixIds().forEach(function (id) {
+			var group = AFFIX_GROUPS[id] || {};
+			var bucket = {
+				title: group.title || id,
+				sub: group.sub || '',
+				rows: rows.filter(function (row) {
+					return textHasAffix(row.text, id);
+				})
+			};
+			if (group.axis === 'affix') {
+				morphBuckets.push(bucket);
+			} else {
+				semanticBuckets.push(bucket);
+			}
+		});
+		taxEl.appendChild(taxAxis('۴', axisTitle('semantic'), semanticBuckets, true));
 		taxEl.appendChild(taxAxis('۵', axisTitle('brand'), [
 			{ title: extraLabel('branded'), rows: brandedR },
 			{ title: extraLabel('unbranded'), rows: unbrandedR }
 		]));
+		taxEl.appendChild(taxAxis('۶', axisTitle('affix'), morphBuckets, true));
 	}
 
 	function setButtons() {

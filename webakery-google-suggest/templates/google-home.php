@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 			<legend>روش استخراج</legend>
 			<label><input type="checkbox" name="wbgs-mode" value="space" checked /> فاصله</label>
 			<label><input type="checkbox" name="wbgs-mode" value="alphabet" checked /> الفبا</label>
-			<label><input type="checkbox" name="wbgs-mode" value="modifiers" checked /> پیشوند رایج</label>
+			<label><input type="checkbox" name="wbgs-mode" value="modifiers" checked /> پیشوند و پسوند</label>
 			<label><input type="checkbox" name="wbgs-mode" value="longtail" checked /> لانگ‌تیل</label>
 			<label><input type="checkbox" name="wbgs-mode" value="latin" /> a–z</label>
 			<label><input type="checkbox" name="wbgs-mode" value="digits" /> ارقام</label>
@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit;
 			<h2>عبارت‌ها</h2>
 			<span class="wbgs-count" id="wbgs-count">۰ عبارت</span>
 		</div>
-		<p class="wbgs-hint">دسته‌بندی پنج‌محوره از عبارت واقعی گوگل: ۱) طول و حجم جستجو (کوتاه ۱–۲ کلمه، میان‌رده ۳ کلمه، طولانی ۴+ کلمه) ۲) قصد کاربر از جستجو (اطلاعاتی، ناوبری/راهبری، تجاری، تراکنشی) ۳) موقعیت جغرافیایی و زمان (محلی، فصلی یا موقت) ۴) مفهوم و ارتباط (LSI بدون کیورد پایه) ۵) نام برند (برند شده / بدون برند). سرچ ماهانه فقط با Keyword Planner.</p>
+		<p class="wbgs-hint">دسته‌بندی از عبارت واقعی گوگل: طول و حجم، قصد جستجو، جغرافیا و زمان، مفهوم و ارتباط (خرید، قیمت، سوالی، ترین، شهر…)، برند، و پیشوند/پسوند ساختواژی. سرچ ماهانه فقط با Keyword Planner.</p>
 		<?php
 		$empty_text = 'عبارت را بنویسید و دکمه را بزنید.';
 		include WBGS_PATH . 'templates/results-chrome.php';

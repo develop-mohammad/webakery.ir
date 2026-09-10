@@ -12,7 +12,7 @@ class WBGS_Work {
 	 * @return string[]
 	 */
 	public static function question_markers() {
-		return array(
+		$marks = array(
 			'چیست',
 			'چیه',
 			'چگونه',
@@ -29,6 +29,13 @@ class WBGS_Work {
 			'when',
 			'where',
 		);
+		if ( class_exists( 'WBGS_Affixes' ) ) {
+			$groups = WBGS_Affixes::groups();
+			if ( isset( $groups['question']['markers'] ) ) {
+				$marks = array_values( array_unique( array_merge( $marks, (array) $groups['question']['markers'] ) ) );
+			}
+		}
+		return $marks;
 	}
 
 	/**
@@ -421,6 +428,7 @@ class WBGS_Work {
 			'seasonal',
 			'lsi',
 			'branded',
+			'affixes',
 			'cluster',
 			'pillar',
 			'suggest_relevance',
@@ -461,6 +469,7 @@ class WBGS_Work {
 					! empty( $row['seasonal'] ) ? '1' : '0',
 					! empty( $row['lsi'] ) ? '1' : '0',
 					! empty( $row['branded'] ) ? '1' : '0',
+					self::csv_escape( isset( $row['affix_fa'] ) ? $row['affix_fa'] : '' ),
 					self::csv_escape( $row['cluster'] ),
 					self::csv_escape( $row['pillar'] ),
 					(string) (int) ( isset( $row['relevance'] ) ? $row['relevance'] : 0 ),

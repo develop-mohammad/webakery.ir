@@ -5,7 +5,7 @@ Tags: google suggest, autocomplete, keywords, seo, webakery
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.2.3
+Stable tag: 1.2.4
 License: GPLv2 or later
 
 ایستگاه کار سئو با پیشنهادهای واقعی Autocomplete گوگل: بریف، رقابت نسبی، تاریخچه و مقایسه.
@@ -39,6 +39,10 @@ License: GPLv2 or later
 5. در المنتور: ویجت Shortcode با همان `[webakery_suggest]`.
 
 == Changelog ==
+
+= 1.2.4 =
+* پیشوند و پسوند رایج فارسی (خرید، قیمت، چیست، چگونه، چرا، ترین، شهر…) داخل سیستم
+* تحویل طبقه‌بندی‌شده در فیلترها، نمای دسته‌بندی و CSV
 
 = 1.2.3 =
 * شورت‌کد عمومی `[webakery_suggest]` برای قرار دادن سجست‌یاب در هر برگه

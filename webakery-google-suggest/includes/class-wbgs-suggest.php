@@ -25,6 +25,9 @@ class WBGS_Suggest {
 	 * @return string[]
 	 */
 	public static function modifiers() {
+		if ( class_exists( 'WBGS_Affixes' ) ) {
+			return WBGS_Affixes::probe_list();
+		}
 		return array(
 			'خرید',
 			'قیمت',
@@ -110,9 +113,15 @@ class WBGS_Suggest {
 		}
 
 		if ( $modes['modifiers'] ) {
-			foreach ( self::modifiers() as $mod ) {
-				$out[] = $mod . ' ' . $seed;
-				$out[] = $seed . ' ' . $mod;
+			if ( class_exists( 'WBGS_Affixes' ) ) {
+				foreach ( WBGS_Affixes::queries_for( $seed ) as $q ) {
+					$out[] = $q;
+				}
+			} else {
+				foreach ( self::modifiers() as $mod ) {
+					$out[] = $mod . ' ' . $seed;
+					$out[] = $seed . ' ' . $mod;
+				}
 			}
 		}
 
