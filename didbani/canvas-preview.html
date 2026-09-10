@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>دیدبانی — پیش‌نمایش پیشخوان</title>
+<link rel="stylesheet" href="assets/css/admin.css" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Vazirmatn, Tahoma, sans-serif;
+    background: #f0f0f1;
+    color: #1d2327;
+  }
+  .wp { display: grid; grid-template-columns: 160px 1fr; min-height: 100vh; }
+  .side { background: #1d2327; color: #fff; padding: 18px 12px; }
+  .side h2 { font-size: 14px; margin: 0 0 16px; font-weight: 700; }
+  .side a { display: block; color: #c3c4c7; text-decoration: none; padding: 8px 10px; border-radius: 2px; font-size: 13px; }
+  .side a.on { background: #2271b1; color: #fff; }
+  .main { padding: 8px 18px 40px; }
+  .nav-tab-wrapper { border-bottom: 1px solid #c3c4c7; margin: 12px 0 16px; padding: 0; }
+  .nav-tab { display: inline-block; padding: 8px 14px; margin: 0 4px -1px 0; background: #dcdcde; border: 1px solid #c3c4c7; border-bottom: none; text-decoration: none; color: #2c3338; border-radius: 2px 2px 0 0; font-size: 13px; }
+  .nav-tab-active { background: #fff; font-weight: 700; }
+  .button { font: inherit; border-radius: 2px; padding: 6px 12px; border: 1px solid #2271b1; background: #f6f7f7; cursor: pointer; }
+  .button-primary { background: #2271b1; color: #fff; }
+  .widefat { width: 100%; border-collapse: collapse; background: #fff; }
+  .widefat th, .widefat td { border-bottom: 1px solid #dcdcde; padding: 10px 12px; text-align: right; font-size: 13px; }
+  .widefat thead th { background: #f6f7f7; }
+  .form-table th { width: 200px; text-align: right; padding: 10px 0; }
+  .form-table td { padding: 8px 0; }
+  input[type=text], input[type=password], input[type=number], select, textarea {
+    font: inherit; padding: 6px 8px; border: 1px solid #8c8f94; border-radius: 2px; width: min(420px, 100%);
+  }
+  textarea.large-text, input.large-text { width: min(640px, 100%); }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  .hint { margin-top: 18px; text-align: center; color: #646970; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wp">
+  <aside class="side">
+    <h2>webakery.ir</h2>
+    <a class="on" href="#">دیدبانی</a>
+    <a href="#">لایسنس افزونه‌ها</a>
+  </aside>
+  <div class="main">
+    <div class="did-wrap wrap">
+		<h1 class="did-h1">دیدبانی <span class="did-ver">v1.2.0</span></h1>
+      <p class="did-sub">رتبهٔ کلیدواژه در گوگل و بینگ · بک‌لینک رقبا · webakery.ir</p>
+      <nav class="nav-tab-wrapper did-tabs" id="tabs">
+        <a class="nav-tab nav-tab-active" data-tab="dash" href="#">داشبورد</a>
+        <a class="nav-tab" data-tab="project" href="#">پروژه</a>
+        <a class="nav-tab" data-tab="ranks" href="#">رتبه‌ها</a>
+        <a class="nav-tab" data-tab="backlinks" href="#">بک‌لینک</a>
+        <a class="nav-tab" data-tab="settings" href="#">تنظیمات</a>
+      </nav>
+
+      <section class="panel on" id="tab-dash">
+        <div class="did-actions">
+          <button type="button" class="button button-primary" id="demo-rank">بررسی رتبه</button>
+          <p class="did-job-msg" id="demo-msg" hidden></p>
+        </div>
+        <div class="did-table-wrap">
+          <table class="widefat striped did-ranks">
+            <thead>
+              <tr>
+                <th class="did-kw">کلمه کلیدی</th>
+                <th colspan="2"><span dir="ltr">myshop.ir</span> <span class="did-tag">سایت</span></th>
+                <th colspan="2"><span dir="ltr">rival-a.ir</span></th>
+              </tr>
+              <tr class="did-subhead">
+                <th></th>
+                <th>گوگل</th>
+                <th>بینگ</th>
+                <th>گوگل</th>
+                <th>بینگ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th class="did-kw">خرید فرش</th>
+                <td><span class="did-rank-num">۴</span> <span class="did-delta did-delta-up">رشد ۳</span></td>
+                <td><span class="did-rank-num">۶</span></td>
+                <td><span class="did-rank-num">۱</span></td>
+                <td><span class="did-rank-num">۲</span></td>
+              </tr>
+              <tr>
+                <th class="did-kw">فرش دستباف کاشان</th>
+                <td><span class="did-rank-num">۱۲</span></td>
+                <td><span class="did-rank-miss">نیست</span></td>
+                <td><span class="did-rank-num">۳</span></td>
+                <td><span class="did-rank-num">۵</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="tab-project">
+        <form class="did-form" onsubmit="return false;">
+          <table class="form-table">
+            <tr><th>نام پروژه</th><td><input type="text" value="فروشگاه فرش" /></td></tr>
+            <tr><th>سایت خودم</th><td><input type="text" dir="ltr" value="myshop.ir" /></td></tr>
+            <tr><th>رقبا (اختیاری)</th><td><textarea class="large-text" rows="3" dir="ltr">rival-a.ir</textarea></td></tr>
+            <tr><th>کلمات کلیدی</th><td><textarea class="large-text" rows="4">خرید فرش
+فرش دستباف کاشان</textarea></td></tr>
+          </table>
+          <p><button class="button button-primary" type="button">ذخیره تغییرات</button></p>
+        </form>
+      </section>
+
+      <section class="panel" id="tab-ranks">
+        <div class="did-actions">
+          <button type="button" class="button button-primary" id="demo-rank-2">بررسی رتبه</button>
+        </div>
+        <p class="did-muted" style="margin-bottom:10px">بدون رقیب هم فقط رتبهٔ سایت در گوگل و بینگ ثبت می‌شود.</p>
+        <div class="did-table-wrap">
+          <table class="widefat striped did-ranks">
+            <thead>
+              <tr>
+                <th class="did-kw">کلمه کلیدی</th>
+                <th colspan="2"><span dir="ltr">myshop.ir</span> <span class="did-tag">سایت</span></th>
+              </tr>
+              <tr class="did-subhead">
+                <th></th>
+                <th>گوگل</th>
+                <th>بینگ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th class="did-kw">خرید فرش</th>
+                <td><span class="did-rank-num">۴</span></td>
+                <td><span class="did-rank-num">۶</span></td>
+              </tr>
+              <tr>
+                <th class="did-kw">فرش دستباف کاشان</th>
+                <td><span class="did-rank-num">۱۲</span></td>
+                <td><span class="did-rank-miss">نیست</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="tab-backlinks">
+        <div class="did-actions">
+          <button type="button" class="button button-primary" id="demo-backlinks">بررسی بک‌لینک</button>
+        </div>
+        <div class="did-table-wrap">
+          <table class="widefat striped did-backlinks">
+            <thead>
+              <tr>
+                <th>دامنه</th>
+                <th>نقش</th>
+                <th>بک‌لینک</th>
+                <th>دامنهٔ ارجاع</th>
+                <th>انکر تکست</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td dir="ltr">myshop.ir</td>
+                <td>سایت</td>
+                <td>۱٬۲۴۰</td>
+                <td>۸۹</td>
+                <td>
+                  <span class="did-anchor">خرید فرش <em>۴۰</em></span>
+                  <span class="did-anchor">فرش کاشان <em>۱۲</em></span>
+                </td>
+              </tr>
+              <tr>
+                <td dir="ltr">rival-a.ir</td>
+                <td>رقیب</td>
+                <td>۸٬۳۱۰</td>
+                <td>۴۲۰</td>
+                <td>
+                  <span class="did-anchor">فرش دستباف <em>۲۱۰</em></span>
+                  <span class="did-anchor">rival a <em>۹۸</em></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="tab-settings">
+        <form class="did-form" onsubmit="return false;">
+          <table class="form-table">
+            <tr><th>کلید Bing</th><td><input type="password" dir="ltr" value="••••••••" /></td></tr>
+            <tr><th>گوگل</th><td><select><option>SerpAPI</option></select></td></tr>
+            <tr><th>ورود DataForSEO</th><td><input type="text" dir="ltr" value="login" /></td></tr>
+            <tr><th>نتایج</th><td><select><option>دسکتاپ (گوگل / بینگ)</option></select></td></tr>
+          </table>
+        </form>
+      </section>
+    </div>
+    <p class="hint">پیش‌نمایش Canvas — بدون وردپرس · python3 -m http.server در پوشه didbani</p>
+  </div>
+</div>
+<script>
+  document.getElementById('tabs').addEventListener('click', function (e) {
+    var a = e.target.closest('[data-tab]');
+    if (!a) return;
+    e.preventDefault();
+    document.querySelectorAll('#tabs .nav-tab').forEach(function (t) { t.classList.remove('nav-tab-active'); });
+    a.classList.add('nav-tab-active');
+    document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('on'); });
+    document.getElementById('tab-' + a.getAttribute('data-tab')).classList.add('on');
+  });
+  function demo(text) {
+    var el = document.getElementById('demo-msg');
+    el.hidden = false;
+    el.textContent = text;
+  }
+  document.getElementById('demo-rank').onclick = function () { demo('بررسی رتبه تمام شد. (۱۰۰٪)'); };
+  document.getElementById('demo-rank-2').onclick = function () {
+    document.querySelector('[data-tab="dash"]').click();
+    demo('بررسی رتبه تمام شد. (۱۰۰٪)');
+  };
+  document.getElementById('demo-backlinks').onclick = function () {};
+</script>
+</body>
+</html>

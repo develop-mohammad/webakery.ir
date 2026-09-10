@@ -1,0 +1,173 @@
+/* دیدبانی — پیشخوان مینیمال RTL */
+
+.did-wrap {
+	direction: rtl;
+	max-width: 1100px;
+}
+
+.did-h1 {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 2px;
+}
+
+.did-ver {
+	font-size: 11px;
+	font-weight: 600;
+	color: #646970;
+	background: #f0f0f1;
+	border-radius: 2px;
+	padding: 1px 7px;
+}
+
+.did-sub {
+	color: #646970;
+	margin: 0 0 12px;
+	font-size: 13px;
+}
+
+.did-tabs {
+	margin-bottom: 14px;
+}
+
+.did-switcher {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 14px;
+}
+
+.did-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin: 0 0 12px;
+}
+
+.did-job-msg {
+	margin: 0;
+	color: #1d2327;
+	font-size: 13px;
+}
+
+.did-job-msg.is-err {
+	color: #d63638;
+}
+
+.did-empty {
+	background: #fff;
+	border: 1px dashed #c3c4c7;
+	border-radius: 2px;
+	padding: 24px;
+	text-align: center;
+	color: #646970;
+}
+
+.did-form {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 2px;
+	padding: 4px 16px 12px;
+}
+
+.did-h2 {
+	font-size: 14px;
+	margin: 16px 0 8px;
+}
+
+.did-table-wrap {
+	overflow-x: auto;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 2px;
+}
+
+.did-ranks th,
+.did-ranks td {
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.did-ranks .did-kw {
+	white-space: normal;
+	min-width: 140px;
+}
+
+.did-subhead th {
+	font-weight: 500;
+	color: #646970;
+	font-size: 12px;
+	background: #f6f7f7;
+}
+
+.did-tag {
+	display: inline-block;
+	margin-right: 6px;
+	font-size: 11px;
+	color: #646970;
+	font-weight: 500;
+}
+
+.did-rank-num {
+	font-weight: 700;
+	color: #1d2327;
+}
+
+.did-rank-miss {
+	color: #8c8f94;
+}
+
+.did-approx {
+	font-size: 11px;
+	color: #996800;
+}
+
+.did-muted {
+	color: #8c8f94;
+	font-size: 13px;
+}
+
+.did-rank-link {
+	text-decoration: none;
+	color: inherit;
+}
+
+.did-pages td {
+	font-size: 12.5px;
+}
+
+.did-delta {
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.did-delta-up,
+.did-delta-enter {
+	color: #007017;
+}
+
+.did-delta-down,
+.did-delta-exit {
+	color: #d63638;
+}
+
+.did-anchor {
+	display: inline-block;
+	margin: 0 0 4px 8px;
+	padding: 1px 6px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 2px;
+	font-size: 12px;
+}
+
+.did-anchor em {
+	font-style: normal;
+	color: #646970;
+}
+
+.did-wrap [hidden] {
+	display: none !important;
+}
