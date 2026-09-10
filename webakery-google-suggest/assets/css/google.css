@@ -483,6 +483,74 @@
 	color: #3730a3;
 }
 
+.wbgs-g .wbgs-tax {
+	display: grid;
+	gap: 22px;
+	margin-top: 10px;
+}
+
+.wbgs-g .wbgs-tax-axis-title {
+	margin: 0 0 10px;
+	font-size: 16px;
+	font-weight: 700;
+	color: inherit;
+}
+
+.wbgs-g .wbgs-tax-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 10px;
+}
+
+.wbgs-g .wbgs-tax-bucket {
+	border: 1px solid #e8eaed;
+	border-radius: 10px;
+	padding: 12px 14px;
+	background: #fff;
+}
+
+.wbgs-g .wbgs-tax-bucket h3 {
+	margin: 0;
+	font-size: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.wbgs-g .wbgs-tax-n {
+	font-size: 12px;
+	font-weight: 700;
+	color: #5f6368;
+	background: #f8f9fa;
+	border-radius: 99px;
+	padding: 1px 8px;
+	flex: 0 0 auto;
+}
+
+.wbgs-g .wbgs-tax-sub {
+	margin: 4px 0 8px;
+	font-size: 12px;
+	color: #5f6368;
+}
+
+.wbgs-g .wbgs-tax-list {
+	margin: 8px 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: 13.5px;
+	line-height: 1.8;
+}
+
+.wbgs-g .wbgs-tax-list li {
+	border-bottom: 1px solid #f8f9fa;
+	padding: 3px 0;
+}
+
+.wbgs-g .wbgs-tax-empty {
+	color: #9aa0a6;
+}
+
 @media (max-width: 640px) {
 	.wbgs-g-logo { font-size: 40px; }
 }

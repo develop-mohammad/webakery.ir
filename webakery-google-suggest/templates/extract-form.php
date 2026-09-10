@@ -39,7 +39,7 @@ defined( 'ABSPATH' ) || exit;
 			<h2>نتایج</h2>
 			<span class="wbgs-count" id="wbgs-count">۰ عبارت</span>
 		</div>
-		<p class="wbgs-hint">اینتنت و امتیاز رقابت نسبی از خودِ عبارت و رتبهٔ سجست است (KD اهرفس نیست). عدد ماهانه فقط از Keyword Planner می‌آید؛ وگرنه «—» می‌ماند.</p>
+		<p class="wbgs-hint">دسته‌بندی پنج‌محوره: طول و حجم جستجو، قصد کاربر از جستجو، موقعیت جغرافیایی و زمان، مفهوم و ارتباط، نام برند. امتیاز رقابت نسبی از خودِ عبارت است (KD اهرفس نیست). عدد ماهانه فقط از Keyword Planner می‌آید؛ وگرنه «—» می‌ماند.</p>
 		<?php
 		$empty_text = 'هنوز چیزی استخراج نشده.';
 		include WBGS_PATH . 'templates/results-chrome.php';

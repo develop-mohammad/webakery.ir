@@ -19,7 +19,7 @@ class WBGS_Intent {
 			self::INFORMATIONAL => 'اطلاعاتی',
 			self::COMMERCIAL    => 'تجاری',
 			self::TRANSACTIONAL => 'تراکنشی',
-			self::NAVIGATIONAL  => 'ناوبری',
+			self::NAVIGATIONAL  => 'ناوبری/راهبری',
 		);
 	}
 

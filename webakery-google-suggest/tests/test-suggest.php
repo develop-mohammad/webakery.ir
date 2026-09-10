@@ -81,6 +81,7 @@ wbgs_assert( WBGS_Intent::INFORMATIONAL === WBGS_Intent::classify( 'کفش چی�
 wbgs_assert( WBGS_Intent::TRANSACTIONAL === WBGS_Intent::classify( 'خرید کفش' ), 'intent transactional' );
 wbgs_assert( WBGS_Intent::COMMERCIAL === WBGS_Intent::classify( 'بهترین کفش' ), 'intent commercial' );
 wbgs_assert( WBGS_Intent::NAVIGATIONAL === WBGS_Intent::classify( 'کفش دیجی کالا' ), 'intent navigational' );
+wbgs_assert( 'ناوبری/راهبری' === WBGS_Intent::labels()[ WBGS_Intent::NAVIGATIONAL ], 'navigational label is ناوبری/راهبری' );
 
 $clusters = WBGS_Tree::clusters(
 	'کفش',
@@ -131,6 +132,17 @@ wbgs_assert( WBGS_Taxonomy::is_branded( 'پشتیبانی دیجی کالا' ), 
 wbgs_assert( ! WBGS_Taxonomy::is_branded( 'خرید لپ تاپ استوک' ), 'unbranded generic' );
 wbgs_assert( WBGS_Taxonomy::is_lsi( 'قهوه', 'اسپرسو تلخ' ), 'LSI related without seed' );
 wbgs_assert( ! WBGS_Taxonomy::is_lsi( 'کفش', 'خرید کفش' ), 'contains seed is not LSI' );
+wbgs_assert( 'طولانی' === WBGS_Taxonomy::length_labels()[ WBGS_Taxonomy::LONG ], 'length label long is طولانی' );
+wbgs_assert( 'کوتاه' === WBGS_Taxonomy::length_labels()[ WBGS_Taxonomy::SHORT ], 'length label short is کوتاه' );
+wbgs_assert( 'میان‌رده' === WBGS_Taxonomy::length_labels()[ WBGS_Taxonomy::MID ], 'length label mid is میان‌رده' );
+wbgs_assert( 'فصلی یا موقت' === WBGS_Taxonomy::extra_labels()['seasonal'], 'seasonal label is فصلی یا موقت' );
+wbgs_assert( 'طول و حجم جستجو' === WBGS_Taxonomy::axis_titles()['length'], 'axis 1 title' );
+wbgs_assert( 'قصد کاربر از جستجو' === WBGS_Taxonomy::axis_titles()['intent'], 'axis 2 title' );
+wbgs_assert( 'موقعیت جغرافیایی و زمان' === WBGS_Taxonomy::axis_titles()['geo_time'], 'axis 3 title' );
+wbgs_assert( 'مفهوم و ارتباط' === WBGS_Taxonomy::axis_titles()['semantic'], 'axis 4 title' );
+wbgs_assert( 'نام برند' === WBGS_Taxonomy::axis_titles()['brand'], 'axis 5 title' );
+$long_tax = WBGS_Taxonomy::classify( 'کفش', 'خرید کفش ورزشی مردانه نایک' );
+wbgs_assert( 'طولانی' === $long_tax['length_fa'], 'classify length_fa is طولانی' );
 
 require_once dirname( __DIR__ ) . '/includes/class-wbgs-work.php';
 wbgs_assert( WBGS_Work::is_question( 'کفش چیست' ), 'question چیست' );

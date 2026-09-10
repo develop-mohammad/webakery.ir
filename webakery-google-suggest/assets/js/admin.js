@@ -9,6 +9,7 @@
 	var listEl = document.getElementById('wbgs-list');
 	var treeEl = document.getElementById('wbgs-tree');
 	var clusterEl = document.getElementById('wbgs-cluster');
+	var taxEl = document.getElementById('wbgs-tax');
 	var briefEl = document.getElementById('wbgs-brief');
 	var compareEl = document.getElementById('wbgs-compare');
 	var emptyEl = document.getElementById('wbgs-empty');
@@ -24,6 +25,7 @@
 	var viewListBtn = document.getElementById('wbgs-view-list');
 	var viewTreeBtn = document.getElementById('wbgs-view-tree');
 	var viewClusterBtn = document.getElementById('wbgs-view-cluster');
+	var viewTaxBtn = document.getElementById('wbgs-view-tax');
 	var viewBriefBtn = document.getElementById('wbgs-view-brief');
 	var viewCompareBtn = document.getElementById('wbgs-view-compare');
 	var filtersEl = document.getElementById('wbgs-intent-filters');
@@ -67,8 +69,34 @@
 		return (cfg.i18n && cfg.i18n[key]) || key;
 	}
 
+	var AXIS_TITLES = {
+		length: 'طول و حجم جستجو',
+		intent: 'قصد کاربر از جستجو',
+		geo_time: 'موقعیت جغرافیایی و زمان',
+		semantic: 'مفهوم و ارتباط',
+		brand: 'نام برند'
+	};
+	var LENGTH_FALLBACK = { short: 'کوتاه', mid: 'میان‌رده', long: 'طولانی' };
+	var EXTRA_FALLBACK = {
+		geo: 'محلی',
+		seasonal: 'فصلی یا موقت',
+		lsi: 'LSI / ارتباط معنایی',
+		branded: 'برند شده',
+		unbranded: 'بدون برند'
+	};
+	var INTENT_FALLBACK = {
+		informational: 'اطلاعاتی',
+		commercial: 'تجاری',
+		transactional: 'تراکنشی',
+		navigational: 'ناوبری/راهبری'
+	};
+
 	function intentLabel(key) {
-		return (cfg.intents && cfg.intents[key]) || key;
+		return (cfg.intents && cfg.intents[key]) || INTENT_FALLBACK[key] || key;
+	}
+
+	function axisTitle(key) {
+		return (cfg.axes && cfg.axes[key]) || AXIS_TITLES[key] || key;
 	}
 
 	function classifyIntent(text) {
@@ -237,11 +265,11 @@
 	}
 
 	function lengthLabel(key) {
-		return (cfg.lengths && cfg.lengths[key]) || key;
+		return (cfg.lengths && cfg.lengths[key]) || LENGTH_FALLBACK[key] || key;
 	}
 
 	function extraLabel(key) {
-		return (cfg.extras && cfg.extras[key]) || key;
+		return (cfg.extras && cfg.extras[key]) || EXTRA_FALLBACK[key] || key;
 	}
 
 	function hasMark(text, list) {
@@ -388,6 +416,9 @@
 		if (clusterEl) {
 			clusterEl.hidden = view !== 'cluster';
 		}
+		if (taxEl) {
+			taxEl.hidden = view !== 'tax';
+		}
 		if (briefEl) {
 			briefEl.hidden = view !== 'brief';
 		}
@@ -402,6 +433,9 @@
 		}
 		if (viewClusterBtn) {
 			viewClusterBtn.classList.toggle('wbgs-view-on', view === 'cluster');
+		}
+		if (viewTaxBtn) {
+			viewTaxBtn.classList.toggle('wbgs-view-on', view === 'tax');
 		}
 		if (viewBriefBtn) {
 			viewBriefBtn.classList.toggle('wbgs-view-on', view === 'brief');
@@ -468,11 +502,11 @@
 			return;
 		}
 		addFilterGroup('همه', ['all']);
-		addFilterGroup('طول و حجم', ['short', 'mid', 'longtail']);
-		addFilterGroup('قصد جستجو', ['informational', 'navigational', 'commercial', 'transactional']);
-		addFilterGroup('جغرافیا و زمان', ['geo', 'seasonal']);
-		addFilterGroup('معنایی', ['lsi']);
-		addFilterGroup('برند', ['branded', 'unbranded']);
+		addFilterGroup(axisTitle('length'), ['short', 'mid', 'longtail']);
+		addFilterGroup(axisTitle('intent'), ['informational', 'navigational', 'commercial', 'transactional']);
+		addFilterGroup(axisTitle('geo_time'), ['geo', 'seasonal']);
+		addFilterGroup(axisTitle('semantic'), ['lsi']);
+		addFilterGroup(axisTitle('brand'), ['branded', 'unbranded']);
 		addFilterGroup('سوالی', ['question']);
 	}
 
@@ -950,9 +984,158 @@
 		});
 	}
 
+	function taxPhraseList(rows) {
+		var ul = document.createElement('ul');
+		ul.className = 'wbgs-tax-list';
+		if (!rows.length) {
+			var empty = document.createElement('li');
+			empty.className = 'wbgs-tax-empty';
+			empty.textContent = '۰';
+			ul.appendChild(empty);
+			return ul;
+		}
+		rows.forEach(function (row) {
+			var li = document.createElement('li');
+			li.textContent = row.text;
+			ul.appendChild(li);
+		});
+		return ul;
+	}
+
+	function taxBucket(title, subtitle, rows) {
+		var art = document.createElement('article');
+		art.className = 'wbgs-tax-bucket';
+		var h = document.createElement('h3');
+		var name = document.createElement('span');
+		name.textContent = title;
+		var cnt = document.createElement('span');
+		cnt.className = 'wbgs-tax-n';
+		cnt.textContent = String(rows.length);
+		h.appendChild(name);
+		h.appendChild(cnt);
+		art.appendChild(h);
+		if (subtitle) {
+			var sub = document.createElement('p');
+			sub.className = 'wbgs-tax-sub';
+			sub.textContent = subtitle;
+			art.appendChild(sub);
+		}
+		art.appendChild(taxPhraseList(rows));
+		return art;
+	}
+
+	function taxAxis(num, title, buckets) {
+		var sec = document.createElement('section');
+		sec.className = 'wbgs-tax-axis';
+		var h = document.createElement('h2');
+		h.className = 'wbgs-tax-axis-title';
+		h.textContent = num + '. ' + title;
+		sec.appendChild(h);
+		var grid = document.createElement('div');
+		grid.className = 'wbgs-tax-grid';
+		buckets.forEach(function (b) {
+			grid.appendChild(taxBucket(b.title, b.sub || '', b.rows));
+		});
+		sec.appendChild(grid);
+		return sec;
+	}
+
+	function renderTaxonomy() {
+		if (!taxEl) {
+			return;
+		}
+		taxEl.innerHTML = '';
+		var rows = visibleItems();
+		if (!rows.length) {
+			var note = document.createElement('p');
+			note.className = 'wbgs-hint';
+			note.textContent = items.length ? 'با فیلتر فعلی عبارتی نماند.' : 'عبارتی برای دسته‌بندی نیست.';
+			taxEl.appendChild(note);
+			return;
+		}
+		var shortR = [];
+		var midR = [];
+		var longR = [];
+		var infoR = [];
+		var navR = [];
+		var commR = [];
+		var transR = [];
+		var geoR = [];
+		var seasonR = [];
+		var neitherR = [];
+		var lsiR = [];
+		var seededR = [];
+		var brandedR = [];
+		var unbrandedR = [];
+		rows.forEach(function (row) {
+			var lk = lengthKey(row.text);
+			if (lk === 'short') {
+				shortR.push(row);
+			} else if (lk === 'mid') {
+				midR.push(row);
+			} else {
+				longR.push(row);
+			}
+			if (row.intent === 'informational') {
+				infoR.push(row);
+			} else if (row.intent === 'navigational') {
+				navR.push(row);
+			} else if (row.intent === 'transactional') {
+				transR.push(row);
+			} else {
+				commR.push(row);
+			}
+			var geo = isGeo(row.text);
+			var season = isSeasonal(row.text);
+			if (geo) {
+				geoR.push(row);
+			}
+			if (season) {
+				seasonR.push(row);
+			}
+			if (!geo && !season) {
+				neitherR.push(row);
+			}
+			if (isLsi(row.text)) {
+				lsiR.push(row);
+			} else {
+				seededR.push(row);
+			}
+			if (isBranded(row.text)) {
+				brandedR.push(row);
+			} else {
+				unbrandedR.push(row);
+			}
+		});
+		taxEl.appendChild(taxAxis('۱', axisTitle('length'), [
+			{ title: 'کوتاه (۱–۲ کلمه)', sub: 'حجم بالا', rows: shortR },
+			{ title: 'میان‌رده (۳ کلمه)', sub: 'رقابت متوسط', rows: midR },
+			{ title: 'طولانی (۴+ کلمه)', sub: 'تبدیل بالا', rows: longR }
+		]));
+		taxEl.appendChild(taxAxis('۲', axisTitle('intent'), [
+			{ title: intentLabel('informational'), rows: infoR },
+			{ title: intentLabel('navigational'), rows: navR },
+			{ title: intentLabel('commercial'), rows: commR },
+			{ title: intentLabel('transactional'), rows: transR }
+		]));
+		taxEl.appendChild(taxAxis('۳', axisTitle('geo_time'), [
+			{ title: extraLabel('geo'), rows: geoR },
+			{ title: extraLabel('seasonal'), rows: seasonR },
+			{ title: 'بدون نشانه جغرافیایی یا زمانی', rows: neitherR }
+		]));
+		taxEl.appendChild(taxAxis('۴', axisTitle('semantic'), [
+			{ title: 'LSI (عبارات مرتبط بدون کیورد پایه)', rows: lsiR },
+			{ title: 'حاوی کیورد پایه', rows: seededR }
+		]));
+		taxEl.appendChild(taxAxis('۵', axisTitle('brand'), [
+			{ title: extraLabel('branded'), rows: brandedR },
+			{ title: extraLabel('unbranded'), rows: unbrandedR }
+		]));
+	}
+
 	function setButtons() {
 		var empty = items.length === 0;
-		[copyBtn, csvBtn, txtBtn, briefTxtBtn, viewListBtn, viewTreeBtn, viewClusterBtn, viewBriefBtn, saveBtn].forEach(function (btn) {
+		[copyBtn, csvBtn, txtBtn, briefTxtBtn, viewListBtn, viewTreeBtn, viewClusterBtn, viewTaxBtn, viewBriefBtn, saveBtn].forEach(function (btn) {
 			if (btn) {
 				btn.disabled = empty;
 			}
@@ -983,6 +1166,7 @@
 		renderList();
 		renderTree();
 		renderCluster();
+		renderTaxonomy();
 		renderBrief();
 		renderCompare();
 		setView(view);
@@ -1563,6 +1747,11 @@
 	if (viewClusterBtn) {
 		viewClusterBtn.addEventListener('click', function () {
 			setView('cluster');
+		});
+	}
+	if (viewTaxBtn) {
+		viewTaxBtn.addEventListener('click', function () {
+			setView('tax');
 		});
 	}
 	if (viewBriefBtn) {

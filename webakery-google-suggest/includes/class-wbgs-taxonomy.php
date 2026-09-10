@@ -17,7 +17,7 @@ class WBGS_Taxonomy {
 		return array(
 			self::SHORT => 'کوتاه',
 			self::MID   => 'میان‌رده',
-			self::LONG  => 'لانگ‌تیل',
+			self::LONG  => 'طولانی',
 		);
 	}
 
@@ -26,16 +26,31 @@ class WBGS_Taxonomy {
 	 */
 	public static function extra_labels() {
 		return array(
-			'geo'        => 'محلی',
-			'seasonal'   => 'فصلی',
-			'lsi'        => 'LSI',
-			'branded'    => 'برند شده',
-			'unbranded'  => 'بدون برند',
+			'geo'       => 'محلی',
+			'seasonal'  => 'فصلی یا موقت',
+			'lsi'       => 'LSI / ارتباط معنایی',
+			'branded'   => 'برند شده',
+			'unbranded' => 'بدون برند',
 		);
 	}
 
 	/**
-	 * ۱–۲ کوتاه، ۳ میان‌رده، ۴+ لانگ‌تیل.
+	 * پنج محور دسته‌بندی سئو (عنوان فیلتر و نمای دسته‌بندی).
+	 *
+	 * @return array<string,string>
+	 */
+	public static function axis_titles() {
+		return array(
+			'length'   => 'طول و حجم جستجو',
+			'intent'   => 'قصد کاربر از جستجو',
+			'geo_time' => 'موقعیت جغرافیایی و زمان',
+			'semantic' => 'مفهوم و ارتباط',
+			'brand'    => 'نام برند',
+		);
+	}
+
+	/**
+	 * ۱–۲ کوتاه، ۳ میان‌رده، ۴+ طولانی.
 	 *
 	 * @param string $text
 	 * @return string

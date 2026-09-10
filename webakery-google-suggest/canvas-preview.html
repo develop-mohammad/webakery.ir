@@ -39,7 +39,7 @@
         <h2>عبارت‌ها</h2>
         <span class="wbgs-count" id="wbgs-count">۱۲ عبارت</span>
       </div>
-      <p class="wbgs-hint">اینتنت و رقابت نسبی از خودِ عبارت است. سرچ ماهانه در این پیش‌نمایش «—» است چون Keyword Planner وصل نیست.</p>
+      <p class="wbgs-hint">دسته‌بندی پنج‌محوره: طول و حجم جستجو، قصد کاربر از جستجو، موقعیت جغرافیایی و زمان، مفهوم و ارتباط، نام برند. سرچ ماهانه در این پیش‌نمایش «—» است چون Keyword Planner وصل نیست.</p>
       <p class="wbgs-usage">امروز ۱۲ درخواست به گوگل · سقف ۴۰۰</p>
       <div class="wbgs-desk">
         <label class="wbgs-desk-label">گزارش‌های ذخیره‌شده</label>
@@ -52,20 +52,21 @@
         <button type="button" class="button wbgs-view-on" id="tab-list">عبارت‌ها</button>
         <button type="button" class="button" id="tab-tree">درخت کیورد</button>
         <button type="button" class="button" id="tab-cluster">پیلار کلاستر</button>
+        <button type="button" class="button" id="tab-tax">دسته‌بندی</button>
         <button type="button" class="button" id="tab-brief">بریف محتوا</button>
         <button type="button" class="button" id="tab-compare">مقایسه</button>
       </div>
       <div class="wbgs-intent-filters">
-        <button type="button" class="is-on">همه ۱۲</button>
-        <button type="button">سوالی ۲</button>
-        <button type="button">تجاری ۷</button>
-        <button type="button">تراکنشی ۲</button>
-        <button type="button">اطلاعاتی ۲</button>
-        <button type="button">ناوبری ۱</button>
+        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">طول و حجم جستجو</span><button type="button">کوتاه ۱۰</button><button type="button">میان‌رده ۱</button><button type="button">طولانی ۱</button></div>
+        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">قصد کاربر از جستجو</span><button type="button">اطلاعاتی ۲</button><button type="button">ناوبری/راهبری ۱</button><button type="button">تجاری ۷</button><button type="button">تراکنشی ۲</button></div>
+        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">موقعیت جغرافیایی و زمان</span><button type="button">محلی ۰</button><button type="button">فصلی یا موقت ۰</button></div>
+        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">مفهوم و ارتباط</span><button type="button">LSI / ارتباط معنایی ۰</button></div>
+        <div class="wbgs-filter-group"><span class="wbgs-filter-cap">نام برند</span><button type="button">برند شده ۴</button><button type="button">بدون برند ۸</button></div>
       </div>
       <ol class="wbgs-list" id="wbgs-list"></ol>
       <div class="wbgs-ktree" id="wbgs-tree" hidden></div>
       <div class="wbgs-pillar" id="wbgs-cluster" hidden></div>
+      <div class="wbgs-tax" id="wbgs-tax" hidden></div>
       <div class="wbgs-briefs" id="wbgs-brief" hidden></div>
       <div class="wbgs-compare" id="wbgs-compare" hidden></div>
     </div>
@@ -80,7 +81,7 @@
     { text: 'قیمت کفش', intent: 'transactional', intent_fa: 'تراکنشی', comp: 80, band: 'بالا' },
     { text: 'کفش چیست', intent: 'informational', intent_fa: 'اطلاعاتی', comp: 28, band: 'پایین', q: 1 },
     { text: 'چگونه کفش مناسب بخریم', intent: 'informational', intent_fa: 'اطلاعاتی', comp: 22, band: 'پایین', q: 1, lt: 1 },
-    { text: 'کفش دیجی کالا', intent: 'navigational', intent_fa: 'ناوبری', comp: 52, band: 'متوسط' },
+    { text: 'کفش دیجی کالا', intent: 'navigational', intent_fa: 'ناوبری/راهبری', comp: 52, band: 'متوسط' },
     { text: 'کفش جردن', intent: 'commercial', intent_fa: 'تجاری', comp: 60, band: 'متوسط' },
     { text: 'کفش مجلسی', intent: 'commercial', intent_fa: 'تجاری', comp: 58, band: 'متوسط' },
     { text: 'کفش کالج', intent: 'commercial', intent_fa: 'تجاری', comp: 56, band: 'متوسط' },
@@ -89,13 +90,21 @@
   var list = document.getElementById('wbgs-list');
   var tree = document.getElementById('wbgs-tree');
   var cluster = document.getElementById('wbgs-cluster');
+  var tax = document.getElementById('wbgs-tax');
   var brief = document.getElementById('wbgs-brief');
   var compare = document.getElementById('wbgs-compare');
   rows.forEach(function (row) {
     var li = document.createElement('li');
     var badges = '';
-    if (row.lt) badges += ' <span class="wbgs-intent wbgs-intent-longtail">لانگ‌تیل</span>';
+    var n = String(row.text).replace(/\s+/g, ' ').trim().split(' ').filter(Boolean).length;
+    var lk = n >= 4 ? 'long' : (n === 3 ? 'mid' : 'short');
+    var lf = { short: 'کوتاه', mid: 'میان‌رده', long: 'طولانی' };
+    badges += ' <span class="wbgs-intent wbgs-intent-len-' + lk + '">' + lf[lk] + '</span>';
     if (row.q) badges += ' <span class="wbgs-intent wbgs-intent-question">سوالی</span>';
+    var branded = ['نایک', 'جردن', 'ونس', 'دیجی کالا'].some(function (b) { return row.text.indexOf(b) !== -1; });
+    badges += branded
+      ? ' <span class="wbgs-intent wbgs-intent-branded">برند شده</span>'
+      : ' <span class="wbgs-intent wbgs-intent-unbranded">بدون برند</span>';
     li.innerHTML = '<span class="wbgs-kw"><span class="wbgs-kw-text"></span>' + badges + '</span>' +
       '<span class="wbgs-intent wbgs-intent-' + row.intent + '"></span>' +
       '<span class="wbgs-comp wbgs-comp-' + (row.band === 'بالا' ? 'high' : row.band === 'پایین' ? 'low' : 'mid') + '"></span>' +
@@ -126,19 +135,67 @@
     '<article class="wbgs-compare-card"><h3>مشترک (۳)</h3><ul><li>خرید کفش</li><li>قیمت کفش</li><li>کفش مردانه</li></ul></article>' +
     '<article class="wbgs-compare-card"><h3>فقط «کفش» (۹)</h3><ul><li>کفش چیست</li><li>کفش جردن</li></ul></article>' +
     '<article class="wbgs-compare-card"><h3>فقط «کتانی» (۵)</h3><ul><li>کتانی مردانه</li><li>کتانی رانینگ</li></ul></article>';
-  var tabs = { list: list, tree: tree, cluster: cluster, brief: brief, compare: compare };
+  function words(text) { return String(text).replace(/\s+/g, ' ').trim().split(' ').filter(Boolean).length; }
+  function lengthOf(text) { var n = words(text); return n >= 4 ? 'long' : (n === 3 ? 'mid' : 'short'); }
+  var brands = ['نایک', 'جردن', 'ونس', 'دیجی کالا'];
+  function isBrand(text) { return brands.some(function (b) { return text.indexOf(b) !== -1; }); }
+  function bucketHtml(title, sub, items) {
+    var lis = items.length ? items.map(function (t) { return '<li>' + t + '</li>'; }).join('') : '<li class="wbgs-tax-empty">۰</li>';
+    return '<article class="wbgs-tax-bucket"><h3><span>' + title + '</span><span class="wbgs-tax-n">' + items.length + '</span></h3>' +
+      (sub ? '<p class="wbgs-tax-sub">' + sub + '</p>' : '') + '<ul class="wbgs-tax-list">' + lis + '</ul></article>';
+  }
+  function axisHtml(num, title, buckets) {
+    return '<section class="wbgs-tax-axis"><h2 class="wbgs-tax-axis-title">' + num + '. ' + title + '</h2><div class="wbgs-tax-grid">' +
+      buckets.map(function (b) { return bucketHtml(b.title, b.sub || '', b.items); }).join('') + '</div></section>';
+  }
+  var texts = rows.map(function (r) { return r.text; });
+  var byLen = { short: [], mid: [], long: [] };
+  var byIntent = { informational: [], navigational: [], commercial: [], transactional: [] };
+  var branded = [], unbranded = [];
+  rows.forEach(function (r) {
+    byLen[lengthOf(r.text)].push(r.text);
+    byIntent[r.intent].push(r.text);
+    (isBrand(r.text) ? branded : unbranded).push(r.text);
+  });
+  tax.innerHTML =
+    axisHtml('۱', 'طول و حجم جستجو', [
+      { title: 'کوتاه (۱–۲ کلمه)', sub: 'حجم بالا', items: byLen.short },
+      { title: 'میان‌رده (۳ کلمه)', sub: 'رقابت متوسط', items: byLen.mid },
+      { title: 'طولانی (۴+ کلمه)', sub: 'تبدیل بالا', items: byLen.long }
+    ]) +
+    axisHtml('۲', 'قصد کاربر از جستجو', [
+      { title: 'اطلاعاتی', items: byIntent.informational },
+      { title: 'ناوبری/راهبری', items: byIntent.navigational },
+      { title: 'تجاری', items: byIntent.commercial },
+      { title: 'تراکنشی', items: byIntent.transactional }
+    ]) +
+    axisHtml('۳', 'موقعیت جغرافیایی و زمان', [
+      { title: 'محلی', items: [] },
+      { title: 'فصلی یا موقت', items: [] },
+      { title: 'بدون نشانه جغرافیایی یا زمانی', items: texts }
+    ]) +
+    axisHtml('۴', 'مفهوم و ارتباط', [
+      { title: 'LSI (عبارات مرتبط بدون کیورد پایه)', items: [] },
+      { title: 'حاوی کیورد پایه', items: texts }
+    ]) +
+    axisHtml('۵', 'نام برند', [
+      { title: 'برند شده', items: branded },
+      { title: 'بدون برند', items: unbranded }
+    ]);
+  var tabs = { list: list, tree: tree, cluster: cluster, tax: tax, brief: brief, compare: compare };
   function show(name) {
     Object.keys(tabs).forEach(function (key) { tabs[key].hidden = key !== name; });
-    ['list', 'tree', 'cluster', 'brief', 'compare'].forEach(function (key) {
+    ['list', 'tree', 'cluster', 'tax', 'brief', 'compare'].forEach(function (key) {
       document.getElementById('tab-' + key).classList.toggle('wbgs-view-on', key === name);
     });
   }
-  ['list', 'tree', 'cluster', 'brief', 'compare'].forEach(function (key) {
+  ['list', 'tree', 'cluster', 'tax', 'brief', 'compare'].forEach(function (key) {
     document.getElementById('tab-' + key).onclick = function () { show(key); };
   });
   document.getElementById('show-list').onclick = function () { show('list'); window.scrollTo(0, 400); };
   if (/compare=1/.test(location.search)) show('compare');
   else if (/brief=1/.test(location.search)) show('brief');
+  else if (/tax=1/.test(location.search)) show('tax');
   else if (/cluster=1/.test(location.search)) show('cluster');
   else if (/tree=1/.test(location.search)) show('tree');
 })();
