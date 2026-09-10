@@ -46,8 +46,12 @@ $row       = static function ( $label, $value ) {
 			$pay = isset( $p['payment'] ) ? $p['payment'] : '';
 			$pay_opts = NCK_Learner::payment_options();
 			$row( 'وضعیت پرداخت', isset( $pay_opts[ $pay ] ) ? $pay_opts[ $pay ] : '—' );
+			$row( 'مبلغ', ! empty( $p['pay_amount'] ) ? NCK_Hall::format_money( (int) $p['pay_amount'] ) : '—' );
 			$row( 'تاریخ پرداخت', $fa( isset( $p['pay_date'] ) ? $p['pay_date'] : '' ) );
 			$row( 'شماره پیگیری', $fa( isset( $p['pay_ref'] ) ? $p['pay_ref'] : '' ) );
+			if ( ! empty( $p['wc_order_id'] ) ) {
+				$row( 'شماره سفارش ووکامرس', $fa( $p['wc_order_id'] ) );
+			}
 			$row( 'کد فراگیر', isset( $p['learner_code'] ) && $p['learner_code'] !== '' ? $p['learner_code'] : '—' );
 			$row( 'تاریخ پذیرش', $fa( isset( $p['admit_date'] ) ? $p['admit_date'] : '' ) );
 			$row( 'مسئول پذیرش', isset( $p['staff_name'] ) && $p['staff_name'] !== '' ? $p['staff_name'] : '—' );

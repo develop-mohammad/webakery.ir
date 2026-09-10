@@ -102,6 +102,35 @@ $s = NCK_Settings::all();
 		</tr>
 	</table>
 
+	<h2>ووکامرس و حسابدار</h2>
+	<p class="description">هر فرمی که مبلغ پرداخت داشته باشد، به‌صورت سفارش ووکامرس ثبت می‌شود و در افزونه حسابدار هم دیده می‌شود. اگر ووکامرس خاموش باشد، خود فرم همچنان ذخیره می‌شود.</p>
+	<table class="form-table" role="presentation">
+		<tr>
+			<th>همگام‌سازی سفارش</th>
+			<td>
+				<label>
+					<input type="hidden" name="settings[wc_sync]" value="0" />
+					<input type="checkbox" name="settings[wc_sync]" value="1" <?php checked( ! empty( $s['wc_sync'] ) ); ?> />
+					ثبت خودکار سفارش در ووکامرس / حسابدار
+				</label>
+			</td>
+		</tr>
+		<tr>
+			<th><label for="cowork_fee">شهریه فضای کار (تومان)</label></th>
+			<td>
+				<input id="cowork_fee" type="text" dir="ltr" name="settings[cowork_fee]" value="<?php echo esc_attr( (string) $s['cowork_fee'] ); ?>" />
+				<p class="description">اگر بیشتر از صفر باشد، بعد از امضای قرارداد فضای کار یک سفارش ساخته می‌شود. صفر یعنی بدون سفارش.</p>
+			</td>
+		</tr>
+		<tr>
+			<th><label for="learner_fee">شهریه پیش‌فرض پذیرش (تومان)</label></th>
+			<td>
+				<input id="learner_fee" type="text" dir="ltr" name="settings[learner_fee]" value="<?php echo esc_attr( (string) $s['learner_fee'] ); ?>" />
+				<p class="description">اگر در فرم پذیرش مبلغ خالی بماند، همین عدد برای سفارش استفاده می‌شود.</p>
+			</td>
+		</tr>
+	</table>
+
 	<h2>متن قرارداد فضای کار</h2>
 	<p class="description">جایگاه‌ها: <code>{{org}}</code> <code>{{title}}</code> <code>{{name}}</code> <code>{{phone}}</code> <code>{{shifts}}</code> <code>{{morning}}</code> <code>{{evening}}</code> <code>{{plan}}</code> <code>{{date}}</code>. بخش‌ها با خط <code>---</code> جدا می‌شوند؛ خط اول هر بخش عنوان است.</p>
 	<table class="form-table" role="presentation">

@@ -6,6 +6,7 @@ class NCK_Admin {
 	public static function hooks() {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_save' ) );
+		add_action( 'admin_init', array( __CLASS__, 'handle_form' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_csv' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( NCK_FILE ), array( __CLASS__, 'links' ) );
@@ -35,6 +36,8 @@ class NCK_Admin {
 			array(
 				'ajax'  => admin_url( 'admin-ajax.php' ),
 				'nonce' => wp_create_nonce( 'nck_admin' ),
+				'types' => NCK_Forms::field_types(),
+				'roles' => NCK_Forms::roles(),
 			)
 		);
 	}
@@ -50,6 +53,42 @@ class NCK_Admin {
 		$input = isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : array(); // phpcs:ignore
 		NCK_Settings::save( $input );
 		wp_safe_redirect( add_query_arg( array( 'page' => NCK_MENU, 'tab' => 'settings', 'saved' => '1' ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	public static function handle_form() {
+		if ( empty( $_POST['nck_save_form'] ) && empty( $_GET['nck_delete_form'] ) ) { // phpcs:ignore
+			return;
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		if ( ! empty( $_GET['nck_delete_form'] ) ) { // phpcs:ignore
+			check_admin_referer( 'nck_delete_form' );
+			$id = isset( $_GET['nck_delete_form'] ) ? sanitize_text_field( wp_unslash( $_GET['nck_delete_form'] ) ) : ''; // phpcs:ignore
+			NCK_Forms::delete( $id );
+			wp_safe_redirect( add_query_arg( array( 'page' => NCK_MENU, 'tab' => 'forms', 'deleted' => '1' ), admin_url( 'admin.php' ) ) );
+			exit;
+		}
+		check_admin_referer( 'nck_save_form' );
+		$raw = isset( $_POST['nck_form_json'] ) ? wp_unslash( $_POST['nck_form_json'] ) : ''; // phpcs:ignore
+		$data = json_decode( (string) $raw, true );
+		if ( ! is_array( $data ) ) {
+			wp_safe_redirect( add_query_arg( array( 'page' => NCK_MENU, 'tab' => 'forms', 'form_error' => '1' ), admin_url( 'admin.php' ) ) );
+			exit;
+		}
+		$form = NCK_Forms::save( $data );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'     => NCK_MENU,
+					'tab'      => 'forms',
+					'form'     => $form['id'],
+					'form_saved' => '1',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 
@@ -92,6 +131,7 @@ class NCK_Admin {
 			'dashboard'  => 'خانه',
 			'members'    => 'اعضا',
 			'contracts'  => 'قراردادها',
+			'forms'      => 'فرم‌ها',
 			'attendance' => 'حضور',
 			'settings'   => 'تنظیمات',
 			'license'    => 'لایسنس',
@@ -99,7 +139,7 @@ class NCK_Admin {
 		if ( ! isset( $tabs[ $tab ] ) ) {
 			$tab = 'dashboard';
 		}
-		if ( in_array( $tab, array( 'settings', 'license' ), true ) && ! current_user_can( 'manage_options' ) ) {
+		if ( in_array( $tab, array( 'settings', 'license', 'forms' ), true ) && ! current_user_can( 'manage_options' ) ) {
 			$tab = 'dashboard';
 		}
 		include NCK_PATH . 'templates/admin-layout.php';
@@ -114,6 +154,15 @@ class NCK_Admin {
 	public static function notice() {
 		if ( ! empty( $_GET['saved'] ) ) { // phpcs:ignore
 			echo '<div class="notice notice-success is-dismissible"><p>تنظیمات ذخیره شد.</p></div>';
+		}
+		if ( ! empty( $_GET['form_saved'] ) ) { // phpcs:ignore
+			echo '<div class="notice notice-success is-dismissible"><p>فرم ذخیره شد. شورت‌کد را در برگه یا المنتور بگذارید.</p></div>';
+		}
+		if ( ! empty( $_GET['deleted'] ) ) { // phpcs:ignore
+			echo '<div class="notice notice-success is-dismissible"><p>فرم حذف شد.</p></div>';
+		}
+		if ( ! empty( $_GET['form_error'] ) ) { // phpcs:ignore
+			echo '<div class="notice notice-error is-dismissible"><p>ذخیره فرم انجام نشد. ساختار را بررسی کنید.</p></div>';
 		}
 	}
 }

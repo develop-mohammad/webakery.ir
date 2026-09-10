@@ -27,6 +27,7 @@ class NCK_Elementor {
 		$widgets_manager->register( new NCK_Contract_Widget() );
 		$widgets_manager->register( new NCK_Hall_Widget() );
 		$widgets_manager->register( new NCK_Learner_Widget() );
+		$widgets_manager->register( new NCK_Form_Widget() );
 		$widgets_manager->register( new NCK_Portal_Widget() );
 	}
 
@@ -41,6 +42,7 @@ class NCK_Elementor {
 			$widgets_manager->register_widget_type( new NCK_Contract_Widget() );
 			$widgets_manager->register_widget_type( new NCK_Hall_Widget() );
 			$widgets_manager->register_widget_type( new NCK_Learner_Widget() );
+			$widgets_manager->register_widget_type( new NCK_Form_Widget() );
 			$widgets_manager->register_widget_type( new NCK_Portal_Widget() );
 		}
 	}

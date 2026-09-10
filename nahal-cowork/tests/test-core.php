@@ -175,6 +175,104 @@ $check( 'بدون موافقت تصویر رد می‌شود', empty( NCK_Learne
 $check( 'هشت گزینه آشنایی', 8 === count( NCK_Learner::heard_options() ) );
 $check( 'پنج دوره ترمی', 5 === count( NCK_Learner::term_options() ) );
 $check( 'برچسب ADHD در پزشکی هست', isset( NCK_Learner::medical_options()['adhd'] ) );
+$learner_ok['pay_amount'] = '۲٬۵۰۰٬۰۰۰';
+$lr_pay = NCK_Learner::validate( $learner_ok );
+$check( 'مبلغ پذیرش در payload می‌ماند', ! empty( $lr_pay['ok'] ) && 2500000 === (int) $lr_pay['payload']['pay_amount'] );
+
+require_once dirname( __DIR__ ) . '/includes/class-nck-forms.php';
+require_once dirname( __DIR__ ) . '/includes/class-nck-pay.php';
+
+echo "\n=== فرم‌ساز سفارشی ===\n";
+$blank = NCK_Forms::blank();
+$blank['title'] = 'کارگاه رباتیک';
+$blank['slug'] = 'workshop';
+$saved = NCK_Forms::save( $blank );
+$check( 'فرم با slug انگلیسی ذخیره می‌شود', 'workshop' === $saved['slug'], $saved['slug'] );
+$check( 'بازیابی با slug', null !== NCK_Forms::by_slug( 'workshop' ) );
+$check( 'شورت‌کد فرم', '[nahal_form slug="workshop"]' === NCK_Forms::shortcode( $saved ) );
+$dup = NCK_Forms::blank();
+$dup['title'] = 'کارگاه دوم';
+$dup['slug'] = 'workshop';
+$dup_saved = NCK_Forms::save( $dup );
+$check( 'slug تکراری یکتا می‌شود', 'workshop-2' === $dup_saved['slug'], $dup_saved['slug'] );
+
+$opts = NCK_Forms::parse_options( "ai|هوش مصنوعی\nenglish|زبان" );
+$check( 'گزینه با کلید و برچسب', isset( $opts['ai'] ) && 'هوش مصنوعی' === $opts['ai'] );
+
+$steps = NCK_Forms::display_steps( $saved );
+$labels = array();
+foreach ( $steps as $st ) {
+	$labels[] = $st['label'];
+}
+$check( 'مرحله پرداخت تزریق می‌شود', in_array( 'پرداخت', $labels, true ) );
+
+$ok_form = NCK_Forms::validate(
+	$saved,
+	array(
+		'name'       => 'سارا محمدی',
+		'phone'      => '۰۹۱۲۱۲۳۴۵۶۷',
+		'payment'    => 'card',
+		'pay_amount' => '۱۲۰۰۰۰۰',
+		'agree'      => 1,
+	)
+);
+$check( 'فرم کامل با پرداخت قبول می‌شود', ! empty( $ok_form['ok'] ), isset( $ok_form['message'] ) ? $ok_form['message'] : '' );
+$check( 'مبلغ فرم در payload', ! empty( $ok_form['ok'] ) && 1200000 === (int) $ok_form['payload']['pay_amount'] );
+$check( 'روش پرداخت کارت', ! empty( $ok_form['ok'] ) && 'card' === $ok_form['payload']['payment'] );
+
+$no_amt = NCK_Forms::validate( $saved, array( 'name' => 'سارا محمدی', 'phone' => '09121234567', 'payment' => 'site', 'agree' => 1 ) );
+$check( 'پرداخت بدون مبلغ رد می‌شود', empty( $no_amt['ok'] ) );
+
+$no_phone = NCK_Forms::validate( $saved, array( 'name' => 'سارا محمدی', 'payment' => 'site', 'pay_amount' => '1000', 'agree' => 1 ) );
+$check( 'بدون موبایل رد می‌شود', empty( $no_phone['ok'] ) );
+
+$no_agree = NCK_Forms::validate( $saved, array( 'name' => 'سارا محمدی', 'phone' => '09121234567', 'payment' => 'site', 'pay_amount' => '1000' ) );
+$check( 'بدون پذیرش صحت رد می‌شود', empty( $no_agree['ok'] ) );
+
+echo "\n=== ثبت سفارش حسابدار / ووکامرس ===\n";
+$check( 'مبلغ صفر ثبت نمی‌شود', false === NCK_Pay::should_record( 0 ) );
+$check( 'مبلغ مثبت ثبت می‌شود', true === NCK_Pay::should_record( 2000000 ) );
+$check( 'پرداخت در محل تکمیل‌شده است', 'completed' === NCK_Pay::status_for_method( 'onsite' ) );
+$check( 'کارت به کارت در انتظار است', 'on-hold' === NCK_Pay::status_for_method( 'card' ) );
+$check( 'پرداخت سایت در حال انجام است', 'processing' === NCK_Pay::status_for_method( 'site' ) );
+$split = NCK_Pay::split_name( 'سارا محمدی' );
+$check( 'جدا کردن نام خانوادگی', 'سارا' === $split['first'] && 'محمدی' === $split['last'] );
+
+$hall_pay = NCK_Pay::from_contract(
+	'hall',
+	array( 'full_name' => 'علی رضایی', 'phone' => '09121234567' ),
+	array( 'amount' => 2000000, 'hall_name' => 'سالن همایش' )
+);
+$check( 'اجاره سالن سفارش می‌سازد', ! empty( $hall_pay['ok'] ) && 2000000 === $hall_pay['order']['amount'] );
+$check( 'عنوان سفارش سالن', false !== strpos( $hall_pay['order']['item_name'], 'سالن همایش' ) );
+
+$learn_skip = NCK_Pay::from_contract(
+	'learner',
+	array( 'full_name' => 'آوا محمدی', 'phone' => '09121234567' ),
+	array( 'payment' => 'site' )
+);
+$check( 'پذیرش بدون مبلغ سفارش نمی‌سازد', ! empty( $learn_skip['skipped'] ) );
+
+$learn_pay = NCK_Pay::from_contract(
+	'learner',
+	array( 'full_name' => 'آوا محمدی', 'phone' => '09121234567' ),
+	array( 'payment' => 'site', 'pay_amount' => 2500000 )
+);
+$check( 'پذیرش با مبلغ سفارش می‌سازد', ! empty( $learn_pay['ok'] ) && 2500000 === $learn_pay['order']['amount'] );
+
+$form_pay = NCK_Pay::from_contract(
+	'form',
+	array( 'full_name' => 'سارا محمدی', 'phone' => '09121234567' ),
+	array( 'pay_amount' => 1200000, 'payment' => 'card', 'form_title' => 'کارگاه رباتیک' )
+);
+$check( 'فرم سفارشی سفارش می‌سازد', ! empty( $form_pay['ok'] ) && 'on-hold' === $form_pay['order']['status'] );
+
+$cowork_skip = NCK_Pay::from_contract( 'cowork', array( 'full_name' => 'سارا', 'phone' => '09121234567', 'plan' => 'morning' ), array() );
+$check( 'فضای کار بدون شهریه سفارش ندارد', ! empty( $cowork_skip['skipped'] ) );
+
+$draft = NCK_Pay::draft( array( 'name' => 'علی رضایی', 'amount' => 10, 'payment' => 'onsite', 'item_name' => 'تست' ) );
+$check( 'created_via نهال است', 'nahal-cowork' === $draft['created_via'] );
+$check( 'ووکامرس در تست هسته خاموش است', false === NCK_Pay::wc_ready() );
 
 echo "\n--- {$pass} موفق، {$fail} ناموفق ---\n";
 exit( $fail ? 1 : 0 );

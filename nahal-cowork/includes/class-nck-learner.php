@@ -203,6 +203,11 @@ class NCK_Learner {
 			}
 		}
 
+		$pay_amount = 0;
+		if ( isset( $in['pay_amount'] ) && trim( (string) $in['pay_amount'] ) !== '' ) {
+			$pay_amount = NCK_Hall::parse_amount( $in['pay_amount'] );
+		}
+
 		$admit_date = '';
 		if ( isset( $in['admit_date'] ) && trim( (string) $in['admit_date'] ) !== '' ) {
 			$admit_date = self::format_date( $in['admit_date'] );
@@ -265,6 +270,7 @@ class NCK_Learner {
 				'payment'       => $payment,
 				'pay_date'      => $pay_date,
 				'pay_ref'       => self::text( isset( $in['pay_ref'] ) ? $in['pay_ref'] : '' ),
+				'pay_amount'    => $pay_amount,
 				'learner_code'  => self::text( isset( $in['learner_code'] ) ? $in['learner_code'] : '' ),
 				'admit_date'    => $admit_date,
 				'staff_name'    => self::text( isset( $in['staff_name'] ) ? $in['staff_name'] : '' ),

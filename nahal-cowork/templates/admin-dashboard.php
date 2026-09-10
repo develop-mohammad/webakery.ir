@@ -31,6 +31,10 @@ $export = wp_nonce_url( admin_url( 'admin.php?page=' . NCK_MENU . '&nck_export=a
 			<strong><?php echo esc_html( NCK_Jalali::fa_digits( NCK_Contracts::count_month( $t['y'], $t['m'], 'learner' ) ) ); ?></strong>
 		</div>
 		<div class="nck-card">
+			<span>فرم سفارشی این ماه</span>
+			<strong><?php echo esc_html( NCK_Jalali::fa_digits( NCK_Contracts::count_month( $t['y'], $t['m'], 'form' ) ) ); ?></strong>
+		</div>
+		<div class="nck-card">
 			<span>حضور صبح امروز</span>
 			<strong><?php echo esc_html( NCK_Jalali::fa_digits( $counts[ NCK_Shifts::MORNING ] ) ); ?></strong>
 		</div>
@@ -52,7 +56,13 @@ $export = wp_nonce_url( admin_url( 'admin.php?page=' . NCK_MENU . '&nck_export=a
 		<p>
 			<a class="button" href="<?php echo esc_url( $export ); ?>">خروجی CSV حضور این ماه</a>
 			<a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=' . NCK_MENU . '&nck_export=members' ), 'nck_export' ) ); ?>">خروجی CSV اعضا</a>
+			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=' . NCK_MENU . '&tab=forms' ) ); ?>">فرم‌ساز</a>
 		</p>
+		<?php if ( ! NCK_Pay::wc_ready() ) : ?>
+			<p class="nck-note">ووکامرس فعال نیست؛ فرم‌ها ذخیره می‌شوند ولی سفارش حسابدار ساخته نمی‌شود.</p>
+		<?php elseif ( NCK_Pay::sync_enabled() ) : ?>
+			<p class="nck-note">پرداخت فرم‌ها به‌صورت سفارش ووکامرس ثبت می‌شود<?php echo NCK_Pay::hesabdar_ready() ? ' و در حسابدار هم دیده می‌شود' : '' ; ?>.</p>
+		<?php endif; ?>
 	</div>
 
 	<h2>آخرین حضورها</h2>

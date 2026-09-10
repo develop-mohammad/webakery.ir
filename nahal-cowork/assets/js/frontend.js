@@ -243,6 +243,7 @@
         continue;
       }
       if (el.type === 'checkbox') {
+        if (el.name && el.name.slice(-2) === '[]') continue;
         if (!el.checked) return 'لطفاً این مورد را بپذیرید: ' + fieldLabel(el);
         continue;
       }
@@ -260,6 +261,16 @@
         if (nodes.length) ok = true;
       });
       if (!ok) return step.getAttribute('data-nck-require-msg') || 'حداقل یک گزینه را انتخاب کنید.';
+    }
+    var groups = step.querySelectorAll('[data-nck-need-one]');
+    for (var g = 0; g < groups.length; g++) {
+      var nm = groups[g].getAttribute('data-nck-need-one');
+      if (!nm) continue;
+      var picked = step.querySelectorAll('[name="' + nm + '[]"]:checked, [name="' + nm + '"]:checked');
+      if (!picked.length) {
+        var legend = groups[g].querySelector('legend');
+        return 'حداقل یک گزینه برای «' + ((legend && legend.textContent) || 'این بخش') + '» را انتخاب کنید.';
+      }
     }
     return '';
   }
@@ -384,7 +395,7 @@
           return;
         }
       }
-      if (!pad.drawn) {
+      if (!pad.drawn && qs(root, '[data-nck-pad]')) {
         setAlert(root, 'err', i18n.draw || 'لطفاً داخل کادر امضا کنید.');
         return;
       }
@@ -422,6 +433,10 @@
 
   function bindLearner(root) {
     bindSignForm(root, '[data-nck-sign-learner]', 'nck_sign_learner');
+  }
+
+  function bindCustomForm(root) {
+    bindSignForm(root, '[data-nck-sign-form]', 'nck_sign_form');
   }
 
   function renderCards(root, data) {
@@ -508,6 +523,7 @@
     document.querySelectorAll('[data-nck="contract"]').forEach(bindContract);
     document.querySelectorAll('[data-nck="hall"]').forEach(bindHall);
     document.querySelectorAll('[data-nck="learner"]').forEach(bindLearner);
+    document.querySelectorAll('[data-nck="form"]').forEach(bindCustomForm);
     document.querySelectorAll('[data-nck="portal"]').forEach(bindPortal);
   }
 

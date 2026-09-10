@@ -44,6 +44,11 @@ $chips = static function ( $name, array $opts, $type = 'checkbox', $required = f
 				<?php $chips( 'payment', NCK_Learner::payment_options(), 'radio', true ); ?>
 				<div class="nck-grid nck-grid-hall" style="margin-top:12px">
 					<div class="nck-field">
+						<label for="nck-pay-amount">مبلغ پرداخت (تومان)</label>
+						<input id="nck-pay-amount" name="pay_amount" type="text" dir="ltr" placeholder="مثلاً 2500000" />
+						<p class="nck-note">اگر مبلغ را وارد کنید، سفارش در ووکامرس و حسابدار هم ثبت می‌شود.</p>
+					</div>
+					<div class="nck-field">
 						<label for="nck-pay-date">تاریخ پرداخت</label>
 						<input id="nck-pay-date" name="pay_date" type="text" dir="ltr" placeholder="1404/06/20" />
 					</div>

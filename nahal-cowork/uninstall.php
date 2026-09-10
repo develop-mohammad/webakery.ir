@@ -13,6 +13,7 @@ foreach ( $tables as $t ) {
 }
 
 delete_option( 'nck_settings' );
+delete_option( 'nck_custom_forms' );
 delete_option( 'nck_db_version' );
 delete_option( 'wbl_nahal-cowork_key' );
 delete_option( 'wbl_nahal-cowork_status' );

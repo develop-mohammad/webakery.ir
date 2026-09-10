@@ -12,6 +12,8 @@ defined( 'ABSPATH' ) || exit;
 		فضای کار اشتراکی و اجاره سالن ·
 		<code>[nahal_contract]</code>
 		<code>[nahal_hall]</code>
+		<code>[nahal_admission]</code>
+		<code>[nahal_form]</code>
 		<code>[nahal_portal]</code>
 		· سازنده: <a href="https://webakery.ir" target="_blank" rel="noopener">webakery.ir</a>
 	</p>

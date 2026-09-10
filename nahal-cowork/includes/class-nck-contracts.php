@@ -55,9 +55,13 @@ class NCK_Contracts {
 		return $row ? $row : null;
 	}
 
+	public static function kinds() {
+		return array( 'cowork', 'hall', 'learner', 'form' );
+	}
+
 	public static function kind_of( array $row ) {
 		$kind = isset( $row['kind'] ) ? $row['kind'] : '';
-		if ( in_array( $kind, array( 'hall', 'learner' ), true ) ) {
+		if ( in_array( $kind, array( 'hall', 'learner', 'form' ), true ) ) {
 			return $kind;
 		}
 		return 'cowork';
@@ -69,6 +73,9 @@ class NCK_Contracts {
 		}
 		if ( 'learner' === $kind ) {
 			return 'پذیرش فراگیر';
+		}
+		if ( 'form' === $kind ) {
+			return 'فرم سفارشی';
 		}
 		return 'فضای کار اشتراکی';
 	}
@@ -100,6 +107,13 @@ class NCK_Contracts {
 				$bits[] = $sea;
 			}
 			return $bits ? implode( '، ', $bits ) : 'پذیرش فراگیر';
+		}
+		if ( 'form' === $kind ) {
+			$p = self::payload( $row );
+			if ( ! empty( $p['form_title'] ) ) {
+				return (string) $p['form_title'];
+			}
+			return 'فرم سفارشی';
 		}
 		$plans = NCK_Shifts::plan_labels();
 		$plan  = isset( $row['plan'] ) ? $row['plan'] : '';
@@ -149,7 +163,7 @@ class NCK_Contracts {
 		$token = bin2hex( random_bytes( 16 ) );
 		$now   = current_time( 'mysql' );
 		$kind = isset( $extra['kind'] ) ? (string) $extra['kind'] : 'cowork';
-		if ( ! in_array( $kind, array( 'cowork', 'hall', 'learner' ), true ) ) {
+		if ( ! in_array( $kind, self::kinds(), true ) ) {
 			$kind = 'cowork';
 		}
 		$nid   = isset( $extra['national_id'] ) ? (string) $extra['national_id'] : '';
@@ -182,6 +196,23 @@ class NCK_Contracts {
 			return null;
 		}
 		return self::get( (int) $wpdb->insert_id );
+	}
+
+	public static function merge_payload( $id, array $extra ) {
+		$row = self::get( (int) $id );
+		if ( ! $row ) {
+			return null;
+		}
+		$payload = array_merge( self::payload( $row ), $extra );
+		global $wpdb;
+		$wpdb->update(
+			self::table(),
+			array( 'payload' => wp_json_encode( $payload ) ),
+			array( 'id' => (int) $id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+		return self::get( (int) $id );
 	}
 
 	public static function void_contract( $id ) {
@@ -249,6 +280,8 @@ class NCK_Contracts {
 			(int) NCK_Settings::get( 'shifts_per_month', 26 )
 		);
 
+		NCK_Pay::maybe_record( $contract );
+
 		return array(
 			'ok'       => true,
 			'message'  => 'قرارداد با موفقیت ثبت شد.',
@@ -288,6 +321,8 @@ class NCK_Contracts {
 		if ( ! $contract ) {
 			return array( 'ok' => false, 'message' => 'ذخیره قرارداد سالن انجام نشد.' );
 		}
+
+		NCK_Pay::maybe_record( $contract );
 
 		return array(
 			'ok'       => true,
@@ -329,9 +364,57 @@ class NCK_Contracts {
 			return array( 'ok' => false, 'message' => 'ذخیره فرم پذیرش انجام نشد.' );
 		}
 
+		NCK_Pay::maybe_record( $contract );
+
 		return array(
 			'ok'       => true,
 			'message'  => 'فرم پذیرش فراگیر ثبت شد.',
+			'member'   => $member,
+			'contract' => $contract,
+			'print'    => self::print_url( $contract['print_token'] ),
+		);
+	}
+
+	public static function sign_form_flow( array $form, array $input, $signature, $ip ) {
+		$check = NCK_Forms::validate( $form, $input );
+		if ( empty( $check['ok'] ) ) {
+			return $check;
+		}
+		if ( ! empty( $form['require_signature'] ) ) {
+			$sig = NCK_Contract::validate_signature( $signature );
+			if ( ! $sig['ok'] ) {
+				return $sig;
+			}
+		} else {
+			$signature = '';
+		}
+
+		$p      = $check['payload'];
+		$member = NCK_Members::upsert( $p['name'], 'mr', $p['phone'], $p['national_id'] );
+		if ( ! $member ) {
+			return array( 'ok' => false, 'message' => 'ثبت عضو انجام نشد.' );
+		}
+
+		$contract = self::create_signed(
+			$member,
+			'form',
+			$signature,
+			$ip,
+			array(
+				'kind'        => 'form',
+				'national_id' => $p['national_id'],
+				'payload'     => $p,
+			)
+		);
+		if ( ! $contract ) {
+			return array( 'ok' => false, 'message' => 'ذخیره فرم انجام نشد.' );
+		}
+
+		NCK_Pay::maybe_record( $contract );
+
+		return array(
+			'ok'       => true,
+			'message'  => 'فرم «' . $form['title'] . '» ثبت شد.',
 			'member'   => $member,
 			'contract' => $contract,
 			'print'    => self::print_url( $contract['print_token'] ),

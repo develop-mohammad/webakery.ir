@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 class NCK_Ajax {
 
 	public static function hooks() {
-		$front = array( 'nck_sign', 'nck_sign_hall', 'nck_sign_learner', 'nck_lookup', 'nck_checkin' );
+		$front = array( 'nck_sign', 'nck_sign_hall', 'nck_sign_learner', 'nck_sign_form', 'nck_lookup', 'nck_checkin' );
 		foreach ( $front as $action ) {
 			add_action( 'wp_ajax_' . $action, array( __CLASS__, $action ) );
 			add_action( 'wp_ajax_nopriv_' . $action, array( __CLASS__, $action ) );
@@ -127,6 +127,7 @@ class NCK_Ajax {
 			'payment'        => self::post_text( 'payment' ),
 			'pay_date'       => self::post_text( 'pay_date' ),
 			'pay_ref'        => self::post_text( 'pay_ref' ),
+			'pay_amount'     => self::post_text( 'pay_amount' ),
 			'learner_code'   => self::post_text( 'learner_code' ),
 			'admit_date'     => self::post_text( 'admit_date' ),
 			'staff_name'     => self::post_text( 'staff_name' ),
@@ -161,6 +162,44 @@ class NCK_Ajax {
 		$ip        = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 
 		$result = NCK_Contracts::sign_learner_flow( $input, $signature, $ip );
+		if ( empty( $result['ok'] ) ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => $result['message'],
+				'print'   => $result['print'],
+				'name'    => $result['member']['full_name'],
+			)
+		);
+	}
+
+	public static function nck_sign_form() {
+		self::nonce_front();
+		self::licensed();
+		self::rate( 'sign_form', 12 );
+
+		$form_id = isset( $_POST['form_id'] ) ? sanitize_text_field( wp_unslash( $_POST['form_id'] ) ) : ''; // phpcs:ignore
+		$form    = NCK_Forms::get( $form_id );
+		if ( ! $form ) {
+			$slug = isset( $_POST['form_slug'] ) ? sanitize_title( wp_unslash( $_POST['form_slug'] ) ) : ''; // phpcs:ignore
+			$form = $slug ? NCK_Forms::by_slug( $slug ) : null;
+		}
+		if ( ! $form ) {
+			wp_send_json_error( array( 'message' => 'این فرم پیدا نشد.' ) );
+		}
+
+		$agree = ! empty( $_POST['agree'] ); // phpcs:ignore
+		if ( ! $agree ) {
+			wp_send_json_error( array( 'message' => 'برای ثبت فرم باید صحت اطلاعات را بپذیرید.' ) );
+		}
+
+		$input = wp_unslash( $_POST ); // phpcs:ignore
+		$signature = isset( $_POST['signature'] ) ? wp_unslash( $_POST['signature'] ) : ''; // phpcs:ignore
+		$ip        = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+
+		$result = NCK_Contracts::sign_form_flow( $form, $input, $signature, $ip );
 		if ( empty( $result['ok'] ) ) {
 			wp_send_json_error( array( 'message' => $result['message'] ) );
 		}

@@ -33,6 +33,9 @@ class NCK_Settings {
 			'hall_list'         => implode( "\n", NCK_Hall::default_halls() ),
 			'projector_price'   => 500000,
 			'projector_minutes' => 90,
+			'wc_sync'           => 1,
+			'cowork_fee'        => 0,
+			'learner_fee'       => 0,
 		);
 	}
 
@@ -136,6 +139,10 @@ class NCK_Settings {
 		$out['projector_price'] = max( 0, $price );
 		$mins = isset( $in['projector_minutes'] ) ? (int) NCK_Phone::latin_digits( $in['projector_minutes'] ) : (int) $d['projector_minutes'];
 		$out['projector_minutes'] = min( 600, max( 15, $mins ) );
+
+		$out['wc_sync'] = empty( $in['wc_sync'] ) ? 0 : 1;
+		$out['cowork_fee']  = max( 0, NCK_Hall::parse_amount( isset( $in['cowork_fee'] ) ? $in['cowork_fee'] : $d['cowork_fee'] ) );
+		$out['learner_fee'] = max( 0, NCK_Hall::parse_amount( isset( $in['learner_fee'] ) ? $in['learner_fee'] : $d['learner_fee'] ) );
 
 		return $out;
 	}

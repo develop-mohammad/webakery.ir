@@ -21,6 +21,8 @@ class NCK_Print {
 			self::render_hall( $contract );
 		} elseif ( 'learner' === $kind ) {
 			self::render_learner( $contract );
+		} elseif ( 'form' === $kind ) {
+			self::render_form( $contract );
 		} else {
 			self::render( $contract );
 		}
@@ -69,5 +71,11 @@ class NCK_Print {
 		$s = NCK_Settings::all();
 		$p = NCK_Contracts::payload( $contract );
 		include NCK_PATH . 'templates/print-learner.php';
+	}
+
+	public static function render_form( array $contract ) {
+		$s = NCK_Settings::all();
+		$p = NCK_Contracts::payload( $contract );
+		include NCK_PATH . 'templates/print-form.php';
 	}
 }

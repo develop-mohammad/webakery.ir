@@ -10,6 +10,7 @@ class NCK_Frontend {
 		add_shortcode( 'nahal_contract', array( __CLASS__, 'shortcode_contract' ) );
 		add_shortcode( 'nahal_hall', array( __CLASS__, 'shortcode_hall' ) );
 		add_shortcode( 'nahal_admission', array( __CLASS__, 'shortcode_learner' ) );
+		add_shortcode( 'nahal_form', array( __CLASS__, 'shortcode_form' ) );
 		add_shortcode( 'nahal_portal', array( __CLASS__, 'shortcode_portal' ) );
 		add_shortcode( 'nahal_cowork', array( __CLASS__, 'shortcode_both' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ), 5 );
@@ -72,6 +73,7 @@ class NCK_Frontend {
 		return has_shortcode( $post->post_content, 'nahal_contract' )
 			|| has_shortcode( $post->post_content, 'nahal_hall' )
 			|| has_shortcode( $post->post_content, 'nahal_admission' )
+			|| has_shortcode( $post->post_content, 'nahal_form' )
 			|| has_shortcode( $post->post_content, 'nahal_portal' )
 			|| has_shortcode( $post->post_content, 'nahal_cowork' );
 	}
@@ -109,6 +111,32 @@ class NCK_Frontend {
 		return (string) ob_get_clean();
 	}
 
+	public static function shortcode_form( $atts = array() ) {
+		self::enqueue();
+		$atts = shortcode_atts(
+			array(
+				'slug'  => '',
+				'id'    => '',
+				'title' => '',
+			),
+			$atts,
+			'nahal_form'
+		);
+		$form = null;
+		if ( $atts['id'] !== '' ) {
+			$form = NCK_Forms::get( $atts['id'] );
+		}
+		if ( ! $form && $atts['slug'] !== '' ) {
+			$form = NCK_Forms::by_slug( $atts['slug'] );
+		}
+		if ( ! $form || 'publish' !== $form['status'] ) {
+			return '<p class="nck-note">این فرم در دسترس نیست.</p>';
+		}
+		ob_start();
+		include NCK_PATH . 'templates/custom-form.php';
+		return (string) ob_get_clean();
+	}
+
 	public static function shortcode_portal( $atts = array() ) {
 		self::enqueue();
 		$atts = shortcode_atts( array( 'title' => '' ), $atts, 'nahal_portal' );
@@ -125,6 +153,9 @@ class NCK_Frontend {
 		}
 		if ( 'admission' === $atts['view'] || 'learner' === $atts['view'] ) {
 			return self::shortcode_learner( $atts );
+		}
+		if ( 'form' === $atts['view'] ) {
+			return self::shortcode_form( $atts );
 		}
 		if ( 'portal' === $atts['view'] ) {
 			return self::shortcode_portal( $atts );

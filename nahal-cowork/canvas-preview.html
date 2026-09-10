@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>نهال — پیش‌نمایش فرم‌ها</title>
-<link rel="stylesheet" href="assets/css/frontend.css?v=110" />
+<link rel="stylesheet" href="assets/css/frontend.css?v=120" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
   body{
@@ -28,6 +28,7 @@
 <body>
   <div class="toolbar">
     <button type="button" id="btn-learner" class="is-on">پذیرش فراگیر</button>
+    <button type="button" id="btn-form">فرم کارگاه</button>
     <button type="button" id="btn-cowork">فضای کار</button>
     <button type="button" id="btn-hall">اجاره سالن</button>
     <button type="button" id="btn-portal">پورتال عضو</button>
@@ -77,6 +78,7 @@
                 <label class="nck-chip"><input type="radio" name="payment" value="onsite" /> در محل کارت کشیده شد</label>
               </div>
               <div class="nck-grid nck-grid-hall" style="margin-top:12px">
+                <div class="nck-field"><label>مبلغ پرداخت (تومان)</label><input name="pay_amount" type="text" dir="ltr" placeholder="مثلاً 2500000" /></div>
                 <div class="nck-field"><label>تاریخ پرداخت</label><input name="pay_date" type="text" dir="ltr" placeholder="1404/06/20" /></div>
                 <div class="nck-field"><label>شماره پیگیری</label><input name="pay_ref" type="text" dir="ltr" /></div>
               </div>
@@ -385,6 +387,70 @@
       </div>
     </div>
 
+    <div id="view-form" hidden>
+      <div class="nck-root" dir="rtl" data-nck="form">
+        <form class="nck-form nck-wizard" data-nck-sign-form data-nck-wizard novalidate>
+          <input type="hidden" name="form_id" value="fworkshop" />
+          <input type="hidden" name="form_slug" value="workshop" />
+          <header class="nck-paper-head nck-wizard-brand">
+            <div>
+              <p class="nck-kicker">مجموعه فرهنگی نهال</p>
+              <h2 class="nck-title">ثبت‌نام کارگاه رباتیک</h2>
+              <p class="nck-tag">با پرداخت، سفارش در حسابدار و ووکامرس هم ثبت می‌شود.</p>
+            </div>
+          </header>
+          <div class="nck-wizard-head" data-nck-wizard-head>
+            <div class="nck-wizard-frac-wrap">
+              <p class="nck-wizard-frac" dir="ltr"><strong data-nck-step-now>۱</strong><span class="nck-wizard-slash">/</span><span data-nck-step-all>۳</span></p>
+              <p class="nck-wizard-caption">مرحله <span data-nck-step-now>۱</span> از <span data-nck-step-all>۳</span> — <span data-nck-step-title></span></p>
+            </div>
+            <div class="nck-wizard-track"><span class="nck-wizard-fill" data-nck-step-fill></span></div>
+            <ol class="nck-wizard-dots" data-nck-step-dots></ol>
+          </div>
+          <div class="nck-alert nck-alert-error" data-nck-error hidden></div>
+          <div class="nck-alert nck-alert-ok" data-nck-ok hidden></div>
+          <section class="nck-step" data-nck-step data-nck-step-label="اطلاعات">
+            <div class="nck-grid nck-grid-hall">
+              <div class="nck-field"><label>نام و نام خانوادگی</label><input name="name" type="text" required /></div>
+              <div class="nck-field"><label>موبایل</label><input name="phone" type="tel" dir="ltr" required placeholder="09123456789" /></div>
+            </div>
+          </section>
+          <section class="nck-step" data-nck-step data-nck-step-label="پرداخت" hidden>
+            <fieldset class="nck-fieldset">
+              <legend>روش پرداخت</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="radio" name="payment" value="site" required /> سایت</label>
+                <label class="nck-chip"><input type="radio" name="payment" value="card" /> کارت به کارت</label>
+                <label class="nck-chip"><input type="radio" name="payment" value="onsite" /> پرداخت در محل</label>
+              </div>
+            </fieldset>
+            <div class="nck-grid nck-grid-hall">
+              <div class="nck-field"><label>مبلغ (تومان)</label><input name="pay_amount" type="text" dir="ltr" required placeholder="مبلغ به تومان" /></div>
+              <div class="nck-field"><label>شماره پیگیری</label><input name="pay_ref" type="text" dir="ltr" /></div>
+            </div>
+          </section>
+          <section class="nck-step" data-nck-step data-nck-step-label="تأیید و ثبت" hidden>
+            <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> اطلاعات واردشده صحیح است و ثبت این فرم را می‌پذیرم.</label>
+            <div class="nck-sign-wrap">
+              <div class="nck-sign-head"><span>امضا</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
+              <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+            </div>
+            <p class="nck-slogan">هوای رشدت رو داریم</p>
+          </section>
+          <nav class="nck-wizard-nav">
+            <button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
+            <button type="button" class="nck-btn" data-nck-next>مرحله بعد</button>
+            <button type="submit" class="nck-btn" data-nck-submit hidden>ثبت فرم</button>
+          </nav>
+        </form>
+        <div class="nck-done" data-nck-done hidden>
+          <p class="nck-done-title">فرم ثبت شد.</p>
+          <p data-nck-done-msg></p>
+          <p><a class="nck-btn" data-nck-print-link href="#print-form" target="_blank" rel="noopener">مشاهده و چاپ فرم</a></p>
+        </div>
+      </div>
+    </div>
+
   </div>
   <p class="note">پیش‌نمایش ایستا بدون وردپرس — داده در همین صفحه شبیه‌سازی می‌شود.</p>
   <script>
@@ -440,6 +506,14 @@
           if (!data.agree_rules || !data.agree_contact || !data.agree_photo) return err('تعهدات را بپذیرید.');
           return ok({ message: 'فرم پذیرش فراگیر ثبت شد.', print: '#print-learner', name: data.name });
         }
+        if (action === 'nck_sign_form') {
+          if (!data.agree) return err('برای ثبت فرم باید صحت اطلاعات را بپذیرید.');
+          if (!data.name || data.name.length < 3) return err('نام را کامل وارد کنید.');
+          if (!phone(data.phone)) return err('شماره موبایل معتبر نیست.');
+          if (!data.payment) return err('روش پرداخت را انتخاب کنید.');
+          if (!parseInt(String(data.pay_amount || '').replace(/\D+/g, ''), 10)) return err('مبلغ پرداخت را وارد کنید.');
+          return ok({ message: 'فرم «ثبت‌نام کارگاه رباتیک» ثبت شد و برای حسابدار سفارش ساخته می‌شود.', print: '#print-form', name: data.name });
+        }
         if (action === 'nck_lookup' || action === 'nck_checkin') {
           var p = phone(data.phone);
           var rec = store[p];
@@ -468,16 +542,17 @@
       }
     };
     document.getElementById('btn-learner').onclick = function () { toggle('learner'); };
+    document.getElementById('btn-form').onclick = function () { toggle('form'); };
     document.getElementById('btn-cowork').onclick = function () { toggle('cowork'); };
     document.getElementById('btn-hall').onclick = function () { toggle('hall'); };
     document.getElementById('btn-portal').onclick = function () { toggle('portal'); };
     function toggle(which) {
-      ['learner', 'cowork', 'hall', 'portal'].forEach(function (k) {
+      ['learner', 'form', 'cowork', 'hall', 'portal'].forEach(function (k) {
         document.getElementById('view-' + k).hidden = k !== which;
         document.getElementById('btn-' + k).classList.toggle('is-on', k === which);
       });
     }
   </script>
-  <script src="assets/js/frontend.js?v=110"></script>
+  <script src="assets/js/frontend.js?v=120"></script>
 </body>
 </html>
