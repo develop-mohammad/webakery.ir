@@ -59,8 +59,13 @@ class Plugin {
 	private function boot_checkout() {
 		$start = static function () {
 			try {
-				if ( class_exists( 'WooCommerce' ) && class_exists( __NAMESPACE__ . '\\Checkout' ) ) {
-					Checkout::instance();
+				if ( class_exists( 'WooCommerce' ) ) {
+					if ( class_exists( __NAMESPACE__ . '\\Checkout' ) ) {
+						Checkout::instance();
+					}
+					if ( class_exists( __NAMESPACE__ . '\\QuickBuy' ) ) {
+						QuickBuy::instance();
+					}
 				}
 			} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 			}
@@ -103,6 +108,7 @@ class Plugin {
 					'features'      => array(
 						'ویرایش و جابه‌جایی فیلدهای checkout',
 						'فیلد رادیو، چندگزینه‌ای و dropdown',
+						'خرید سریع: دکمه خرید → صفحه پرداخت',
 						'محصولات آنلاین با لینک پرداخت',
 						'به‌روزرسانی خودکار از webakery.ir',
 						'پشتیبانی فنی',
