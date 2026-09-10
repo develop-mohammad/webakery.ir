@@ -121,6 +121,17 @@ if ( ! function_exists( 'get_option' ) ) {
 	}
 }
 
+require_once dirname( __DIR__ ) . '/includes/class-wbgs-taxonomy.php';
+wbgs_assert( WBGS_Taxonomy::SHORT === WBGS_Taxonomy::length( 'خرید کفش' ), '2 words is short-tail' );
+wbgs_assert( WBGS_Taxonomy::MID === WBGS_Taxonomy::length( 'خرید کفش ورزشی' ), '3 words is mid-tail' );
+wbgs_assert( WBGS_Taxonomy::LONG === WBGS_Taxonomy::length( 'خرید کفش ورزشی مردانه نایک' ), '4+ words is long-tail' );
+wbgs_assert( WBGS_Taxonomy::is_geo( 'بهترین رستوران در شیراز' ), 'geo شیراز' );
+wbgs_assert( WBGS_Taxonomy::is_seasonal( 'خرید لباس زمستانی' ), 'seasonal زمستان' );
+wbgs_assert( WBGS_Taxonomy::is_branded( 'پشتیبانی دیجی کالا' ), 'branded دیجی کالا' );
+wbgs_assert( ! WBGS_Taxonomy::is_branded( 'خرید لپ تاپ استوک' ), 'unbranded generic' );
+wbgs_assert( WBGS_Taxonomy::is_lsi( 'قهوه', 'اسپرسو تلخ' ), 'LSI related without seed' );
+wbgs_assert( ! WBGS_Taxonomy::is_lsi( 'کفش', 'خرید کفش' ), 'contains seed is not LSI' );
+
 require_once dirname( __DIR__ ) . '/includes/class-wbgs-work.php';
 wbgs_assert( WBGS_Work::is_question( 'کفش چیست' ), 'question چیست' );
 wbgs_assert( WBGS_Work::is_question( 'چگونه کفش بخریم' ), 'question چگونه' );
@@ -171,6 +182,8 @@ $csv = WBGS_Work::csv_document( 'کفش', $work_rows );
 wbgs_assert( 0 === strpos( $csv, "\xEF\xBB\xBF" ), 'excel csv has utf-8 BOM' );
 wbgs_assert( false !== strpos( $csv, 'relative_competition' ), 'csv has competition column' );
 wbgs_assert( false !== strpos( $csv, 'question' ), 'csv has question column' );
+wbgs_assert( false !== strpos( $csv, 'length' ), 'csv has length column' );
+wbgs_assert( false !== strpos( $csv, 'branded' ), 'csv has branded column' );
 wbgs_assert( false !== strpos( $csv, 'cluster' ), 'csv has cluster column' );
 
 $briefs = WBGS_Work::briefs( 'کفش', $work_rows );

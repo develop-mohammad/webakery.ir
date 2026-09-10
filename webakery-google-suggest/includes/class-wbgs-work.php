@@ -375,6 +375,8 @@ class WBGS_Work {
 			if ( $text === '' ) {
 				continue;
 			}
+			$tax                          = WBGS_Taxonomy::classify( $seed, $text );
+			$row                          = array_merge( $row, $tax );
 			$row['words']                 = WBGS_Suggest::word_count( $text );
 			$row['longtail']              = WBGS_Suggest::is_longtail( $text );
 			$row['question']              = self::is_question( $text );
@@ -411,9 +413,14 @@ class WBGS_Work {
 		return array(
 			'keyword',
 			'words',
+			'length',
 			'intent',
 			'longtail',
 			'question',
+			'geo',
+			'seasonal',
+			'lsi',
+			'branded',
 			'cluster',
 			'pillar',
 			'suggest_relevance',
@@ -446,9 +453,14 @@ class WBGS_Work {
 				array(
 					self::csv_escape( $row['text'] ),
 					(string) (int) $row['words'],
+					self::csv_escape( isset( $row['length_fa'] ) ? $row['length_fa'] : '' ),
 					self::csv_escape( isset( $row['intent_fa'] ) ? $row['intent_fa'] : $row['intent'] ),
 					! empty( $row['longtail'] ) ? '1' : '0',
 					! empty( $row['question'] ) ? '1' : '0',
+					! empty( $row['geo'] ) ? '1' : '0',
+					! empty( $row['seasonal'] ) ? '1' : '0',
+					! empty( $row['lsi'] ) ? '1' : '0',
+					! empty( $row['branded'] ) ? '1' : '0',
 					self::csv_escape( $row['cluster'] ),
 					self::csv_escape( $row['pillar'] ),
 					(string) (int) ( isset( $row['relevance'] ) ? $row['relevance'] : 0 ),

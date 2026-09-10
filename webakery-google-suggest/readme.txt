@@ -5,7 +5,7 @@ Tags: google suggest, autocomplete, keywords, seo, webakery
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 
 ایستگاه کار سئو با پیشنهادهای واقعی Autocomplete گوگل: بریف، رقابت نسبی، تاریخچه و مقایسه.
@@ -37,6 +37,9 @@ License: GPLv2 or later
 4. ورود آسان را برای پیامک و جیمیل تنظیم کنید.
 
 == Changelog ==
+
+= 1.2.1 =
+* دسته‌بندی پنج‌محوره: طول، اینتنت، محلی/فصلی، LSI، برند
 
 = 1.2.0 =
 * ایستگاه کار سئو: بریف محتوا، عنوان و متا از عبارت واقعی

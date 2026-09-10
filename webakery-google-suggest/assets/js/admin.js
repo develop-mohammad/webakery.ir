@@ -59,6 +59,9 @@
 	};
 
 	var QUESTION_MARKS = ['چیست', 'چیه', 'چگونه', 'چطور', 'چرا', 'یعنی', 'معنی', 'تعریف', 'آیا', 'what', 'how', 'why', 'which', 'when', 'where'];
+	var GEO_MARKS = cfg.geo || [];
+	var SEASON_MARKS = cfg.seasonal || [];
+	var BRAND_MARKS = cfg.brands || [];
 
 	function i18n(key) {
 		return (cfg.i18n && cfg.i18n[key]) || key;
@@ -222,18 +225,94 @@
 		return wordCount(text) >= 4;
 	}
 
+	function lengthKey(text) {
+		var n = wordCount(text);
+		if (n >= 4) {
+			return 'long';
+		}
+		if (n === 3) {
+			return 'mid';
+		}
+		return 'short';
+	}
+
+	function lengthLabel(key) {
+		return (cfg.lengths && cfg.lengths[key]) || key;
+	}
+
+	function extraLabel(key) {
+		return (cfg.extras && cfg.extras[key]) || key;
+	}
+
+	function hasMark(text, list) {
+		var t = String(text || '').toLowerCase();
+		for (var i = 0; i < list.length; i++) {
+			if (t.indexOf(String(list[i]).toLowerCase()) !== -1) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function isGeo(text) {
+		return hasMark(text, GEO_MARKS);
+	}
+
+	function isSeasonal(text) {
+		return hasMark(text, SEASON_MARKS);
+	}
+
+	function isBranded(text) {
+		return hasMark(text, BRAND_MARKS);
+	}
+
+	function isLsi(text) {
+		var seed = (seedEl.value || '').replace(/\s+/g, ' ').trim();
+		var t = String(text || '').replace(/\s+/g, ' ').trim();
+		if (!seed || !t || seed === t) {
+			return false;
+		}
+		return t.toLowerCase().indexOf(seed.toLowerCase()) === -1;
+	}
+
 	function visibleItems() {
 		if (intentFilter === 'all') {
 			return items.slice();
 		}
-		if (intentFilter === 'longtail') {
+		if (intentFilter === 'short' || intentFilter === 'mid' || intentFilter === 'longtail') {
+			var want = intentFilter === 'longtail' ? 'long' : intentFilter;
 			return items.filter(function (row) {
-				return isLongTail(row.text);
+				return lengthKey(row.text) === want;
 			});
 		}
 		if (intentFilter === 'question') {
 			return items.filter(function (row) {
 				return isQuestion(row.text);
+			});
+		}
+		if (intentFilter === 'geo') {
+			return items.filter(function (row) {
+				return isGeo(row.text);
+			});
+		}
+		if (intentFilter === 'seasonal') {
+			return items.filter(function (row) {
+				return isSeasonal(row.text);
+			});
+		}
+		if (intentFilter === 'lsi') {
+			return items.filter(function (row) {
+				return isLsi(row.text);
+			});
+		}
+		if (intentFilter === 'branded') {
+			return items.filter(function (row) {
+				return isBranded(row.text);
+			});
+		}
+		if (intentFilter === 'unbranded') {
+			return items.filter(function (row) {
+				return !isBranded(row.text);
 			});
 		}
 		return items.filter(function (row) {
@@ -332,41 +411,38 @@
 		}
 	}
 
-	function renderFilters() {
-		if (!filtersEl) {
-			return;
+	function filterCount(key) {
+		if (key === 'all') {
+			return items.length;
 		}
-		var counts = { all: items.length };
-		items.forEach(function (row) {
-			counts[row.intent] = (counts[row.intent] || 0) + 1;
-		});
-		filtersEl.innerHTML = '';
-		filtersEl.hidden = items.length === 0;
-		var longCount = items.filter(function (row) {
-			return isLongTail(row.text);
-		}).length;
-		var qCount = items.filter(function (row) {
-			return isQuestion(row.text);
-		}).length;
-		var keys = ['all', 'longtail', 'question', 'informational', 'commercial', 'transactional', 'navigational'];
+		var prev = intentFilter;
+		intentFilter = key;
+		var n = visibleItems().length;
+		intentFilter = prev;
+		return n;
+	}
+
+	function addFilterGroup(title, keys) {
+		var box = document.createElement('div');
+		box.className = 'wbgs-filter-group';
+		var cap = document.createElement('span');
+		cap.className = 'wbgs-filter-cap';
+		cap.textContent = title;
+		box.appendChild(cap);
+		var any = false;
 		keys.forEach(function (key) {
-			var n = counts[key] || 0;
-			var label = key === 'all' ? 'همه' : intentLabel(key);
-			if (key === 'longtail') {
-				n = longCount;
-				label = 'لانگ‌تیل';
-				if (!n) {
-					return;
-				}
-			} else if (key === 'question') {
-				n = qCount;
-				label = 'سوالی';
-				if (!n) {
-					return;
-				}
-			} else if (key !== 'all' && !counts[key]) {
+			var n = filterCount(key);
+			if (key !== 'all' && !n) {
 				return;
 			}
+			any = true;
+			var label = key === 'all' ? 'همه' : (
+				key === 'short' || key === 'mid' || key === 'longtail'
+					? lengthLabel(key === 'longtail' ? 'long' : key)
+					: (key === 'question' ? 'سوالی' : (
+						(cfg.extras && cfg.extras[key]) || intentLabel(key)
+					))
+			);
 			var btn = document.createElement('button');
 			btn.type = 'button';
 			btn.className = key === intentFilter ? 'is-on' : '';
@@ -375,8 +451,29 @@
 				intentFilter = key;
 				render();
 			});
-			filtersEl.appendChild(btn);
+			box.appendChild(btn);
 		});
+		if (any) {
+			filtersEl.appendChild(box);
+		}
+	}
+
+	function renderFilters() {
+		if (!filtersEl) {
+			return;
+		}
+		filtersEl.innerHTML = '';
+		filtersEl.hidden = items.length === 0;
+		if (!items.length) {
+			return;
+		}
+		addFilterGroup('همه', ['all']);
+		addFilterGroup('طول و حجم', ['short', 'mid', 'longtail']);
+		addFilterGroup('قصد جستجو', ['informational', 'navigational', 'commercial', 'transactional']);
+		addFilterGroup('جغرافیا و زمان', ['geo', 'seasonal']);
+		addFilterGroup('معنایی', ['lsi']);
+		addFilterGroup('برند', ['branded', 'unbranded']);
+		addFilterGroup('سوالی', ['question']);
 	}
 
 	function renderList() {
@@ -389,20 +486,28 @@
 			var kw = document.createElement('span');
 			kw.className = 'wbgs-kw';
 			kw.appendChild(document.createTextNode(row.text));
-			if (isLongTail(row.text)) {
-				var lt = document.createElement('span');
-				lt.className = 'wbgs-intent wbgs-intent-longtail';
-				lt.textContent = 'لانگ‌تیل';
+			function tag(cls, label) {
+				var el = document.createElement('span');
+				el.className = 'wbgs-intent ' + cls;
+				el.textContent = label;
 				kw.appendChild(document.createTextNode(' '));
-				kw.appendChild(lt);
+				kw.appendChild(el);
 			}
+			var lk = lengthKey(row.text);
+			tag('wbgs-intent-len-' + lk, lengthLabel(lk));
 			if (isQuestion(row.text)) {
-				var q = document.createElement('span');
-				q.className = 'wbgs-intent wbgs-intent-question';
-				q.textContent = 'سوالی';
-				kw.appendChild(document.createTextNode(' '));
-				kw.appendChild(q);
+				tag('wbgs-intent-question', 'سوالی');
 			}
+			if (isGeo(row.text)) {
+				tag('wbgs-intent-geo', extraLabel('geo'));
+			}
+			if (isSeasonal(row.text)) {
+				tag('wbgs-intent-seasonal', extraLabel('seasonal'));
+			}
+			if (isLsi(row.text)) {
+				tag('wbgs-intent-lsi', extraLabel('lsi'));
+			}
+			tag(isBranded(row.text) ? 'wbgs-intent-branded' : 'wbgs-intent-unbranded', extraLabel(isBranded(row.text) ? 'branded' : 'unbranded'));
 			li.appendChild(kw);
 			li.appendChild(intentBadge(row));
 			li.appendChild(compBadge(row));
@@ -1030,7 +1135,7 @@
 	}
 
 	function excelCsv(seed, rows) {
-		var header = ['keyword', 'words', 'intent', 'longtail', 'question', 'cluster', 'pillar', 'suggest_relevance', 'suggest_rank', 'suggest_score', 'relative_competition', 'competition_band', 'monthly_searches', 'title', 'meta'];
+		var header = ['keyword', 'words', 'length', 'intent', 'longtail', 'question', 'geo', 'seasonal', 'lsi', 'branded', 'cluster', 'pillar', 'suggest_relevance', 'suggest_rank', 'suggest_score', 'relative_competition', 'competition_band', 'monthly_searches', 'title', 'meta'];
 		var briefs = briefMap(seed, rows);
 		var pillar = buildBriefs(seed, rows)[0] || { title: '', meta: '' };
 		var lines = [header.join(',')];
@@ -1041,9 +1146,14 @@
 			lines.push([
 				csvEscape(row.text),
 				wordCount(row.text),
+				csvEscape(lengthLabel(lengthKey(row.text))),
 				csvEscape(intentLabel(row.intent)),
 				isLongTail(row.text) ? '1' : '0',
 				isQuestion(row.text) ? '1' : '0',
+				isGeo(row.text) ? '1' : '0',
+				isSeasonal(row.text) ? '1' : '0',
+				isLsi(row.text) ? '1' : '0',
+				isBranded(row.text) ? '1' : '0',
 				csvEscape(cluster),
 				csvEscape(seed),
 				row.relevance || 0,

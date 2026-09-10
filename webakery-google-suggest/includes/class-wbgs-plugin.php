@@ -64,6 +64,11 @@ class WBGS_Plugin {
 			'licensed'  => self::licensed(),
 			'ads'       => WBGS_Ads::configured(),
 			'intents'   => WBGS_Intent::labels(),
+			'lengths'   => WBGS_Taxonomy::length_labels(),
+			'extras'    => WBGS_Taxonomy::extra_labels(),
+			'geo'       => WBGS_Taxonomy::geo_markers(),
+			'seasonal'  => WBGS_Taxonomy::seasonal_markers(),
+			'brands'    => WBGS_Taxonomy::brand_markers(),
 			'i18n'      => array(
 				'empty'    => 'عبارت پایه را بنویسید.',
 				'locked'   => 'برای استخراج، لایسنس را فعال کنید یا دوره آزمایشی را استفاده کنید.',
@@ -98,6 +103,7 @@ class WBGS_Plugin {
 		require_once WBGS_PATH . 'includes/class-wbgs-suggest.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-tree.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-intent.php';
+		require_once WBGS_PATH . 'includes/class-wbgs-taxonomy.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-work.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-reports.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-ads.php';
@@ -126,6 +132,7 @@ class WBGS_Plugin {
 					'لانگ‌تیل از ادامهٔ همان سجست گوگل',
 					'حرف‌گردانی الفبای فارسی و فاصله قبل/بعد',
 					'صفحهٔ جدا روی سایت با ورود موبایل یا جیمیل',
+					'دسته‌بندی طول، اینتنت، محلی/فصلی، LSI و برند',
 					'درخت محتوا، اینتنت و پیلار کلاستر',
 					'فیلتر سوالی، بریف محتوا و عنوان/متا از عبارت‌های واقعی',
 					'امتیاز رقابت نسبی (نه KD ساختگی)',

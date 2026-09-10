@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit;
 			<h2>عبارت‌ها</h2>
 			<span class="wbgs-count" id="wbgs-count">۰ عبارت</span>
 		</div>
-		<p class="wbgs-hint">عبارت‌ها فقط از Autocomplete واقعی گوگل هستند. امتیاز رقابت نسبی KD اهرفس نیست. سرچ ماهانه فقط با Keyword Planner پر می‌شود.</p>
+		<p class="wbgs-hint">دسته‌بندی: طول (کوتاه / میان‌رده / لانگ‌تیل)، اینتنت، محلی و فصلی، LSI و برند. فقط از عبارت واقعی گوگل. سرچ ماهانه فقط با Keyword Planner.</p>
 		<?php
 		$empty_text = 'عبارت را بنویسید و دکمه را بزنید.';
 		include WBGS_PATH . 'templates/results-chrome.php';
