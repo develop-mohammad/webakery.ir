@@ -84,7 +84,7 @@
 
 ایستگاه کار سئو با پیشنهادهای واقعی Autocomplete گوگل: بریف محتوا، رقابت نسبی، تاریخچه و مقایسه.
 
-- نسخه: **1.2.2**
+- نسخه: **1.2.3**
 - سازنده: **webakery.ir**
 - مسیر: `webakery-google-suggest/`
 - ZIP: `webakery-google-suggest.zip`

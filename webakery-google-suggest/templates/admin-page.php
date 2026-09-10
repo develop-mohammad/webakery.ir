@@ -35,6 +35,10 @@ defined( 'ABSPATH' ) || exit;
 		<div class="notice notice-warning"><p>دوره آزمایشی یا لایسنس فعال نیست. استخراج قفل است. از زبانه لایسنس اقدام کنید.</p></div>
 	<?php endif; ?>
 
+	<?php if ( in_array( $tab, array( 'extract', 'settings', 'license' ), true ) ) : ?>
+		<?php include WBGS_PATH . 'templates/shortcode-box.php'; ?>
+	<?php endif; ?>
+
 	<?php if ( 'extract' === $tab ) : ?>
 		<?php include WBGS_PATH . 'templates/extract-form.php'; ?>
 	<?php elseif ( 'reports' === $tab ) : ?>
@@ -43,21 +47,21 @@ defined( 'ABSPATH' ) || exit;
 		<form class="wbgs-card wbgs-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="wbgs_save_settings" />
 			<?php wp_nonce_field( 'wbgs_save_settings' ); ?>
-			<h2>صفحهٔ جدا روی سایت</h2>
-			<p class="wbgs-hint">آدرس را اینجا بگذارید. آن بخش از سایت قالب معمولی را نشان نمی‌دهد؛ اول ورود با موبایل یا جیمیل (افزونه ورود آسان)، بعد استخراج سجست.</p>
+			<h2>صفحهٔ جدا روی سایت (اختیاری)</h2>
+			<p class="wbgs-hint">راه اصلی برای دیگران، شورت‌کد روی یک برگه است. صفحهٔ جدا قالب سایت را نشان نمی‌دهد و آدرسش مثل <code dir="ltr">/sajest/</code> است.</p>
 			<p>
 				<label class="wbgs-check">
 					<input type="checkbox" name="front_enabled" value="1" <?php checked( ! empty( $settings['front_enabled'] ) ); ?> />
-					فعال بودن صفحهٔ عمومی
+					فعال بودن صفحهٔ جدا
 				</label>
 			</p>
 			<p>
 				<label class="wbgs-check">
 					<input type="checkbox" name="front_public" value="1" <?php checked( ! empty( $settings['front_public'] ) ); ?> />
-					ابزار رایگان بدون ورود (شورت‌کد و صفحهٔ جدا)
+					اجازه استفاده برای مهمان
 				</label>
 			</p>
-			<p class="wbgs-hint">شورت‌کد صفحهٔ گوگل‌مانند: <code>[webakery_suggest]</code></p>
+			<p class="wbgs-hint">اگر روشن باشد (پیش‌فرض)، بازدیدکننده بدون ورود از شورت‌کد و صفحهٔ جدا استفاده می‌کند. خاموش کنید تا فقط کاربر واردشده بتواند استخراج کند.</p>
 			<p>
 				<label class="wbgs-label" for="wbgs-slug">آدرس صفحه (اسلاگ)</label>
 				<input id="wbgs-slug" class="wbgs-input wbgs-input-sm" type="text" name="front_slug" value="<?php echo esc_attr( $settings['front_slug'] ); ?>" dir="ltr" />

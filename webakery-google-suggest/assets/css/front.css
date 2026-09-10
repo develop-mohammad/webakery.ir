@@ -20,6 +20,15 @@
 	padding-top: 8px;
 }
 
+.wbgs-embed [hidden] {
+	display: none !important;
+}
+
+.wbgs-embed .wbgs-locked h2 {
+	margin: 0 0 6px;
+	font-size: 16px;
+}
+
 .wbgs-app [hidden] {
 	display: none !important;
 }

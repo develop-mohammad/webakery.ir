@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * صفحهٔ جدا روی سایت (بدون قالب وردپرس) با ورود موبایل/جیمیل و سپس استخراج.
+ * شورت‌کد عمومی روی برگه/نوشته + صفحهٔ جدا /sajest/.
  */
 class WBGS_Frontend {
 
@@ -21,9 +21,39 @@ class WBGS_Frontend {
 		add_filter( 'query_vars', array( $this, 'query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'maybe_render' ), 0 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue_shortcode' ) );
-		add_shortcode( 'webakery_suggest', array( $this, 'shortcode' ) );
-		add_shortcode( 'wbgs_suggest', array( $this, 'shortcode' ) );
+		foreach ( self::shortcode_tags() as $tag ) {
+			add_shortcode( $tag, array( $this, 'shortcode' ) );
+		}
 		add_filter( 'wbl_login_redirect', array( __CLASS__, 'filter_login_redirect' ) );
+	}
+
+	/** شورت‌کد اصلی و نام مستعار — هر دو یک خروجی دارند. */
+	public static function shortcode_tags() {
+		return array( 'webakery_suggest', 'wbgs_suggest' );
+	}
+
+	public static function primary_shortcode() {
+		return '[' . self::shortcode_tags()[0] . ']';
+	}
+
+	/**
+	 * آیا متن شامل شورت‌کد سجست‌یاب است؟ بدون وردپرس هم با رجکس کار می‌کند.
+	 *
+	 * @param string $content
+	 */
+	public static function content_has_shortcode( $content ) {
+		if ( ! is_string( $content ) || $content === '' ) {
+			return false;
+		}
+		foreach ( self::shortcode_tags() as $tag ) {
+			if ( function_exists( 'has_shortcode' ) && has_shortcode( $content, $tag ) ) {
+				return true;
+			}
+			if ( preg_match( '/\[' . preg_quote( $tag, '/' ) . '(?:\s|\])/', $content ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static function slug() {
@@ -85,7 +115,7 @@ class WBGS_Frontend {
 
 		status_header( 200 );
 		nocache_headers();
-		$this->mark_return_cookie();
+		$this->mark_return_cookie( self::url() );
 		$this->enqueue_app();
 
 		$licensed = WBGS_Plugin::licensed();
@@ -94,33 +124,76 @@ class WBGS_Frontend {
 		exit;
 	}
 
-	public function shortcode() {
-		if ( ! WBGS_Plugin::licensed() && ! current_user_can( 'manage_options' ) ) {
-			return '';
+	/**
+	 * شورت‌کد برگهٔ معمولی — مهمان‌ها هم می‌توانند استفاده کنند مگر «اجازه مهمان» خاموش باشد.
+	 * وابسته به فعال بودن صفحهٔ جدا /sajest/ نیست.
+	 *
+	 * @param array|string $atts
+	 */
+	public function shortcode( $atts = array() ) {
+		if ( ! is_array( $atts ) ) {
+			$atts = array();
 		}
+		$atts = shortcode_atts(
+			array(
+				'class' => '',
+			),
+			$atts,
+			'webakery_suggest'
+		);
+
 		$this->enqueue_app();
+		$this->print_assets_if_late();
+
 		if ( ! is_user_logged_in() ) {
 			$this->mark_return_cookie();
 		}
+
 		ob_start();
-		$licensed = WBGS_Plugin::licensed();
-		$logged   = is_user_logged_in();
-		$public   = ! empty( WBGS_Plugin::settings()['front_public'] );
+		$licensed    = WBGS_Plugin::licensed();
+		$logged      = is_user_logged_in();
+		$public      = ! empty( WBGS_Plugin::settings()['front_public'] );
+		$extra_class = function_exists( 'sanitize_html_class' ) ? sanitize_html_class( $atts['class'] ) : '';
 		include WBGS_PATH . 'templates/front-embed.php';
 		return ob_get_clean();
 	}
 
 	public function maybe_enqueue_shortcode() {
-		if ( ! is_singular() ) {
-			return;
-		}
-		global $post;
-		if ( ! ( $post instanceof WP_Post ) ) {
-			return;
-		}
-		if ( has_shortcode( $post->post_content, 'webakery_suggest' ) || has_shortcode( $post->post_content, 'wbgs_suggest' ) ) {
+		if ( $this->page_needs_assets() ) {
 			$this->enqueue_app();
 		}
+	}
+
+	private function page_needs_assets() {
+		if ( ! is_singular() ) {
+			return false;
+		}
+		global $post;
+		if ( $post instanceof WP_Post && self::content_has_shortcode( $post->post_content ) ) {
+			return true;
+		}
+		return $this->elementor_has_shortcode();
+	}
+
+	private function elementor_has_shortcode() {
+		$post_id = function_exists( 'get_queried_object_id' ) ? (int) get_queried_object_id() : 0;
+		if ( ! $post_id ) {
+			global $post;
+			$post_id = ( $post instanceof WP_Post ) ? (int) $post->ID : 0;
+		}
+		if ( ! $post_id ) {
+			return false;
+		}
+		$raw = get_post_meta( $post_id, '_elementor_data', true );
+		if ( ! is_string( $raw ) || $raw === '' ) {
+			return false;
+		}
+		foreach ( self::shortcode_tags() as $tag ) {
+			if ( false !== strpos( $raw, $tag ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public function enqueue_app() {
@@ -138,6 +211,19 @@ class WBGS_Frontend {
 		}
 	}
 
+	/**
+	 * اگر شورت‌کد بعد از wp_head رندر شود (مثلاً ویجت المنتور)، استایل را همان‌جا چاپ کن.
+	 */
+	private function print_assets_if_late() {
+		if ( ! did_action( 'wp_print_styles' ) ) {
+			return;
+		}
+		if ( wp_style_is( 'wbgs-google', 'done' ) ) {
+			return;
+		}
+		wp_print_styles( array( 'wbgs-admin', 'wbgs-front', 'wbgs-google' ) );
+	}
+
 	public static function has_easy_login() {
 		return class_exists( 'WBL_Frontend' ) && class_exists( 'WBL_Plugin' ) && WBL_Plugin::is_usable();
 	}
@@ -151,11 +237,22 @@ class WBGS_Frontend {
 		return $ok ? $ok : $url;
 	}
 
-	private function mark_return_cookie() {
+	private function mark_return_cookie( $url = '' ) {
 		if ( headers_sent() ) {
 			return;
 		}
-		$url  = self::url();
+		if ( $url === '' && function_exists( 'is_singular' ) && is_singular() && function_exists( 'get_permalink' ) ) {
+			$here = get_permalink();
+			if ( is_string( $here ) && $here !== '' ) {
+				$url = $here;
+			}
+		}
+		if ( $url === '' ) {
+			$url = self::url();
+		}
+		if ( $url === '' ) {
+			return;
+		}
 		$path = defined( 'COOKIEPATH' ) ? COOKIEPATH : '/';
 		$host = defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : '';
 		setcookie( 'wbgs_return', $url, time() + 20 * MINUTE_IN_SECONDS, $path, $host, is_ssl(), true );

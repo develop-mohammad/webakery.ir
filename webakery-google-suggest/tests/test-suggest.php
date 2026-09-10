@@ -110,6 +110,18 @@ require_once dirname( __DIR__ ) . '/includes/class-wbgs-frontend.php';
 wbgs_assert( 'sajest' === WBGS_Frontend::sanitize_slug( '' ), 'empty slug falls back' );
 wbgs_assert( 'sajest' === WBGS_Frontend::sanitize_slug( 'wp-admin' ), 'reserved slug blocked' );
 wbgs_assert( 'my-tool' === WBGS_Frontend::sanitize_slug( 'My Tool' ), 'slug sanitized' );
+wbgs_assert( array( 'webakery_suggest', 'wbgs_suggest' ) === WBGS_Frontend::shortcode_tags(), 'primary and alias shortcode tags' );
+wbgs_assert( '[webakery_suggest]' === WBGS_Frontend::primary_shortcode(), 'primary shortcode markup' );
+wbgs_assert( WBGS_Frontend::content_has_shortcode( '[webakery_suggest]' ), 'detects [webakery_suggest] on a page' );
+wbgs_assert( WBGS_Frontend::content_has_shortcode( '[wbgs_suggest class="wide"]' ), 'detects alias with optional class' );
+wbgs_assert( ! WBGS_Frontend::content_has_shortcode( 'متن بدون شورت‌کد' ), 'plain text is not a shortcode' );
+wbgs_assert( ! WBGS_Frontend::content_has_shortcode( '' ), 'empty content is not a shortcode' );
+$front_src = file_get_contents( dirname( __DIR__ ) . '/includes/class-wbgs-frontend.php' );
+wbgs_assert( false !== strpos( $front_src, "add_shortcode( \$tag" ), 'registers both shortcode aliases' );
+wbgs_assert( false === strpos( $front_src, "current_user_can( 'manage_options' )" ), 'unlicensed guests see lock, not a blank shortcode' );
+$embed_src = file_get_contents( dirname( __DIR__ ) . '/templates/front-embed.php' );
+wbgs_assert( false !== strpos( $embed_src, 'برای استخراج، لایسنس را فعال کنید' ), 'embed has lock message' );
+wbgs_assert( false !== strpos( $embed_src, 'google-home.php' ), 'embed renders google-home UI' );
 
 if ( ! function_exists( 'get_option' ) ) {
 	$GLOBALS['wbgs_test_options'] = array();
