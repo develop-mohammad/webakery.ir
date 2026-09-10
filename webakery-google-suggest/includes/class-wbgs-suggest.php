@@ -198,6 +198,7 @@ class WBGS_Suggest {
 		$body = is_string( $body ) ? $body : '';
 		$body = preg_replace( '/^\xEF\xBB\xBF/', '', $body );
 		$body = preg_replace( '/^\)\]\}\'\s*/', '', $body );
+		$body = self::unwrap_suggest( $body );
 		$data = json_decode( $body, true );
 		if ( ! is_array( $data ) || ! isset( $data[1] ) || ! is_array( $data[1] ) ) {
 			return array();
@@ -241,9 +242,50 @@ class WBGS_Suggest {
 	 * @param string $gl
 	 * @return string
 	 */
-	public static function suggest_url( $query, $hl = 'fa', $gl = 'ir' ) {
-		$hl = preg_replace( '/[^a-zA-Z\-]/', '', (string) $hl );
-		$gl = preg_replace( '/[^a-zA-Z]/', '', (string) $gl );
+	/**
+	 * پاسخ یوتیوب: window.google.ac.h([...])
+	 *
+	 * @param string $body
+	 * @return string
+	 */
+	public static function unwrap_suggest( $body ) {
+		$body = trim( (string) $body );
+		if ( preg_match( '/^window\.google\.ac\.h\((.*)\)\s*;?\s*$/s', $body, $m ) ) {
+			return $m[1];
+		}
+		return $body;
+	}
+
+	/**
+	 * @return array<string,string>
+	 */
+	public static function sources() {
+		return array(
+			'google'  => 'گوگل',
+			'youtube' => 'یوتیوب',
+		);
+	}
+
+	/**
+	 * @param string $source
+	 * @return string
+	 */
+	public static function normalize_source( $source ) {
+		$source = preg_replace( '/[^a-z]/', '', strtolower( (string) $source ) );
+		return isset( self::sources()[ $source ] ) ? $source : 'google';
+	}
+
+	/**
+	 * @param string $query
+	 * @param string $hl
+	 * @param string $gl
+	 * @param string $source
+	 * @return string
+	 */
+	public static function suggest_url( $query, $hl = 'fa', $gl = 'ir', $source = 'google' ) {
+		$hl     = preg_replace( '/[^a-zA-Z\-]/', '', (string) $hl );
+		$gl     = preg_replace( '/[^a-zA-Z]/', '', (string) $gl );
+		$source = self::normalize_source( $source );
 		if ( $hl === '' ) {
 			$hl = 'fa';
 		}
@@ -251,13 +293,18 @@ class WBGS_Suggest {
 			$gl = 'ir';
 		}
 
+		$args = array(
+			'client' => 'youtube' === $source ? 'youtube' : 'chrome',
+			'hl'     => $hl,
+			'gl'     => $gl,
+			'q'      => (string) $query,
+		);
+		if ( 'youtube' === $source ) {
+			$args['ds'] = 'yt';
+		}
+
 		return 'https://suggestqueries.google.com/complete/search?' . http_build_query(
-			array(
-				'client' => 'chrome',
-				'hl'     => $hl,
-				'gl'     => $gl,
-				'q'      => (string) $query,
-			),
+			$args,
 			'',
 			'&',
 			PHP_QUERY_RFC3986
@@ -269,8 +316,8 @@ class WBGS_Suggest {
 	 *
 	 * @return array{ok:bool,error:string,items:string[],status:int}
 	 */
-	public static function fetch( $query, $hl = 'fa', $gl = 'ir' ) {
-		$url  = self::suggest_url( $query, $hl, $gl );
+	public static function fetch( $query, $hl = 'fa', $gl = 'ir', $source = 'google' ) {
+		$url  = self::suggest_url( $query, $hl, $gl, $source );
 		$args = array(
 			'timeout'     => 12,
 			'redirection' => 2,

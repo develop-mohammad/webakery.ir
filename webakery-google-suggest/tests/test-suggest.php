@@ -50,6 +50,15 @@ wbgs_assert( in_array( 'قیمت کفش', $mods, true ), 'قیمت prefix probe'
 wbgs_assert( in_array( 'ضد کفش', $mods, true ), 'morph prefix probe' );
 wbgs_assert( ! in_array( 'تهران کفش', $mods, true ), 'city is suffix-only, not invented reverse' );
 
+$yt = 'window.google.ac.h(["کفش",[["کفش فوتبال",0,[512]],["کفش مجلسی",0,[512]]]])';
+wbgs_assert( '["کفش",[["کفش فوتبال",0,[512]],["کفش مجلسی",0,[512]]]]' === WBGS_Suggest::unwrap_suggest( $yt ), 'unwrap youtube ac.h' );
+$yt_items = WBGS_Suggest::parse_enriched( $yt );
+wbgs_assert( 2 === count( $yt_items ), 'youtube body yields real phrases' );
+wbgs_assert( 'کفش فوتبال' === $yt_items[0]['text'], 'youtube first phrase' );
+wbgs_assert( false !== strpos( WBGS_Suggest::suggest_url( 'کفش', 'fa', 'ir', 'youtube' ), 'client=youtube' ), 'youtube suggest client' );
+wbgs_assert( false !== strpos( WBGS_Suggest::suggest_url( 'کفش', 'fa', 'ir', 'youtube' ), 'ds=yt' ), 'youtube ds=yt' );
+wbgs_assert( 'youtube' === WBGS_Suggest::normalize_source( 'YOUTUBE' ), 'source youtube' );
+
 $sample = '["کفش",["کفش مردانه","کفش زنانه","خرید کفش"]]';
 $parsed = WBGS_Suggest::parse_response( $sample );
 wbgs_assert( array( 'کفش مردانه', 'کفش زنانه', 'خرید کفش' ) === $parsed, 'parse firefox JSON' );
@@ -285,6 +294,25 @@ wbgs_assert( 1 === count( $list ), 'report listed' );
 wbgs_assert( WBGS_Reports::delete( $saved['report']['id'], 'u1' ), 'report deleted' );
 wbgs_assert( null === WBGS_Reports::get( $saved['report']['id'], 'u1' ), 'deleted report gone' );
 wbgs_assert( false === WBGS_Reports::save( '', array(), 'u1' )['ok'], 'empty report rejected' );
+
+require_once dirname( __DIR__ ) . '/includes/class-wbgs-export.php';
+$xmind = WBGS_Export::xmind( 'کفش', $work_rows );
+wbgs_assert( ! empty( $xmind['ok'] ) && $xmind['bin'] !== '', 'xmind zip built from real phrases' );
+wbgs_assert( false !== strpos( $xmind['name'], '.xmind' ), 'xmind filename' );
+$tmpx = tempnam( sys_get_temp_dir(), 'xm' );
+file_put_contents( $tmpx, $xmind['bin'] );
+$zx = new ZipArchive();
+wbgs_assert( true === $zx->open( $tmpx ), 'xmind is a zip' );
+wbgs_assert( false !== $zx->locateName( 'content.json' ), 'xmind has content.json' );
+$sheet = json_decode( $zx->getFromName( 'content.json' ), true );
+$zx->close();
+@unlink( $tmpx );
+wbgs_assert( isset( $sheet[0]['rootTopic']['title'] ) && 'کفش' === $sheet[0]['rootTopic']['title'], 'xmind root is seed' );
+$cal = WBGS_Export::calendar( 'کفش', $work_rows );
+wbgs_assert( ! empty( $cal[0]['items'] ), 'calendar has week 1' );
+$html = WBGS_Export::html_report( 'کفش', $work_rows );
+wbgs_assert( false !== strpos( $html, 'کفش' ), 'html report has seed' );
+wbgs_assert( false === strpos( $html, 'ChatGPT' ), 'html report is not an AI article' );
 
 if ( $failed ) {
 	echo "\n$failed failed\n";

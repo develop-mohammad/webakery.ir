@@ -71,6 +71,7 @@ class WBGS_Plugin {
 			'seasonal'  => WBGS_Taxonomy::seasonal_markers(),
 			'brands'    => WBGS_Taxonomy::brand_markers(),
 			'affixes'   => WBGS_Affixes::public_map(),
+			'sources'   => WBGS_Suggest::sources(),
 			'i18n'      => array(
 				'empty'    => 'عبارت پایه را بنویسید.',
 				'locked'   => 'برای استخراج، لایسنس را فعال کنید یا دوره آزمایشی را استفاده کنید.',
@@ -93,6 +94,9 @@ class WBGS_Plugin {
 				'usage'    => 'امروز %s درخواست به گوگل',
 				'trends'   => 'در حال خواندن ترند گوگل برای ایران…',
 				'trends_off' => 'ترند ایران از فید رسمی گوگل خوانده نشد. از لینک ترند باز کنید.',
+				'xmind'    => 'در حال ساخت فایل XMind…',
+				'xmind_ok' => 'فایل XMind آماده شد.',
+				'xmind_err'=> 'ساخت XMind نشد.',
 			),
 			'longtailCap' => 50,
 			'canSave'     => function_exists( 'is_user_logged_in' ) && is_user_logged_in(),
@@ -113,6 +117,7 @@ class WBGS_Plugin {
 		require_once WBGS_PATH . 'includes/class-wbgs-reports.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-ads.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-trends.php';
+		require_once WBGS_PATH . 'includes/class-wbgs-export.php';
 		require_once WBGS_PATH . 'includes/class-wbgs-frontend.php';
 		WBGS_Frontend::instance();
 
@@ -144,6 +149,8 @@ class WBGS_Plugin {
 					'فیلتر سوالی، بریف محتوا و عنوان/متا از عبارت‌های واقعی',
 					'امتیاز رقابت نسبی (نه KD ساختگی)',
 					'ترند روزانه گوگل برای ایران (فید رسمی RSS، geo=IR)',
+					'خروجی XMind، تقویم محتوا و گزارش HTML از عبارت واقعی',
+					'سجست گوگل و یوتیوب',
 					'تاریخچه گزارش، مقایسه دو عبارت، CSV اکسل',
 					'میزان سرچ ماهانه از Google Ads Keyword Planner',
 					'خروجی CSV و کپی یکجا',

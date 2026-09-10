@@ -18,6 +18,11 @@ defined( 'ABSPATH' ) || exit;
 			<button type="button" class="wbgs-g-btn" id="wbgs-stop" hidden>توقف</button>
 		</div>
 		<fieldset class="wbgs-modes wbgs-g-modes" <?php disabled( ! $licensed ); ?>>
+			<legend>منبع سجست</legend>
+			<label><input type="radio" name="wbgs-source" value="google" checked /> گوگل</label>
+			<label><input type="radio" name="wbgs-source" value="youtube" /> یوتیوب</label>
+		</fieldset>
+		<fieldset class="wbgs-modes wbgs-g-modes" <?php disabled( ! $licensed ); ?>>
 			<legend>روش استخراج</legend>
 			<label><input type="checkbox" name="wbgs-mode" value="space" checked /> فاصله</label>
 			<label><input type="checkbox" name="wbgs-mode" value="alphabet" checked /> الفبا</label>
@@ -38,7 +43,7 @@ defined( 'ABSPATH' ) || exit;
 			<h2>عبارت‌ها</h2>
 			<span class="wbgs-count" id="wbgs-count">۰ عبارت</span>
 		</div>
-		<p class="wbgs-hint">ترند ایران از فید رسمی گوگل ترند (کشور IR) خوانده می‌شود؛ عدد آن حجم ماهانه نیست. سرچ ماهانه فقط با Keyword Planner.</p>
+		<p class="wbgs-hint">جریان کیوردچی: استخراج واقعی → درخت و پیلار کلاستر → XMind و اکسل → تقویم محتوا. مقاله ساختگی با هوش مصنوعی نوشته نمی‌شود؛ بریف از همان عبارت‌های گوگل است.</p>
 		<?php
 		$empty_text = 'عبارت را بنویسید و دکمه را بزنید.';
 		include WBGS_PATH . 'templates/results-chrome.php';

@@ -29,7 +29,11 @@
 	var viewTrendsBtn = document.getElementById('wbgs-view-trends');
 	var trendsEl = document.getElementById('wbgs-trends');
 	var viewBriefBtn = document.getElementById('wbgs-view-brief');
+	var viewCalBtn = document.getElementById('wbgs-view-cal');
+	var calEl = document.getElementById('wbgs-cal');
 	var viewCompareBtn = document.getElementById('wbgs-view-compare');
+	var xmindBtn = document.getElementById('wbgs-xmind');
+	var htmlBtn = document.getElementById('wbgs-html');
 	var filtersEl = document.getElementById('wbgs-intent-filters');
 	var historyEl = document.getElementById('wbgs-history');
 	var loadBtn = document.getElementById('wbgs-load');
@@ -197,6 +201,11 @@
 		}
 		usageEl.textContent = text;
 		usageEl.hidden = false;
+	}
+
+	function selectedSource() {
+		var el = document.querySelector('input[name="wbgs-source"]:checked');
+		return el && el.value === 'youtube' ? 'youtube' : 'google';
 	}
 
 	function selectedModes() {
@@ -531,6 +540,9 @@
 		if (briefEl) {
 			briefEl.hidden = view !== 'brief';
 		}
+		if (calEl) {
+			calEl.hidden = view !== 'cal';
+		}
 		if (compareEl) {
 			compareEl.hidden = view !== 'compare';
 		}
@@ -551,6 +563,9 @@
 		}
 		if (viewBriefBtn) {
 			viewBriefBtn.classList.toggle('wbgs-view-on', view === 'brief');
+		}
+		if (viewCalBtn) {
+			viewCalBtn.classList.toggle('wbgs-view-on', view === 'cal');
 		}
 		if (viewCompareBtn) {
 			viewCompareBtn.classList.toggle('wbgs-view-on', view === 'compare');
@@ -988,6 +1003,93 @@
 		return out;
 	}
 
+	function buildCalendar(seed, rows) {
+		var briefs = buildBriefs(seed, rows);
+		var weeks = [];
+		briefs.forEach(function (b, i) {
+			var w = Math.floor(i / 3);
+			if (!weeks[w]) {
+				weeks[w] = { week: w + 1, items: [] };
+			}
+			weeks[w].items.push(b);
+		});
+		return weeks;
+	}
+
+	function renderCalendar() {
+		if (!calEl) {
+			return;
+		}
+		calEl.innerHTML = '';
+		if (!items.length) {
+			return;
+		}
+		var seed = (seedEl.value || '').trim();
+		var note = document.createElement('p');
+		note.className = 'wbgs-hint';
+		note.textContent = 'تقویم از پیلار و کلاسترهای همین استخراج است. هر هفته تا سه صفحه. متن مقاله ساخته نمی‌شود.';
+		calEl.appendChild(note);
+		buildCalendar(seed, items).forEach(function (week) {
+			var card = document.createElement('article');
+			card.className = 'wbgs-brief-card';
+			var h = document.createElement('h3');
+			h.textContent = 'هفتهٔ ' + week.week;
+			card.appendChild(h);
+			var ul = document.createElement('ul');
+			week.items.forEach(function (b) {
+				var li = document.createElement('li');
+				li.textContent = (b.is_pillar ? 'پیلار: ' : 'کلاستر: ') + (b.h1 || b.cluster);
+				ul.appendChild(li);
+			});
+			card.appendChild(ul);
+			calEl.appendChild(card);
+		});
+	}
+
+	function clientHtmlReport(seed, rows) {
+		var briefs = buildBriefs(seed, rows);
+		var lines = [
+			'<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8" /><title>گزارش سجست‌یاب — ' + seed + '</title>',
+			'<style>body{font-family:Tahoma,sans-serif;max-width:880px;margin:24px auto;padding:0 16px}li{line-height:1.8}</style></head><body>',
+			'<h1>گزارش کیورد — ' + seed + '</h1>',
+			'<p>تعداد عبارت: ' + rows.length + ' — منبع: سجست واقعی. حجم ماهانه ساخته نشده.</p>',
+			'<h2>پیلار و کلاستر</h2><ol>'
+		];
+		briefs.forEach(function (b) {
+			lines.push('<li>' + (b.is_pillar ? 'پیلار: ' : '') + (b.h1 || b.cluster) + ' (' + b.count + ')</li>');
+		});
+		lines.push('</ol><h2>عبارت‌ها</h2><ol>');
+		rows.slice(0, 200).forEach(function (row) {
+			lines.push('<li>' + String(row.text).replace(/</g, '') + '</li>');
+		});
+		lines.push('</ol></body></html>');
+		return lines.join('\n');
+	}
+
+	function downloadXmind() {
+		if (!items.length) {
+			return;
+		}
+		setStatus(i18n('xmind'), '');
+		post('wbgs_xmind', {
+			seed: (seedEl.value || '').trim(),
+			rows: JSON.stringify(items.map(compactRow))
+		}).then(function (out) {
+			if (!out.json || !out.json.success || !out.json.data || !out.json.data.b64) {
+				throw new Error(i18n('xmind_err'));
+			}
+			var bin = atob(out.json.data.b64);
+			var bytes = new Uint8Array(bin.length);
+			for (var i = 0; i < bin.length; i++) {
+				bytes[i] = bin.charCodeAt(i);
+			}
+			download(out.json.data.name || 'sajest.xmind', bytes, 'application/vnd.xmind.workbook');
+			setStatus(i18n('xmind_ok'), 'ok');
+		}).catch(function (err) {
+			setStatus((err && err.message) || i18n('xmind_err'), 'error');
+		});
+	}
+
 	function renderBrief() {
 		if (!briefEl) {
 			return;
@@ -1410,7 +1512,7 @@
 
 	function setButtons() {
 		var empty = items.length === 0;
-		[copyBtn, csvBtn, txtBtn, briefTxtBtn, viewListBtn, viewTreeBtn, viewClusterBtn, viewTaxBtn, viewBriefBtn, saveBtn].forEach(function (btn) {
+		[copyBtn, csvBtn, txtBtn, briefTxtBtn, xmindBtn, htmlBtn, viewListBtn, viewTreeBtn, viewClusterBtn, viewTaxBtn, viewBriefBtn, viewCalBtn, saveBtn].forEach(function (btn) {
 			if (btn) {
 				btn.disabled = empty;
 			}
@@ -1447,6 +1549,7 @@
 		renderTaxonomy();
 		renderTrends();
 		renderBrief();
+		renderCalendar();
 		renderCompare();
 		setView(view);
 	}
@@ -1894,7 +1997,7 @@
 			}
 			var q = queries[i];
 			setProgress(i, queries.length);
-			return post('wbgs_fetch', { q: q }).then(function (out) {
+			return post('wbgs_fetch', { q: q, source: selectedSource() }).then(function (out) {
 				if (out.json && out.json.data && out.json.data.usage) {
 					cfg.usage = out.json.data.usage;
 					showUsage(cfg.usage);
@@ -2040,6 +2143,20 @@
 	if (viewBriefBtn) {
 		viewBriefBtn.addEventListener('click', function () {
 			setView('brief');
+		});
+	}
+	if (viewCalBtn) {
+		viewCalBtn.addEventListener('click', function () {
+			setView('cal');
+		});
+	}
+	if (xmindBtn) {
+		xmindBtn.addEventListener('click', downloadXmind);
+	}
+	if (htmlBtn) {
+		htmlBtn.addEventListener('click', function () {
+			var seed = (seedEl.value || '').trim();
+			download('sajest-report.html', clientHtmlReport(seed, items), 'text/html;charset=utf-8');
 		});
 	}
 	if (viewCompareBtn) {

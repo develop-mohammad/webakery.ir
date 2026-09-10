@@ -256,6 +256,7 @@
 }
 
 .wbgs-briefs,
+.wbgs-cal,
 .wbgs-compare {
 	display: grid;
 	gap: 12px;

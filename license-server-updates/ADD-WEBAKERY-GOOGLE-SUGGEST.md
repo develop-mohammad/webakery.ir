@@ -10,13 +10,13 @@
 'webakery-google-suggest' => [
 	'name'         => 'سجست‌یاب گوگل',
 	'price'        => 199000,          // تومان
-	'version'      => '1.2.5',
+	'version'      => '1.3.0',
 	'file'         => 'webakery-google-suggest.zip',
 	'homepage'     => 'https://webakery.ir/product/webakery-google-suggest/',
 	'requires'     => '5.8',
 	'requires_php' => '7.4',
 	'tested'       => '6.7',
-	'changelog'    => '<h4>1.2.5</h4><ul><li>ترند روزانه گوگل برای ایران از فید رسمی RSS</li></ul><h4>1.2.4</h4><ul><li>پیشوند و پسوند رایج و تحویل طبقه‌بندی‌شده</li></ul>',
+	'changelog'    => '<h4>1.3.0</h4><ul><li>XMind، تقویم محتوا، گزارش HTML، سجست یوتیوب</li></ul><h4>1.2.5</h4><ul><li>ترند روزانه گوگل برای ایران</li></ul>',
 ],
 ```
 

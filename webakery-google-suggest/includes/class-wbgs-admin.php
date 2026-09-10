@@ -23,6 +23,7 @@ class WBGS_Admin {
 		add_action( 'wp_ajax_wbgs_fetch', array( $this, 'ajax_fetch' ) );
 		add_action( 'wp_ajax_wbgs_volumes', array( $this, 'ajax_volumes' ) );
 		add_action( 'wp_ajax_wbgs_trends', array( $this, 'ajax_trends' ) );
+		add_action( 'wp_ajax_wbgs_xmind', array( $this, 'ajax_xmind' ) );
 		add_action( 'wp_ajax_wbgs_report_save', array( $this, 'ajax_report_save' ) );
 		add_action( 'wp_ajax_wbgs_report_list', array( $this, 'ajax_report_list' ) );
 		add_action( 'wp_ajax_wbgs_report_get', array( $this, 'ajax_report_get' ) );
@@ -31,6 +32,7 @@ class WBGS_Admin {
 		add_action( 'wp_ajax_nopriv_wbgs_fetch', array( $this, 'ajax_fetch' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_volumes', array( $this, 'ajax_volumes' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_trends', array( $this, 'ajax_trends' ) );
+		add_action( 'wp_ajax_nopriv_wbgs_xmind', array( $this, 'ajax_xmind' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_report_save', array( $this, 'ajax_report_save' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_report_list', array( $this, 'ajax_report_list' ) );
 		add_action( 'wp_ajax_nopriv_wbgs_report_get', array( $this, 'ajax_report_get' ) );
@@ -175,8 +177,9 @@ class WBGS_Admin {
 			wp_send_json_error( array( 'message' => 'کوئری خالی است.' ), 400 );
 		}
 
+		$source   = isset( $_POST['source'] ) ? sanitize_key( wp_unslash( $_POST['source'] ) ) : 'google';
 		$settings = WBGS_Plugin::settings();
-		$result   = WBGS_Suggest::fetch( $query, $settings['hl'], $settings['gl'] );
+		$result   = WBGS_Suggest::fetch( $query, $settings['hl'], $settings['gl'], $source );
 
 		if ( ! $result['ok'] ) {
 			$message = 'limited' === $result['error']
@@ -196,11 +199,42 @@ class WBGS_Admin {
 		$snap = WBGS_Reports::usage_snapshot();
 		$snap['used'] = $used;
 
+		$items = array();
+		foreach ( $result['items'] as $row ) {
+			$row['source'] = WBGS_Suggest::normalize_source( $source );
+			$items[]       = $row;
+		}
+
 		wp_send_json_success(
 			array(
-				'q'     => $query,
-				'items' => $result['items'],
-				'usage' => $snap,
+				'q'      => $query,
+				'source' => WBGS_Suggest::normalize_source( $source ),
+				'items'  => $items,
+				'usage'  => $snap,
+			)
+		);
+	}
+
+	public function ajax_xmind() {
+		$this->ajax_guard();
+		$seed = isset( $_POST['seed'] ) ? wp_unslash( $_POST['seed'] ) : '';
+		$seed = is_string( $seed ) ? $seed : '';
+		$raw  = isset( $_POST['rows'] ) ? wp_unslash( $_POST['rows'] ) : '';
+		$rows = array();
+		if ( is_string( $raw ) && $raw !== '' ) {
+			$decoded = json_decode( $raw, true );
+			if ( is_array( $decoded ) ) {
+				$rows = $decoded;
+			}
+		}
+		$out = WBGS_Export::xmind( $seed, $rows );
+		if ( empty( $out['ok'] ) ) {
+			wp_send_json_error( array( 'message' => 'ساخت فایل XMind نشد.' ), 500 );
+		}
+		wp_send_json_success(
+			array(
+				'name' => $out['name'],
+				'b64'  => base64_encode( $out['bin'] ),
 			)
 		);
 	}

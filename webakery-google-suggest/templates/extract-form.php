@@ -13,6 +13,11 @@ defined( 'ABSPATH' ) || exit;
 		<input id="wbgs-seed-b" class="wbgs-input" type="text" dir="auto" placeholder="مثلاً کتانی" <?php disabled( ! $licensed ); ?> />
 
 		<fieldset class="wbgs-modes" <?php disabled( ! $licensed ); ?>>
+			<legend>منبع سجست</legend>
+			<label><input type="radio" name="wbgs-source" value="google" checked /> گوگل</label>
+			<label><input type="radio" name="wbgs-source" value="youtube" /> یوتیوب</label>
+		</fieldset>
+		<fieldset class="wbgs-modes" <?php disabled( ! $licensed ); ?>>
 			<legend>روش‌ها</legend>
 			<label><input type="checkbox" name="wbgs-mode" value="space" checked /> فاصله قبل و بعد</label>
 			<label><input type="checkbox" name="wbgs-mode" value="alphabet" checked /> حرف‌گردانی فارسی (ا تا ی)</label>

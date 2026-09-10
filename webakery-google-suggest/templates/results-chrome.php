@@ -20,9 +20,12 @@ $empty_text = isset( $empty_text ) ? $empty_text : 'هنوز چیزی استخر
 			<button type="button" class="button" id="wbgs-view-tax" disabled>دسته‌بندی</button>
 			<button type="button" class="button" id="wbgs-view-trends">ترند ایران</button>
 			<button type="button" class="button" id="wbgs-view-brief" disabled>بریف محتوا</button>
+			<button type="button" class="button" id="wbgs-view-cal" disabled>تقویم محتوا</button>
 			<button type="button" class="button" id="wbgs-view-compare" disabled>مقایسه</button>
 			<button type="button" class="button" id="wbgs-copy" disabled>کپی</button>
 			<button type="button" class="button" id="wbgs-csv" disabled>CSV اکسل</button>
+			<button type="button" class="button" id="wbgs-xmind" disabled>XMind</button>
+			<button type="button" class="button" id="wbgs-html" disabled>گزارش HTML</button>
 			<button type="button" class="button" id="wbgs-txt" disabled>TXT</button>
 			<button type="button" class="button" id="wbgs-brief-txt" disabled>دانلود بریف</button>
 		</div>
@@ -33,5 +36,6 @@ $empty_text = isset( $empty_text ) ? $empty_text : 'هنوز چیزی استخر
 		<div class="wbgs-tax" id="wbgs-tax" hidden></div>
 		<div class="wbgs-trends" id="wbgs-trends" hidden></div>
 		<div class="wbgs-briefs" id="wbgs-brief" hidden></div>
+		<div class="wbgs-cal" id="wbgs-cal" hidden></div>
 		<div class="wbgs-compare" id="wbgs-compare" hidden></div>
 		<p class="wbgs-empty" id="wbgs-empty"><?php echo esc_html( $empty_text ); ?></p>
