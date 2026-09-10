@@ -26,6 +26,8 @@
 	var viewTreeBtn = document.getElementById('wbgs-view-tree');
 	var viewClusterBtn = document.getElementById('wbgs-view-cluster');
 	var viewTaxBtn = document.getElementById('wbgs-view-tax');
+	var viewShelfBtn = document.getElementById('wbgs-view-shelf');
+	var shelfEl = document.getElementById('wbgs-shelf');
 	var viewTrendsBtn = document.getElementById('wbgs-view-trends');
 	var trendsEl = document.getElementById('wbgs-trends');
 	var viewBriefBtn = document.getElementById('wbgs-view-brief');
@@ -687,6 +689,9 @@
 		if (taxEl) {
 			taxEl.hidden = view !== 'tax';
 		}
+		if (shelfEl) {
+			shelfEl.hidden = view !== 'shelf';
+		}
 		if (briefEl) {
 			briefEl.hidden = view !== 'brief';
 		}
@@ -710,6 +715,9 @@
 		}
 		if (viewTaxBtn) {
 			viewTaxBtn.classList.toggle('wbgs-view-on', view === 'tax');
+		}
+		if (viewShelfBtn) {
+			viewShelfBtn.classList.toggle('wbgs-view-on', view === 'shelf');
 		}
 		if (viewBriefBtn) {
 			viewBriefBtn.classList.toggle('wbgs-view-on', view === 'brief');
@@ -1203,13 +1211,36 @@
 
 	function clientHtmlReport(seed, rows) {
 		var briefs = buildBriefs(seed, rows);
+		var buckets = shelfBuckets(rows);
+		var matrix = shelfMatrix(rows);
+		var faq = faqRows(rows);
 		var lines = [
 			'<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8" /><title>گزارش سجست‌یاب — ' + seed + '</title>',
-			'<style>body{font-family:Tahoma,sans-serif;max-width:880px;margin:24px auto;padding:0 16px}li{line-height:1.8}</style></head><body>',
+			'<style>body{font-family:Tahoma,sans-serif;max-width:880px;margin:24px auto;padding:0 16px}li{line-height:1.8}table{border-collapse:collapse;width:100%}td,th{border:1px solid #dadce0;padding:6px 8px;text-align:right}</style></head><body>',
 			'<h1>گزارش کیورد — ' + seed + '</h1>',
 			'<p>تعداد عبارت: ' + rows.length + ' — منبع: سجست واقعی. حجم ماهانه ساخته نشده.</p>',
-			'<h2>پیلار و کلاستر</h2><ol>'
+			'<h2>قفسه کالا</h2><ul>'
 		];
+		['category', 'product', 'brand', 'other'].forEach(function (key) {
+			lines.push('<li>' + entityLabel(key) + ': ' + buckets[key].length + '</li>');
+		});
+		lines.push('</ul><h2>ماتریس موجودیت و اینتنت</h2><table><tr><th>سطل</th>');
+		matrix.intents.forEach(function (ik) {
+			lines.push('<th>' + intentLabel(ik) + '</th>');
+		});
+		lines.push('<th>جمع</th></tr>');
+		['category', 'product', 'brand', 'other'].forEach(function (ek) {
+			var cells = [entityLabel(ek)].concat(matrix.intents.map(function (ik) { return matrix.cells[ek][ik]; })).concat([matrix.cells[ek].total]);
+			lines.push('<tr><td>' + cells.join('</td><td>') + '</td></tr>');
+		});
+		lines.push('</table><h2>پرسش‌های محتوا</h2><ol>');
+		if (!faq.length) {
+			lines.push('<li>پرسش واقعی در این استخراج نبود.</li>');
+		}
+		faq.forEach(function (row) {
+			lines.push('<li>' + String(row.text).replace(/</g, '') + '</li>');
+		});
+		lines.push('</ol><h2>پیلار و کلاستر</h2><ol>');
 		briefs.forEach(function (b) {
 			lines.push('<li>' + (b.is_pillar ? 'پیلار: ' : '') + (b.h1 || b.cluster) + ' (' + b.count + ')</li>');
 		});
@@ -1567,6 +1598,207 @@
 		taxEl.appendChild(taxAxis('۷', axisTitle('affix'), morphBuckets, true));
 	}
 
+	function shelfBuckets(rows) {
+		var out = { category: [], product: [], brand: [], other: [] };
+		(rows || []).forEach(function (row) {
+			var key = entityKey(row);
+			if (!out[key]) {
+				key = 'other';
+			}
+			out[key].push(row);
+		});
+		return out;
+	}
+
+	function intentKey(row) {
+		return (row && row.intent) || classifyIntent(row && row.text);
+	}
+
+	function shelfMatrix(rows) {
+		var intents = ['informational', 'navigational', 'commercial', 'transactional'];
+		var cells = {};
+		['category', 'product', 'brand', 'other'].forEach(function (ek) {
+			cells[ek] = { informational: 0, navigational: 0, commercial: 0, transactional: 0, total: 0 };
+		});
+		(rows || []).forEach(function (row) {
+			var ek = entityKey(row);
+			if (!cells[ek]) {
+				ek = 'other';
+			}
+			var ik = intentKey(row);
+			if (cells[ek][ik] == null) {
+				ik = 'commercial';
+			}
+			cells[ek][ik] += 1;
+			cells[ek].total += 1;
+		});
+		return { intents: intents, cells: cells };
+	}
+
+	function faqRows(rows) {
+		return (rows || []).filter(function (row) {
+			return isQuestion(row.text) || intentKey(row) === 'informational';
+		});
+	}
+
+	function copyLines(lines) {
+		var text = (lines || []).join('\n');
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(function () {
+				setStatus(i18n('copy_ok'), 'ok');
+			}).catch(function () {
+				setStatus(i18n('copy_err'), 'error');
+			});
+			return;
+		}
+		setStatus(i18n('copy_err'), 'error');
+	}
+
+	function shelfText(seed, rows) {
+		var buckets = shelfBuckets(rows);
+		var lines = ['قفسه کالا — ' + seed, ''];
+		['category', 'product', 'brand', 'other'].forEach(function (key) {
+			lines.push('## ' + entityLabel(key) + ' (' + buckets[key].length + ')');
+			buckets[key].forEach(function (row) {
+				lines.push(row.text);
+			});
+			lines.push('');
+		});
+		return lines.join('\n');
+	}
+
+	function faqText(seed, rows) {
+		var faq = faqRows(rows);
+		var lines = ['پرسش‌های محتوا — ' + seed, 'فقط عبارت واقعی گوگل. مقاله ساخته نشده.', ''];
+		if (!faq.length) {
+			lines.push('پرسش واقعی در این استخراج نبود.');
+		}
+		faq.forEach(function (row) {
+			lines.push(row.text);
+		});
+		return lines.join('\n');
+	}
+
+	function renderShelf() {
+		if (!shelfEl) {
+			return;
+		}
+		shelfEl.innerHTML = '';
+		var rows = visibleItems();
+		if (!rows.length) {
+			var empty = document.createElement('p');
+			empty.className = 'wbgs-hint';
+			empty.textContent = items.length ? 'با فیلتر فعلی عبارتی نماند.' : 'عبارتی برای قفسه نیست.';
+			shelfEl.appendChild(empty);
+			return;
+		}
+		var seed = (seedEl.value || '').replace(/\s+/g, ' ').trim();
+		var intro = document.createElement('p');
+		intro.className = 'wbgs-hint';
+		intro.textContent = 'قفسه از خودِ عبارت گوگل است: دسته محصول، محصول، برند. ماتریس تعداد اینتنت در هر سطل را نشان می‌دهد.';
+		shelfEl.appendChild(intro);
+		var actions = document.createElement('div');
+		actions.className = 'wbgs-shelf-actions';
+		function addDl(label, name, body, mime) {
+			var btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'button';
+			btn.textContent = label;
+			btn.addEventListener('click', function () {
+				download(name, body, mime);
+			});
+			actions.appendChild(btn);
+		}
+		addDl('دانلود قفسه', 'shelf.txt', shelfText(seed, rows), 'text/plain;charset=utf-8');
+		addDl('دانلود پرسش‌ها', 'faq.txt', faqText(seed, rows), 'text/plain;charset=utf-8');
+		shelfEl.appendChild(actions);
+
+		var matrix = shelfMatrix(rows);
+		var table = document.createElement('table');
+		table.className = 'wbgs-matrix';
+		var thead = document.createElement('thead');
+		var hr = document.createElement('tr');
+		['سطل'].concat(matrix.intents.map(intentLabel)).concat(['جمع']).forEach(function (title) {
+			var th = document.createElement('th');
+			th.textContent = title;
+			hr.appendChild(th);
+		});
+		thead.appendChild(hr);
+		table.appendChild(thead);
+		var tb = document.createElement('tbody');
+		['category', 'product', 'brand', 'other'].forEach(function (ek) {
+			var tr = document.createElement('tr');
+			var name = document.createElement('th');
+			name.textContent = entityLabel(ek);
+			tr.appendChild(name);
+			matrix.intents.concat(['total']).forEach(function (ik) {
+				var td = document.createElement('td');
+				td.textContent = String(matrix.cells[ek][ik] || 0);
+				tr.appendChild(td);
+			});
+			tb.appendChild(tr);
+		});
+		table.appendChild(tb);
+		var matrixWrap = document.createElement('section');
+		matrixWrap.className = 'wbgs-shelf-matrix';
+		var mh = document.createElement('h2');
+		mh.textContent = 'ماتریس موجودیت و اینتنت';
+		matrixWrap.appendChild(mh);
+		matrixWrap.appendChild(table);
+		shelfEl.appendChild(matrixWrap);
+
+		var buckets = shelfBuckets(rows);
+		var grid = document.createElement('div');
+		grid.className = 'wbgs-tax-grid';
+		['category', 'product', 'brand', 'other'].forEach(function (key) {
+			var art = document.createElement('article');
+			art.className = 'wbgs-tax-bucket';
+			var h = document.createElement('h3');
+			var name = document.createElement('span');
+			name.textContent = entityLabel(key);
+			var cnt = document.createElement('span');
+			cnt.className = 'wbgs-tax-n';
+			cnt.textContent = String(buckets[key].length);
+			h.appendChild(name);
+			h.appendChild(cnt);
+			art.appendChild(h);
+			var copy = document.createElement('button');
+			copy.type = 'button';
+			copy.className = 'button wbgs-shelf-copy';
+			copy.textContent = 'کپی این سطل';
+			copy.disabled = !buckets[key].length;
+			copy.addEventListener('click', function () {
+				copyLines(buckets[key].map(function (row) { return row.text; }));
+			});
+			art.appendChild(copy);
+			art.appendChild(taxPhraseList(buckets[key]));
+			grid.appendChild(art);
+		});
+		shelfEl.appendChild(grid);
+
+		var faq = faqRows(rows);
+		var faqBox = document.createElement('section');
+		faqBox.className = 'wbgs-shelf-faq';
+		var fh = document.createElement('h2');
+		fh.textContent = 'پرسش‌های محتوا (' + faq.length + ')';
+		faqBox.appendChild(fh);
+		var fn = document.createElement('p');
+		fn.className = 'wbgs-hint';
+		fn.textContent = 'برای صفحه FAQ. مقاله ساخته نمی‌شود.';
+		faqBox.appendChild(fn);
+		if (faq.length) {
+			var ul = document.createElement('ul');
+			ul.className = 'wbgs-tax-list';
+			faq.forEach(function (row) {
+				var li = document.createElement('li');
+				li.textContent = row.text;
+				ul.appendChild(li);
+			});
+			faqBox.appendChild(ul);
+		}
+		shelfEl.appendChild(faqBox);
+	}
+
 	function renderTrends() {
 		if (!trendsEl) {
 			return;
@@ -1687,7 +1919,7 @@
 
 	function setButtons() {
 		var empty = items.length === 0;
-		[copyBtn, csvBtn, txtBtn, briefTxtBtn, xmindBtn, htmlBtn, viewListBtn, viewTreeBtn, viewClusterBtn, viewTaxBtn, viewBriefBtn, viewCalBtn, saveBtn].forEach(function (btn) {
+		[copyBtn, csvBtn, txtBtn, briefTxtBtn, xmindBtn, htmlBtn, viewListBtn, viewTreeBtn, viewClusterBtn, viewTaxBtn, viewShelfBtn, viewBriefBtn, viewCalBtn, saveBtn].forEach(function (btn) {
 			if (btn) {
 				btn.disabled = empty;
 			}
@@ -1722,6 +1954,7 @@
 		renderTree();
 		renderCluster();
 		renderTaxonomy();
+		renderShelf();
 		renderTrends();
 		renderBrief();
 		renderCalendar();
@@ -2319,6 +2552,11 @@
 			setView('tax');
 		});
 	}
+	if (viewShelfBtn) {
+		viewShelfBtn.addEventListener('click', function () {
+			setView('shelf');
+		});
+	}
 	if (viewBriefBtn) {
 		viewBriefBtn.addEventListener('click', function () {
 			setView('brief');
@@ -2368,18 +2606,9 @@
 	}
 
 	copyBtn.addEventListener('click', function () {
-		var text = items.map(function (row) {
+		copyLines(visibleItems().map(function (row) {
 			return row.text;
-		}).join('\n');
-		if (navigator.clipboard && navigator.clipboard.writeText) {
-			navigator.clipboard.writeText(text).then(function () {
-				setStatus(i18n('copy_ok'), 'ok');
-			}).catch(function () {
-				setStatus(i18n('copy_err'), 'error');
-			});
-			return;
-		}
-		setStatus(i18n('copy_err'), 'error');
+		}));
 	});
 
 	csvBtn.addEventListener('click', function () {

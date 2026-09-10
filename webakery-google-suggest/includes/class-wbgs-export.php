@@ -42,7 +42,7 @@ class WBGS_Export {
 			array(
 				'creator'              => array(
 					'name'    => 'سجست‌یاب گوگل',
-					'version' => defined( 'WBGS_VERSION' ) ? WBGS_VERSION : '1.3.0',
+					'version' => defined( 'WBGS_VERSION' ) ? WBGS_VERSION : '1.3.2',
 				),
 				'dataStructureVersion' => '2',
 			)
@@ -176,6 +176,38 @@ class WBGS_Export {
 		$html    .= '<h1>' . $esc( 'گزارش کیورد — ' . $seed ) . '</h1>';
 		$html    .= '<p class="note">منبع: پیشنهادهای واقعی Autocomplete گوگل / یوتیوب. حجم ماهانه ساخته نشده. سازنده: webakery.ir</p>';
 		$html    .= '<p>تعداد عبارت: ' . $esc( (string) $count ) . ' — کلاستر: ' . $esc( (string) count( $clusters['clusters'] ) ) . '</p>';
+		if ( class_exists( 'WBGS_Entity' ) ) {
+			$shelf  = WBGS_Entity::shelf( $rows );
+			$matrix = WBGS_Entity::matrix( $rows );
+			$faq    = WBGS_Entity::faq_rows( $rows );
+			$ilabels = class_exists( 'WBGS_Intent' ) ? WBGS_Intent::labels() : array();
+			$html   .= '<h2>قفسه کالا</h2><table><tr><th>سطل</th><th>تعداد</th></tr>';
+			foreach ( $shelf as $bucket ) {
+				$html .= '<tr><td>' . $esc( $bucket['fa'] ) . '</td><td>' . $esc( (string) $bucket['count'] ) . '</td></tr>';
+			}
+			$html .= '</table><h2>ماتریس موجودیت و اینتنت</h2><table><tr><th>سطل</th>';
+			foreach ( $matrix['intents'] as $ik ) {
+				$html .= '<th>' . $esc( isset( $ilabels[ $ik ] ) ? $ilabels[ $ik ] : $ik ) . '</th>';
+			}
+			$html .= '<th>جمع</th></tr>';
+			foreach ( WBGS_Entity::keys() as $ek ) {
+				$html .= '<tr><td>' . $esc( WBGS_Entity::labels()[ $ek ] ) . '</td>';
+				foreach ( $matrix['intents'] as $ik ) {
+					$html .= '<td>' . $esc( (string) $matrix['cells'][ $ek ][ $ik ] ) . '</td>';
+				}
+				$html .= '<td>' . $esc( (string) $matrix['cells'][ $ek ]['total'] ) . '</td></tr>';
+			}
+			$html .= '</table><h2>پرسش‌های محتوا (FAQ)</h2>';
+			if ( $faq ) {
+				$html .= '<ul>';
+				foreach ( $faq as $qrow ) {
+					$html .= '<li>' . $esc( isset( $qrow['text'] ) ? $qrow['text'] : '' ) . '</li>';
+				}
+				$html .= '</ul><p class="note">فقط عبارت واقعی گوگل. مقاله ساخته نشده.</p>';
+			} else {
+				$html .= '<p class="note">پرسش واقعی در این استخراج نبود.</p>';
+			}
+		}
 		$html    .= '<h2>پیلار کلاستر</h2><table><tr><th>کلاستر</th><th>تعداد</th><th>اینتنت</th></tr>';
 		foreach ( $clusters['clusters'] as $c ) {
 			$html .= '<tr><td>' . $esc( $c['name'] ) . '</td><td>' . $esc( (string) $c['count'] ) . '</td><td>' . $esc( $c['intent_fa'] ) . '</td></tr>';

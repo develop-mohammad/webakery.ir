@@ -558,6 +558,47 @@
 	color: #9aa0a6;
 }
 
+.wbgs-g .wbgs-shelf {
+	display: grid;
+	gap: 18px;
+	margin-top: 10px;
+}
+
+.wbgs-g .wbgs-shelf-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.wbgs-g .wbgs-shelf-copy {
+	margin-top: 8px;
+}
+
+.wbgs-g .wbgs-matrix {
+	width: 100%;
+	border-collapse: collapse;
+	background: #fff;
+	font-size: 13px;
+}
+
+.wbgs-g .wbgs-matrix th,
+.wbgs-g .wbgs-matrix td {
+	border: 1px solid #e8eaed;
+	padding: 6px 8px;
+	text-align: center;
+}
+
+.wbgs-g .wbgs-matrix th:first-child,
+.wbgs-g .wbgs-matrix td:first-child {
+	text-align: right;
+}
+
+.wbgs-g .wbgs-shelf-faq h2,
+.wbgs-g .wbgs-shelf-matrix h2 {
+	margin: 0 0 8px;
+	font-size: 16px;
+}
+
 .wbgs-g .wbgs-trends {
 	margin-top: 10px;
 }

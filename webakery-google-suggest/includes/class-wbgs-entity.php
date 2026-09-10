@@ -331,6 +331,160 @@ class WBGS_Entity {
 	}
 
 	/**
+	 * ترتیب ثابت سطل‌های قفسه.
+	 *
+	 * @return string[]
+	 */
+	public static function keys() {
+		return array( self::CATEGORY, self::PRODUCT, self::BRAND, self::OTHER );
+	}
+
+	/**
+	 * @param array $row
+	 * @return string
+	 */
+	public static function row_key( $row ) {
+		$row = is_array( $row ) ? $row : array();
+		if ( ! empty( $row['entity'] ) && isset( self::labels()[ $row['entity'] ] ) ) {
+			return (string) $row['entity'];
+		}
+		return self::classify( isset( $row['text'] ) ? (string) $row['text'] : '' );
+	}
+
+	/**
+	 * قفسه کالا: دسته محصول / محصول / برند / سایر از عبارت واقعی.
+	 *
+	 * @param array<int,array> $rows
+	 * @return array<string,array<string,mixed>>
+	 */
+	public static function shelf( $rows ) {
+		$labels = self::labels();
+		$out    = array();
+		foreach ( self::keys() as $key ) {
+			$out[ $key ] = array(
+				'key'   => $key,
+				'fa'    => $labels[ $key ],
+				'rows'  => array(),
+				'count' => 0,
+			);
+		}
+		foreach ( (array) $rows as $row ) {
+			$text = isset( $row['text'] ) ? WBGS_Suggest::normalize_seed( $row['text'] ) : '';
+			if ( $text === '' ) {
+				continue;
+			}
+			$key = self::row_key( $row );
+			if ( ! isset( $out[ $key ] ) ) {
+				$key = self::OTHER;
+			}
+			$out[ $key ]['rows'][] = $row;
+			$out[ $key ]['count']++;
+		}
+		return $out;
+	}
+
+	/**
+	 * ماتریس موجودیت × اینتنت (شمارش عبارت واقعی).
+	 *
+	 * @param array<int,array> $rows
+	 * @return array<string,mixed>
+	 */
+	public static function matrix( $rows ) {
+		$intents = class_exists( 'WBGS_Intent' ) ? array_keys( WBGS_Intent::labels() ) : array( 'informational', 'commercial', 'transactional', 'navigational' );
+		$cells   = array();
+		foreach ( self::keys() as $entity ) {
+			$cells[ $entity ] = array_fill_keys( $intents, 0 );
+			$cells[ $entity ]['total'] = 0;
+		}
+		foreach ( (array) $rows as $row ) {
+			$text = isset( $row['text'] ) ? WBGS_Suggest::normalize_seed( $row['text'] ) : '';
+			if ( $text === '' ) {
+				continue;
+			}
+			$entity = self::row_key( $row );
+			if ( ! isset( $cells[ $entity ] ) ) {
+				$entity = self::OTHER;
+			}
+			$intent = isset( $row['intent'] ) ? (string) $row['intent'] : ( class_exists( 'WBGS_Intent' ) ? WBGS_Intent::classify( $text ) : 'commercial' );
+			if ( ! isset( $cells[ $entity ][ $intent ] ) ) {
+				$intent = 'commercial';
+			}
+			$cells[ $entity ][ $intent ]++;
+			$cells[ $entity ]['total']++;
+		}
+		return array(
+			'intents' => $intents,
+			'cells'   => $cells,
+		);
+	}
+
+	/**
+	 * پرسش‌های واقعی برای FAQ — مقاله ساخته نمی‌شود.
+	 *
+	 * @param array<int,array> $rows
+	 * @return array<int,array>
+	 */
+	public static function faq_rows( $rows ) {
+		$out = array();
+		$seen = array();
+		foreach ( (array) $rows as $row ) {
+			$text = isset( $row['text'] ) ? WBGS_Suggest::normalize_seed( $row['text'] ) : '';
+			if ( $text === '' || isset( $seen[ $text ] ) ) {
+				continue;
+			}
+			$intent = isset( $row['intent'] ) ? (string) $row['intent'] : ( class_exists( 'WBGS_Intent' ) ? WBGS_Intent::classify( $text ) : '' );
+			$ask    = class_exists( 'WBGS_Work' ) ? WBGS_Work::is_question( $text ) : ( class_exists( 'WBGS_Intent' ) && WBGS_Intent::INFORMATIONAL === $intent );
+			if ( ! $ask && WBGS_Intent::INFORMATIONAL !== $intent ) {
+				continue;
+			}
+			$seen[ $text ] = true;
+			$out[]         = $row;
+		}
+		return $out;
+	}
+
+	/**
+	 * @param string           $seed
+	 * @param array<int,array> $rows
+	 * @return string
+	 */
+	public static function shelf_text( $seed, $rows ) {
+		$seed  = WBGS_Suggest::normalize_seed( $seed );
+		$shelf = self::shelf( $rows );
+		$lines = array( 'قفسه کالا — ' . $seed, '' );
+		foreach ( $shelf as $bucket ) {
+			$lines[] = '## ' . $bucket['fa'] . ' (' . (int) $bucket['count'] . ')';
+			foreach ( $bucket['rows'] as $row ) {
+				$lines[] = isset( $row['text'] ) ? (string) $row['text'] : '';
+			}
+			$lines[] = '';
+		}
+		return implode( "\n", $lines );
+	}
+
+	/**
+	 * @param string           $seed
+	 * @param array<int,array> $rows
+	 * @return string
+	 */
+	public static function faq_text( $seed, $rows ) {
+		$seed = WBGS_Suggest::normalize_seed( $seed );
+		$faq  = self::faq_rows( $rows );
+		$lines = array(
+			'پرسش‌های محتوا — ' . $seed,
+			'فقط عبارت واقعی گوگل. مقاله ساخته نشده.',
+			'',
+		);
+		foreach ( $faq as $row ) {
+			$lines[] = isset( $row['text'] ) ? (string) $row['text'] : '';
+		}
+		if ( ! $faq ) {
+			$lines[] = 'پرسش واقعی در این استخراج نبود.';
+		}
+		return implode( "\n", $lines );
+	}
+
+	/**
 	 * @param string $text
 	 * @param bool   $has_maker
 	 * @param bool   $has_line

@@ -53,6 +53,7 @@
         <button type="button" class="button" id="tab-tree">درخت کیورد</button>
         <button type="button" class="button" id="tab-cluster">پیلار کلاستر</button>
         <button type="button" class="button" id="tab-tax">دسته‌بندی</button>
+        <button type="button" class="button" id="tab-shelf">قفسه کالا</button>
         <button type="button" class="button" id="tab-brief">بریف محتوا</button>
         <button type="button" class="button" id="tab-compare">مقایسه</button>
       </div>
@@ -67,6 +68,7 @@
       <div class="wbgs-ktree" id="wbgs-tree" hidden></div>
       <div class="wbgs-pillar" id="wbgs-cluster" hidden></div>
       <div class="wbgs-tax" id="wbgs-tax" hidden></div>
+      <div class="wbgs-shelf" id="wbgs-shelf" hidden></div>
       <div class="wbgs-briefs" id="wbgs-brief" hidden></div>
       <div class="wbgs-compare" id="wbgs-compare" hidden></div>
     </div>
@@ -93,6 +95,7 @@
   var tree = document.getElementById('wbgs-tree');
   var cluster = document.getElementById('wbgs-cluster');
   var tax = document.getElementById('wbgs-tax');
+  var shelf = document.getElementById('wbgs-shelf');
   var brief = document.getElementById('wbgs-brief');
   var compare = document.getElementById('wbgs-compare');
   rows.forEach(function (row) {
@@ -193,20 +196,43 @@
       { title: 'برند شده', items: branded },
       { title: 'بدون برند', items: unbranded }
     ]);
-  var tabs = { list: list, tree: tree, cluster: cluster, tax: tax, brief: brief, compare: compare };
+  var byEnt = { category: [], product: [], brand: [], other: [] };
+  var mx = { informational: {}, navigational: {}, commercial: {}, transactional: {} };
+  ['category', 'product', 'brand', 'other'].forEach(function (k) {
+    mx.informational[k] = 0; mx.navigational[k] = 0; mx.commercial[k] = 0; mx.transactional[k] = 0;
+  });
+  rows.forEach(function (r) {
+    byEnt[r.entity].push(r.text);
+    mx[r.intent][r.entity] += 1;
+  });
+  var faq = rows.filter(function (r) { return r.q || r.intent === 'informational'; }).map(function (r) { return r.text; });
+  function shelfCol(title, items) {
+    return '<article class="wbgs-tax-bucket"><h3><span>' + title + '</span><span class="wbgs-tax-n">' + items.length + '</span></h3><ul class="wbgs-tax-list">' +
+      (items.length ? items.map(function (t) { return '<li>' + t + '</li>'; }).join('') : '<li class="wbgs-tax-empty">۰</li>') + '</ul></article>';
+  }
+  shelf.innerHTML = '<p class="wbgs-hint">قفسه از عبارت واقعی: دسته محصول، محصول، برند. مقاله ساخته نمی‌شود.</p>' +
+    '<table class="wbgs-matrix"><thead><tr><th>سطل</th><th>اطلاعاتی</th><th>ناوبری</th><th>تجاری</th><th>تراکنشی</th></tr></thead><tbody>' +
+    ['category','product','brand'].map(function (k) {
+      var lab = { category: 'دسته محصول', product: 'محصول', brand: 'برند' }[k];
+      return '<tr><th>' + lab + '</th><td>' + mx.informational[k] + '</td><td>' + mx.navigational[k] + '</td><td>' + mx.commercial[k] + '</td><td>' + mx.transactional[k] + '</td></tr>';
+    }).join('') + '</tbody></table>' +
+    '<div class="wbgs-tax-grid">' + shelfCol('دسته محصول', byEnt.category) + shelfCol('محصول', byEnt.product) + shelfCol('برند', byEnt.brand) + '</div>' +
+    '<section class="wbgs-shelf-faq"><h2>پرسش‌های محتوا (' + faq.length + ')</h2><ul class="wbgs-tax-list">' + faq.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul></section>';
+  var tabs = { list: list, tree: tree, cluster: cluster, tax: tax, shelf: shelf, brief: brief, compare: compare };
   function show(name) {
     Object.keys(tabs).forEach(function (key) { tabs[key].hidden = key !== name; });
-    ['list', 'tree', 'cluster', 'tax', 'brief', 'compare'].forEach(function (key) {
+    ['list', 'tree', 'cluster', 'tax', 'shelf', 'brief', 'compare'].forEach(function (key) {
       document.getElementById('tab-' + key).classList.toggle('wbgs-view-on', key === name);
     });
   }
-  ['list', 'tree', 'cluster', 'tax', 'brief', 'compare'].forEach(function (key) {
+  ['list', 'tree', 'cluster', 'tax', 'shelf', 'brief', 'compare'].forEach(function (key) {
     document.getElementById('tab-' + key).onclick = function () { show(key); };
   });
   document.getElementById('show-list').onclick = function () { show('list'); window.scrollTo(0, 400); };
   if (/compare=1/.test(location.search)) show('compare');
   else if (/brief=1/.test(location.search)) show('brief');
   else if (/tax=1/.test(location.search)) show('tax');
+  else if (/shelf=1/.test(location.search)) show('shelf');
   else if (/cluster=1/.test(location.search)) show('cluster');
   else if (/tree=1/.test(location.search)) show('tree');
 })();

@@ -338,6 +338,32 @@ wbgs_assert( ! empty( $cal[0]['items'] ), 'calendar has week 1' );
 $html = WBGS_Export::html_report( 'کفش', $work_rows );
 wbgs_assert( false !== strpos( $html, 'کفش' ), 'html report has seed' );
 wbgs_assert( false === strpos( $html, 'ChatGPT' ), 'html report is not an AI article' );
+wbgs_assert( false !== strpos( $html, 'قفسه کالا' ), 'html report has shelf' );
+wbgs_assert( false !== strpos( $html, 'ماتریس موجودیت' ), 'html report has matrix' );
+wbgs_assert( false !== strpos( $html, 'پرسش‌های محتوا' ), 'html report has FAQ heading' );
+
+$shelf_rows = array(
+	array( 'text' => 'کفش ورزشی' ),
+	array( 'text' => 'کفش نایک' ),
+	array( 'text' => 'نایک' ),
+	array( 'text' => 'کفش چیست' ),
+);
+$shelf = WBGS_Entity::shelf( $shelf_rows );
+wbgs_assert( 2 === $shelf[ WBGS_Entity::CATEGORY ]['count'], 'shelf category count' );
+wbgs_assert( 'کفش ورزشی' === $shelf[ WBGS_Entity::CATEGORY ]['rows'][0]['text'], 'shelf category phrase' );
+wbgs_assert( 1 === $shelf[ WBGS_Entity::PRODUCT ]['count'], 'shelf product count' );
+wbgs_assert( 1 === $shelf[ WBGS_Entity::BRAND ]['count'], 'shelf brand count' );
+$mx = WBGS_Entity::matrix( $shelf_rows );
+wbgs_assert( 1 === $mx['cells'][ WBGS_Entity::CATEGORY ]['commercial'], 'matrix category commercial' );
+wbgs_assert( 1 === $mx['cells'][ WBGS_Entity::CATEGORY ]['informational'], 'matrix category informational' );
+wbgs_assert( 1 === $mx['cells'][ WBGS_Entity::BRAND ]['navigational'], 'matrix brand navigational' );
+$faq = WBGS_Entity::faq_rows( $shelf_rows );
+wbgs_assert( 1 === count( $faq ) && 'کفش چیست' === $faq[0]['text'], 'faq keeps real question' );
+$shelf_txt = WBGS_Entity::shelf_text( 'کفش', $shelf_rows );
+wbgs_assert( false !== strpos( $shelf_txt, 'دسته محصول' ) && false !== strpos( $shelf_txt, 'کفش نایک' ), 'shelf text has buckets' );
+$faq_txt = WBGS_Entity::faq_text( 'کفش', $shelf_rows );
+wbgs_assert( false !== strpos( $faq_txt, 'کفش چیست' ), 'faq text has question' );
+wbgs_assert( false === strpos( $faq_txt, 'مقاله کامل' ), 'faq text does not invent an article' );
 
 if ( $failed ) {
 	echo "\n$failed failed\n";

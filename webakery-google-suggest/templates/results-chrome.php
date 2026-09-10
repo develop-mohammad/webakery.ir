@@ -18,6 +18,7 @@ $empty_text = isset( $empty_text ) ? $empty_text : 'هنوز چیزی استخر
 			<button type="button" class="button" id="wbgs-view-tree" disabled>درخت کیورد</button>
 			<button type="button" class="button" id="wbgs-view-cluster" disabled>پیلار کلاستر</button>
 			<button type="button" class="button" id="wbgs-view-tax" disabled>دسته‌بندی</button>
+			<button type="button" class="button" id="wbgs-view-shelf" disabled>قفسه کالا</button>
 			<button type="button" class="button" id="wbgs-view-trends">ترند ایران</button>
 			<button type="button" class="button" id="wbgs-view-brief" disabled>بریف محتوا</button>
 			<button type="button" class="button" id="wbgs-view-cal" disabled>تقویم محتوا</button>
@@ -34,6 +35,7 @@ $empty_text = isset( $empty_text ) ? $empty_text : 'هنوز چیزی استخر
 		<div class="wbgs-ktree" id="wbgs-tree" hidden></div>
 		<div class="wbgs-pillar" id="wbgs-cluster" hidden></div>
 		<div class="wbgs-tax" id="wbgs-tax" hidden></div>
+		<div class="wbgs-shelf" id="wbgs-shelf" hidden></div>
 		<div class="wbgs-trends" id="wbgs-trends" hidden></div>
 		<div class="wbgs-briefs" id="wbgs-brief" hidden></div>
 		<div class="wbgs-cal" id="wbgs-cal" hidden></div>
