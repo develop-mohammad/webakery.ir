@@ -1,0 +1,54 @@
+.nck-wrap{ direction: rtl; }
+.nck-h1{
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 4px;
+}
+.nck-ver{
+	font-size: 12px;
+	font-weight: 600;
+	color: #64748b;
+	background: #f1f5f9;
+	border-radius: 99px;
+	padding: 2px 10px;
+}
+.nck-sub{ color: #64748b; margin: 0 0 14px; }
+.nck-cards{
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 12px;
+	margin: 12px 0 18px;
+}
+.nck-card{
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 14px;
+}
+.nck-card span{ display: block; color: #64748b; font-size: 12px; }
+.nck-card strong{ font-size: 26px; }
+.nck-panel{
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 14px 16px;
+	margin-bottom: 18px;
+}
+.nck-search{ display: flex; gap: 8px; margin: 12px 0; }
+.nck-search input[type="search"]{ min-width: 220px; }
+.nck-pill{
+	display: inline-block;
+	font-size: 11px;
+	font-weight: 700;
+	border-radius: 99px;
+	padding: 2px 9px;
+}
+.nck-pill-on{ background: #dcfce7; color: #15803d; }
+.nck-pill-off{ background: #fee2e2; color: #b91c1c; }
+.nck-table{ background: #fff; }
+.nck-admin-form{ display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.nck-admin-msg{ margin-top: 8px; }
+@media (max-width: 900px){
+	.nck-cards{ grid-template-columns: 1fr 1fr; }
+}

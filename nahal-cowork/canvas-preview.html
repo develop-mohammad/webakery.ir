@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>نهال — پیش‌نمایش قراردادها</title>
+<link rel="stylesheet" href="assets/css/frontend.css?v=100" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
+  body{
+    margin:0;
+    font-family:"Vazirmatn", Tahoma, sans-serif;
+    background:#ece7dc;
+    color:#1f241c;
+    padding:24px 12px 48px;
+  }
+  .toolbar{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:18px; }
+  .toolbar button{
+    font:inherit; border:1px solid #e4d8bf; background:#fff; border-radius:999px;
+    padding:8px 14px; cursor:pointer;
+  }
+  .toolbar button.is-on{ background:#3f5d45; color:#fff; border-color:#3f5d45; }
+  .stage{ max-width:760px; margin:0 auto; }
+  .note{ text-align:center; color:#5c5a52; font-size:13px; margin-top:16px; }
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <button type="button" id="btn-cowork" class="is-on">فضای کار اشتراکی</button>
+    <button type="button" id="btn-hall">اجاره سالن</button>
+    <button type="button" id="btn-portal">پورتال عضو</button>
+  </div>
+  <div class="stage">
+
+    <div id="view-cowork">
+      <div class="nck-root" dir="rtl" data-nck="contract">
+        <article class="nck-paper">
+          <header class="nck-paper-head">
+            <div>
+              <p class="nck-kicker">مجموعه فرهنگی نهال</p>
+              <h2 class="nck-title">قرارداد فضای کار اشتراکی</h2>
+              <p class="nck-tag">فضای کار، تمرکز و رشد</p>
+            </div>
+          </header>
+          <p class="nck-intro">خواستیم که «نهال» را برای کار، تمرکز و رشد خود انتخاب کرده‌اید.</p>
+          <p class="nck-preamble" data-nck-preamble data-tpl="این قرارداد بین «{{org}}» و «{{title}} {{name}}» با شماره تماس {{phone}} منعقد می‌گردد.">این قرارداد بین «مجموعه فرهنگی نهال» و «آقای/خانم …………………..» با شماره تماس ………………….. منعقد می‌گردد.</p>
+          <section class="nck-section"><h3>موضوع قرارداد</h3><p>ارائه خدمات فضای کار اشتراکی در محیط مشخص و از پیش تعیین‌شده در مجموعه نهال، جهت انجام فعالیت‌های کاری، مطالعاتی و فردی.</p></section>
+          <section class="nck-section"><h3>انتخاب شیفت استفاده</h3><p>هر اشتراک شامل ۲۶ شیفت استفاده در ماه می‌باشد. هر حضور در شیفت صبح یا عصر، به عنوان یک شیفت استفاده محاسبه می‌گردد.</p></section>
+          <section class="nck-section"><h3>ساعات کاری مجموعه</h3><p>شیفت صبح: ۸:۰۰ الی ۱۳:۰۰ — شیفت عصر: ۱۶:۳۰ الی ۲۲:۰۰</p><p>مجموعه در تعطیلات رسمی در شیفت صبح تعطیل می‌باشد.</p></section>
+        </article>
+        <form class="nck-form" data-nck-sign novalidate>
+          <h3 class="nck-form-title">ثبت و امضای قرارداد</h3>
+          <div class="nck-alert nck-alert-error" data-nck-error hidden></div>
+          <div class="nck-alert nck-alert-ok" data-nck-ok hidden></div>
+          <div class="nck-grid">
+            <div class="nck-field"><label>عنوان</label><select name="honorific"><option value="mr">آقای</option><option value="ms">خانم</option></select></div>
+            <div class="nck-field nck-field-wide"><label>نام و نام خانوادگی</label><input name="name" type="text" required /></div>
+            <div class="nck-field"><label>شماره تماس</label><input name="phone" type="tel" dir="ltr" required placeholder="09123456789" /></div>
+            <div class="nck-field nck-field-wide">
+              <span class="nck-label">نوع اشتراک</span>
+              <div class="nck-plans">
+                <label class="nck-plan"><input type="radio" name="plan" value="morning" required /> شیفت صبح</label>
+                <label class="nck-plan"><input type="radio" name="plan" value="evening" /> شیفت عصر</label>
+                <label class="nck-plan"><input type="radio" name="plan" value="both" /> هر دو شیفت</label>
+              </div>
+            </div>
+          </div>
+          <div class="nck-sign-wrap">
+            <div class="nck-sign-head"><span>امضا</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
+            <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+          </div>
+          <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
+          <button type="submit" class="nck-btn" data-nck-submit>ثبت قرارداد</button>
+        </form>
+        <div class="nck-done" data-nck-done hidden>
+          <p class="nck-done-title">قرارداد شما ثبت شد.</p>
+          <p data-nck-done-msg></p>
+          <p><a class="nck-btn" data-nck-print-link href="#">مشاهده و چاپ قرارداد</a></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-hall" hidden>
+      <div class="nck-root" dir="rtl" data-nck="hall" data-ms-label="سرکارخانم">
+        <article class="nck-paper">
+          <header class="nck-paper-head">
+            <div>
+              <p class="nck-kicker">بسمه تعالی</p>
+              <h2 class="nck-title">قرارداد اجاره سالن</h2>
+              <p class="nck-tag">موسسه فرهنگی آموزشی نهال</p>
+            </div>
+          </header>
+          <p class="nck-preamble">
+            این قرارداد بین «موسسه فرهنگی آموزشی نهال» به عنوان طرف اول و
+            <span class="nck-blank" data-nck-live="title" data-blank="آقای/سرکارخانم">آقای/سرکارخانم</span>
+            <span class="nck-blank" data-nck-live="name" data-blank="…………………….">…………………….</span>
+            به شماره ملی <span class="nck-blank" data-nck-live="national_id" data-blank="…………………….">…………………….</span>
+            و شماره تماس <span class="nck-blank" data-nck-live="phone" data-blank="…………………….">…………………….</span>
+            به عنوان طرف دوم منعقد می‌گردد.
+          </p>
+          <section class="nck-section">
+            <h3>۱- موضوع قرارداد:</h3>
+            <p>این قرارداد جهت اجاره سالن <span class="nck-blank" data-nck-live="hall_name" data-blank="…………………….">…………………….</span> با رعایت مقررات داخلی اتاق به مبلغ <span class="nck-blank" data-nck-live="amount" data-blank="…………………….">…………………….</span> منعقد گردید.</p>
+          </section>
+          <section class="nck-section">
+            <h3>۲- مدت قرارداد:</h3>
+            <p>مدت قرارداد از تاریخ <span class="nck-blank" data-nck-live="event_date" data-blank="…. / …. / ….">…. / …. / ….</span> ساعت <span class="nck-blank" data-nck-live="start_hour" data-blank="….">….</span> الی ساعت <span class="nck-blank" data-nck-live="end_hour" data-blank="….">….</span> می‌باشد.</p>
+            <p>توضیح: هزینه استفاده از ویدئو پروژکتور به ازای ۹۰ دقیقه، ۵۰۰,۰۰۰ تومان می‌باشد.</p>
+          </section>
+          <section class="nck-section">
+            <h3>۴- سایر موارد:</h3>
+            <p>۴-۱ امکانات سالن به تعداد <span class="nck-blank" data-nck-live="chairs" data-blank="….">….</span> عدد صندلی باشد.</p>
+            <p>۴-۲ تهیه مواد مصرفی، پذیرایی به عهده برگزار کننده مراسم می‌باشد که در صورت نیاز با هماهنگی قبلی توسط کافه شاپ مجموعه قابل پیش‌بینی است.</p>
+            <p>۴-۳ پس از اخذ مبلغ ورودی تا ۳ روز قبل برگزاری، چنانچه برنامه کنسل گردد، ۱۳ درصد به عنوان خسارت و مالیات کسر خواهد شد.</p>
+            <p>۴-۶ برگزار کننده بایستی کلیه شئونات را طبق قوانین جمهوری اسلامی حفظ و از بحث‌های سیاسی و مذهبی اجتناب نماید.</p>
+            <p>۴-۷ امضاء کننده ذیل این قرارداد برگزار کننده مراسم بوده و حق واگذاری سالن را ندارد.</p>
+          </section>
+        </article>
+        <form class="nck-form" data-nck-sign-hall novalidate>
+          <h3 class="nck-form-title">ثبت قرارداد اجاره سالن</h3>
+          <div class="nck-alert nck-alert-error" data-nck-error hidden></div>
+          <div class="nck-alert nck-alert-ok" data-nck-ok hidden></div>
+          <div class="nck-grid nck-grid-hall">
+            <div class="nck-field"><label>عنوان</label><select name="honorific"><option value="mr">آقای</option><option value="ms">سرکارخانم</option></select></div>
+            <div class="nck-field nck-field-wide"><label>نام برگزارکننده</label><input name="name" type="text" required /></div>
+            <div class="nck-field"><label>شماره ملی</label><input name="national_id" type="text" dir="ltr" required maxlength="10" placeholder="0010000003" /></div>
+            <div class="nck-field"><label>شماره تماس</label><input name="phone" type="tel" dir="ltr" required placeholder="09123456789" /></div>
+            <div class="nck-field nck-field-wide"><label>سالن</label><input name="hall_name" type="text" list="nck-halls" required /><datalist id="nck-halls"><option value="سالن اصلی"></option><option value="سالن همایش"></option></datalist></div>
+            <div class="nck-field"><label>مبلغ (تومان)</label><input name="amount" type="text" dir="ltr" required placeholder="5000000" /></div>
+            <div class="nck-field"><label>تعداد صندلی</label><input name="chairs" type="number" min="1" required /></div>
+            <div class="nck-field"><label>تاریخ برگزاری</label><input name="event_date" type="text" dir="ltr" required value="1404/06/20" /></div>
+            <div class="nck-field"><label>از ساعت</label><input name="start_hour" type="text" dir="ltr" required placeholder="16:00" /></div>
+            <div class="nck-field"><label>تا ساعت</label><input name="end_hour" type="text" dir="ltr" required placeholder="20:00" /></div>
+            <div class="nck-field nck-field-wide"><label class="nck-agree" style="margin:0"><input type="checkbox" name="projector" value="1" /> نیاز به ویدئو پروژکتور</label></div>
+          </div>
+          <div class="nck-sign-wrap">
+            <div class="nck-sign-head"><span>امضای برگزارکننده مراسم</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
+            <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+          </div>
+          <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
+          <button type="submit" class="nck-btn" data-nck-submit>ثبت قرارداد سالن</button>
+        </form>
+        <div class="nck-done" data-nck-done hidden>
+          <p class="nck-done-title">قرارداد اجاره سالن ثبت شد.</p>
+          <p data-nck-done-msg></p>
+          <p><a class="nck-btn" data-nck-print-link href="#">مشاهده و چاپ قرارداد</a></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-portal" hidden>
+      <div class="nck-root nck-portal" dir="rtl" data-nck="portal">
+        <div class="nck-portal-card">
+          <p class="nck-kicker">مجموعه فرهنگی نهال</p>
+          <h2 class="nck-title">پورتال عضو</h2>
+          <p class="nck-tag">باقی‌مانده شیفت‌ها و ثبت حضور</p>
+          <div class="nck-alert nck-alert-error" data-nck-error hidden></div>
+          <div class="nck-alert nck-alert-ok" data-nck-ok hidden></div>
+          <form class="nck-form nck-form-compact" data-nck-lookup>
+            <div class="nck-field"><label>شماره موبایل قرارداد</label><input name="phone" type="tel" dir="ltr" required placeholder="09123456789" /></div>
+            <button type="submit" class="nck-btn" data-nck-lookup-btn>مشاهده اشتراک</button>
+          </form>
+          <div class="nck-member" data-nck-member hidden>
+            <p class="nck-member-name" data-nck-member-name></p>
+            <p class="nck-member-month" data-nck-month></p>
+            <div class="nck-shift-cards" data-nck-cards></div>
+            <div class="nck-portal-actions">
+              <button type="button" class="nck-btn" data-nck-checkin hidden>ثبت حضور شیفت جاری</button>
+              <a class="nck-link-btn" data-nck-print href="#" hidden>چاپ قرارداد</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="note">پیش‌نمایش ایستا بدون وردپرس — داده در همین صفحه شبیه‌سازی می‌شود.</p>
+  <script>
+    window.NCK = {
+      ajax: '#',
+      nonce: 'preview',
+      org: 'مجموعه فرهنگی نهال',
+      slot: 'evening',
+      i18n: { signing: 'در حال ثبت…', looking: 'جستجو…', checking: 'ثبت حضور…', error: 'خطا', draw: 'لطفاً داخل کادر امضا کنید.' },
+      store: {},
+      mock: function (action, data) {
+        var store = window.NCK.store;
+        function ok(payload) { return Promise.resolve({ success: true, data: payload }); }
+        function err(message) { return Promise.resolve({ success: false, data: { message: message } }); }
+        function phone(p) {
+          p = String(p || '').replace(/[۰-۹]/g, function (c) { return '0123456789'['۰۱۲۳۴۵۶۷۸۹'.indexOf(c)]; }).replace(/\D+/g, '');
+          if (p.length === 10 && p[0] === '9') p = '0' + p;
+          return /^09\d{9}$/.test(p) ? p : '';
+        }
+        if (action === 'nck_sign') {
+          if (!data.agree) return err('برای ثبت قرارداد باید مفاد آن را بپذیرید.');
+          if (!data.name || data.name.length < 3) return err('نام را کامل وارد کنید.');
+          if (!phone(data.phone)) return err('شماره موبایل معتبر نیست.');
+          if (!data.plan) return err('نوع اشتراک را انتخاب کنید.');
+          store[phone(data.phone)] = { name: data.name, plan: data.plan, usedM: 0, usedE: 0, quota: 26 };
+          return ok({ message: 'قرارداد فضای کار ثبت شد.', print: '#print-cowork', name: data.name });
+        }
+        if (action === 'nck_sign_hall') {
+          if (!data.agree) return err('برای ثبت قرارداد باید مفاد آن را بپذیرید.');
+          if (!data.name || data.name.length < 3) return err('نام برگزارکننده را کامل وارد کنید.');
+          var nid = String(data.national_id || '').replace(/\D+/g, '');
+          if (nid.length !== 10) return err('شماره ملی باید ۱۰ رقم باشد.');
+          if (!phone(data.phone)) return err('شماره موبایل معتبر نیست.');
+          if (!data.hall_name) return err('نام سالن را وارد کنید.');
+          if (!parseInt(String(data.amount).replace(/\D+/g, ''), 10)) return err('مبلغ اجاره را وارد کنید.');
+          if (!data.chairs) return err('تعداد صندلی را وارد کنید.');
+          return ok({ message: 'قرارداد اجاره سالن ثبت شد.', print: '#print-hall', name: data.name });
+        }
+        if (action === 'nck_lookup' || action === 'nck_checkin') {
+          var p = phone(data.phone);
+          var rec = store[p];
+          if (!rec) return err('با این شماره قراردادی پیدا نشد.');
+          if (action === 'nck_checkin') {
+            if (rec.plan === 'evening' || rec.plan === 'both') rec.usedE += 1;
+            else rec.usedM += 1;
+          }
+          var morningOn = rec.plan === 'morning' || rec.plan === 'both';
+          var eveningOn = rec.plan === 'evening' || rec.plan === 'both';
+          return ok({
+            message: action === 'nck_checkin' ? 'حضور ثبت شد.' : '',
+            name: rec.name,
+            phone: p,
+            status: 'active',
+            month: 'شهریور ۱۴۰۴',
+            slot: 'evening',
+            print: '#print-cowork',
+            shifts: {
+              morning: { label: 'صبح', has_plan: morningOn, quota: 26, used: rec.usedM, remaining: Math.max(0, 26 - rec.usedM), open: true, reason: '', already: rec.usedM > 0 && rec.plan === 'morning', current: false },
+              evening: { label: 'عصر', has_plan: eveningOn, quota: 26, used: rec.usedE, remaining: Math.max(0, 26 - rec.usedE), open: true, reason: '', already: rec.usedE > 0, current: true }
+            }
+          });
+        }
+        return err('اقدام ناشناخته');
+      }
+    };
+    document.getElementById('btn-cowork').onclick = function () { toggle('cowork'); };
+    document.getElementById('btn-hall').onclick = function () { toggle('hall'); };
+    document.getElementById('btn-portal').onclick = function () { toggle('portal'); };
+    function toggle(which) {
+      ['cowork', 'hall', 'portal'].forEach(function (k) {
+        document.getElementById('view-' + k).hidden = k !== which;
+        document.getElementById('btn-' + k).classList.toggle('is-on', k === which);
+      });
+    }
+  </script>
+  <script src="assets/js/frontend.js?v=100"></script>
+</body>
+</html>

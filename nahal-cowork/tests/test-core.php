@@ -1,0 +1,123 @@
+<?php
+/**
+ * تست‌های هسته بدون وردپرس.
+ * اجرا: php tests/test-core.php
+ */
+define( 'ABSPATH', __DIR__ . '/../' );
+
+require_once dirname( __DIR__ ) . '/includes/class-nck-phone.php';
+require_once dirname( __DIR__ ) . '/includes/class-nck-jalali.php';
+require_once dirname( __DIR__ ) . '/includes/class-nck-holidays.php';
+require_once dirname( __DIR__ ) . '/includes/class-nck-shifts.php';
+require_once dirname( __DIR__ ) . '/includes/class-nck-contract.php';
+require_once dirname( __DIR__ ) . '/includes/class-nck-hall.php';
+
+$pass = 0;
+$fail = 0;
+$check = function ( $label, $ok, $detail = '' ) use ( &$pass, &$fail ) {
+	if ( $ok ) {
+		$pass++;
+		echo "  ok   — {$label}" . ( $detail ? " ({$detail})" : '' ) . "\n";
+	} else {
+		$fail++;
+		echo "  FAIL — {$label}" . ( $detail ? " ({$detail})" : '' ) . "\n";
+	}
+};
+
+echo "\n=== تلفن ===\n";
+$check( '۰۹۱۲۳۴۵۶۷۸۹ نرمال می‌شود', '09123456789' === NCK_Phone::normalize( '۰۹۱۲۳۴۵۶۷۸۹' ) );
+$check( '۹۱۲۳۴۵۶۷۸۹ با صفر تکمیل می‌شود', '09123456789' === NCK_Phone::normalize( '9123456789' ) );
+$check( '۹۸۱۲ رقم بین‌المللی', '09123456789' === NCK_Phone::normalize( '989123456789' ) );
+$check( 'شماره کوتاه رد می‌شود', null === NCK_Phone::normalize( '09123' ) );
+
+echo "\n=== شمسی ===\n";
+$g = NCK_Jalali::to_gregorian( 1403, 1, 1 );
+$j = NCK_Jalali::to_jalali( $g[0], $g[1], $g[2] );
+$check( 'رفت و برگشت نوروز ۱۴۰۳', array( 1403, 1, 1 ) === $j, implode( '/', $j ) );
+$check( 'طول فروردین ۳۱', 31 === NCK_Jalali::month_length( 1403, 1 ) );
+
+echo "\n=== شیفت و تعطیل ===\n";
+$hours = array(
+	'morning_start' => '8:00',
+	'morning_end'   => '13:00',
+	'evening_start' => '16:30',
+	'evening_end'   => '22:00',
+	'grace_minutes' => 15,
+);
+$am = new DateTimeImmutable( '2024-04-10 09:00:00', new DateTimeZone( 'Asia/Tehran' ) );
+$pm = new DateTimeImmutable( '2024-04-10 18:00:00', new DateTimeZone( 'Asia/Tehran' ) );
+$off = new DateTimeImmutable( '2024-04-10 14:00:00', new DateTimeZone( 'Asia/Tehran' ) );
+$check( 'ساعت ۹ صبح است', NCK_Shifts::MORNING === NCK_Shifts::current_slot( $am, $hours ) );
+$check( 'ساعت ۱۸ عصر است', NCK_Shifts::EVENING === NCK_Shifts::current_slot( $pm, $hours ) );
+$check( 'ساعت ۱۴ خارج از شیفت', '' === NCK_Shifts::current_slot( $off, $hours ) );
+$check( 'باقی‌مانده ۲۶ منهای ۳', 23 === NCK_Shifts::remaining( 26, 3 ) );
+
+$nowruz = NCK_Shifts::day_status( 'morning', 1404, 1, 1, array( 'official' => 'عید نوروز', 'official_policy' => 'morning', 'full_close' => array() ) );
+$check( 'صبح نوروز بسته است', empty( $nowruz['ok'] ) && 'official_morning' === $nowruz['code'] );
+$eve_n = NCK_Shifts::day_status( 'evening', 1404, 1, 1, array( 'official' => 'عید نوروز', 'official_policy' => 'morning', 'full_close' => array() ) );
+$check( 'عصر نوروز با سیاست صبح باز است', ! empty( $eve_n['ok'] ) );
+$full = NCK_Shifts::day_status( 'evening', 1404, 6, 21, array( 'official' => '', 'official_policy' => 'morning', 'full_close' => array( '1404/06/21' => 'برنامه ویژه' ) ) );
+$check( 'تعطیلی کامل هر دو شیفت', empty( $full['ok'] ) );
+
+$gate = NCK_Shifts::can_check_in( array( 'quota' => 26, 'used' => 26, 'has_plan' => true, 'already' => false, 'day' => array( 'ok' => true ), 'member_active' => true ) );
+$check( 'سهمیه تمام‌شده رد می‌شود', empty( $gate['ok'] ) );
+
+echo "\n=== قرارداد فضای کار ===\n";
+$vars = NCK_Contract::vars_from( array( 'name' => 'سارا محمدی', 'phone' => '09121234567', 'title' => 'ms', 'org' => 'مجموعه فرهنگی نهال' ) );
+$filled = NCK_Contract::fill_template( NCK_Contract::default_preamble(), $vars );
+$check( 'نام در مقدمه می‌نشیند', false !== strpos( $filled, 'سارا محمدی' ) );
+$check( 'عنوان خانم', 'خانم' === $vars['title'] );
+$sig = NCK_Contract::validate_signature( 'not-an-image' );
+$check( 'امضای نامعتبر رد می‌شود', empty( $sig['ok'] ) );
+
+echo "\n=== اجاره سالن ===\n";
+$nine = '001000000';
+$digit = NCK_Hall::nid_check_digit( $nine );
+$nid   = $nine . $digit;
+$check( 'کد ملی ساختگی الگوریتم را پاس می‌کند', $nid === NCK_Hall::normalize_nid( $nid ), $nid );
+$check( 'کد ملی تکراری رقم رد می‌شود', null === NCK_Hall::normalize_nid( '1111111111' ) );
+$check( 'مبلغ فارسی', 5000000 === NCK_Hall::parse_amount( '۵٬۰۰۰٬۰۰۰ تومان' ) );
+$check( 'فرمت مبلغ', false !== strpos( NCK_Hall::format_money( 500000 ), 'تومان' ) );
+
+$ok = NCK_Hall::validate(
+	array(
+		'name'        => 'علی رضایی',
+		'honorific'   => 'mr',
+		'national_id' => $nid,
+		'phone'       => '09121234567',
+		'hall_name'   => 'سالن همایش',
+		'amount'      => '۲۰۰۰۰۰۰',
+		'event_date'  => '1404/06/20',
+		'start_hour'  => '16:00',
+		'end_hour'    => '20:00',
+		'chairs'      => '۸۰',
+	)
+);
+$check( 'قرارداد سالن کامل قبول می‌شود', ! empty( $ok['ok'] ), isset( $ok['message'] ) ? $ok['message'] : '' );
+$check( 'ساعت پایان در payload', ! empty( $ok['payload']['end_hour'] ) && '20:00' === $ok['payload']['end_hour'] );
+
+$bad_time = NCK_Hall::validate(
+	array(
+		'name'        => 'علی رضایی',
+		'honorific'   => 'mr',
+		'national_id' => $nid,
+		'phone'       => '09121234567',
+		'hall_name'   => 'سالن اصلی',
+		'amount'      => '1000',
+		'event_date'  => '1404/06/20',
+		'start_hour'  => '20:00',
+		'end_hour'    => '16:00',
+		'chairs'      => '10',
+	)
+);
+$check( 'ساعت وارونه رد می‌شود', empty( $bad_time['ok'] ) );
+
+$no_nid = NCK_Hall::validate( array( 'name' => 'علی رضایی', 'phone' => '09121234567', 'hall_name' => 'سالن', 'amount' => '1', 'event_date' => '1404/01/01', 'start_hour' => '8:00', 'end_hour' => '10:00', 'chairs' => '1' ) );
+$check( 'بدون کد ملی رد می‌شود', empty( $no_nid['ok'] ) );
+
+$plans = NCK_Shifts::plan_types( 'both' );
+$check( 'پلن هر دو دو اشتراک می‌سازد', array( 'morning', 'evening' ) === $plans );
+$check( 'پلن سالن شیفت فضای کار نیست', array() === NCK_Shifts::plan_types( 'hall' ) );
+
+echo "\n--- {$pass} موفق، {$fail} ناموفق ---\n";
+exit( $fail ? 1 : 0 );

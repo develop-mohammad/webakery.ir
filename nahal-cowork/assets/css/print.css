@@ -1,0 +1,56 @@
+.nck-print-body{
+	margin: 0;
+	background: #ece7dc;
+	font-family: Vazirmatn, Tahoma, sans-serif;
+}
+.nck-print-bar{
+	display: flex;
+	gap: 8px;
+	justify-content: center;
+	padding: 12px;
+}
+.nck-print-bar button{
+	font: inherit;
+	border: 0;
+	border-radius: 999px;
+	padding: 8px 16px;
+	background: #3f5d45;
+	color: #fff;
+	cursor: pointer;
+}
+.nck-print-paper{
+	max-width: 800px;
+	margin: 0 auto 32px;
+	padding: 28px 32px 36px;
+}
+.nck-sign-row{
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 24px;
+	margin-top: 28px;
+	padding-top: 16px;
+	border-top: 1px solid #e4d8bf;
+}
+.nck-sign-img{
+	display: block;
+	max-width: 260px;
+	height: auto;
+	background: #fff;
+	border: 1px solid #e4d8bf;
+	border-radius: 8px;
+}
+.nck-org-sign{
+	font-weight: 700;
+	color: #3f5d45;
+}
+
+@media print{
+	.nck-print-bar{ display: none !important; }
+	.nck-print-body{ background: #fff; }
+	.nck-print-paper{
+		box-shadow: none;
+		border: 0;
+		margin: 0;
+		max-width: none;
+	}
+}

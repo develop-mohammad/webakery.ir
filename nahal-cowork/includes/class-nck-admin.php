@@ -1,0 +1,119 @@
+<?php
+defined( 'ABSPATH' ) || exit;
+
+class NCK_Admin {
+
+	public static function hooks() {
+		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
+		add_action( 'admin_init', array( __CLASS__, 'handle_save' ) );
+		add_action( 'admin_init', array( __CLASS__, 'handle_csv' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
+		add_filter( 'plugin_action_links_' . plugin_basename( NCK_FILE ), array( __CLASS__, 'links' ) );
+	}
+
+	public static function menu() {
+		add_menu_page(
+			'قرارداد نهال',
+			'نهال',
+			'edit_posts',
+			NCK_MENU,
+			array( __CLASS__, 'render' ),
+			'dashicons-welcome-learn-more',
+			56
+		);
+	}
+
+	public static function assets( $hook ) {
+		if ( false === strpos( (string) $hook, NCK_MENU ) ) {
+			return;
+		}
+		wp_enqueue_style( 'nck-admin', NCK_URL . 'assets/css/admin.css', array(), NCK_VERSION );
+		wp_enqueue_script( 'nck-admin', NCK_URL . 'assets/js/admin.js', array(), NCK_VERSION, true );
+		wp_localize_script(
+			'nck-admin',
+			'NCKAdmin',
+			array(
+				'ajax'  => admin_url( 'admin-ajax.php' ),
+				'nonce' => wp_create_nonce( 'nck_admin' ),
+			)
+		);
+	}
+
+	public static function handle_save() {
+		if ( empty( $_POST['nck_save_settings'] ) ) { // phpcs:ignore
+			return;
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		check_admin_referer( 'nck_settings' );
+		$input = isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : array(); // phpcs:ignore
+		NCK_Settings::save( $input );
+		wp_safe_redirect( add_query_arg( array( 'page' => NCK_MENU, 'tab' => 'settings', 'saved' => '1' ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	public static function handle_csv() {
+		if ( empty( $_GET['nck_export'] ) || empty( $_GET['page'] ) || NCK_MENU !== $_GET['page'] ) { // phpcs:ignore
+			return;
+		}
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+		check_admin_referer( 'nck_export' );
+		$type = sanitize_key( wp_unslash( $_GET['nck_export'] ) ); // phpcs:ignore
+		$t    = NCK_Jalali::today();
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="nahal-' . $type . '.csv"' );
+		echo "\xEF\xBB\xBF";
+		$out = fopen( 'php://output', 'w' );
+		if ( 'members' === $type ) {
+			fputcsv( $out, array( 'id', 'name', 'phone', 'status', 'created_at' ) );
+			foreach ( NCK_Members::search( '', 500, 0 ) as $row ) {
+				fputcsv( $out, array( $row['id'], $row['full_name'], $row['phone'], $row['status'], $row['created_at'] ) );
+			}
+		} else {
+			fputcsv( $out, array( 'name', 'phone', 'shift', 'used', 'year', 'month' ) );
+			foreach ( NCK_Attendance::month_report( $t['y'], $t['m'] ) as $row ) {
+				fputcsv( $out, array( $row['full_name'], $row['phone'], $row['shift_type'], $row['used'], $t['y'], $t['m'] ) );
+			}
+		}
+		fclose( $out );
+		exit;
+	}
+
+	public static function render() {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'dashboard'; // phpcs:ignore
+		$tabs = array(
+			'dashboard'  => 'خانه',
+			'members'    => 'اعضا',
+			'contracts'  => 'قراردادها',
+			'attendance' => 'حضور',
+			'settings'   => 'تنظیمات',
+			'license'    => 'لایسنس',
+		);
+		if ( ! isset( $tabs[ $tab ] ) ) {
+			$tab = 'dashboard';
+		}
+		if ( in_array( $tab, array( 'settings', 'license' ), true ) && ! current_user_can( 'manage_options' ) ) {
+			$tab = 'dashboard';
+		}
+		include NCK_PATH . 'templates/admin-layout.php';
+	}
+
+	public static function links( $links ) {
+		$url = admin_url( 'admin.php?page=' . NCK_MENU );
+		array_unshift( $links, '<a href="' . esc_url( $url ) . '">نهال</a>' );
+		return $links;
+	}
+
+	public static function notice() {
+		if ( ! empty( $_GET['saved'] ) ) { // phpcs:ignore
+			echo '<div class="notice notice-success is-dismissible"><p>تنظیمات ذخیره شد.</p></div>';
+		}
+	}
+}
