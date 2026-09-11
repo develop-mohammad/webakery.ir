@@ -184,15 +184,7 @@ class NCK_Pay {
 	 * @return array{ok:bool,message?:string,payload?:array}
 	 */
 	public static function parse_front_payment( array $in, $fallback_amount = 0 ) {
-		$opts    = class_exists( 'NCK_Learner' ) ? NCK_Learner::payment_options() : array(
-			'site'   => 'سایت',
-			'card'   => 'کارت به کارت',
-			'onsite' => 'در محل کارت کشیده شد',
-		);
-		$payment = isset( $in['payment'] ) ? (string) $in['payment'] : '';
-		if ( ! isset( $opts[ $payment ] ) ) {
-			$payment = 'site';
-		}
+		$payment = 'site';
 
 		$amount = 0;
 		if ( isset( $in['pay_amount'] ) && trim( (string) $in['pay_amount'] ) !== '' ) {
@@ -340,6 +332,109 @@ class NCK_Pay {
 		}
 	}
 
+	public static function form_product_sku( $form_id ) {
+		$id = preg_replace( '/[^a-z0-9]/', '', strtolower( (string) $form_id ) );
+		if ( $id === '' ) {
+			return '';
+		}
+		return 'nck-form-' . $id;
+	}
+
+	public static function form_product_name( array $form ) {
+		$item = isset( $form['payment']['item_name'] ) ? trim( (string) $form['payment']['item_name'] ) : '';
+		if ( $item !== '' ) {
+			return $item;
+		}
+		$title = isset( $form['title'] ) ? trim( (string) $form['title'] ) : '';
+		return $title !== '' ? $title : 'فرم نهال';
+	}
+
+	/**
+	 * ساخت یا به‌روزرسانی محصول ووکامرس متناظر با فرم سفارشی.
+	 *
+	 * @return int شناسه محصول یا ۰ اگر ووکامرس نباشد
+	 */
+	public static function ensure_form_product( array $form ) {
+		if ( ! self::wc_ready() || ! class_exists( 'WC_Product_Simple' ) || ! function_exists( 'wc_get_product' ) ) {
+			return 0;
+		}
+		$form_id = isset( $form['id'] ) ? (string) $form['id'] : '';
+		if ( $form_id === '' ) {
+			return 0;
+		}
+
+		$sku        = self::form_product_sku( $form_id );
+		$product_id = isset( $form['product_id'] ) ? (int) $form['product_id'] : 0;
+		$product    = $product_id ? wc_get_product( $product_id ) : false;
+		if ( ( ! $product || is_wp_error( $product ) ) && $sku !== '' && function_exists( 'wc_get_product_id_by_sku' ) ) {
+			$sku_id = (int) wc_get_product_id_by_sku( $sku );
+			if ( $sku_id ) {
+				$product = wc_get_product( $sku_id );
+			}
+		}
+
+		$created = false;
+		if ( ! $product || is_wp_error( $product ) ) {
+			$product = new WC_Product_Simple();
+			$created = true;
+		}
+
+		$name   = self::form_product_name( $form );
+		$status = ( isset( $form['status'] ) && 'draft' === $form['status'] ) ? 'draft' : 'publish';
+		$amount = isset( $form['payment']['amount'] ) ? (int) $form['payment']['amount'] : 0;
+		$tag    = isset( $form['tagline'] ) ? trim( (string) $form['tagline'] ) : '';
+
+		$product->set_name( $name );
+		$product->set_status( $status );
+		$product->set_regular_price( $amount > 0 ? (string) $amount : '0' );
+		if ( $created ) {
+			$product->set_catalog_visibility( 'visible' );
+			$product->set_virtual( true );
+			$product->set_sold_individually( true );
+			$product->set_tax_status( 'none' );
+		} elseif ( ! $product->get_virtual() ) {
+			$product->set_virtual( true );
+		}
+		if ( $tag !== '' ) {
+			$product->set_short_description( $tag );
+		}
+		if ( $sku !== '' ) {
+			try {
+				$product->set_sku( $sku );
+			} catch ( Exception $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+			}
+		}
+		$product->update_meta_data( '_nck_form_id', $form_id );
+		if ( ! empty( $form['slug'] ) ) {
+			$product->update_meta_data( '_nck_form_slug', (string) $form['slug'] );
+		}
+
+		try {
+			$product->save();
+		} catch ( Exception $e ) {
+			return $product_id;
+		}
+
+		return (int) $product->get_id();
+	}
+
+	public static function trash_form_product( array $form ) {
+		$id = isset( $form['product_id'] ) ? (int) $form['product_id'] : 0;
+		if ( $id < 1 || ! function_exists( 'wp_trash_post' ) ) {
+			return;
+		}
+		$product = function_exists( 'wc_get_product' ) ? wc_get_product( $id ) : null;
+		if ( ! $product ) {
+			return;
+		}
+		$form_id = isset( $form['id'] ) ? (string) $form['id'] : '';
+		$meta    = method_exists( $product, 'get_meta' ) ? (string) $product->get_meta( '_nck_form_id' ) : '';
+		if ( $form_id !== '' && $meta !== '' && $meta !== $form_id ) {
+			return;
+		}
+		wp_trash_post( $id );
+	}
+
 	/**
 	 * @return array{ok:bool,message?:string,pay_url?:string}
 	 */
@@ -357,7 +452,19 @@ class NCK_Pay {
 			WC()->session->set_customer_session_cookie( true );
 		}
 
-		$product_id = self::ensure_product();
+		$product_id = isset( $draft['product_id'] ) ? (int) $draft['product_id'] : 0;
+		if ( $product_id && function_exists( 'wc_get_product' ) && ! wc_get_product( $product_id ) ) {
+			$product_id = 0;
+		}
+		if ( ! $product_id && ! empty( $payload['form_id'] ) && class_exists( 'NCK_Forms' ) ) {
+			$linked = NCK_Forms::get( $payload['form_id'] );
+			if ( $linked ) {
+				$product_id = self::ensure_form_product( $linked );
+			}
+		}
+		if ( ! $product_id ) {
+			$product_id = self::ensure_product();
+		}
 		if ( ! $product_id ) {
 			return array( 'ok' => false, 'message' => 'محصول پرداخت نهال ساخته نشد.' );
 		}
@@ -622,6 +729,7 @@ class NCK_Pay {
 			'phone'         => isset( $args['phone'] ) ? (string) $args['phone'] : '',
 			'email'         => isset( $args['email'] ) ? (string) $args['email'] : '',
 			'kind'          => isset( $args['kind'] ) ? (string) $args['kind'] : '',
+			'product_id'    => isset( $args['product_id'] ) ? (int) $args['product_id'] : 0,
 		);
 	}
 
@@ -730,7 +838,8 @@ class NCK_Pay {
 						'email'     => isset( $payload['email'] ) ? $payload['email'] : '',
 						'amount'    => $amount,
 						'payment'   => isset( $payload['payment'] ) ? $payload['payment'] : 'site',
-						'item_name' => $title,
+						'item_name'  => $title,
+						'product_id' => isset( $payload['product_id'] ) ? (int) $payload['product_id'] : 0,
 					)
 				),
 			);

@@ -184,7 +184,7 @@ $ok = NCK_Hall::validate(
 );
 $check( 'قرارداد سالن کامل قبول می‌شود', ! empty( $ok['ok'] ), isset( $ok['message'] ) ? $ok['message'] : '' );
 $check( 'ساعت پایان در payload', ! empty( $ok['payload']['end_hour'] ) && '20:00' === $ok['payload']['end_hour'] );
-$check( 'روش پرداخت سالن در payload', ! empty( $ok['ok'] ) && 'card' === $ok['payload']['payment'] );
+$check( 'روش پرداخت سالن در payload سایت است', ! empty( $ok['ok'] ) && 'site' === $ok['payload']['payment'] );
 $check( 'پیگیری سالن خودکار است', ! empty( $ok['payload']['pay_ref'] ) && 0 === strpos( $ok['payload']['pay_ref'], 'NCK-' ) );
 
 $no_pay_hall = NCK_Hall::validate(
@@ -291,6 +291,23 @@ $check( '۹ صبح در شیارها هست', in_array( '09:00', $slots, true ) 
 $check( '۲۲ شب در شیارها هست', in_array( '22:00', $slots, true ) );
 $check( '۱۴ در شیارها نیست', ! in_array( '14:00', $slots, true ) );
 
+$check( 'بازه مجاور تداخل ندارد', false === NCK_Hall::ranges_overlap( '16:00', '20:00', '20:00', '22:00' ) );
+$check( 'بازه هم‌پوشان تداخل دارد', true === NCK_Hall::ranges_overlap( '16:00', '20:00', '18:00', '22:00' ) );
+$month_map = NCK_Hall::group_month_payloads(
+	array(
+		array( 'event_date' => '1404/06/20', 'start_hour' => '16:00', 'end_hour' => '20:00', 'hall_name' => 'سالن همایش' ),
+		array( 'event_date' => '1404/06/20', 'start_hour' => '09:00', 'end_hour' => '13:00', 'hall_name' => 'سالن اصلی' ),
+		array( 'event_date' => '1404/07/01', 'start_hour' => '16:00', 'end_hour' => '18:00', 'hall_name' => 'سالن همایش' ),
+	),
+	1404,
+	6,
+	'سالن همایش'
+);
+$check( 'رزرو ماه فقط سالن انتخاب‌شده', isset( $month_map['1404/06/20'] ) && 1 === count( $month_map['1404/06/20'] ) );
+$check( 'ماه بعد در تقویم این ماه نیست', ! isset( $month_map['1404/07/01'] ) );
+$empty_month = NCK_Hall::month_bookings( 1404, 6, 'سالن همایش' );
+$check( 'بدون وردپرس رزرو ماه خالی است', array() === $empty_month );
+
 $no_nid = NCK_Hall::validate( array( 'name' => 'علی رضایی', 'phone' => '09121234567', 'hall_name' => 'سالن', 'amount' => '1', 'event_date' => '1404/01/01', 'start_hour' => '8:00', 'end_hour' => '10:00', 'chairs' => '1' ) );
 $check( 'بدون کد ملی رد می‌شود', empty( $no_nid['ok'] ) );
 
@@ -386,6 +403,15 @@ $dup['title'] = 'کارگاه دوم';
 $dup['slug'] = 'workshop';
 $dup_saved = NCK_Forms::save( $dup );
 $check( 'slug تکراری یکتا می‌شود', 'workshop-2' === $dup_saved['slug'], $dup_saved['slug'] );
+$check( 'بدون ووکامرس شناسه محصول صفر است', 0 === (int) $saved['product_id'] );
+$check( 'SKU محصول فرم از شناسه ساخته می‌شود', 'nck-form-fabc123' === NCK_Pay::form_product_sku( 'fabc123' ) );
+$check( 'نام محصول فرم از عنوان می‌آید', 'کارگاه رباتیک' === NCK_Pay::form_product_name( $saved ) );
+$named = $saved;
+$named['payment']['item_name'] = 'ثبت‌نام کارگاه';
+$check( 'نام محصول از عنوان ردیف سفارش است', 'ثبت‌نام کارگاه' === NCK_Pay::form_product_name( $named ) );
+$check( 'ساخت محصول بدون ووکامرس صفر است', 0 === NCK_Pay::ensure_form_product( $saved ) );
+$keep = NCK_Forms::sanitize_form( array_merge( $saved, array( 'product_id' => 88 ) ) );
+$check( 'شناسه محصول در sanitize می‌ماند', 88 === (int) $keep['product_id'] );
 
 $opts = NCK_Forms::parse_options( "ai|هوش مصنوعی\nenglish|زبان" );
 $check( 'گزینه با کلید و برچسب', isset( $opts['ai'] ) && 'هوش مصنوعی' === $opts['ai'] );
@@ -409,8 +435,9 @@ $ok_form = NCK_Forms::validate(
 );
 $check( 'فرم کامل با پرداخت قبول می‌شود', ! empty( $ok_form['ok'] ), isset( $ok_form['message'] ) ? $ok_form['message'] : '' );
 $check( 'مبلغ فرم در payload', ! empty( $ok_form['ok'] ) && 1200000 === (int) $ok_form['payload']['pay_amount'] );
-$check( 'روش پرداخت کارت', ! empty( $ok_form['ok'] ) && 'card' === $ok_form['payload']['payment'] );
+$check( 'روش پرداخت فرم سایت است', ! empty( $ok_form['ok'] ) && 'site' === $ok_form['payload']['payment'] );
 $check( 'فرم پیگیری خودکار دارد', ! empty( $ok_form['ok'] ) && 0 === strpos( $ok_form['payload']['pay_ref'], 'NCK-' ) );
+$check( 'payload فرم شناسه محصول دارد', ! empty( $ok_form['ok'] ) && isset( $ok_form['payload']['product_id'] ) );
 
 $no_amt = NCK_Forms::validate( $saved, array( 'name' => 'سارا محمدی', 'phone' => '09121234567', 'payment' => 'site', 'agree' => 1 ) );
 $check( 'پرداخت بدون مبلغ رد می‌شود', empty( $no_amt['ok'] ) );
@@ -478,6 +505,9 @@ $cowork_pay = NCK_Pay::from_contract(
 $check( 'فضای کار با مبلغ سفارش می‌سازد', ! empty( $cowork_pay['ok'] ) && 1500000 === $cowork_pay['order']['amount'] );
 $check( 'روش پرداخت فضای کار از فرم می‌آید', 'on-hold' === $cowork_pay['order']['status'] );
 
+$check( 'ورودی کارت فرانت سایت می‌شود', 'site' === NCK_Pay::parse_front_payment( array( 'payment' => 'card', 'pay_amount' => '1000' ) )['payload']['payment'] );
+$check( 'گزینه پرداخت کاربر فقط سایت است', array( 'site' ) === array_keys( NCK_Learner::payment_options() ) );
+$check( 'برچسب کارت برای چاپ قدیمی می‌ماند', 'کارت به کارت' === NCK_Learner::payment_label( 'card' ) );
 $no_method = NCK_Pay::parse_front_payment( array( 'pay_amount' => '1000' ) );
 $check( 'بدون روش پرداخت سایت می‌شود', ! empty( $no_method['ok'] ) && 'site' === $no_method['payload']['payment'] );
 $check( 'پیگیری خودکار پیشوند NCK دارد', ! empty( $no_method['payload']['pay_ref'] ) && 0 === strpos( $no_method['payload']['pay_ref'], 'NCK-' ) );
@@ -538,6 +568,8 @@ $check( 'دانلود قرارداد سالن هست', false !== strpos( $hall_t
 $check( 'تقویم شمسی اجاره سالن هست', false !== strpos( $hall_tpl, 'hall-schedule.php' ) );
 $sched_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/hall-schedule.php' );
 $check( 'تاریخ سالن از تقویم باز می‌شود', false !== strpos( $sched_tpl, 'data-nck-cal' ) );
+$check( 'تقویم سالن ماهانه است', false !== strpos( $sched_tpl, 'nck-cal-month' ) );
+$check( 'لیست ساعت پر در تقویم هست', false !== strpos( $sched_tpl, 'data-nck-cal-busy' ) );
 $check( 'ساعت سالن رول دارد', false !== strpos( $sched_tpl, 'data-nck-time-rolls' ) );
 $check( 'ورودی دستی ساعت سالن حذف شده', false === strpos( $sched_tpl, 'type="text"' ) );
 $js = (string) file_get_contents( dirname( __DIR__ ) . '/assets/js/frontend.js' );
@@ -545,6 +577,13 @@ $check( 'دانلود مفاد در جاوااسکریپت هست', false !== st
 $check( 'کپی امضا به مفاد هست', false !== strpos( $js, 'copyReviewInk' ) );
 $check( 'رفتن به درگاه در جاوااسکریپت هست', false !== strpos( $js, 'pay_url' ) );
 $check( 'ورود اجباری پرداخت در جاوااسکریپت هست', false !== strpos( $js, 'need_login' ) );
+$check( 'بارگذاری ماه سالن در جاوااسکریپت هست', false !== strpos( $js, 'nck_hall_month' ) );
+$learner_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/learner.php' );
+$check( 'پذیرش چیپ کارت ندارد', false === strpos( $learner_tpl, 'value="card"' ) );
+$check( 'پذیرش پرداخت سایت پنهان دارد', false !== strpos( $learner_tpl, 'name="payment" value="site"' ) );
+$forms_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/admin-forms.php' );
+$check( 'ویرایشگر فرم محصول ووکامرس دارد', false !== strpos( $forms_tpl, 'محصول ووکامرس' ) );
+$check( 'همگام‌سازی محصولات فرم در فهرست هست', false !== strpos( $forms_tpl, 'sync_all_products' ) );
 
 echo "\n--- {$pass} موفق، {$fail} ناموفق ---\n";
 exit( $fail ? 1 : 0 );

@@ -65,7 +65,8 @@
     var roles = (window.NCKAdmin && NCKAdmin.roles) || {};
     var state = parseJson(hidden.value, {});
     if (!state.steps) state.steps = [];
-    if (!state.payment) state.payment = { enabled: 1, amount: 0, methods: ['site', 'card', 'onsite'], item_name: '' };
+    if (!state.payment) state.payment = { enabled: 1, amount: 0, methods: ['site'], item_name: '' };
+    if (!state.product_id) state.product_id = 0;
 
     function esc(s) {
       return String(s || '').replace(/[&<>"']/g, function (c) {
@@ -123,10 +124,7 @@
         if (el.type === 'checkbox') pay[key] = el.checked ? 1 : 0;
         else pay[key] = el.value;
       });
-      pay.methods = [];
-      wrap.querySelectorAll('[data-nck-pay-method]').forEach(function (el) {
-        if (el.checked) pay.methods.push(el.getAttribute('data-nck-pay-method'));
-      });
+      pay.methods = ['site'];
       state.payment = pay;
       box.querySelectorAll('.nck-builder-step').forEach(function (stepEl) {
         var si = parseInt(stepEl.getAttribute('data-si'), 10);

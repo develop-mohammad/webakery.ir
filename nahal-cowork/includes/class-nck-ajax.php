@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 class NCK_Ajax {
 
 	public static function hooks() {
-		$front = array( 'nck_sign', 'nck_sign_hall', 'nck_sign_learner', 'nck_sign_form', 'nck_lookup', 'nck_checkin' );
+		$front = array( 'nck_sign', 'nck_sign_hall', 'nck_sign_learner', 'nck_sign_form', 'nck_lookup', 'nck_checkin', 'nck_hall_month' );
 		foreach ( $front as $action ) {
 			add_action( 'wp_ajax_' . $action, array( __CLASS__, $action ) );
 			add_action( 'wp_ajax_nopriv_' . $action, array( __CLASS__, $action ) );
@@ -94,6 +94,28 @@ class NCK_Ajax {
 
 		$result = NCK_Contracts::sign_flow( $name, $honorific, $phone, $plan, $signature, $ip, $pay_in, $shift );
 		self::send_sign_result( $result );
+	}
+
+	public static function nck_hall_month() {
+		self::nonce_front();
+		self::licensed();
+		self::rate( 'hall_month', 60 );
+
+		$y    = isset( $_POST['year'] ) ? (int) $_POST['year'] : 0; // phpcs:ignore
+		$m    = isset( $_POST['month'] ) ? (int) $_POST['month'] : 0; // phpcs:ignore
+		$hall = isset( $_POST['hall_name'] ) ? sanitize_text_field( wp_unslash( $_POST['hall_name'] ) ) : ''; // phpcs:ignore
+		if ( $y < 1390 || $y > 1500 || $m < 1 || $m > 12 ) {
+			wp_send_json_error( array( 'message' => 'ماه نامعتبر است.' ) );
+		}
+
+		$days = NCK_Hall::month_bookings( $y, $m, $hall );
+		wp_send_json_success(
+			array(
+				'year'  => $y,
+				'month' => $m,
+				'days'  => $days ? $days : new stdClass(),
+			)
+		);
 	}
 
 	public static function nck_sign_hall() {

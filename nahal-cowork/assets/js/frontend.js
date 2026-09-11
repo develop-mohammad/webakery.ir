@@ -462,15 +462,22 @@
     return faDigits(d) + ' ' + (names[m - 1] || '') + ' ' + faDigits(y);
   }
 
+  function hallBookingsOf(root, date) {
+    var cal = qs(root, '[data-nck-cal]');
+    if (!cal || !cal.nckBookings) return [];
+    var key = date || ((qs(root, '[name="event_date"]') || {}).value || '');
+    var list = cal.nckBookings[key];
+    return Array.isArray(list) ? list : [];
+  }
+
   function bindHallCalendar(root) {
     var wrap = qs(root, '[data-nck-cal]');
     if (!wrap) return;
-    var pop = qs(wrap, '[data-nck-cal-pop]');
     var grid = qs(wrap, '[data-nck-cal-grid]');
     var title = qs(wrap, '[data-nck-cal-month]');
     var label = qs(wrap, '[data-nck-cal-label]');
     var input = qs(wrap, '[name="event_date"]');
-    var openBtn = qs(wrap, '[data-nck-cal-open]');
+    var status = qs(wrap, '[data-nck-cal-status]');
     var today = hallToday(wrap);
     var parsed = String((input && input.value) || '').split('/');
     var sel = {
@@ -480,20 +487,46 @@
     };
     var viewY = sel.y;
     var viewM = sel.m;
+    var loadTimer = null;
+    wrap.nckBookings = wrap.nckBookings || {};
 
     function todayKey() {
       return today.y * 10000 + today.m * 100 + today.d;
     }
 
-    function setDate(y, m, d, close) {
+    function dateKey(y, m, d) {
+      return jalaliYmd(y, m, d);
+    }
+
+    function paintBusy() {
+      var date = input ? input.value : dateKey(sel.y, sel.m, sel.d);
+      var list = hallBookingsOf(root, date);
+      var box = qs(wrap, '[data-nck-cal-busy-list]');
+      var empty = qs(wrap, '[data-nck-cal-busy-empty]');
+      if (box) {
+        box.innerHTML = '';
+        list.forEach(function (b) {
+          var li = document.createElement('li');
+          var text = faDigits(b.start || '') + ' تا ' + faDigits(b.end || '');
+          if (b.hall) text += ' — ' + b.hall;
+          li.textContent = text;
+          box.appendChild(li);
+        });
+      }
+      show(box, list.length > 0);
+      show(empty, list.length === 0);
+    }
+
+    function setDate(y, m, d) {
       sel = { y: y, m: m, d: d };
       if (input) {
-        input.value = jalaliYmd(y, m, d);
+        input.value = dateKey(y, m, d);
         input.dispatchEvent(new Event('change', { bubbles: true }));
       }
       if (label) label.textContent = longJalali(y, m, d);
       render();
-      if (close) show(pop, false);
+      paintBusy();
+      if (typeof root.nckHallRefresh === 'function') root.nckHallRefresh();
     }
 
     function render() {
@@ -504,23 +537,26 @@
       var len = jalaliMonthLength(viewY, viewM);
       var i;
       for (i = 0; i < startWd; i++) {
-        var empty = document.createElement('span');
-        empty.className = 'nck-cal-empty';
-        empty.setAttribute('aria-hidden', 'true');
-        grid.appendChild(empty);
+        var spacer = document.createElement('span');
+        spacer.className = 'nck-cal-empty';
+        spacer.setAttribute('aria-hidden', 'true');
+        grid.appendChild(spacer);
       }
       for (i = 1; i <= len; i++) {
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.textContent = faDigits(i);
         var key = viewY * 10000 + viewM * 100 + i;
+        var ymd = dateKey(viewY, viewM, i);
+        var busy = hallBookingsOf(root, ymd);
+        if (busy.length) btn.classList.add('is-busy');
         if (key < todayKey()) {
           btn.disabled = true;
-          btn.className = 'is-past';
+          btn.classList.add('is-past');
         } else {
           (function (y, m, d) {
             btn.addEventListener('click', function () {
-              setDate(y, m, d, true);
+              setDate(y, m, d);
             });
           })(viewY, viewM, i);
         }
@@ -528,54 +564,91 @@
         if (today.y === viewY && today.m === viewM && today.d === i) btn.classList.add('is-today');
         grid.appendChild(btn);
       }
+      paintBusy();
     }
 
-    if (openBtn) {
-      openBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        var on = pop && pop.hidden;
-        show(pop, on);
-        if (on) {
-          viewY = sel.y;
-          viewM = sel.m;
-          render();
+    function loadMonth() {
+      if (status) {
+        status.textContent = 'در حال خواندن رزروهای این ماه…';
+        show(status, true);
+      }
+      var hallInput = qs(root, '[name="hall_name"]');
+      post('nck_hall_month', {
+        year: String(viewY),
+        month: String(viewM),
+        hall_name: hallInput ? String(hallInput.value || '').trim() : ''
+      }).then(function (json) {
+        wrap.nckBookings = {};
+        if (json && json.success && json.data && json.data.days && !Array.isArray(json.data.days)) {
+          wrap.nckBookings = json.data.days;
         }
+        if (status) {
+          status.textContent = '';
+          show(status, false);
+        }
+        render();
+        if (typeof root.nckHallRefresh === 'function') root.nckHallRefresh();
+      }).catch(function () {
+        if (status) {
+          status.textContent = 'رزروهای ماه بارگذاری نشد؛ می‌توانید بازه را انتخاب کنید.';
+          show(status, true);
+        }
+        render();
       });
     }
+
+    function shiftMonth(delta) {
+      var next = viewM + delta;
+      var y = viewY;
+      if (next < 1) {
+        next = 12;
+        y -= 1;
+      } else if (next > 12) {
+        next = 1;
+        y += 1;
+      }
+      var minM = today.m - 6;
+      var minY = today.y + Math.floor((minM - 1) / 12);
+      minM = ((minM - 1) % 12) + 1;
+      if (minM <= 0) {
+        minM += 12;
+        minY -= 1;
+      }
+      var maxM = today.m + 18;
+      var maxY = today.y + Math.floor((maxM - 1) / 12);
+      maxM = ((maxM - 1) % 12) + 1;
+      if (y < minY || (y === minY && next < minM)) return;
+      if (y > maxY || (y === maxY && next > maxM)) return;
+      viewY = y;
+      viewM = next;
+      render();
+      loadMonth();
+    }
+
     var prev = qs(wrap, '[data-nck-cal-prev]');
-    var next = qs(wrap, '[data-nck-cal-next]');
+    var nextBtn = qs(wrap, '[data-nck-cal-next]');
     if (prev) {
       prev.addEventListener('click', function () {
-        if (viewY === today.y && viewM === today.m) return;
-        viewM -= 1;
-        if (viewM < 1) {
-          viewM = 12;
-          viewY -= 1;
-        }
-        render();
+        shiftMonth(-1);
       });
     }
-    if (next) {
-      next.addEventListener('click', function () {
-        var maxM = today.m + 18;
-        var maxY = today.y + Math.floor((maxM - 1) / 12);
-        maxM = ((maxM - 1) % 12) + 1;
-        if (viewY > maxY || (viewY === maxY && viewM >= maxM)) return;
-        viewM += 1;
-        if (viewM > 12) {
-          viewM = 1;
-          viewY += 1;
-        }
-        render();
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function () {
+        shiftMonth(1);
       });
     }
-    document.addEventListener('click', function (e) {
-      if (!pop || pop.hidden) return;
-      if (wrap.contains(e.target)) return;
-      show(pop, false);
-    });
-    setDate(sel.y, sel.m, sel.d, false);
-    show(pop, false);
+    var hallInput = qs(root, '[name="hall_name"]');
+    if (hallInput) {
+      hallInput.addEventListener('change', function () {
+        loadMonth();
+      });
+      hallInput.addEventListener('input', function () {
+        if (loadTimer) clearTimeout(loadTimer);
+        loadTimer = setTimeout(loadMonth, 280);
+      });
+    }
+    setDate(sel.y, sel.m, sel.d);
+    loadMonth();
   }
 
   var HALL_WINDOWS = [
@@ -677,12 +750,54 @@
       return (startInput && startInput.value) || '16:00';
     }
 
-    function validEnd(start, end) {
+    function rangeBusy(start, end) {
+      var s = parseHallMinutes(start);
+      var e = parseHallMinutes(end);
+      if (s === null || e === null) return false;
+      return hallBookingsOf(root).some(function (b) {
+        var bs = parseHallMinutes(b.start);
+        var be = parseHallMinutes(b.end);
+        return bs !== null && be !== null && s < be && bs < e;
+      });
+    }
+
+    function slotCovered(slot) {
+      var m = parseHallMinutes(slot);
+      if (m === null) return false;
+      return hallBookingsOf(root).some(function (b) {
+        var bs = parseHallMinutes(b.start);
+        var be = parseHallMinutes(b.end);
+        return bs !== null && be !== null && m >= bs && m < be;
+      });
+    }
+
+    function validWindow(start, end) {
       var s = parseHallMinutes(start);
       var e = parseHallMinutes(end);
       if (s === null || e === null) return false;
       if (!hallWindowOf(s) || hallWindowOf(s) !== hallWindowOf(e)) return false;
       return e > s;
+    }
+
+    function validEnd(start, end) {
+      return validWindow(start, end) && !rangeBusy(start, end);
+    }
+
+    function canStart(v) {
+      var sm = parseHallMinutes(v);
+      var win = sm === null ? '' : hallWindowOf(sm);
+      var can = false;
+      if (win && !slotCovered(v)) {
+        HALL_WINDOWS.forEach(function (w) {
+          if (w.id === win && sm < w.end) can = true;
+        });
+      }
+      if (!can) return false;
+      var any = false;
+      itemsOf(endRoll).forEach(function (li) {
+        if (validEnd(v, li.getAttribute('data-value'))) any = true;
+      });
+      return any;
     }
 
     function firstValidEnd(start) {
@@ -691,34 +806,41 @@
         var v = li.getAttribute('data-value');
         if (!found && validEnd(start, v)) found = v;
       });
-      return found || '20:00';
+      return found;
+    }
+
+    function firstValidStart() {
+      var found = '';
+      itemsOf(startRoll).forEach(function (li) {
+        var v = li.getAttribute('data-value');
+        if (!found && canStart(v)) found = v;
+      });
+      return found || '16:00';
     }
 
     function syncEndAvailability() {
+      itemsOf(startRoll).forEach(function (li) {
+        var v = li.getAttribute('data-value');
+        li.classList.toggle('is-off', !canStart(v));
+        li.classList.toggle('is-busy', slotCovered(v));
+      });
       var s = startVal();
+      if (!canStart(s)) {
+        s = firstValidStart();
+        setValue(startInput, s);
+      }
       itemsOf(endRoll).forEach(function (li) {
         var v = li.getAttribute('data-value');
         li.classList.toggle('is-off', !validEnd(s, v));
-      });
-      itemsOf(startRoll).forEach(function (li) {
-        var v = li.getAttribute('data-value');
-        var sm = parseHallMinutes(v);
-        var win = sm === null ? '' : hallWindowOf(sm);
-        var can = false;
-        if (win) {
-          HALL_WINDOWS.forEach(function (w) {
-            if (w.id === win && sm < w.end) can = true;
-          });
-        }
-        li.classList.toggle('is-off', !can);
+        li.classList.toggle('is-busy', !validWindow(s, v) ? false : rangeBusy(s, v));
       });
       var e = (endInput && endInput.value) || '';
       if (!validEnd(s, e)) {
         e = firstValidEnd(s);
-        setValue(endInput, e);
+        if (e) setValue(endInput, e);
       }
       markOn(startRoll, s);
-      markOn(endRoll, e);
+      markOn(endRoll, (endInput && endInput.value) || e);
       return e;
     }
 
@@ -730,7 +852,7 @@
       if (input === startInput) syncEndAvailability();
       else if (!validEnd(startVal(), v)) {
         v = firstValidEnd(startVal());
-        setValue(endInput, v);
+        if (v) setValue(endInput, v);
       }
       markOn(startRoll, startVal());
       markOn(endRoll, endInput.value);
@@ -772,11 +894,11 @@
   }
 
   function bindHallPickers(root) {
-    bindHallCalendar(root);
     var refreshRolls = bindHallRolls(root);
     root.nckHallRefresh = function () {
       if (typeof refreshRolls === 'function') refreshRolls();
     };
+    bindHallCalendar(root);
   }
 
   function updatePreamble(root) {

@@ -31,12 +31,24 @@ class NCK_Learner {
 		);
 	}
 
-	public static function payment_options() {
+	public static function payment_labels() {
 		return array(
 			'site'   => 'سایت',
 			'card'   => 'کارت به کارت',
 			'onsite' => 'در محل کارت کشیده شد',
 		);
+	}
+
+	public static function payment_options() {
+		return array(
+			'site' => 'سایت',
+		);
+	}
+
+	public static function payment_label( $key ) {
+		$all = self::payment_labels();
+		$k   = (string) $key;
+		return isset( $all[ $k ] ) ? $all[ $k ] : '';
 	}
 
 	public static function term_options() {

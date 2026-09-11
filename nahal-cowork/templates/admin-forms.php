@@ -2,8 +2,11 @@
 defined( 'ABSPATH' ) || exit;
 $edit_id = isset( $_GET['form'] ) ? sanitize_text_field( wp_unslash( $_GET['form'] ) ) : ''; // phpcs:ignore
 $is_new  = ( 'new' === $edit_id );
-$form    = $is_new ? NCK_Forms::blank() : ( $edit_id ? NCK_Forms::get( $edit_id ) : null );
-$list    = NCK_Forms::all();
+if ( '' === $edit_id ) {
+	NCK_Forms::sync_all_products();
+}
+$form = $is_new ? NCK_Forms::blank() : ( $edit_id ? NCK_Forms::get( $edit_id ) : null );
+$list = NCK_Forms::all();
 
 if ( $form || $is_new ) :
 	$json = wp_json_encode( $form, JSON_UNESCAPED_UNICODE );
@@ -18,7 +21,7 @@ if ( $form || $is_new ) :
 
 		<div class="nck-panel">
 			<h2><?php echo $is_new ? 'افزودن فرم جدید' : 'ویرایش فرم'; ?></h2>
-			<p class="description">برای نمایش در سایت، شورت‌کد را در برگه یا ویجت المنتور بگذارید. اگر پرداخت روشن باشد، پس از ثبت، سفارش در ووکامرس ساخته می‌شود و در حسابدار هم دیده می‌شود.</p>
+			<p class="description">برای نمایش در سایت، شورت‌کد را در برگه یا ویجت المنتور بگذارید. با ذخیره، یک محصول ووکامرس با همین عنوان ساخته می‌شود و اگر پرداخت روشن باشد سفارش در حسابدار هم دیده می‌شود.</p>
 			<table class="form-table" role="presentation">
 				<tr>
 					<th><label for="nck-form-title">عنوان</label></th>
@@ -54,6 +57,23 @@ if ( $form || $is_new ) :
 					<th>امضا</th>
 					<td><label><input type="checkbox" data-nck-meta="require_signature" <?php checked( ! empty( $form['require_signature'] ) ); ?> /> مرحله امضا در پایان فرم</label></td>
 				</tr>
+				<tr>
+					<th>محصول ووکامرس</th>
+					<td>
+						<?php if ( ! empty( $form['product_id'] ) && function_exists( 'get_edit_post_link' ) ) : ?>
+							<p>
+								<a class="button button-small" href="<?php echo esc_url( get_edit_post_link( (int) $form['product_id'] ) ); ?>" target="_blank" rel="noopener">
+									ویرایش محصول #<?php echo esc_html( (string) (int) $form['product_id'] ); ?>
+								</a>
+							</p>
+							<p class="description">با هر ذخیره، عنوان و مبلغ این محصول با فرم هماهنگ می‌شود.</p>
+						<?php elseif ( class_exists( 'NCK_Pay' ) && ! NCK_Pay::wc_ready() ) : ?>
+							<p class="description">ووکامرس فعال نیست. بعد از فعال‌سازی، با ذخیره فرم یک محصول در فهرست محصولات ساخته می‌شود.</p>
+						<?php else : ?>
+							<p class="description">با ذخیره این فرم، یک محصول مجازی با همین عنوان در ووکامرس ساخته می‌شود.</p>
+						<?php endif; ?>
+					</td>
+				</tr>
 			</table>
 		</div>
 
@@ -76,14 +96,9 @@ if ( $form || $is_new ) :
 					<td><input id="nck-form-item" class="regular-text" type="text" data-nck-pay="item_name" value="<?php echo esc_attr( $form['payment']['item_name'] ); ?>" placeholder="همان عنوان فرم" /></td>
 				</tr>
 				<tr>
-					<th>روش‌های پرداخت</th>
+					<th>روش پرداخت</th>
 					<td>
-						<?php foreach ( NCK_Learner::payment_options() as $k => $label ) : ?>
-							<label style="margin-left:12px">
-								<input type="checkbox" data-nck-pay-method="<?php echo esc_attr( $k ); ?>" <?php checked( in_array( $k, (array) $form['payment']['methods'], true ) ); ?> />
-								<?php echo esc_html( $label ); ?>
-							</label>
-						<?php endforeach; ?>
+						<p class="description">پرداخت کاربر فقط از درگاه سایت است؛ کارت‌به‌کارت و پرداخت در محل نمایش داده نمی‌شود.</p>
 					</td>
 				</tr>
 			</table>
@@ -115,6 +130,7 @@ if ( $form || $is_new ) :
 			<tr>
 				<th>عنوان</th>
 				<th>شورت‌کد</th>
+				<th>محصول</th>
 				<th>پرداخت</th>
 				<th>وضعیت</th>
 				<th></th>
@@ -122,12 +138,19 @@ if ( $form || $is_new ) :
 		</thead>
 		<tbody>
 			<?php if ( ! $list ) : ?>
-				<tr><td colspan="5">هنوز فرم سفارشی ندارید.</td></tr>
+				<tr><td colspan="6">هنوز فرم سفارشی ندارید.</td></tr>
 			<?php else : ?>
 				<?php foreach ( $list as $row ) : ?>
 					<tr>
 						<td><?php echo esc_html( $row['title'] ); ?></td>
 						<td><code><?php echo esc_html( NCK_Forms::shortcode( $row ) ); ?></code></td>
+						<td>
+							<?php if ( ! empty( $row['product_id'] ) && function_exists( 'get_edit_post_link' ) ) : ?>
+								<a href="<?php echo esc_url( get_edit_post_link( (int) $row['product_id'] ) ); ?>" target="_blank" rel="noopener">#<?php echo esc_html( (string) (int) $row['product_id'] ); ?></a>
+							<?php else : ?>
+								—
+							<?php endif; ?>
+						</td>
 						<td><?php echo ! empty( $row['payment']['enabled'] ) ? 'فعال' : 'بدون پرداخت'; ?></td>
 						<td><?php echo 'publish' === $row['status'] ? 'منتشر' : 'پیش‌نویس'; ?></td>
 						<td>

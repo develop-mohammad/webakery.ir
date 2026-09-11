@@ -38,7 +38,7 @@ $front_css = NCK_URL . 'assets/css/frontend.css?v=' . NCK_VERSION;
 		<?php
 		$pay = class_exists( 'NCK_Contracts' ) ? NCK_Contracts::payload( $contract ) : array();
 		if ( ! empty( $pay['pay_amount'] ) || ! empty( $pay['payment'] ) ) :
-			$pay_opts = NCK_Learner::payment_options();
+			$pay_opts = NCK_Learner::payment_labels();
 			$pay_key  = isset( $pay['payment'] ) ? $pay['payment'] : '';
 			$fa       = static function ( $v ) {
 				return NCK_Jalali::fa_digits( (string) $v );

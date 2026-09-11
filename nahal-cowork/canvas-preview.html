@@ -72,15 +72,13 @@
             </fieldset>
             <fieldset class="nck-fieldset">
               <legend>وضعیت پرداخت</legend>
-              <div class="nck-chips">
-                <label class="nck-chip"><input type="radio" name="payment" value="site" required /> سایت</label>
-                <label class="nck-chip"><input type="radio" name="payment" value="card" /> کارت به کارت</label>
-                <label class="nck-chip"><input type="radio" name="payment" value="onsite" /> در محل کارت کشیده شد</label>
+              <input type="hidden" name="payment" value="site" />
+              <div class="nck-pay-site">
+                <p class="nck-pay-site-kicker">پرداخت فقط از درگاه سایت انجام می‌شود.</p>
               </div>
               <div class="nck-grid nck-grid-hall" style="margin-top:12px">
                 <div class="nck-field"><label>مبلغ پرداخت (تومان)</label><input name="pay_amount" type="text" dir="ltr" placeholder="مثلاً 2500000" /></div>
                 <div class="nck-field"><label>تاریخ پرداخت</label><input name="pay_date" type="text" dir="ltr" placeholder="1404/06/20" /></div>
-                <div class="nck-field"><label>شماره پیگیری</label><input name="pay_ref" type="text" dir="ltr" /></div>
               </div>
             </fieldset>
             <fieldset class="nck-fieldset">
@@ -351,19 +349,11 @@
             <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
           </section>
           <section class="nck-step" data-nck-step data-nck-step-label="پرداخت" hidden>
-            <fieldset class="nck-fieldset">
-              <legend>وضعیت پرداخت</legend>
-              <div class="nck-chips">
-                <label class="nck-chip"><input type="radio" name="payment" value="site" required /> سایت</label>
-                <label class="nck-chip"><input type="radio" name="payment" value="card" /> کارت به کارت</label>
-                <label class="nck-chip"><input type="radio" name="payment" value="onsite" /> در محل کارت کشیده شد</label>
-              </div>
-              <div class="nck-grid nck-grid-hall" style="margin-top:12px">
-                <div class="nck-field"><label>مبلغ پرداخت (تومان)</label><input name="pay_amount" type="text" dir="ltr" /></div>
-                <div class="nck-field"><label>تاریخ پرداخت</label><input name="pay_date" type="text" dir="ltr" placeholder="1404/06/20" /></div>
-                <div class="nck-field"><label>شماره پیگیری</label><input name="pay_ref" type="text" dir="ltr" /></div>
-              </div>
-            </fieldset>
+            <input type="hidden" name="payment" value="site" />
+            <div class="nck-pay-site">
+              <p class="nck-pay-site-kicker">پرداخت فقط از درگاه سایت انجام می‌شود.</p>
+              <div class="nck-field"><label>مبلغ پرداخت (تومان)</label><input name="pay_amount" type="text" dir="ltr" /></div>
+            </div>
           </section>
           <nav class="nck-wizard-nav">
             <button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
@@ -420,10 +410,11 @@
               <div class="nck-field"><label>تعداد صندلی</label><input name="chairs" type="number" min="1" required /></div>
               <div class="nck-field nck-field-wide">
                 <span class="nck-label">تاریخ برگزاری</span>
-                <div class="nck-cal" data-nck-cal data-today="1405/06/20" data-today-y="1405" data-today-m="6" data-today-d="20">
-                  <button type="button" class="nck-cal-trigger" data-nck-cal-open><span data-nck-cal-label>۲۰ شهریور ۱۴۰۵</span></button>
+                <p class="nck-form-help">تقویم ماهانه را ورق بزنید. روزهای نقطه‌دار رزرو دارند.</p>
+                <div class="nck-cal nck-cal-month" data-nck-cal data-today="1405/06/20" data-today-y="1405" data-today-m="6" data-today-d="20">
+                  <p class="nck-cal-picked" data-nck-cal-label>۲۰ شهریور ۱۴۰۵</p>
                   <input name="event_date" type="hidden" required value="1405/06/20" />
-                  <div class="nck-cal-pop" data-nck-cal-pop hidden role="dialog" aria-label="تقویم شمسی">
+                  <div class="nck-cal-board" data-nck-cal-board>
                     <div class="nck-cal-nav">
                       <button type="button" data-nck-cal-prev>ماه قبل</button>
                       <strong data-nck-cal-month>شهریور ۱۴۰۵</strong>
@@ -431,6 +422,12 @@
                     </div>
                     <div class="nck-cal-weekdays"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
                     <div class="nck-cal-grid" data-nck-cal-grid></div>
+                    <p class="nck-cal-status" data-nck-cal-status hidden></p>
+                  </div>
+                  <div class="nck-cal-busy" data-nck-cal-busy>
+                    <p class="nck-cal-busy-title">ساعت‌های پر این روز</p>
+                    <ul data-nck-cal-busy-list hidden></ul>
+                    <p class="nck-cal-busy-empty" data-nck-cal-busy-empty>برای این روز رزروی ثبت نشده؛ می‌توانید ساعت آزاد را انتخاب کنید.</p>
                   </div>
                 </div>
               </div>
@@ -489,19 +486,11 @@
             <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
           </section>
           <section class="nck-step" data-nck-step data-nck-step-label="پرداخت" hidden>
-            <fieldset class="nck-fieldset">
-              <legend>وضعیت پرداخت</legend>
-              <div class="nck-chips">
-                <label class="nck-chip"><input type="radio" name="payment" value="site" required /> سایت</label>
-                <label class="nck-chip"><input type="radio" name="payment" value="card" /> کارت به کارت</label>
-                <label class="nck-chip"><input type="radio" name="payment" value="onsite" /> در محل کارت کشیده شد</label>
-              </div>
-              <div class="nck-grid nck-grid-hall" style="margin-top:12px">
-                <div class="nck-field"><label>مبلغ پرداخت (تومان)</label><input name="pay_amount" type="text" dir="ltr" data-nck-from="amount" required /></div>
-                <div class="nck-field"><label>تاریخ پرداخت</label><input name="pay_date" type="text" dir="ltr" placeholder="1404/06/20" /></div>
-                <div class="nck-field"><label>شماره پیگیری</label><input name="pay_ref" type="text" dir="ltr" /></div>
-              </div>
-            </fieldset>
+            <input type="hidden" name="payment" value="site" />
+            <div class="nck-pay-site">
+              <p class="nck-pay-site-kicker">پرداخت فقط از درگاه سایت انجام می‌شود.</p>
+              <div class="nck-field"><label>مبلغ پرداخت (تومان)</label><input name="pay_amount" type="text" dir="ltr" data-nck-from="amount" required /></div>
+            </div>
           </section>
           <nav class="nck-wizard-nav">
             <button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
@@ -571,17 +560,12 @@
             </div>
           </section>
           <section class="nck-step" data-nck-step data-nck-step-label="پرداخت" hidden>
-            <fieldset class="nck-fieldset">
-              <legend>روش پرداخت</legend>
-              <div class="nck-chips">
-                <label class="nck-chip"><input type="radio" name="payment" value="site" required /> سایت</label>
-                <label class="nck-chip"><input type="radio" name="payment" value="card" /> کارت به کارت</label>
-                <label class="nck-chip"><input type="radio" name="payment" value="onsite" /> پرداخت در محل</label>
-              </div>
-            </fieldset>
+            <input type="hidden" name="payment" value="site" />
+            <div class="nck-pay-site">
+              <p class="nck-pay-site-kicker">پرداخت فقط از درگاه سایت انجام می‌شود.</p>
+            </div>
             <div class="nck-grid nck-grid-hall">
               <div class="nck-field"><label>مبلغ (تومان)</label><input name="pay_amount" type="text" dir="ltr" required placeholder="مبلغ به تومان" /></div>
-              <div class="nck-field"><label>شماره پیگیری</label><input name="pay_ref" type="text" dir="ltr" /></div>
             </div>
           </section>
           <section class="nck-step" data-nck-step data-nck-step-label="تأیید و ثبت" hidden>
@@ -657,6 +641,20 @@
           p = String(p || '').replace(/[۰-۹]/g, function (c) { return '0123456789'['۰۱۲۳۴۵۶۷۸۹'.indexOf(c)]; }).replace(/\D+/g, '');
           if (p.length === 10 && p[0] === '9') p = '0' + p;
           return /^09\d{9}$/.test(p) ? p : '';
+        }
+        if (action === 'nck_hall_month') {
+          var hall = String(data.hall_name || '').trim();
+          var all = {
+            '1405/06/20': [{ start: '16:00', end: '20:00', hall: 'سالن همایش' }],
+            '1405/06/22': [{ start: '09:00', end: '13:00', hall: 'سالن اصلی' }],
+            '1405/06/25': [{ start: '16:00', end: '18:00', hall: 'سالن همایش' }, { start: '18:00', end: '22:00', hall: 'سالن اصلی' }]
+          };
+          var days = {};
+          Object.keys(all).forEach(function (k) {
+            var list = all[k].filter(function (b) { return !hall || b.hall === hall; });
+            if (list.length) days[k] = list;
+          });
+          return ok({ year: data.year, month: data.month, days: days });
         }
         if (action === 'nck_sign') {
           if (!data.agree) return err('برای ثبت قرارداد باید مفاد آن را بپذیرید.');

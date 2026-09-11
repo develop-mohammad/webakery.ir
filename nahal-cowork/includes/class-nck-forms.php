@@ -58,10 +58,11 @@ class NCK_Forms {
 			'slogan'             => 'هوای رشدت رو داریم',
 			'status'             => 'publish',
 			'require_signature' => 1,
+			'product_id'         => 0,
 			'payment'            => array(
 				'enabled'   => 1,
 				'amount'    => 0,
-				'methods'   => array( 'site', 'card', 'onsite' ),
+				'methods'   => array( 'site' ),
 				'item_name' => '',
 			),
 			'steps'              => array(
@@ -140,7 +141,13 @@ class NCK_Forms {
 			$form['id'] = self::new_id();
 		}
 		$form['slug'] = self::unique_slug( $form['slug'] !== '' ? $form['slug'] : $form['title'], $form['id'] );
-		$all            = self::all();
+		if ( class_exists( 'NCK_Pay' ) ) {
+			$pid = NCK_Pay::ensure_form_product( $form );
+			if ( $pid ) {
+				$form['product_id'] = $pid;
+			}
+		}
+		$all                = self::all();
 		$all[ $form['id'] ] = $form;
 		self::store_set( $all );
 		return $form;
@@ -152,9 +159,35 @@ class NCK_Forms {
 		if ( ! isset( $all[ $id ] ) ) {
 			return false;
 		}
+		if ( class_exists( 'NCK_Pay' ) ) {
+			NCK_Pay::trash_form_product( $all[ $id ] );
+		}
 		unset( $all[ $id ] );
 		self::store_set( $all );
 		return true;
+	}
+
+	public static function sync_all_products() {
+		if ( ! class_exists( 'NCK_Pay' ) || ! NCK_Pay::wc_ready() ) {
+			return;
+		}
+		$all     = self::all();
+		$changed = false;
+		foreach ( $all as $id => $form ) {
+			$existing = isset( $form['product_id'] ) ? (int) $form['product_id'] : 0;
+			if ( $existing && function_exists( 'wc_get_product' ) && wc_get_product( $existing ) ) {
+				continue;
+			}
+			$pid = NCK_Pay::ensure_form_product( $form );
+			if ( $pid ) {
+				$form['product_id'] = $pid;
+				$all[ $id ]         = $form;
+				$changed            = true;
+			}
+		}
+		if ( $changed ) {
+			self::store_set( $all );
+		}
 	}
 
 	public static function shortcode( array $form ) {
@@ -182,18 +215,15 @@ class NCK_Forms {
 		$status         = isset( $in['status'] ) ? self::key( $in['status'] ) : 'publish';
 		$out['status']  = in_array( $status, array( 'publish', 'draft' ), true ) ? $status : 'publish';
 		$out['require_signature'] = empty( $in['require_signature'] ) ? 0 : 1;
+		$out['product_id']        = isset( $in['product_id'] ) ? max( 0, (int) $in['product_id'] ) : 0;
 
 		$pay_in = isset( $in['payment'] ) && is_array( $in['payment'] ) ? $in['payment'] : array();
-		$methods = isset( $pay_in['methods'] ) ? $pay_in['methods'] : array( 'site', 'card', 'onsite' );
 		$out['payment'] = array(
 			'enabled'   => empty( $pay_in['enabled'] ) ? 0 : 1,
 			'amount'    => max( 0, NCK_Hall::parse_amount( isset( $pay_in['amount'] ) ? $pay_in['amount'] : 0 ) ),
-			'methods'   => self::clean_methods( $methods ),
+			'methods'   => array( 'site' ),
 			'item_name' => self::text( isset( $pay_in['item_name'] ) ? $pay_in['item_name'] : '', 160 ),
 		);
-		if ( ! $out['payment']['methods'] ) {
-			$out['payment']['methods'] = array( 'site', 'card', 'onsite' );
-		}
 
 		$steps_in = isset( $in['steps'] ) && is_array( $in['steps'] ) ? $in['steps'] : $d['steps'];
 		$out['steps'] = self::sanitize_steps( $steps_in );
@@ -341,7 +371,7 @@ class NCK_Forms {
 			$roles['national_id'] = $nid;
 		}
 
-		$payment = '';
+		$payment = 'site';
 		$pay_ref = class_exists( 'NCK_Pay' ) ? NCK_Pay::make_ref() : self::text( isset( $in['pay_ref'] ) ? $in['pay_ref'] : '', 80 );
 		$pay_date = '';
 		if ( isset( $in['pay_date'] ) && trim( (string) $in['pay_date'] ) !== '' ) {
@@ -350,15 +380,6 @@ class NCK_Forms {
 				return array( 'ok' => false, 'message' => 'تاریخ پرداخت را به صورت ۱۴۰۴/۰۶/۲۰ وارد کنید.' );
 			}
 		}
-		foreach ( $answers as $row ) {
-			if ( 'payment_method' === $row['type'] && is_string( $row['value'] ) ) {
-				$payment = $row['value'];
-			}
-		}
-		if ( $payment === '' && isset( $in['payment'] ) ) {
-			$payment = NCK_Learner::pick_one( $in['payment'], NCK_Learner::payment_options() );
-		}
-
 		$amount = (int) $roles['amount'];
 		if ( ! empty( $form['payment']['amount'] ) ) {
 			$amount = (int) $form['payment']['amount'];
@@ -370,9 +391,8 @@ class NCK_Forms {
 			if ( $amount < 1 ) {
 				return array( 'ok' => false, 'message' => 'مبلغ پرداخت را وارد کنید تا در حسابدار و ووکامرس ثبت شود.' );
 			}
-			if ( ! $payment ) {
-				$payment = 'site';
-			}
+		} else {
+			$payment = '';
 		}
 
 		if ( empty( $in['agree'] ) ) {
@@ -392,6 +412,7 @@ class NCK_Forms {
 				'form_id'      => $form['id'],
 				'form_slug'    => $form['slug'],
 				'form_title'   => $form['title'],
+				'product_id'   => isset( $form['product_id'] ) ? (int) $form['product_id'] : 0,
 				'name'         => $name,
 				'phone'        => $phone,
 				'email'        => $roles['email'],
@@ -441,15 +462,10 @@ class NCK_Forms {
 	}
 
 	public static function payment_options_for( array $form ) {
-		$all = NCK_Learner::payment_options();
-		$want = isset( $form['payment']['methods'] ) ? (array) $form['payment']['methods'] : array_keys( $all );
-		$out  = array();
-		foreach ( $want as $k ) {
-			if ( isset( $all[ $k ] ) ) {
-				$out[ $k ] = $all[ $k ];
-			}
-		}
-		return $out ? $out : $all;
+		unset( $form );
+		return array(
+			'site' => class_exists( 'NCK_Learner' ) ? NCK_Learner::payment_label( 'site' ) : 'سایت',
+		);
 	}
 
 	public static function slugify( $raw ) {
@@ -602,12 +618,11 @@ class NCK_Forms {
 	private static function read_field( array $field, $raw, array $form ) {
 		$type = $field['type'];
 		if ( 'payment_method' === $type ) {
-			$opts = self::payment_options_for( $form );
-			$val  = NCK_Learner::pick_one( is_array( $raw ) ? '' : $raw, $opts );
+			unset( $raw );
 			return array(
 				'ok'      => true,
-				'value'   => $val,
-				'display' => ( $val && isset( $opts[ $val ] ) ) ? $opts[ $val ] : '',
+				'value'   => 'site',
+				'display' => class_exists( 'NCK_Learner' ) ? NCK_Learner::payment_label( 'site' ) : 'سایت',
 			);
 		}
 		if ( 'checkbox' === $type ) {
@@ -736,15 +751,10 @@ class NCK_Forms {
 		}
 
 		if ( 'payment_method' === $type ) {
-			$opts = self::payment_options_for( $form );
-			echo '<fieldset class="nck-fieldset"><legend>' . esc_html( $field['label'] ) . '</legend><div class="nck-chips">';
-			$i = 0;
-			foreach ( $opts as $k => $label ) {
-				$r = ( $req && 0 === $i ) ? ' required' : '';
-				echo '<label class="nck-chip"><input type="radio" name="payment" value="' . esc_attr( $k ) . '"' . $r . ' /> ' . esc_html( $label ) . '</label>';
-				$i++;
-			}
-			echo '</div></fieldset>';
+			echo '<div class="nck-pay-site">';
+			echo '<input type="hidden" name="payment" value="site" />';
+			echo '<p class="nck-pay-site-kicker">پرداخت فقط از درگاه سایت انجام می‌شود.</p>';
+			echo '</div>';
 			return;
 		}
 

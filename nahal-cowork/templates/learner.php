@@ -39,7 +39,10 @@ $chips = static function ( $name, array $opts, $type = 'checkbox', $required = f
 			</fieldset>
 			<fieldset class="nck-fieldset">
 				<legend>وضعیت پرداخت</legend>
-				<?php $chips( 'payment', NCK_Learner::payment_options(), 'radio', true ); ?>
+				<input type="hidden" name="payment" value="site" />
+				<div class="nck-pay-site">
+					<p class="nck-pay-site-kicker">پرداخت فقط از درگاه سایت انجام می‌شود.</p>
+				</div>
 				<div class="nck-grid nck-grid-hall" style="margin-top:12px">
 					<div class="nck-field">
 						<label for="nck-pay-amount">مبلغ پرداخت (تومان)</label>

@@ -180,6 +180,150 @@ class NCK_Hall {
 		);
 	}
 
+	public static function hall_key( $name ) {
+		$name = trim( (string) $name );
+		$name = preg_replace( '/\s+/u', ' ', $name );
+		return $name;
+	}
+
+	/**
+	 * بازه نیمه‌باز: ۱۶:۰۰–۲۰:۰۰ با ۲۰:۰۰–۲۲:۰۰ تداخل ندارد.
+	 */
+	public static function ranges_overlap( $a_start, $a_end, $b_start, $b_end ) {
+		$a0 = NCK_Shifts::parse_hhmm( $a_start );
+		$a1 = NCK_Shifts::parse_hhmm( $a_end );
+		$b0 = NCK_Shifts::parse_hhmm( $b_start );
+		$b1 = NCK_Shifts::parse_hhmm( $b_end );
+		if ( null === $a0 || null === $a1 || null === $b0 || null === $b1 ) {
+			return false;
+		}
+		return $a0 < $b1 && $b0 < $a1;
+	}
+
+	/**
+	 * رزروهای امضاشدهٔ یک ماه، گروه‌بندی‌شده با کلید تاریخ شمسی.
+	 *
+	 * @param array<int,array> $payloads
+	 * @return array<string,array<int,array{start:string,end:string,hall:string}>>
+	 */
+	public static function group_month_payloads( array $payloads, $jy, $jm, $hall = '' ) {
+		$jy   = (int) $jy;
+		$jm   = (int) $jm;
+		$want = self::hall_key( $hall );
+		$days = array();
+		foreach ( $payloads as $p ) {
+			if ( ! is_array( $p ) ) {
+				continue;
+			}
+			$date = NCK_Jalali::parse( isset( $p['event_date'] ) ? $p['event_date'] : '' );
+			if ( ! $date || (int) $date['y'] !== $jy || (int) $date['m'] !== $jm ) {
+				continue;
+			}
+			$room = self::hall_key( isset( $p['hall_name'] ) ? $p['hall_name'] : '' );
+			if ( $want !== '' && $room !== $want ) {
+				continue;
+			}
+			$hours = self::check_hours(
+				isset( $p['start_hour'] ) ? $p['start_hour'] : '',
+				isset( $p['end_hour'] ) ? $p['end_hour'] : ''
+			);
+			if ( empty( $hours['ok'] ) ) {
+				continue;
+			}
+			$key = NCK_Jalali::format( $date['y'], $date['m'], $date['d'] );
+			if ( ! isset( $days[ $key ] ) ) {
+				$days[ $key ] = array();
+			}
+			$days[ $key ][] = array(
+				'start' => $hours['start'],
+				'end'   => $hours['end'],
+				'hall'  => $room,
+			);
+		}
+		return $days;
+	}
+
+	/**
+	 * @return array<string,array<int,array{start:string,end:string,hall:string}>>
+	 */
+	public static function month_bookings( $jy, $jm, $hall = '' ) {
+		return self::group_month_payloads( self::month_payloads( $jy, $jm ), $jy, $jm, $hall );
+	}
+
+	/**
+	 * @return array<int,array>
+	 */
+	public static function month_payloads( $jy, $jm ) {
+		global $wpdb;
+		if ( ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_results' ) ) {
+			return array();
+		}
+		$jy    = (int) $jy;
+		$jm    = (int) $jm;
+		if ( $jy < 1390 || $jy > 1500 || $jm < 1 || $jm > 12 ) {
+			return array();
+		}
+		$table = ( isset( $wpdb->prefix ) ? $wpdb->prefix : '' ) . 'nck_contracts';
+		$plain = sprintf( '%04d/%02d', $jy, $jm );
+		$esc   = str_replace( '/', '\\/', $plain );
+		$like1 = '%' . $wpdb->esc_like( $plain ) . '%';
+		$like2 = '%' . $wpdb->esc_like( $esc ) . '%';
+		$rows  = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT payload FROM {$table} WHERE kind = %s AND status = %s AND (payload LIKE %s OR payload LIKE %s)",
+				'hall',
+				'signed',
+				$like1,
+				$like2
+			),
+			ARRAY_A
+		);
+		if ( ! is_array( $rows ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $rows as $row ) {
+			$raw = isset( $row['payload'] ) ? $row['payload'] : '';
+			$p   = json_decode( (string) $raw, true );
+			if ( is_array( $p ) ) {
+				$out[] = $p;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * @return array<int,array{start:string,end:string,hall:string}>
+	 */
+	public static function day_bookings( $date, $hall = '' ) {
+		$parsed = NCK_Jalali::parse( $date );
+		if ( ! $parsed ) {
+			return array();
+		}
+		$key  = NCK_Jalali::format( $parsed['y'], $parsed['m'], $parsed['d'] );
+		$days = self::month_bookings( $parsed['y'], $parsed['m'], $hall );
+		return isset( $days[ $key ] ) ? $days[ $key ] : array();
+	}
+
+	/**
+	 * @return array{ok:bool,message?:string,busy?:array}
+	 */
+	public static function clash( $date, $start, $end, $hall ) {
+		$busy = self::day_bookings( $date, $hall );
+		foreach ( $busy as $row ) {
+			if ( self::ranges_overlap( $start, $end, $row['start'], $row['end'] ) ) {
+				$from = NCK_Jalali::fa_digits( $row['start'] );
+				$to   = NCK_Jalali::fa_digits( $row['end'] );
+				return array(
+					'ok'      => false,
+					'busy'    => $row,
+					'message' => 'این بازه در «' . $hall . '» پر است (' . $from . ' تا ' . $to . '). ساعت دیگری انتخاب کنید.',
+				);
+			}
+		}
+		return array( 'ok' => true );
+	}
+
 	/**
 	 * @return array{ok:bool,message:string,payload?:array}
 	 */
@@ -236,6 +380,12 @@ class NCK_Hall {
 
 		$start_s = $hours['start'];
 		$end_s   = $hours['end'];
+		$date_s  = NCK_Jalali::format( $date['y'], $date['m'], $date['d'] );
+
+		$clash = self::clash( $date_s, $start_s, $end_s, $hall );
+		if ( empty( $clash['ok'] ) ) {
+			return $clash;
+		}
 
 		$pay = class_exists( 'NCK_Pay' ) ? NCK_Pay::parse_front_payment( $in, $amount ) : array( 'ok' => true, 'payload' => array() );
 		if ( empty( $pay['ok'] ) ) {
@@ -255,7 +405,7 @@ class NCK_Hall {
 					'phone'        => $phone,
 					'hall_name'    => $hall,
 					'amount'       => $amount,
-					'event_date'   => NCK_Jalali::format( $date['y'], $date['m'], $date['d'] ),
+					'event_date'   => $date_s,
 					'start_hour'   => $start_s,
 					'end_hour'     => $end_s,
 					'chairs'       => $chairs,

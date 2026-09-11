@@ -42,7 +42,7 @@ $row       = static function ( $label, $value ) {
 			<?php
 			$row( 'نحوه آشنایی', NCK_Learner::join_labels( isset( $p['heard'] ) ? (array) $p['heard'] : array(), NCK_Learner::heard_options() ) );
 			$pay = isset( $p['payment'] ) ? $p['payment'] : '';
-			$pay_opts = NCK_Learner::payment_options();
+			$pay_opts = NCK_Learner::payment_labels();
 			$row( 'وضعیت پرداخت', isset( $pay_opts[ $pay ] ) ? $pay_opts[ $pay ] : '—' );
 			$row( 'مبلغ', ! empty( $p['pay_amount'] ) ? NCK_Hall::format_money( (int) $p['pay_amount'] ) : '—' );
 			$row( 'تاریخ پرداخت', $fa( isset( $p['pay_date'] ) ? $p['pay_date'] : '' ) );

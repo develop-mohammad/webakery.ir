@@ -209,7 +209,7 @@ class NCK_Admin {
 			echo '<div class="notice notice-success is-dismissible"><p>تنظیمات ذخیره شد.</p></div>';
 		}
 		if ( ! empty( $_GET['form_saved'] ) ) { // phpcs:ignore
-			echo '<div class="notice notice-success is-dismissible"><p>فرم ذخیره شد. شورت‌کد را در برگه یا المنتور بگذارید.</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>فرم ذخیره شد. اگر ووکامرس فعال باشد، محصول متناظر در فهرست محصولات هم ساخته یا به‌روز شده است.</p></div>';
 		}
 		if ( ! empty( $_GET['deleted'] ) ) { // phpcs:ignore
 			echo '<div class="notice notice-success is-dismissible"><p>فرم حذف شد.</p></div>';

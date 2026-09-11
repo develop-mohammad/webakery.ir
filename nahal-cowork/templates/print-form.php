@@ -75,7 +75,7 @@ $row       = static function ( $label, $value ) {
 				<h3>پرداخت</h3>
 				<?php
 				$pay = isset( $p['payment'] ) ? $p['payment'] : '';
-				$opts = NCK_Learner::payment_options();
+				$opts = NCK_Learner::payment_labels();
 				$row( 'روش پرداخت', isset( $opts[ $pay ] ) ? $opts[ $pay ] : '—' );
 				$row( 'مبلغ', ! empty( $p['pay_amount'] ) ? NCK_Hall::format_money( (int) $p['pay_amount'] ) : '—' );
 				$row( 'تاریخ پرداخت', $fa( isset( $p['pay_date'] ) ? $p['pay_date'] : '' ) );

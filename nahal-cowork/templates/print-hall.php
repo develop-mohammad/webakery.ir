@@ -65,7 +65,7 @@ $payload   = NCK_Contracts::payload( $contract );
 
 		<?php if ( ! empty( $payload['pay_amount'] ) || ! empty( $payload['payment'] ) ) : ?>
 			<?php
-			$pay_opts = NCK_Learner::payment_options();
+			$pay_opts = NCK_Learner::payment_labels();
 			$pay_key  = isset( $payload['payment'] ) ? $payload['payment'] : '';
 			?>
 			<section class="nck-section">
