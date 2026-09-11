@@ -382,6 +382,7 @@ wbgs_assert( false !== strpos( $home_src, 'WBGS_Plugin::html_dir()' ), 'google h
 $preview_src = file_get_contents( dirname( __DIR__ ) . '/canvas-preview.html' );
 wbgs_assert( false !== strpos( $preview_src, 'wbgs-copy-one' ), 'preview has per-phrase copy' );
 wbgs_assert( false !== strpos( $preview_src, 'dir=ltr' ), 'preview can flip to LTR' );
+wbgs_assert( false !== strpos( $preview_src, 'copyOnVisualLeft' ), 'preview can measure copy side' );
 
 if ( $failed ) {
 	echo "\n$failed failed\n";

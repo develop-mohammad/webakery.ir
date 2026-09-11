@@ -82,6 +82,30 @@
   if (root) {
     root.setAttribute('dir', ltr ? 'ltr' : 'rtl');
   }
+  window.addEventListener('load', function () {
+    if (!/[?&]measure=1/.test(location.search)) {
+      return;
+    }
+    var kw = document.querySelector('.wbgs-kw');
+    var btn = document.querySelector('.wbgs-copy-one');
+    if (!kw || !btn) {
+      return;
+    }
+    var k = kw.getBoundingClientRect();
+    var b = btn.getBoundingClientRect();
+    var dir = document.documentElement.getAttribute('dir') || 'rtl';
+    var pre = document.createElement('pre');
+    pre.id = 'wbgs-measure';
+    pre.textContent = JSON.stringify({
+      dir: dir,
+      kwLeft: Math.round(k.left),
+      kwRight: Math.round(k.right),
+      btnLeft: Math.round(b.left),
+      btnRight: Math.round(b.right),
+      copyOnVisualLeft: b.left < k.left
+    });
+    document.body.appendChild(pre);
+  });
 })();
 </script>
 <script>
