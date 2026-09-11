@@ -90,12 +90,7 @@ export function WooCommercePage() {
               <b>۵.</b> دسترسی را بگذار روی <b>خواندن/نوشتن</b> و ذخیره کن
             </li>
             <li>
-              <b>۶.</b> دو تا نوشته بهت می‌دهد. هر دو را کپی کن:
-              <span className="mt-1 block rounded-md bg-muted px-2 py-1.5 font-mono text-[12px] leading-6" dir="ltr">
-                کلید اول با ck_ شروع می‌شود
-                <br />
-                کلید دوم با cs_ شروع می‌شود
-              </span>
+              <b>۶.</b> دو تا نوشتهٔ انگلیسی بهت می‌دهد. هر دو را کپی کن و در قدم ۲ بچسبان.
             </li>
           </ol>
         </CardContent>
@@ -167,7 +162,7 @@ export function WooCommercePage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-[13px] leading-6 text-muted-foreground">
-              وقتی تست بالا سبز شد، این دکمه را بزن. همه کالاهای سایت می‌آیند صفحهٔ «کالاها».
+              اول «ببین وصل می‌شود؟» را بزن. اگر پیام موفقیت دیدی، بعد این دکمه را بزن تا کالاها بیایند صفحهٔ «کالاها».
             </p>
             <Button type="button" disabled={busy} onClick={pull}>
               {busy ? 'صبر کن، دارد می‌آورد…' : 'کالاهای سایت را بیاور'}
