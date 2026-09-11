@@ -51,8 +51,8 @@
 .nck-mark img{
 	display: block;
 	width: auto;
-	max-width: 120px;
-	max-height: 56px;
+	max-width: 160px;
+	max-height: 72px;
 	height: auto;
 	object-fit: contain;
 }

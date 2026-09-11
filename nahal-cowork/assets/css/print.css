@@ -19,8 +19,8 @@
 	cursor: pointer;
 }
 .nck-print-paper .nck-mark img{
-	max-width: 140px;
-	max-height: 64px;
+	max-width: 160px;
+	max-height: 80px;
 }
 .nck-sign-row{
 	display: grid;
