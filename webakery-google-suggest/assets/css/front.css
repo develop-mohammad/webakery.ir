@@ -1,0 +1,116 @@
+/* صفحهٔ جدا سجست‌یاب — بدون قالب سایت */
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
+
+.wbgs-app {
+	margin: 0;
+	min-height: 100vh;
+	background: #f1f5f9;
+	color: #0f172a;
+	font-family: Vazirmatn, Tahoma, sans-serif;
+}
+
+.wbgs-app-google {
+	background: #fff;
+	color: #202124;
+}
+
+.wbgs-embed {
+	direction: rtl;
+}
+
+.wbgs-embed[dir="ltr"] {
+	direction: ltr;
+}
+
+.wbgs-embed .wbgs-g {
+	font-family: inherit;
+	max-width: 100%;
+	padding-top: 8px;
+}
+
+.wbgs-embed [hidden] {
+	display: none !important;
+}
+
+.wbgs-embed .wbgs-locked h2 {
+	margin: 0 0 6px;
+	font-size: 16px;
+}
+
+.wbgs-app [hidden] {
+	display: none !important;
+}
+
+.wbgs-app-shell {
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: 28px 16px 48px;
+}
+
+.wbgs-app-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 16px;
+	margin-bottom: 20px;
+}
+
+.wbgs-app-head h1 {
+	margin: 0 0 4px;
+	font-size: 22px;
+}
+
+.wbgs-app-head p {
+	margin: 0;
+	color: #64748b;
+	font-size: 13px;
+}
+
+.wbgs-app-user {
+	font-size: 13px;
+	color: #334155;
+}
+
+.wbgs-app-user a {
+	margin-right: 10px;
+}
+
+.wbgs-login-panel {
+	max-width: 420px;
+	margin: 24px auto 0;
+}
+
+.wbgs-login-panel h2 {
+	margin: 0 0 8px;
+	font-size: 18px;
+}
+
+.wbgs-admin-hint {
+	color: #b45309;
+	background: #fffbeb;
+	border-radius: 8px;
+	padding: 8px 12px;
+	font-size: 13px;
+}
+
+.wbgs-app .button,
+.wbgs-embed .button {
+	display: inline-block;
+	border: 1px solid #8c8f94;
+	background: #f6f7f7;
+	border-radius: 6px;
+	padding: 7px 14px;
+	font: inherit;
+	cursor: pointer;
+}
+
+.wbgs-app .button-primary,
+.wbgs-embed .button-primary {
+	background: #0f766e;
+	border-color: #0f766e;
+	color: #fff;
+}
+
+.wbgs-embed .wbgs-card {
+	margin: 12px 0;
+}
