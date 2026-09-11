@@ -1,4 +1,26 @@
 .nck-wrap{ direction: rtl; }
+.nck-logo-preview{
+	width: 132px;
+	height: 88px;
+	border: 1px dashed #cbd5e1;
+	border-radius: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0 0 8px;
+	background: #fff;
+	overflow: hidden;
+	color: #64748b;
+	font-size: 12px;
+	text-align: center;
+	padding: 6px;
+}
+.nck-logo-preview img{
+	max-width: 100%;
+	max-height: 80px;
+	object-fit: contain;
+}
+.nck-logo-actions{ display: flex; gap: 8px; flex-wrap: wrap; }
 .nck-h1{
 	display: flex;
 	align-items: center;

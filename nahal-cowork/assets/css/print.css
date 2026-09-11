@@ -18,10 +18,9 @@
 	color: #fff;
 	cursor: pointer;
 }
-.nck-print-paper{
-	max-width: 800px;
-	margin: 0 auto 32px;
-	padding: 28px 32px 36px;
+.nck-print-paper .nck-mark img{
+	max-width: 140px;
+	max-height: 64px;
 }
 .nck-sign-row{
 	display: grid;

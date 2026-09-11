@@ -19,9 +19,7 @@ $chips = static function ( $name, array $opts, $type = 'checkbox', $required = f
 <div class="nck-root" dir="rtl" data-nck="learner">
 	<form class="nck-form nck-wizard" data-nck-sign-learner data-nck-wizard novalidate>
 		<header class="nck-paper-head nck-wizard-brand">
-			<div class="nck-mark" aria-hidden="true">
-				<svg viewBox="0 0 48 48" width="42" height="42"><path fill="currentColor" d="M24 4c1.2 6 3 10 8 14-6 1-10 4-12 10-2-6-6-9-12-10 5-4 6.8-8 8-14 2 5 4 8 8 10z"/><path fill="currentColor" opacity=".55" d="M24 28c2 6 5 10 12 14-8-1-14 1-16 8-2-7-8-9-16-8 7-4 10-8 12-14 2 4 4 6 8 8z"/></svg>
-			</div>
+			<?php include NCK_PATH . 'templates/brand-mark.php'; ?>
 			<div>
 				<p class="nck-kicker"><?php echo esc_html( $center ); ?></p>
 				<h2 class="nck-title">فرم پذیرش و شناخت فراگیر</h2>
@@ -224,6 +222,7 @@ $chips = static function ( $name, array $opts, $type = 'checkbox', $required = f
 		<p data-nck-done-msg></p>
 		<p>
 			<a class="nck-btn" data-nck-print-link href="#" target="_blank" rel="noopener">مشاهده و چاپ فرم</a>
+			<a class="nck-btn nck-btn-ghost" data-nck-pay-link href="#" hidden>پرداخت در سایت</a>
 		</p>
 	</div>
 </div>

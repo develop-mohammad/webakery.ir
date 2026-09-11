@@ -28,6 +28,7 @@ class NCK_Settings {
 			'contract_preamble' => NCK_Contract::default_preamble(),
 			'contract_sections' => implode( "\n---\n", $packed ),
 			'accent'            => '#3f5d45',
+			'logo_id'           => 0,
 			'hall_org'          => NCK_Hall::default_org(),
 			'hall_signer'       => NCK_Hall::default_signer(),
 			'hall_list'         => implode( "\n", NCK_Hall::default_halls() ),
@@ -160,6 +161,13 @@ class NCK_Settings {
 		$color = function_exists( 'sanitize_hex_color' ) ? sanitize_hex_color( isset( $in['accent'] ) ? $in['accent'] : '' ) : '';
 		$out['accent'] = $color ? $color : $d['accent'];
 
+		$logo_raw = isset( $in['logo_id'] ) ? $in['logo_id'] : 0;
+		$logo_id  = function_exists( 'absint' ) ? absint( $logo_raw ) : (int) $logo_raw;
+		if ( $logo_id && function_exists( 'wp_attachment_is_image' ) && ! wp_attachment_is_image( $logo_id ) ) {
+			$logo_id = 0;
+		}
+		$out['logo_id'] = $logo_id;
+
 		$out['hall_org']    = sanitize_text_field( isset( $in['hall_org'] ) ? $in['hall_org'] : $d['hall_org'] );
 		$out['hall_signer'] = sanitize_text_field( isset( $in['hall_signer'] ) ? $in['hall_signer'] : $d['hall_signer'] );
 		$out['hall_list']   = sanitize_textarea_field( isset( $in['hall_list'] ) ? $in['hall_list'] : $d['hall_list'] );
@@ -177,6 +185,22 @@ class NCK_Settings {
 		$out['learner_fee'] = max( 0, NCK_Hall::parse_amount( isset( $in['learner_fee'] ) ? $in['learner_fee'] : $d['learner_fee'] ) );
 
 		return $out;
+	}
+
+	public static function logo_id() {
+		return (int) self::get( 'logo_id', 0 );
+	}
+
+	public static function logo_url( $size = 'medium' ) {
+		$id = self::logo_id();
+		if ( $id < 1 || ! function_exists( 'wp_get_attachment_image_url' ) ) {
+			return '';
+		}
+		$url = wp_get_attachment_image_url( $id, $size );
+		if ( ! $url && function_exists( 'wp_get_attachment_url' ) ) {
+			$url = wp_get_attachment_url( $id );
+		}
+		return $url ? (string) $url : '';
 	}
 
 	public static function save( $input ) {

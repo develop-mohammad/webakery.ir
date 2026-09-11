@@ -20,6 +20,7 @@ class NCK_Plugin {
 		NCK_Print::hooks();
 		NCK_Frontend::hooks();
 		NCK_Admin::hooks();
+		NCK_Pay::hooks();
 
 		if ( did_action( 'elementor/loaded' ) ) {
 			$this->load_elementor();

@@ -8,9 +8,7 @@ $blank = '…………………….';
 <div class="nck-root" dir="rtl" data-nck="hall" data-ms-label="سرکارخانم">
 	<form class="nck-form nck-wizard" data-nck-sign-hall data-nck-wizard novalidate>
 		<header class="nck-paper-head nck-wizard-brand">
-			<div class="nck-mark" aria-hidden="true">
-				<svg viewBox="0 0 48 48" width="42" height="42"><path fill="currentColor" d="M24 4c1.2 6 3 10 8 14-6 1-10 4-12 10-2-6-6-9-12-10 5-4 6.8-8 8-14 2 5 4 8 8 10z"/></svg>
-			</div>
+			<?php include NCK_PATH . 'templates/brand-mark.php'; ?>
 			<div>
 				<p class="nck-kicker">بسمه تعالی</p>
 				<h2 class="nck-title">قرارداد اجاره سالن</h2>
@@ -160,7 +158,7 @@ $blank = '…………………….';
 		<nav class="nck-wizard-nav">
 			<button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
 			<button type="button" class="nck-btn" data-nck-next>مرحله بعد</button>
-			<button type="submit" class="nck-btn" data-nck-submit hidden>ثبت قرارداد سالن</button>
+			<button type="submit" class="nck-btn" data-nck-submit hidden>ثبت و پرداخت در سایت</button>
 		</nav>
 	</form>
 
@@ -169,6 +167,7 @@ $blank = '…………………….';
 		<p data-nck-done-msg></p>
 		<p>
 			<a class="nck-btn" data-nck-print-link href="#" target="_blank" rel="noopener">دانلود و چاپ قرارداد</a>
+			<a class="nck-btn nck-btn-ghost" data-nck-pay-link href="#" hidden>پرداخت در سایت</a>
 		</p>
 	</div>
 </div>

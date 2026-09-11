@@ -46,6 +46,16 @@
 	border-bottom: 1px solid var(--nck-edge);
 }
 .nck-mark{ color: var(--nck-leaf); flex: 0 0 auto; }
+.nck-mark svg{ display: block; }
+.nck-mark.has-logo{ color: inherit; }
+.nck-mark img{
+	display: block;
+	width: auto;
+	max-width: 120px;
+	max-height: 56px;
+	height: auto;
+	object-fit: contain;
+}
 .nck-kicker{
 	margin: 0;
 	font-size: .82rem;
@@ -522,6 +532,15 @@
 	font-weight: 700;
 	color: var(--nck-leaf);
 }
+.nck-pay-gate{
+	margin: 0 0 12px;
+	padding: 12px 14px;
+	border: 1px solid var(--nck-edge);
+	border-radius: 10px;
+	background: #f7f3ea;
+}
+.nck-pay-gate p{ margin: 0 0 8px; }
+.nck-pay-gate p:last-child{ margin-bottom: 0; }
 .nck-review-actions{
 	display: flex;
 	gap: 8px;

@@ -47,12 +47,17 @@ class NCK_Frontend {
 				'nck-frontend',
 				'NCK',
 				array(
-					'ajax'  => admin_url( 'admin-ajax.php' ),
-					'nonce' => wp_create_nonce( 'nck_front' ),
-					'slot'  => $slot,
-					'org'   => $s['org_name'],
-					'i18n'  => array(
+					'ajax'      => admin_url( 'admin-ajax.php' ),
+					'nonce'     => wp_create_nonce( 'nck_front' ),
+					'slot'      => $slot,
+					'org'       => $s['org_name'],
+					'loggedIn'  => is_user_logged_in(),
+					'loginUrl'  => NCK_Pay::login_url(),
+					'wcReady'   => NCK_Pay::wc_ready(),
+					'i18n'      => array(
 						'signing'   => 'در حال ثبت…',
+						'paying'    => 'در حال انتقال به پرداخت سایت…',
+						'login'     => 'در حال رفتن به صفحه ورود…',
 						'looking'   => 'در حال جستجو…',
 						'checking'  => 'در حال ثبت حضور…',
 						'error'     => 'خطایی رخ داد. دوباره تلاش کنید.',

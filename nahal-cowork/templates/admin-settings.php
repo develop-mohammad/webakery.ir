@@ -17,6 +17,28 @@ $s = NCK_Settings::all();
 			<td><input id="org_tagline" class="regular-text" type="text" name="settings[org_tagline]" value="<?php echo esc_attr( $s['org_tagline'] ); ?>" /></td>
 		</tr>
 		<tr>
+			<th>لوگوی مجموعه</th>
+			<td>
+				<?php
+				$nck_logo_id  = isset( $s['logo_id'] ) ? (int) $s['logo_id'] : 0;
+				$nck_logo_url = class_exists( 'NCK_Settings' ) ? NCK_Settings::logo_url( 'medium' ) : '';
+				?>
+				<input type="hidden" name="settings[logo_id]" id="nck-logo-id" value="<?php echo esc_attr( (string) $nck_logo_id ); ?>" />
+				<div class="nck-logo-preview" data-nck-logo-preview>
+					<?php if ( $nck_logo_url ) : ?>
+						<img src="<?php echo esc_url( $nck_logo_url ); ?>" alt="" />
+					<?php else : ?>
+						<span>برگ نهال (پیش‌فرض)</span>
+					<?php endif; ?>
+				</div>
+				<p class="nck-logo-actions">
+					<button type="button" class="button" data-nck-logo-pick>انتخاب از رسانه‌ها</button>
+					<button type="button" class="button" data-nck-logo-clear<?php echo $nck_logo_url ? '' : ' hidden'; ?>>حذف لوگو</button>
+				</p>
+				<p class="description">این تصویر روی فرم قرارداد، اجاره سالن، پذیرش، فرم‌های سفارشی و نسخه چاپ دیده می‌شود. PNG یا SVG شفاف بهتر است. اگر خالی بماند همان برگ نهال می‌ماند.</p>
+			</td>
+		</tr>
+		<tr>
 			<th><label for="accent">رنگ برگ نهال</label></th>
 			<td><input id="accent" type="color" name="settings[accent]" value="<?php echo esc_attr( $s['accent'] ); ?>" /></td>
 		</tr>
@@ -103,7 +125,7 @@ $s = NCK_Settings::all();
 	</table>
 
 	<h2>ووکامرس و حسابدار</h2>
-	<p class="description">هر فرمی که مبلغ پرداخت داشته باشد، به‌صورت سفارش ووکامرس ثبت می‌شود و در افزونه حسابدار هم دیده می‌شود. اگر ووکامرس خاموش باشد، خود فرم همچنان ذخیره می‌شود.</p>
+		<p class="description">پرداخت سایت مثل خرید محصولات ووکامرس است: ورود به حساب، افزودن به سبد، سپس صفحه تسویه و درگاه سایت. اشتراک فضای کار بعد از پرداخت موفق فعال می‌شود. اگر ووکامرس خاموش باشد، خود فرم همچنان ذخیره می‌شود ولی درگاه کار نمی‌کند.</p>
 	<table class="form-table" role="presentation">
 		<tr>
 			<th>همگام‌سازی سفارش</th>

@@ -218,9 +218,67 @@
     }
   });
 
+  function bindLogoPicker() {
+    var pick = document.querySelector('[data-nck-logo-pick]');
+    var input = document.getElementById('nck-logo-id');
+    var preview = document.querySelector('[data-nck-logo-preview]');
+    var clear = document.querySelector('[data-nck-logo-clear]');
+    if (!pick || !input || !preview || typeof wp === 'undefined' || !wp.media) return;
+    var i18n = (window.NCKAdmin && NCKAdmin.i18n) || {};
+    var frame;
+
+    function showPreview(url) {
+      preview.textContent = '';
+      if (!url) {
+        preview.appendChild(document.createTextNode('برگ نهال (پیش‌فرض)'));
+        if (clear) clear.hidden = true;
+        return;
+      }
+      var img = document.createElement('img');
+      img.src = url;
+      img.alt = '';
+      preview.appendChild(img);
+      if (clear) clear.hidden = false;
+    }
+
+    pick.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (frame) {
+        frame.open();
+        return;
+      }
+      frame = wp.media({
+        title: i18n.logoTitle || 'انتخاب لوگوی مجموعه',
+        button: { text: i18n.logoBtn || 'استفاده از این تصویر' },
+        multiple: false,
+        library: { type: 'image' }
+      });
+      frame.on('select', function () {
+        var att = frame.state().get('selection').first().toJSON();
+        input.value = String(att.id || 0);
+        var url = att.url || '';
+        if (att.sizes && att.sizes.medium && att.sizes.medium.url) url = att.sizes.medium.url;
+        showPreview(url);
+      });
+      frame.open();
+    });
+
+    if (clear) {
+      clear.addEventListener('click', function (e) {
+        e.preventDefault();
+        input.value = '0';
+        showPreview('');
+      });
+    }
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindFormBuilder);
+    document.addEventListener('DOMContentLoaded', function () {
+      bindFormBuilder();
+      bindLogoPicker();
+    });
   } else {
     bindFormBuilder();
+    bindLogoPicker();
   }
 })();

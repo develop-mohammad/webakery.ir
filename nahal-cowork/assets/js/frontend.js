@@ -63,6 +63,9 @@
         body.append(k, v);
       }
     });
+    if (!data || data.return_url === undefined) {
+      body.append('return_url', window.location.href.split('#')[0]);
+    }
     return fetch((window.NCK && NCK.ajax) || '/wp-admin/admin-ajax.php', {
       method: 'POST',
       credentials: 'same-origin',
@@ -251,7 +254,8 @@
       return {
         has: false,
         isReady: function () { return true; },
-        getData: function () { return ''; }
+        getData: function () { return ''; },
+        setData: function () {}
       };
     }
 
@@ -259,7 +263,8 @@
       return {
         has: true,
         isReady: function () { return pad.drawn; },
-        getData: function () { return pad.drawn ? pad.toDataURL() : ''; }
+        getData: function () { return pad.drawn ? pad.toDataURL() : ''; },
+        setData: function () {}
       };
     }
 
@@ -340,6 +345,12 @@
         if (uploaded) return uploaded;
         if (pad.drawn && padEl) return inkifyCanvas(padEl);
         return '';
+      },
+      setData: function (src) {
+        if (!src) return;
+        uploaded = src;
+        showInk(src);
+        setMode('upload');
       }
     };
   }
@@ -972,6 +983,89 @@
     return '';
   }
 
+  function knownLoginState() {
+    return !!(window.NCK && Object.prototype.hasOwnProperty.call(NCK, 'loggedIn'));
+  }
+
+  function isLoggedIn() {
+    return !!(window.NCK && NCK.loggedIn);
+  }
+
+  function wcReady() {
+    return !!(window.NCK && NCK.wcReady && NCK.wcReady !== '0');
+  }
+
+  function syncPayGate(form) {
+    var site = qs(form, '[data-nck-pay-site]');
+    if (!site || !knownLoginState()) return;
+    var logged = isLoggedIn();
+    var wc = wcReady();
+    show(qs(site, '[data-nck-login-needed]'), !logged);
+    show(qs(site, '[data-nck-login-ok]'), logged && wc);
+    show(qs(site, '[data-nck-wc-off]'), logged && !wc);
+    var btn = qs(form, '[data-nck-submit]');
+    if (btn && !site.hidden) {
+      btn.disabled = !logged || !wc;
+    }
+  }
+
+  function draftKey(root) {
+    return 'nck-draft:' + (root.getAttribute('data-nck') || 'form') + ':' + window.location.pathname;
+  }
+
+  function saveDraft(root, form, sig, wizard) {
+    try {
+      sessionStorage.setItem(draftKey(root), JSON.stringify({
+        fields: collectForm(form),
+        step: wizard && typeof wizard.getIndex === 'function' ? wizard.getIndex() : 0,
+        signature: sig && sig.has ? sig.getData() : ''
+      }));
+    } catch (err) { /* ignore quota */ }
+  }
+
+  function applyFields(form, fields) {
+    Object.keys(fields || {}).forEach(function (name) {
+      var val = fields[name];
+      var nodes = form.querySelectorAll('[name="' + name + '"], [name="' + name + '[]"]');
+      if (!nodes.length) return;
+      Array.prototype.forEach.call(nodes, function (el) {
+        if (el.type === 'radio') {
+          el.checked = el.value === String(val);
+          return;
+        }
+        if (el.type === 'checkbox') {
+          if (Array.isArray(val)) {
+            el.checked = val.indexOf(el.value) !== -1;
+          } else {
+            el.checked = !!val && val !== '0';
+          }
+          return;
+        }
+        if (el.type === 'file') return;
+        if (!Array.isArray(val)) el.value = val;
+      });
+    });
+  }
+
+  function restoreDraft(root, form, sig, wizard) {
+    var raw;
+    try {
+      raw = sessionStorage.getItem(draftKey(root));
+    } catch (err) {
+      return;
+    }
+    if (!raw) return;
+    try {
+      var d = JSON.parse(raw);
+      applyFields(form, d.fields || {});
+      form.dispatchEvent(new Event('change', { bubbles: true }));
+      if (d.signature && sig && typeof sig.setData === 'function') sig.setData(d.signature);
+      if (wizard && typeof wizard.go === 'function' && d.step) wizard.go(d.step);
+      if (typeof root.nckHallRefresh === 'function') root.nckHallRefresh();
+      sessionStorage.removeItem(draftKey(root));
+    } catch (err2) { /* ignore */ }
+  }
+
   function bindWizard(form, root) {
     var steps = [].slice.call(form.querySelectorAll('[data-nck-step]'));
     if (!steps.length) return null;
@@ -1005,10 +1099,12 @@
       if (typeof root.nckHallRefresh === 'function') root.nckHallRefresh();
       form.querySelectorAll('[data-nck-from]').forEach(function (el) {
         var srcName = el.getAttribute('data-nck-from');
-        if (!srcName) return;
-        var src = qs(form, '[name="' + srcName + '"]');
-        if (src && src.value) el.value = src.value;
+        if (srcName) {
+          var src = qs(form, '[name="' + srcName + '"]');
+          if (src && src.value) el.value = src.value;
+        }
       });
+      syncPayGate(form);
       var ol = form.querySelector('[data-nck-step-dots]');
       if (ol) {
         ol.innerHTML = '';
@@ -1068,6 +1164,13 @@
       },
       isLast: function () {
         return i === steps.length - 1;
+      },
+      getIndex: function () {
+        return i;
+      },
+      go: function (n) {
+        if (n > max) max = n;
+        go(n, false);
       }
     };
   }
@@ -1122,6 +1225,13 @@
       });
     });
     fillLive(root);
+    restoreDraft(root, form, sig, wizard);
+    var loginLink = qs(form, '[data-nck-login-link]');
+    if (loginLink) {
+      loginLink.addEventListener('click', function () {
+        saveDraft(root, form, sig, wizard);
+      });
+    }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var i18n = (window.NCK && NCK.i18n) || {};
@@ -1139,23 +1249,50 @@
         setAlert(root, 'err', i18n.signature || i18n.draw || 'عکس امضا را آپلود کنید یا داخل کادر بکشید.');
         return;
       }
+      if (qs(form, '[data-nck-pay-site]') && knownLoginState() && !isLoggedIn()) {
+        saveDraft(root, form, sig, wizard);
+        var login = (window.NCK && NCK.loginUrl) || '';
+        if (login) {
+          window.location.href = login;
+          return;
+        }
+        setAlert(root, 'err', 'برای پرداخت از درگاه سایت ابتدا وارد حساب کاربری شوید.');
+        return;
+      }
       var btn = qs(form, '[data-nck-submit]');
       setLoading(btn, true, i18n.signing);
       setAlert(root, '', '');
       var fd = collectForm(form);
       if (sig.has) fd.signature = sig.getData();
       post(action, fd).then(function (res) {
-        setLoading(btn, false);
         if (!res || !res.success) {
-          setAlert(root, 'err', (res && res.data && res.data.message) || i18n.error);
+          var data = (res && res.data) || {};
+          if (data.need_login && data.login) {
+            saveDraft(root, form, sig, wizard);
+            window.location.href = data.login;
+            return;
+          }
+          setLoading(btn, false);
+          setAlert(root, 'err', data.message || i18n.error);
           return;
         }
+        if (res.data && res.data.pay_url) {
+          setLoading(btn, true, i18n.paying || 'در حال انتقال به پرداخت سایت…');
+          window.location.href = res.data.pay_url;
+          return;
+        }
+        setLoading(btn, false);
         show(form, false);
         var done = qs(root, '[data-nck-done]');
         show(done, true);
         qs(root, '[data-nck-done-msg]').textContent = res.data.message || '';
         var a = qs(root, '[data-nck-print-link]');
         if (a && res.data.print) a.href = res.data.print;
+        var payLink = qs(root, '[data-nck-pay-link]');
+        if (payLink && res.data.pay_url) {
+          payLink.href = res.data.pay_url;
+          show(payLink, true);
+        }
       }).catch(function () {
         setLoading(btn, false);
         setAlert(root, 'err', i18n.error);

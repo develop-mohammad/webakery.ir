@@ -426,7 +426,7 @@ $check( 'مبلغ صفر ثبت نمی‌شود', false === NCK_Pay::should_reco
 $check( 'مبلغ مثبت ثبت می‌شود', true === NCK_Pay::should_record( 2000000 ) );
 $check( 'پرداخت در محل تکمیل‌شده است', 'completed' === NCK_Pay::status_for_method( 'onsite' ) );
 $check( 'کارت به کارت در انتظار است', 'on-hold' === NCK_Pay::status_for_method( 'card' ) );
-$check( 'پرداخت سایت در حال انجام است', 'processing' === NCK_Pay::status_for_method( 'site' ) );
+$check( 'پرداخت سایت در انتظار تسویه است', 'pending' === NCK_Pay::status_for_method( 'site' ) );
 $split = NCK_Pay::split_name( 'سارا محمدی' );
 $check( 'جدا کردن نام خانوادگی', 'سارا' === $split['first'] && 'محمدی' === $split['last'] );
 
@@ -491,6 +491,16 @@ $check( 'ورودی پیگیری کاربر نادیده گرفته می‌شو�
 $draft = NCK_Pay::draft( array( 'name' => 'علی رضایی', 'amount' => 10, 'payment' => 'onsite', 'item_name' => 'تست' ) );
 $check( 'created_via نهال است', 'nahal-cowork' === $draft['created_via'] );
 $check( 'ووکامرس در تست هسته خاموش است', false === NCK_Pay::wc_ready() );
+$gate_ok = NCK_Pay::assert_can_checkout( 1000, 'site' );
+$check( 'بدون وردپرس درگاه تست آزاد است', ! empty( $gate_ok['ok'] ) );
+$sent = NCK_Pay::send_to_checkout(
+	array( 'id' => 1 ),
+	array( 'amount' => 1000, 'item_name' => 'تست', 'kind' => 'cowork' ),
+	array()
+);
+$check( 'ارسال به درگاه بدون ووکامرس رد می‌شود', empty( $sent['ok'] ) && false !== strpos( $sent['message'], 'ووکامرس' ) );
+$check( 'لوگو پیش‌فرض خالی است', 0 === (int) NCK_Settings::defaults()['logo_id'] );
+$check( 'بدون وردپرس آدرس لوگو خالی است', '' === NCK_Settings::logo_url() );
 
 require_once dirname( __DIR__ ) . '/includes/class-nck-admin.php';
 echo "\n=== راهنمای شورت‌کد ===\n";
@@ -513,7 +523,14 @@ $check( 'قالب پرداخت مشترک هست', false !== strpos( $pay_tpl, '
 $check( 'اجاره سالن مرحله پرداخت دارد', false !== strpos( $hall_tpl, 'pay-step.php' ) );
 $check( 'پرداخت فقط سایت است', false !== strpos( $pay_tpl, 'name="payment" value="site"' ) );
 $check( 'فیلد پیگیری دستی در پرداخت نیست', false === strpos( $pay_tpl, 'name="pay_ref"' ) );
+$check( 'ورود برای درگاه سایت در پرداخت هست', false !== strpos( $pay_tpl, 'data-nck-login-needed' ) );
+$check( 'توضیح ووکامرس در پرداخت هست', false !== strpos( $pay_tpl, 'ووکامرس' ) );
+$mark_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/brand-mark.php' );
+$check( 'قالب لوگوی مشترک هست', false !== strpos( $mark_tpl, 'nck-mark' ) );
+$settings_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/admin-settings.php' );
+$check( 'تنظیمات انتخاب لوگو دارد', false !== strpos( $settings_tpl, 'data-nck-logo-pick' ) );
 $cowork_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/contract.php' );
+$check( 'فرم قرارداد از قالب لوگو استفاده می‌کند', false !== strpos( $cowork_tpl, 'brand-mark.php' ) );
 $check( 'فضای کار مرحله مفاد دارد', false !== strpos( $cowork_tpl, 'data-nck-step-label="مفاد قرارداد"' ) );
 $check( 'دانلود قرارداد در مفاد هست', false !== strpos( $cowork_tpl, 'data-nck-download-review' ) );
 $check( 'اجاره سالن مرحله مفاد دارد', false !== strpos( $hall_tpl, 'data-nck-step-label="مفاد قرارداد"' ) );
@@ -526,6 +543,8 @@ $check( 'ورودی دستی ساعت سالن حذف شده', false === strpos(
 $js = (string) file_get_contents( dirname( __DIR__ ) . '/assets/js/frontend.js' );
 $check( 'دانلود مفاد در جاوااسکریپت هست', false !== strpos( $js, 'data-nck-download-review' ) );
 $check( 'کپی امضا به مفاد هست', false !== strpos( $js, 'copyReviewInk' ) );
+$check( 'رفتن به درگاه در جاوااسکریپت هست', false !== strpos( $js, 'pay_url' ) );
+$check( 'ورود اجباری پرداخت در جاوااسکریپت هست', false !== strpos( $js, 'need_login' ) );
 
 echo "\n--- {$pass} موفق، {$fail} ناموفق ---\n";
 exit( $fail ? 1 : 0 );

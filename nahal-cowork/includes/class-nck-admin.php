@@ -28,6 +28,7 @@ class NCK_Admin {
 		if ( false === strpos( (string) $hook, NCK_MENU ) ) {
 			return;
 		}
+		wp_enqueue_media();
 		wp_enqueue_style( 'nck-admin', NCK_URL . 'assets/css/admin.css', array(), NCK_VERSION );
 		wp_enqueue_script( 'nck-admin', NCK_URL . 'assets/js/admin.js', array(), NCK_VERSION, true );
 		wp_localize_script(
@@ -38,6 +39,10 @@ class NCK_Admin {
 				'nonce' => wp_create_nonce( 'nck_admin' ),
 				'types' => NCK_Forms::field_types(),
 				'roles' => NCK_Forms::roles(),
+				'i18n'  => array(
+					'logoTitle' => 'انتخاب لوگوی مجموعه',
+					'logoBtn'   => 'استفاده از این تصویر',
+				),
 			)
 		);
 	}

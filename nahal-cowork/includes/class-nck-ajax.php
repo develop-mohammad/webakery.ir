@@ -46,6 +46,25 @@ class NCK_Ajax {
 		}
 	}
 
+	private static function send_sign_result( $result ) {
+		if ( empty( $result['ok'] ) ) {
+			$err = array( 'message' => isset( $result['message'] ) ? $result['message'] : 'خطا' );
+			if ( ! empty( $result['need_login'] ) ) {
+				$err['need_login'] = true;
+				$err['login']      = isset( $result['login'] ) ? $result['login'] : '';
+			}
+			wp_send_json_error( $err );
+		}
+		wp_send_json_success(
+			array(
+				'message' => $result['message'],
+				'print'   => $result['print'],
+				'name'    => $result['member']['full_name'],
+				'pay_url' => isset( $result['pay_url'] ) ? $result['pay_url'] : '',
+			)
+		);
+	}
+
 	public static function nck_sign() {
 		self::nonce_front();
 		self::licensed();
@@ -74,17 +93,7 @@ class NCK_Ajax {
 		}
 
 		$result = NCK_Contracts::sign_flow( $name, $honorific, $phone, $plan, $signature, $ip, $pay_in, $shift );
-		if ( empty( $result['ok'] ) ) {
-			wp_send_json_error( array( 'message' => $result['message'] ) );
-		}
-
-		wp_send_json_success(
-			array(
-				'message' => $result['message'],
-				'print'   => $result['print'],
-				'name'    => $result['member']['full_name'],
-			)
-		);
+		self::send_sign_result( $result );
 	}
 
 	public static function nck_sign_hall() {
@@ -118,17 +127,7 @@ class NCK_Ajax {
 		$ip        = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 
 		$result = NCK_Contracts::sign_hall_flow( $input, $signature, $ip );
-		if ( empty( $result['ok'] ) ) {
-			wp_send_json_error( array( 'message' => $result['message'] ) );
-		}
-
-		wp_send_json_success(
-			array(
-				'message' => $result['message'],
-				'print'   => $result['print'],
-				'name'    => $result['member']['full_name'],
-			)
-		);
+		self::send_sign_result( $result );
 	}
 
 	public static function nck_sign_learner() {
@@ -176,17 +175,7 @@ class NCK_Ajax {
 		$ip        = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 
 		$result = NCK_Contracts::sign_learner_flow( $input, $signature, $ip );
-		if ( empty( $result['ok'] ) ) {
-			wp_send_json_error( array( 'message' => $result['message'] ) );
-		}
-
-		wp_send_json_success(
-			array(
-				'message' => $result['message'],
-				'print'   => $result['print'],
-				'name'    => $result['member']['full_name'],
-			)
-		);
+		self::send_sign_result( $result );
 	}
 
 	public static function nck_sign_form() {
@@ -214,17 +203,7 @@ class NCK_Ajax {
 		$ip        = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 
 		$result = NCK_Contracts::sign_form_flow( $form, $input, $signature, $ip );
-		if ( empty( $result['ok'] ) ) {
-			wp_send_json_error( array( 'message' => $result['message'] ) );
-		}
-
-		wp_send_json_success(
-			array(
-				'message' => $result['message'],
-				'print'   => $result['print'],
-				'name'    => $result['member']['full_name'],
-			)
-		);
+		self::send_sign_result( $result );
 	}
 
 	private static function post_text( $key ) {

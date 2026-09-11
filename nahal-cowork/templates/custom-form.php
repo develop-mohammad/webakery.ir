@@ -9,9 +9,7 @@ $need_sign = ! empty( $form['require_signature'] );
 		<input type="hidden" name="form_id" value="<?php echo esc_attr( $form['id'] ); ?>" />
 		<input type="hidden" name="form_slug" value="<?php echo esc_attr( $form['slug'] ); ?>" />
 		<header class="nck-paper-head nck-wizard-brand">
-			<div class="nck-mark" aria-hidden="true">
-				<svg viewBox="0 0 48 48" width="42" height="42"><path fill="currentColor" d="M24 4c1.2 6 3 10 8 14-6 1-10 4-12 10-2-6-6-9-12-10 5-4 6.8-8 8-14 2 5 4 8 8 10z"/></svg>
-			</div>
+			<?php include NCK_PATH . 'templates/brand-mark.php'; ?>
 			<div>
 				<?php if ( $form['kicker'] !== '' ) : ?>
 					<p class="nck-kicker"><?php echo esc_html( $form['kicker'] ); ?></p>
@@ -79,6 +77,7 @@ $need_sign = ! empty( $form['require_signature'] );
 		<p data-nck-done-msg></p>
 		<p>
 			<a class="nck-btn" data-nck-print-link href="#" target="_blank" rel="noopener">مشاهده و چاپ فرم</a>
+			<a class="nck-btn nck-btn-ghost" data-nck-pay-link href="#" hidden>پرداخت در سایت</a>
 		</p>
 	</div>
 </div>

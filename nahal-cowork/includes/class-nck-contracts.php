@@ -262,6 +262,14 @@ class NCK_Contracts {
 			$pay['payload']['months']  = (int) $pkg['months'];
 		}
 
+		$gate = NCK_Pay::assert_can_checkout(
+			isset( $pay['payload']['pay_amount'] ) ? $pay['payload']['pay_amount'] : 0,
+			isset( $pay['payload']['payment'] ) ? $pay['payload']['payment'] : 'site'
+		);
+		if ( empty( $gate['ok'] ) ) {
+			return $gate;
+		}
+
 		$sig = NCK_Contract::prepare_signature( $signature );
 		if ( empty( $sig['ok'] ) ) {
 			return $sig;
@@ -287,21 +295,12 @@ class NCK_Contracts {
 			return array( 'ok' => false, 'message' => 'ذخیره قرارداد انجام نشد.' );
 		}
 
-		NCK_Subscriptions::replace_for_contract(
-			(int) $member['id'],
-			(int) $contract['id'],
-			$plan,
-			(int) NCK_Settings::get( 'shifts_per_month', 26 )
-		);
-
-		NCK_Pay::maybe_record( $contract );
-
-		return array(
-			'ok'       => true,
-			'message'  => 'قرارداد با موفقیت ثبت شد.' . NCK_Pay::tracking_note( $pay['payload'] ),
-			'member'   => $member,
-			'contract' => $contract,
-			'print'    => self::print_url( $contract['print_token'] ),
+		return self::finish_sign(
+			$contract,
+			$member,
+			'قرارداد با موفقیت ثبت شد.',
+			$pay['payload'],
+			$plan
 		);
 	}
 
@@ -310,13 +309,20 @@ class NCK_Contracts {
 		if ( empty( $check['ok'] ) ) {
 			return $check;
 		}
+		$p    = $check['payload'];
+		$gate = NCK_Pay::assert_can_checkout(
+			isset( $p['pay_amount'] ) ? $p['pay_amount'] : ( isset( $p['amount'] ) ? $p['amount'] : 0 ),
+			isset( $p['payment'] ) ? $p['payment'] : 'site'
+		);
+		if ( empty( $gate['ok'] ) ) {
+			return $gate;
+		}
 		$sig = NCK_Contract::prepare_signature( $signature );
 		if ( empty( $sig['ok'] ) ) {
 			return $sig;
 		}
 		$signature = $sig['data'];
 
-		$p      = $check['payload'];
 		$member = NCK_Members::upsert( $p['name'], $p['honorific'], $p['phone'], $p['national_id'] );
 		if ( ! $member ) {
 			return array( 'ok' => false, 'message' => 'ثبت برگزارکننده انجام نشد.' );
@@ -337,15 +343,7 @@ class NCK_Contracts {
 			return array( 'ok' => false, 'message' => 'ذخیره قرارداد سالن انجام نشد.' );
 		}
 
-		NCK_Pay::maybe_record( $contract );
-
-		return array(
-			'ok'       => true,
-			'message'  => 'قرارداد اجاره سالن ثبت شد.' . NCK_Pay::tracking_note( $p ),
-			'member'   => $member,
-			'contract' => $contract,
-			'print'    => self::print_url( $contract['print_token'] ),
-		);
+		return self::finish_sign( $contract, $member, 'قرارداد اجاره سالن ثبت شد.', $p );
 	}
 
 	public static function sign_learner_flow( array $input, $signature, $ip ) {
@@ -353,13 +351,20 @@ class NCK_Contracts {
 		if ( empty( $check['ok'] ) ) {
 			return $check;
 		}
+		$p    = $check['payload'];
+		$gate = NCK_Pay::assert_can_checkout(
+			isset( $p['pay_amount'] ) ? $p['pay_amount'] : 0,
+			isset( $p['payment'] ) ? $p['payment'] : 'site'
+		);
+		if ( empty( $gate['ok'] ) ) {
+			return $gate;
+		}
 		$sig = NCK_Contract::prepare_signature( $signature );
 		if ( empty( $sig['ok'] ) ) {
 			return $sig;
 		}
 		$signature = $sig['data'];
 
-		$p      = $check['payload'];
 		$member = NCK_Members::upsert( $p['name'], 'mr', $p['contact_phone'], $p['national_id'] );
 		if ( ! $member ) {
 			return array( 'ok' => false, 'message' => 'ثبت فراگیر انجام نشد.' );
@@ -380,21 +385,21 @@ class NCK_Contracts {
 			return array( 'ok' => false, 'message' => 'ذخیره فرم پذیرش انجام نشد.' );
 		}
 
-		NCK_Pay::maybe_record( $contract );
-
-		return array(
-			'ok'       => true,
-			'message'  => 'فرم پذیرش فراگیر ثبت شد.' . NCK_Pay::tracking_note( $p ),
-			'member'   => $member,
-			'contract' => $contract,
-			'print'    => self::print_url( $contract['print_token'] ),
-		);
+		return self::finish_sign( $contract, $member, 'فرم پذیرش فراگیر ثبت شد.', $p );
 	}
 
 	public static function sign_form_flow( array $form, array $input, $signature, $ip ) {
 		$check = NCK_Forms::validate( $form, $input );
 		if ( empty( $check['ok'] ) ) {
 			return $check;
+		}
+		$p    = $check['payload'];
+		$gate = NCK_Pay::assert_can_checkout(
+			isset( $p['pay_amount'] ) ? $p['pay_amount'] : 0,
+			isset( $p['payment'] ) ? $p['payment'] : 'site'
+		);
+		if ( empty( $gate['ok'] ) ) {
+			return $gate;
 		}
 		if ( ! empty( $form['require_signature'] ) ) {
 			$sig = NCK_Contract::prepare_signature( $signature );
@@ -406,7 +411,6 @@ class NCK_Contracts {
 			$signature = '';
 		}
 
-		$p      = $check['payload'];
 		$member = NCK_Members::upsert( $p['name'], 'mr', $p['phone'], $p['national_id'] );
 		if ( ! $member ) {
 			return array( 'ok' => false, 'message' => 'ثبت عضو انجام نشد.' );
@@ -427,14 +431,41 @@ class NCK_Contracts {
 			return array( 'ok' => false, 'message' => 'ذخیره فرم انجام نشد.' );
 		}
 
-		NCK_Pay::maybe_record( $contract );
+		return self::finish_sign( $contract, $member, 'فرم «' . $form['title'] . '» ثبت شد.', $p );
+	}
 
+	/**
+	 * پس از ذخیره قرارداد: اگر پرداخت سایت است به سبد ووکامرس می‌رود.
+	 *
+	 * @return array{ok:bool,message?:string,pay_url?:string,print?:string,member?:array,contract?:array}
+	 */
+	private static function finish_sign( $contract, $member, $message, array $pay_payload, $cowork_plan = '' ) {
+		$paid = NCK_Pay::after_sign( $contract );
+		if ( empty( $paid['ok'] ) ) {
+			return $paid;
+		}
+		$pay_url = isset( $paid['pay_url'] ) ? (string) $paid['pay_url'] : '';
+		if ( $pay_url === '' && $cowork_plan !== '' && ! empty( $member['id'] ) && class_exists( 'NCK_Subscriptions' ) ) {
+			NCK_Subscriptions::replace_for_contract(
+				(int) $member['id'],
+				(int) $contract['id'],
+				$cowork_plan,
+				(int) NCK_Settings::get( 'shifts_per_month', 26 )
+			);
+		}
+		$note = NCK_Pay::tracking_note( $pay_payload );
+		if ( $pay_url !== '' ) {
+			$message = 'ثبت شد. در حال انتقال به پرداخت سایت، مثل خرید محصولات ووکامرس…' . $note;
+		} else {
+			$message .= $note;
+		}
 		return array(
 			'ok'       => true,
-			'message'  => 'فرم «' . $form['title'] . '» ثبت شد.' . NCK_Pay::tracking_note( $p ),
+			'message'  => $message,
 			'member'   => $member,
 			'contract' => $contract,
 			'print'    => self::print_url( $contract['print_token'] ),
+			'pay_url'  => $pay_url,
 		);
 	}
 }

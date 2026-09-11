@@ -29,9 +29,7 @@ $row       = static function ( $label, $value ) {
 	?>
 	<article class="nck-root nck-paper nck-print-paper" dir="rtl">
 		<header class="nck-paper-head">
-			<div class="nck-mark" aria-hidden="true">
-				<svg viewBox="0 0 48 48" width="42" height="42"><path fill="currentColor" d="M24 4c1.2 6 3 10 8 14-6 1-10 4-12 10-2-6-6-9-12-10 5-4 6.8-8 8-14 2 5 4 8 8 10z"/></svg>
-			</div>
+			<?php include NCK_PATH . 'templates/brand-mark.php'; ?>
 			<div>
 				<p class="nck-kicker"><?php echo esc_html( NCK_Learner::center_name() ); ?></p>
 				<h1 class="nck-title">فرم پذیرش و شناخت فراگیر</h1>

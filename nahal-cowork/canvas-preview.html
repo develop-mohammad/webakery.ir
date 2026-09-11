@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>نهال — پیش‌نمایش فرم‌ها</title>
-<link rel="stylesheet" href="assets/css/frontend.css?v=126" />
+<link rel="stylesheet" href="assets/css/frontend.css?v=127" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
   body{
@@ -644,7 +644,10 @@
       org: 'مجموعه فرهنگی نهال',
       slot: 'evening',
       cal: { today: '1405/06/20', y: 1405, m: 6, d: 20, months: ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'] },
-      i18n: { signing: 'در حال ثبت…', looking: 'جستجو…', checking: 'ثبت حضور…', error: 'خطا', draw: 'عکس امضا را آپلود کنید یا داخل کادر بکشید.', signature: 'عکس امضا را آپلود کنید یا داخل کادر بکشید.' },
+      i18n: { signing: 'در حال ثبت…', paying: 'در حال انتقال به پرداخت سایت…', login: 'در حال رفتن به صفحه ورود…', looking: 'جستجو…', checking: 'ثبت حضور…', error: 'خطا', draw: 'عکس امضا را آپلود کنید یا داخل کادر بکشید.', signature: 'عکس امضا را آپلود کنید یا داخل کادر بکشید.' },
+      loggedIn: true,
+      loginUrl: '#',
+      wcReady: true,
       store: {},
       mock: function (action, data) {
         var store = window.NCK.store;
