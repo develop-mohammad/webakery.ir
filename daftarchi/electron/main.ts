@@ -24,12 +24,11 @@ function createWindow(): void {
     autoHideMenuBar: true,
     title: 'دفترچی',
     webPreferences: {
-      preload: fs.existsSync(path.join(__dirname, 'preload.mjs'))
-        ? path.join(__dirname, 'preload.mjs')
-        : path.join(__dirname, 'preload.js'),
+      preload: ['.cjs', '.mjs', '.js']
+        .map((ext) => path.join(__dirname, `preload${ext}`))
+        .find((file) => fs.existsSync(file)) ?? path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
     },
   })
 

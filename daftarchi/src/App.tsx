@@ -14,7 +14,9 @@ import { SettingsPage } from '@/pages/SettingsPage'
 export default function App() {
   return (
     <SettingsProvider>
-      <HashRouter>
+      <HashRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
         <Routes>
           <Route element={<AppLayout />}>
             <Route index element={<DashboardPage />} />
@@ -45,7 +47,10 @@ export default function App() {
                 <ComingSoonPage title="لایسنس تک‌سیستمی" body="فعال‌سازی روی یک سیستم بعد از اتمام فاز ۱ اضافه می‌شود." />
               }
             />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route
+              path="*"
+              element={<Navigate to="/" replace />}
+            />
           </Route>
         </Routes>
       </HashRouter>

@@ -1,12 +1,13 @@
-import { FileText, Package, TrendingUp, Wallet } from 'lucide-react'
+import { Banknote, FileText, TrendingUp, Wallet } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { toFaDigits } from '@/lib/jalali'
 import { formatToman } from '@/lib/money'
 
 const STATS = [
   { label: 'فروش امروز', value: 0, icon: TrendingUp },
-  { label: 'سود این ماه', value: 0, icon: Wallet },
+  { label: 'سود این ماه', value: 0, icon: Banknote },
   { label: 'فاکتورهای امروز', count: 0, icon: FileText },
-  { label: 'موجودی صندوق', value: 0, icon: Package },
+  { label: 'موجودی صندوق', value: 0, icon: Wallet },
 ]
 
 export function DashboardPage() {
@@ -19,7 +20,7 @@ export function DashboardPage() {
               <div>
                 <p className="text-xs text-muted-foreground">{item.label}</p>
                 <p className="mt-1 text-lg font-semibold">
-                  {'count' in item ? item.count : formatToman(item.value)}
+                  {'count' in item ? toFaDigits(item.count) : formatToman(item.value)}
                 </p>
               </div>
               <item.icon className="size-4 text-primary" />
