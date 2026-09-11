@@ -136,7 +136,10 @@ $s = NCK_Settings::all();
 	<table class="form-table" role="presentation">
 		<tr>
 			<th><label for="contract_intro">مقدمه</label></th>
-			<td><textarea id="contract_intro" class="large-text" rows="2" name="settings[contract_intro]"><?php echo esc_textarea( $s['contract_intro'] ); ?></textarea></td>
+			<td>
+				<textarea id="contract_intro" class="large-text" rows="2" name="settings[contract_intro]"><?php echo esc_textarea( $s['contract_intro'] ); ?></textarea>
+				<p class="description">جملهٔ خوشامد ابتدای قرارداد. پیش‌فرض: «خوشحالیم که نهال را انتخاب کرده‌اید.»</p>
+			</td>
 		</tr>
 		<tr>
 			<th><label for="contract_preamble">طرفین</label></th>

@@ -7,6 +7,11 @@ defined( 'ABSPATH' ) || exit;
 class NCK_Contract {
 
 	public static function default_intro() {
+		return 'خوشحالیم که «نهال» را برای کار، تمرکز و رشد خود انتخاب کرده‌اید.';
+	}
+
+	/** جملهٔ غلط قبلی که به‌اشتباه «خواستیم» نوشته شده بود. */
+	public static function legacy_intro() {
 		return 'خواستیم که «نهال» را برای کار، تمرکز و رشد خود انتخاب کرده‌اید.';
 	}
 

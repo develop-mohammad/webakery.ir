@@ -28,11 +28,11 @@ class NCK_Install {
 
 	public static function maybe_upgrade() {
 		$cur = get_option( self::VERSION_OPTION, '' );
-		if ( self::DB_VERSION === $cur ) {
-			return;
+		if ( self::DB_VERSION !== $cur ) {
+			self::create_tables();
+			update_option( self::VERSION_OPTION, self::DB_VERSION, false );
 		}
-		self::create_tables();
-		update_option( self::VERSION_OPTION, self::DB_VERSION, false );
+		NCK_Settings::fix_legacy_intro();
 	}
 
 	public static function create_tables() {

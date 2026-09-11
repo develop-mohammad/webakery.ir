@@ -44,7 +44,31 @@ class NCK_Settings {
 		if ( function_exists( 'get_option' ) ) {
 			$saved = (array) get_option( self::OPTION, array() );
 		}
-		return array_merge( self::defaults(), $saved );
+		$all = array_merge( self::defaults(), $saved );
+		if ( isset( $all['contract_intro'] ) && self::is_legacy_intro( $all['contract_intro'] ) ) {
+			$all['contract_intro'] = NCK_Contract::default_intro();
+		}
+		return $all;
+	}
+
+	public static function is_legacy_intro( $text ) {
+		return trim( (string) $text ) === NCK_Contract::legacy_intro();
+	}
+
+	public static function fix_legacy_intro() {
+		if ( ! function_exists( 'get_option' ) || ! function_exists( 'update_option' ) ) {
+			return false;
+		}
+		$saved = get_option( self::OPTION, array() );
+		if ( ! is_array( $saved ) || empty( $saved['contract_intro'] ) ) {
+			return false;
+		}
+		if ( ! self::is_legacy_intro( $saved['contract_intro'] ) ) {
+			return false;
+		}
+		$saved['contract_intro'] = NCK_Contract::default_intro();
+		update_option( self::OPTION, $saved, false );
+		return true;
 	}
 
 	public static function get( $key, $default = null ) {

@@ -12,6 +12,7 @@ require_once dirname( __DIR__ ) . '/includes/class-nck-shifts.php';
 require_once dirname( __DIR__ ) . '/includes/class-nck-contract.php';
 require_once dirname( __DIR__ ) . '/includes/class-nck-hall.php';
 require_once dirname( __DIR__ ) . '/includes/class-nck-learner.php';
+require_once dirname( __DIR__ ) . '/includes/class-nck-settings.php';
 
 $pass = 0;
 $fail = 0;
@@ -64,6 +65,10 @@ $gate = NCK_Shifts::can_check_in( array( 'quota' => 26, 'used' => 26, 'has_plan'
 $check( 'سهمیه تمام‌شده رد می‌شود', empty( $gate['ok'] ) );
 
 echo "\n=== قرارداد فضای کار ===\n";
+$check( 'مقدمه خوشحالیم است', 0 === strpos( NCK_Contract::default_intro(), 'خوشحالیم' ) );
+$check( 'خواستیم در مقدمه نیست', false === strpos( NCK_Contract::default_intro(), 'خواستیم' ) );
+$check( 'جمله غلط قبلی تشخیص داده می‌شود', NCK_Settings::is_legacy_intro( NCK_Contract::legacy_intro() ) );
+$check( 'جمله درست میراث نیست', ! NCK_Settings::is_legacy_intro( NCK_Contract::default_intro() ) );
 $vars = NCK_Contract::vars_from( array( 'name' => 'سارا محمدی', 'phone' => '09121234567', 'title' => 'ms', 'org' => 'مجموعه فرهنگی نهال' ) );
 $filled = NCK_Contract::fill_template( NCK_Contract::default_preamble(), $vars );
 $check( 'نام در مقدمه می‌نشیند', false !== strpos( $filled, 'سارا محمدی' ) );
