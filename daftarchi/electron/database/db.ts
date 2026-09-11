@@ -51,6 +51,7 @@ export function closeDatabase(): void {
 function migrate(database: Database.Database): void {
   database.exec(schemaSql)
   ensureColumn(database, 'categories', 'wc_category_id', 'INTEGER')
+  database.exec('CREATE INDEX IF NOT EXISTS idx_categories_wc ON categories(wc_category_id)')
 
   const version = database
     .prepare('SELECT value FROM schema_meta WHERE key = ?')

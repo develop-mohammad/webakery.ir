@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS categories (
   created_at      TEXT NOT NULL,
   updated_at      TEXT NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_categories_wc ON categories(wc_category_id);
 
 CREATE TABLE IF NOT EXISTS products (
   id             INTEGER PRIMARY KEY AUTOINCREMENT,
