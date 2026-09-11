@@ -225,6 +225,18 @@ $check( 'بدون کد ملی رد می‌شود', empty( $no_nid['ok'] ) );
 $plans = NCK_Shifts::plan_types( 'both' );
 $check( 'پلن هر دو دو اشتراک می‌سازد', array( 'morning', 'evening' ) === $plans );
 $check( 'پلن سالن شیفت فضای کار نیست', array() === NCK_Shifts::plan_types( 'hall' ) );
+$check( 'پنج بسته فضای کار', 5 === count( NCK_Shifts::packages() ) );
+$check( 'قیمت ۱ ماهه تک‌شیفت', 1950000 === NCK_Shifts::package_price( 'm1_one' ) );
+$check( 'قیمت ۱ ماهه دو شیفت', 3900000 === NCK_Shifts::package_price( 'm1_two' ) );
+$check( 'قیمت ۲ ماهه تک‌شیفت', 3600000 === NCK_Shifts::package_price( 'm2_one' ) );
+$check( 'قیمت ۲ ماهه دو شیفت', 7200000 === NCK_Shifts::package_price( 'm2_two' ) );
+$check( 'قیمت ۳ ماهه یک شیفت', 5250000 === NCK_Shifts::package_price( 'm3_one' ) );
+$check( 'تک‌شیفت بدون نوبت ناقص است', '' === NCK_Shifts::compose_plan( 'm1_one', '' ) );
+$check( '۱ ماهه صبح', 'm1_am' === NCK_Shifts::compose_plan( 'm1_one', 'morning' ) );
+$check( '۱ ماهه دو شیفت', 'm1_both' === NCK_Shifts::compose_plan( 'm1_two', '' ) );
+$check( '۳ ماهه عصر', 'm3_pm' === NCK_Shifts::compose_plan( 'm3_one', 'evening' ) );
+$check( 'دو شیفت دو اشتراک می‌سازد', array( 'morning', 'evening' ) === NCK_Shifts::plan_types( 'm2_both' ) );
+$check( 'برچسب ۱ ماهه دو شیفت', 'اشتراک ۱ ماهه دو شیفت' === NCK_Shifts::plan_labels()['m1_both'] );
 
 echo "\n=== پذیرش فراگیر ===\n";
 $learner_ok = array(
@@ -373,8 +385,15 @@ $form_pay = NCK_Pay::from_contract(
 );
 $check( 'فرم سفارشی سفارش می‌سازد', ! empty( $form_pay['ok'] ) && 'on-hold' === $form_pay['order']['status'] );
 
-$cowork_skip = NCK_Pay::from_contract( 'cowork', array( 'full_name' => 'سارا', 'phone' => '09121234567', 'plan' => 'morning' ), array() );
-$check( 'فضای کار بدون شهریه سفارش ندارد', ! empty( $cowork_skip['skipped'] ) );
+$cowork_skip = NCK_Pay::from_contract( 'cowork', array( 'full_name' => 'سارا', 'phone' => '09121234567', 'plan' => '' ), array() );
+$check( 'فضای کار بدون بسته سفارش ندارد', ! empty( $cowork_skip['skipped'] ) );
+
+$cowork_pkg = NCK_Pay::from_contract(
+	'cowork',
+	array( 'full_name' => 'سارا محمدی', 'phone' => '09121234567', 'plan' => 'm1_am' ),
+	array( 'payment' => 'card' )
+);
+$check( 'فضای کار مبلغ بسته را می‌گیرد', ! empty( $cowork_pkg['ok'] ) && 1950000 === $cowork_pkg['order']['amount'] );
 
 $cowork_pay = NCK_Pay::from_contract(
 	'cowork',

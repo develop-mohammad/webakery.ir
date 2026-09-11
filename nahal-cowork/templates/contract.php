@@ -69,14 +69,7 @@ $hours    = NCK_Settings::hours();
 					<label for="nck-phone">شماره تماس</label>
 					<input id="nck-phone" name="phone" type="tel" dir="ltr" inputmode="numeric" autocomplete="tel" required placeholder="09123456789" />
 				</div>
-				<div class="nck-field nck-field-wide">
-					<span class="nck-label">نوع اشتراک</span>
-					<div class="nck-plans">
-						<label class="nck-plan"><input type="radio" name="plan" value="morning" required /> شیفت صبح</label>
-						<label class="nck-plan"><input type="radio" name="plan" value="evening" /> شیفت عصر</label>
-						<label class="nck-plan"><input type="radio" name="plan" value="both" /> هر دو شیفت (دو اشتراک)</label>
-					</div>
-				</div>
+				<?php include NCK_PATH . 'templates/cowork-plans.php'; ?>
 			</div>
 		</section>
 
@@ -94,8 +87,8 @@ $hours    = NCK_Settings::hours();
 
 		<?php
 		$nck_pay_id       = 'nck-cowork-pay';
-		$nck_pay_amount   = ! empty( $s['cowork_fee'] ) ? (string) $s['cowork_fee'] : '';
-		$nck_pay_required = ! empty( $s['cowork_fee'] );
+		$nck_pay_amount   = '';
+		$nck_pay_required = true;
 		$nck_pay_from     = '';
 		include NCK_PATH . 'templates/pay-step.php';
 		?>

@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>نهال — پیش‌نمایش فرم‌ها</title>
-<link rel="stylesheet" href="assets/css/frontend.css?v=124" />
+<link rel="stylesheet" href="assets/css/frontend.css?v=125" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
   body{
@@ -297,10 +297,19 @@
               <div class="nck-field"><label>شماره تماس</label><input name="phone" type="tel" dir="ltr" required placeholder="09123456789" /></div>
               <div class="nck-field nck-field-wide">
                 <span class="nck-label">نوع اشتراک</span>
+                <div class="nck-plan-list" data-nck-packages>
+                  <label class="nck-plan-card"><input type="radio" name="package" value="m1_one" required data-nck-price="1950000" data-nck-dual="0" /> <span class="nck-plan-copy"><strong>اشتراک ۱ ماهه به‌صورت تک‌شیفت</strong></span> <span class="nck-plan-price">۱,۹۵۰,۰۰۰ تومان</span></label>
+                  <label class="nck-plan-card"><input type="radio" name="package" value="m1_two" data-nck-price="3900000" data-nck-dual="1" /> <span class="nck-plan-copy"><strong>اشتراک ۱ ماهه به‌صورت دو شیفت</strong></span> <span class="nck-plan-price">۳,۹۰۰,۰۰۰ تومان</span></label>
+                  <label class="nck-plan-card"><input type="radio" name="package" value="m2_one" data-nck-price="3600000" data-nck-dual="0" /> <span class="nck-plan-copy"><strong>اشتراک ۲ ماهه به‌صورت تک‌شیفت</strong></span> <span class="nck-plan-price">۳,۶۰۰,۰۰۰ تومان</span></label>
+                  <label class="nck-plan-card"><input type="radio" name="package" value="m2_two" data-nck-price="7200000" data-nck-dual="1" /> <span class="nck-plan-copy"><strong>اشتراک ۲ ماهه به‌صورت دو شیفت</strong></span> <span class="nck-plan-price">۷,۲۰۰,۰۰۰ تومان</span></label>
+                  <label class="nck-plan-card"><input type="radio" name="package" value="m3_one" data-nck-price="5250000" data-nck-dual="0" /> <span class="nck-plan-copy"><strong>اشتراک ۳ ماهه به‌صورت یک شیفت</strong></span> <span class="nck-plan-price">۵,۲۵۰,۰۰۰ تومان</span></label>
+                </div>
+              </div>
+              <div class="nck-field nck-field-wide" data-nck-shift-wrap hidden>
+                <span class="nck-label">شیفت استفاده</span>
                 <div class="nck-plans">
-                  <label class="nck-plan"><input type="radio" name="plan" value="morning" required /> شیفت صبح</label>
-                  <label class="nck-plan"><input type="radio" name="plan" value="evening" /> شیفت عصر</label>
-                  <label class="nck-plan"><input type="radio" name="plan" value="both" /> هر دو شیفت</label>
+                  <label class="nck-plan"><input type="radio" name="shift" value="morning" /> صبح</label>
+                  <label class="nck-plan"><input type="radio" name="shift" value="evening" /> عصر</label>
                 </div>
               </div>
             </div>
@@ -620,7 +629,7 @@
           if (!data.agree) return err('برای ثبت قرارداد باید مفاد آن را بپذیرید.');
           if (!data.name || data.name.length < 3) return err('نام را کامل وارد کنید.');
           if (!phone(data.phone)) return err('شماره موبایل معتبر نیست.');
-          if (!data.plan) return err('نوع اشتراک را انتخاب کنید.');
+          if (!data.package && !data.plan) return err('نوع اشتراک را انتخاب کنید.');
           store[phone(data.phone)] = { name: data.name, plan: data.plan, usedM: 0, usedE: 0, quota: 26 };
           return ok({ message: 'قرارداد فضای کار ثبت شد.', print: '#print-cowork', name: data.name });
         }
@@ -699,6 +708,6 @@
       });
     }
   </script>
-  <script src="assets/js/frontend.js?v=124"></script>
+  <script src="assets/js/frontend.js?v=125"></script>
 </body>
 </html>

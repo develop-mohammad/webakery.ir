@@ -54,7 +54,11 @@ class NCK_Ajax {
 		$name       = isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : ''; // phpcs:ignore
 		$honorific  = isset( $_POST['honorific'] ) ? sanitize_key( wp_unslash( $_POST['honorific'] ) ) : 'mr'; // phpcs:ignore
 		$phone      = isset( $_POST['phone'] ) ? wp_unslash( $_POST['phone'] ) : ''; // phpcs:ignore
-		$plan       = isset( $_POST['plan'] ) ? sanitize_key( wp_unslash( $_POST['plan'] ) ) : ''; // phpcs:ignore
+		$plan       = isset( $_POST['package'] ) ? sanitize_key( wp_unslash( $_POST['package'] ) ) : ''; // phpcs:ignore
+		if ( $plan === '' && isset( $_POST['plan'] ) ) {
+			$plan = sanitize_key( wp_unslash( $_POST['plan'] ) ); // phpcs:ignore
+		}
+		$shift      = isset( $_POST['shift'] ) ? sanitize_key( wp_unslash( $_POST['shift'] ) ) : ''; // phpcs:ignore
 		$signature  = isset( $_POST['signature'] ) ? wp_unslash( $_POST['signature'] ) : ''; // phpcs:ignore
 		$agree      = ! empty( $_POST['agree'] ); // phpcs:ignore
 		$ip         = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
@@ -69,7 +73,7 @@ class NCK_Ajax {
 			wp_send_json_error( array( 'message' => 'برای ثبت قرارداد باید مفاد آن را بپذیرید.' ) );
 		}
 
-		$result = NCK_Contracts::sign_flow( $name, $honorific, $phone, $plan, $signature, $ip, $pay_in );
+		$result = NCK_Contracts::sign_flow( $name, $honorific, $phone, $plan, $signature, $ip, $pay_in, $shift );
 		if ( empty( $result['ok'] ) ) {
 			wp_send_json_error( array( 'message' => $result['message'] ) );
 		}

@@ -582,11 +582,47 @@
     };
   }
 
+  function bindCoworkPlans(form) {
+    var list = qs(form, '[data-nck-packages]');
+    if (!list) return;
+
+    function sync() {
+      var picked = qs(form, '[name="package"]:checked');
+      qsa(list, '.nck-plan-card').forEach(function (card) {
+        var on = !!(card.querySelector('input') && card.querySelector('input').checked);
+        card.classList.toggle('is-on', on);
+      });
+      var dual = !!(picked && picked.getAttribute('data-nck-dual') === '1');
+      var wrap = qs(form, '[data-nck-shift-wrap]');
+      var shifts = qsa(form, '[name="shift"]');
+      if (wrap) {
+        wrap.hidden = !picked || dual;
+      }
+      shifts.forEach(function (r) {
+        r.required = !!(picked && !dual);
+        r.disabled = !picked || dual;
+        if (dual || !picked) r.checked = false;
+      });
+      var pay = qs(form, '[name="pay_amount"]');
+      if (pay && picked) {
+        var price = picked.getAttribute('data-nck-price') || '';
+        if (price) pay.value = price;
+      }
+    }
+
+    form.addEventListener('change', function (e) {
+      if (!e.target) return;
+      if (e.target.name === 'package' || e.target.name === 'shift') sync();
+    });
+    sync();
+  }
+
   function bindSignForm(root, formSel, action) {
     var form = qs(root, formSel);
     if (!form) return;
     var wizard = bindWizard(form, root);
     var sig = bindSignature(root);
+    bindCoworkPlans(form);
     ['input', 'change'].forEach(function (ev) {
       form.addEventListener(ev, function () {
         updatePreamble(root);

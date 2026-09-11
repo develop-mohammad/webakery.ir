@@ -116,10 +116,27 @@ $s = NCK_Settings::all();
 			</td>
 		</tr>
 		<tr>
-			<th><label for="cowork_fee">شهریه فضای کار (تومان)</label></th>
+			<th>شهریه فضای کار (تومان)</th>
 			<td>
-				<input id="cowork_fee" type="text" dir="ltr" name="settings[cowork_fee]" value="<?php echo esc_attr( (string) $s['cowork_fee'] ); ?>" />
-				<p class="description">مبلغ پیش‌فرض مرحله پرداخت قرارداد فضای کار. اگر صفر باشد، عضو خودش مبلغ را وارد می‌کند؛ خالی یعنی بدون سفارش حسابدار.</p>
+				<table class="widefat striped" style="max-width:36rem">
+					<thead>
+						<tr>
+							<th>بسته</th>
+							<th>مبلغ</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( NCK_Shifts::packages() as $pkg ) : ?>
+							<tr>
+								<td><label for="<?php echo esc_attr( $pkg['fee_key'] ); ?>"><?php echo esc_html( $pkg['label'] ); ?></label></td>
+								<td>
+									<input id="<?php echo esc_attr( $pkg['fee_key'] ); ?>" type="text" dir="ltr" name="settings[<?php echo esc_attr( $pkg['fee_key'] ); ?>]" value="<?php echo esc_attr( (string) NCK_Shifts::package_price( $pkg['id'] ) ); ?>" />
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+				<p class="description">این مبلغ‌ها در فرم قرارداد نشان داده می‌شوند و به مرحله پرداخت می‌روند. برای تک‌شیفت، عضو صبح یا عصر را جدا انتخاب می‌کند.</p>
 			</td>
 		</tr>
 		<tr>

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: قرارداد نهال | فضای کار، سالن و پذیرش
  * Description: قرارداد دیجیتال فضای کار اشتراکی و اجاره سالن، فرم پذیرش فراگیر، فرم‌ساز سفارشی، ثبت پرداخت در ووکامرس و حسابدار.
- * Version:     1.2.4
+ * Version:     1.2.5
  * Plugin URI:  https://webakery.ir
  * Author:      webakery.ir
  * Author URI:  https://webakery.ir
@@ -19,7 +19,7 @@ if ( defined( 'NCK_LOADED' ) ) {
 	return;
 }
 define( 'NCK_LOADED', true );
-define( 'NCK_VERSION', '1.2.4' );
+define( 'NCK_VERSION', '1.2.5' );
 define( 'NCK_FILE', __FILE__ );
 define( 'NCK_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NCK_URL', plugin_dir_url( __FILE__ ) );

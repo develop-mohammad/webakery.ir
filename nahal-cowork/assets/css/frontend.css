@@ -133,6 +133,47 @@
 	background: #fbf6ec;
 	cursor: pointer;
 }
+.nck-plan-list{
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.nck-plan-card{
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	border: 1px solid var(--nck-edge);
+	border-radius: 12px;
+	padding: .7rem .9rem;
+	background: #fff;
+	cursor: pointer;
+	box-sizing: border-box;
+}
+.nck-plan-card.is-on,
+.nck-plan-card:has(input:checked){
+	border-color: var(--nck-leaf);
+	background: #f3f7f2;
+}
+.nck-plan-card input{
+	margin: 0;
+	flex: 0 0 auto;
+}
+.nck-plan-copy{
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.nck-plan-copy strong{
+	display: block;
+	font-weight: 650;
+	line-height: 1.45;
+}
+.nck-plan-price{
+	flex: 0 0 auto;
+	font-weight: 700;
+	white-space: nowrap;
+	font-size: .95rem;
+}
 .nck-sign-wrap{ margin: 1rem 0; }
 .nck-sign-head{
 	display: flex;

@@ -235,10 +235,10 @@ class NCK_Contracts {
 		);
 	}
 
-	public static function sign_flow( $name, $honorific, $phone, $plan, $signature, $ip, array $pay_in = array() ) {
+	public static function sign_flow( $name, $honorific, $phone, $plan, $signature, $ip, array $pay_in = array(), $shift = '' ) {
 		$phone = NCK_Phone::normalize( $phone );
 		$name  = sanitize_text_field( $name );
-		$plan  = in_array( $plan, array( 'morning', 'evening', 'both' ), true ) ? $plan : '';
+		$plan  = NCK_Shifts::compose_plan( $plan, $shift );
 
 		if ( $name === '' || mb_strlen( $name ) < 3 ) {
 			return array( 'ok' => false, 'message' => 'نام و نام خانوادگی را کامل وارد کنید.' );
@@ -247,13 +247,19 @@ class NCK_Contracts {
 			return array( 'ok' => false, 'message' => 'شماره موبایل معتبر نیست. مثال: ۰۹۱۲۳۴۵۶۷۸۹' );
 		}
 		if ( ! $plan ) {
-			return array( 'ok' => false, 'message' => 'نوع اشتراک (صبح، عصر یا هر دو) را انتخاب کنید.' );
+			return array( 'ok' => false, 'message' => 'نوع اشتراک را انتخاب کنید. برای تک‌شیفت، صبح یا عصر را هم مشخص کنید.' );
 		}
 
-		$fee     = (int) NCK_Settings::get( 'cowork_fee', 0 );
-		$pay     = NCK_Pay::parse_front_payment( $pay_in, $fee );
+		$fee = NCK_Shifts::package_price( $plan );
+		$pay = NCK_Pay::parse_front_payment( $pay_in, $fee );
 		if ( empty( $pay['ok'] ) ) {
 			return $pay;
+		}
+		$pkg_id = NCK_Shifts::package_id_from_plan( $plan );
+		$pkg    = NCK_Shifts::package( $pkg_id );
+		if ( $pkg ) {
+			$pay['payload']['package'] = $pkg['id'];
+			$pay['payload']['months']  = (int) $pkg['months'];
 		}
 
 		$sig = NCK_Contract::prepare_signature( $signature );

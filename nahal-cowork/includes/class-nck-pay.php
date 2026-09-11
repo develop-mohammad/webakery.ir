@@ -255,13 +255,13 @@ class NCK_Pay {
 
 		if ( 'cowork' === $kind ) {
 			$amount = isset( $payload['pay_amount'] ) ? (int) $payload['pay_amount'] : 0;
-			if ( $amount < 1 && class_exists( 'NCK_Settings' ) ) {
-				$amount = (int) NCK_Settings::get( 'cowork_fee', 0 );
+			$plan   = isset( $contract['plan'] ) ? $contract['plan'] : '';
+			if ( $amount < 1 && $plan && class_exists( 'NCK_Shifts' ) ) {
+				$amount = NCK_Shifts::package_price( $plan );
 			}
 			if ( ! self::should_record( $amount ) ) {
 				return array( 'ok' => false, 'skipped' => true, 'reason' => 'amount' );
 			}
-			$plan  = isset( $contract['plan'] ) ? $contract['plan'] : '';
 			$label = 'اشتراک فضای کار نهال';
 			if ( class_exists( 'NCK_Shifts' ) ) {
 				$labels = NCK_Shifts::plan_labels();

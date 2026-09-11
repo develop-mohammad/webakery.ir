@@ -34,7 +34,12 @@ class NCK_Settings {
 			'projector_price'   => 500000,
 			'projector_minutes' => 90,
 			'wc_sync'           => 1,
-			'cowork_fee'        => 0,
+			'cowork_fee'        => 1950000,
+			'fee_m1_one'        => 1950000,
+			'fee_m1_two'        => 3900000,
+			'fee_m2_one'        => 3600000,
+			'fee_m2_two'        => 7200000,
+			'fee_m3_one'        => 5250000,
 			'learner_fee'       => 0,
 		);
 	}
@@ -165,7 +170,10 @@ class NCK_Settings {
 		$out['projector_minutes'] = min( 600, max( 15, $mins ) );
 
 		$out['wc_sync'] = empty( $in['wc_sync'] ) ? 0 : 1;
-		$out['cowork_fee']  = max( 0, NCK_Hall::parse_amount( isset( $in['cowork_fee'] ) ? $in['cowork_fee'] : $d['cowork_fee'] ) );
+		foreach ( array( 'fee_m1_one', 'fee_m1_two', 'fee_m2_one', 'fee_m2_two', 'fee_m3_one' ) as $fee_key ) {
+			$out[ $fee_key ] = max( 0, NCK_Hall::parse_amount( isset( $in[ $fee_key ] ) ? $in[ $fee_key ] : $d[ $fee_key ] ) );
+		}
+		$out['cowork_fee']  = $out['fee_m1_one'];
 		$out['learner_fee'] = max( 0, NCK_Hall::parse_amount( isset( $in['learner_fee'] ) ? $in['learner_fee'] : $d['learner_fee'] ) );
 
 		return $out;

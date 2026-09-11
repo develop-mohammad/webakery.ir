@@ -21,7 +21,137 @@ class NCK_Shifts {
 			'morning' => 'اشتراک شیفت صبح',
 			'evening' => 'اشتراک شیفت عصر',
 			'both'    => 'هر دو شیفت (دو اشتراک جدا)',
+			'm1_am'   => 'اشتراک ۱ ماهه تک‌شیفت صبح',
+			'm1_pm'   => 'اشتراک ۱ ماهه تک‌شیفت عصر',
+			'm1_both' => 'اشتراک ۱ ماهه دو شیفت',
+			'm2_am'   => 'اشتراک ۲ ماهه تک‌شیفت صبح',
+			'm2_pm'   => 'اشتراک ۲ ماهه تک‌شیفت عصر',
+			'm2_both' => 'اشتراک ۲ ماهه دو شیفت',
+			'm3_am'   => 'اشتراک ۳ ماهه تک‌شیفت صبح',
+			'm3_pm'   => 'اشتراک ۳ ماهه تک‌شیفت عصر',
 		);
+	}
+
+	/**
+	 * بسته‌های قابل فروش فضای کار (مدت + تک/دو شیفت).
+	 *
+	 * @return array<string,array{id:string,months:int,dual:bool,default_price:int,store?:string,store_prefix?:string,label:string,fee_key:string}>
+	 */
+	public static function packages() {
+		return array(
+			'm1_one' => array(
+				'id'            => 'm1_one',
+				'months'        => 1,
+				'dual'          => false,
+				'default_price' => 1950000,
+				'store_prefix'  => 'm1',
+				'fee_key'       => 'fee_m1_one',
+				'label'         => 'اشتراک ۱ ماهه به‌صورت تک‌شیفت',
+			),
+			'm1_two' => array(
+				'id'            => 'm1_two',
+				'months'        => 1,
+				'dual'          => true,
+				'default_price' => 3900000,
+				'store'         => 'm1_both',
+				'fee_key'       => 'fee_m1_two',
+				'label'         => 'اشتراک ۱ ماهه به‌صورت دو شیفت',
+			),
+			'm2_one' => array(
+				'id'            => 'm2_one',
+				'months'        => 2,
+				'dual'          => false,
+				'default_price' => 3600000,
+				'store_prefix'  => 'm2',
+				'fee_key'       => 'fee_m2_one',
+				'label'         => 'اشتراک ۲ ماهه به‌صورت تک‌شیفت',
+			),
+			'm2_two' => array(
+				'id'            => 'm2_two',
+				'months'        => 2,
+				'dual'          => true,
+				'default_price' => 7200000,
+				'store'         => 'm2_both',
+				'fee_key'       => 'fee_m2_two',
+				'label'         => 'اشتراک ۲ ماهه به‌صورت دو شیفت',
+			),
+			'm3_one' => array(
+				'id'            => 'm3_one',
+				'months'        => 3,
+				'dual'          => false,
+				'default_price' => 5250000,
+				'store_prefix'  => 'm3',
+				'fee_key'       => 'fee_m3_one',
+				'label'         => 'اشتراک ۳ ماهه به‌صورت یک شیفت',
+			),
+		);
+	}
+
+	public static function package( $id ) {
+		$all = self::packages();
+		$id  = is_string( $id ) ? $id : '';
+		return isset( $all[ $id ] ) ? $all[ $id ] : null;
+	}
+
+	public static function package_id_from_plan( $plan ) {
+		$map = array(
+			'morning' => 'm1_one',
+			'evening' => 'm1_one',
+			'both'    => 'm1_two',
+			'm1_am'   => 'm1_one',
+			'm1_pm'   => 'm1_one',
+			'm1_both' => 'm1_two',
+			'm2_am'   => 'm2_one',
+			'm2_pm'   => 'm2_one',
+			'm2_both' => 'm2_two',
+			'm3_am'   => 'm3_one',
+			'm3_pm'   => 'm3_one',
+		);
+		$plan = is_string( $plan ) ? $plan : '';
+		if ( isset( $map[ $plan ] ) ) {
+			return $map[ $plan ];
+		}
+		return self::package( $plan ) ? $plan : '';
+	}
+
+	public static function package_price( $package_id ) {
+		$pkg = self::package( $package_id );
+		if ( ! $pkg ) {
+			$package_id = self::package_id_from_plan( $package_id );
+			$pkg        = self::package( $package_id );
+		}
+		if ( ! $pkg ) {
+			return 0;
+		}
+		$fallback = (int) $pkg['default_price'];
+		if ( class_exists( 'NCK_Settings' ) ) {
+			$saved = (int) NCK_Settings::get( $pkg['fee_key'], $fallback );
+			return $saved > 0 ? $saved : $fallback;
+		}
+		return $fallback;
+	}
+
+	/**
+	 * بسته + شیفت را به کد ذخیره‌شده قرارداد تبدیل می‌کند.
+	 */
+	public static function compose_plan( $package, $shift = '' ) {
+		$package = is_string( $package ) ? $package : '';
+		$labels  = self::plan_labels();
+		if ( isset( $labels[ $package ] ) && ! self::package( $package ) ) {
+			return $package;
+		}
+		$pkg = self::package( $package );
+		if ( ! $pkg ) {
+			return '';
+		}
+		if ( ! empty( $pkg['dual'] ) ) {
+			return isset( $pkg['store'] ) ? $pkg['store'] : '';
+		}
+		$slot = self::normalize_type( $shift );
+		if ( ! $slot || empty( $pkg['store_prefix'] ) ) {
+			return '';
+		}
+		return $pkg['store_prefix'] . ( self::MORNING === $slot ? '_am' : '_pm' );
 	}
 
 	public static function normalize_type( $type ) {
@@ -30,11 +160,17 @@ class NCK_Shifts {
 	}
 
 	public static function plan_types( $plan ) {
-		if ( 'both' === $plan ) {
+		$plan = is_string( $plan ) ? $plan : '';
+		if ( in_array( $plan, array( 'both', 'm1_both', 'm2_both' ), true ) ) {
 			return array( self::MORNING, self::EVENING );
 		}
-		$one = self::normalize_type( $plan );
-		return $one ? array( $one ) : array();
+		if ( in_array( $plan, array( self::MORNING, 'm1_am', 'm2_am', 'm3_am' ), true ) ) {
+			return array( self::MORNING );
+		}
+		if ( in_array( $plan, array( self::EVENING, 'm1_pm', 'm2_pm', 'm3_pm' ), true ) ) {
+			return array( self::EVENING );
+		}
+		return array();
 	}
 
 	/** "۸:۰۰" یا "16:30" → دقیقه از نیمه‌شب، یا null */
