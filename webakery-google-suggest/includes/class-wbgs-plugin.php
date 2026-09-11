@@ -53,6 +53,18 @@ class WBGS_Plugin {
 		return wp_parse_args( (array) get_option( self::OPTION, array() ), self::defaults() );
 	}
 
+	/**
+	 * جهت UI بر اساس زبان سایت وردپرس: فارسی/RTL سمت چپ، LTR سمت راست.
+	 *
+	 * @return string rtl|ltr
+	 */
+	public static function html_dir() {
+		if ( function_exists( 'is_rtl' ) && ! is_rtl() ) {
+			return 'ltr';
+		}
+		return 'rtl';
+	}
+
 	public static function script_data( $nonce_action ) {
 		$settings = self::settings();
 		$ajax     = admin_url( 'admin-ajax.php' );
@@ -101,6 +113,8 @@ class WBGS_Plugin {
 				'xmind_ok' => 'فایل XMind آماده شد.',
 				'xmind_err'=> 'ساخت XMind نشد.',
 			),
+			'dir'         => self::html_dir(),
+			'isRtl'       => self::html_dir() === 'rtl',
 			'longtailCap' => 50,
 			'canSave'     => function_exists( 'is_user_logged_in' ) && is_user_logged_in(),
 			'reportList'  => class_exists( 'WBGS_Reports' ) ? WBGS_Reports::list_for() : array(),

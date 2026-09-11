@@ -75,6 +75,17 @@
   </div>
 <script>
 (function () {
+  var ltr = /[?&]dir=ltr(?:&|$)/.test(location.search);
+  document.documentElement.setAttribute('dir', ltr ? 'ltr' : 'rtl');
+  document.documentElement.setAttribute('lang', ltr ? 'en' : 'fa');
+  var root = document.querySelector('.wbgs-g');
+  if (root) {
+    root.setAttribute('dir', ltr ? 'ltr' : 'rtl');
+  }
+})();
+</script>
+<script>
+(function () {
   var rows = [
     { text: 'کفش مردانه', intent: 'commercial', intent_fa: 'تجاری', entity: 'category', entity_fa: 'دسته محصول', comp: 66, band: 'متوسط' },
     { text: 'کفش زنانه', intent: 'commercial', intent_fa: 'تجاری', entity: 'category', entity_fa: 'دسته محصول', comp: 64, band: 'متوسط' },

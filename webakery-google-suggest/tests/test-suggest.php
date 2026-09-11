@@ -371,9 +371,17 @@ wbgs_assert( false !== strpos( $js_src, 'wbgs-copy-one' ), 'copy button class ex
 wbgs_assert( substr_count( $js_src, 'copyPhraseBtn(row.text)' ) >= 4, 'copy wired on list, tree, tax, cluster, faq' );
 $css_src = file_get_contents( dirname( __DIR__ ) . '/assets/css/google.css' );
 wbgs_assert( false !== strpos( $css_src, '.wbgs-copy-one' ), 'copy button styled' );
-wbgs_assert( false !== strpos( $css_src, 'minmax(0, 1fr) auto auto 5.5em auto' ), 'copy is last list column' );
+wbgs_assert( false !== strpos( $css_src, 'margin-inline-start: auto' ), 'copy docks to inline-end (left in RTL)' );
+wbgs_assert( false !== strpos( $css_src, '.wbgs-g[dir="ltr"]' ), 'LTR site language flips direction' );
+wbgs_assert( false !== strpos( $js_src, 'function applyUiDir' ), 'JS applies site language dir' );
+wbgs_assert( false !== strpos( $js_src, 'function siteDir' ), 'JS reads site dir from config' );
+$plugin_src = file_get_contents( dirname( __DIR__ ) . '/includes/class-wbgs-plugin.php' );
+wbgs_assert( false !== strpos( $plugin_src, 'function html_dir' ), 'html_dir follows is_rtl' );
+$home_src = file_get_contents( dirname( __DIR__ ) . '/templates/google-home.php' );
+wbgs_assert( false !== strpos( $home_src, 'WBGS_Plugin::html_dir()' ), 'google home dir follows site language' );
 $preview_src = file_get_contents( dirname( __DIR__ ) . '/canvas-preview.html' );
 wbgs_assert( false !== strpos( $preview_src, 'wbgs-copy-one' ), 'preview has per-phrase copy' );
+wbgs_assert( false !== strpos( $preview_src, 'dir=ltr' ), 'preview can flip to LTR' );
 
 if ( $failed ) {
 	echo "\n$failed failed\n";

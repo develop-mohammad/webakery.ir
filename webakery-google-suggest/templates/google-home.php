@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 /** @var bool $licensed */
 ?>
-<div class="wbgs-g" data-wbgs-ui="google" dir="rtl">
+<div class="wbgs-g" data-wbgs-ui="google" dir="<?php echo esc_attr( WBGS_Plugin::html_dir() ); ?>">
 	<div class="wbgs-g-hero" id="wbgs-hero">
 		<div class="wbgs-g-logo">سجست‌یاب</div>
 		<p class="wbgs-g-tag">همه پیشنهادهای واقعی گوگل برای یک عبارت</p>

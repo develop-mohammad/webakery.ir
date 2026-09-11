@@ -6,6 +6,11 @@
 	max-width: 920px;
 	margin: 0 auto;
 	padding: 24px 12px 48px;
+	direction: rtl;
+}
+
+.wbgs-g[dir="ltr"] {
+	direction: ltr;
 }
 
 .wbgs-g [hidden] {
@@ -151,12 +156,17 @@
 }
 
 .wbgs-g .wbgs-list li {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto auto 5.5em auto;
+	display: flex;
+	flex-direction: row;
 	align-items: center;
 	gap: 10px;
 	padding: 10px 14px;
 	border-bottom: 1px solid #f1f3f4;
+}
+
+.wbgs-g .wbgs-list li .wbgs-kw {
+	flex: 1 1 auto;
+	min-width: 0;
 }
 
 .wbgs-g .wbgs-list li:last-child {
@@ -174,7 +184,7 @@
 	font-weight: 700;
 	border-radius: 99px;
 	padding: 2px 8px;
-	margin-left: 6px;
+	margin-inline-end: 6px;
 	white-space: nowrap;
 }
 
@@ -191,6 +201,8 @@
 	color: #fff;
 	white-space: nowrap;
 	line-height: 1.3;
+	flex: 0 0 auto;
+	margin-inline-start: auto;
 }
 
 .wbgs-copy-one:hover {
@@ -389,13 +401,24 @@
 
 .wbgs-ktree-head,
 .wbgs-ktree-row {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto 5.5em auto;
+	display: flex;
+	flex-direction: row;
 	align-items: center;
 	gap: 8px;
 	padding: 8px 12px;
 	border-bottom: 1px solid #f1f3f4;
 	font-size: 13.5px;
+}
+
+.wbgs-ktree-head > span:first-child,
+.wbgs-ktree-row .wbgs-kw {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.wbgs-ktree-head > span:last-child,
+.wbgs-ktree-row .wbgs-copy-one {
+	margin-inline-start: auto;
 }
 
 .wbgs-ktree-head {
@@ -506,10 +529,21 @@
 .wbgs-mmap-card li,
 .wbgs-pillar-card li {
 	display: flex;
-	justify-content: space-between;
+	align-items: center;
+	justify-content: flex-start;
 	gap: 8px;
 	border-bottom: 1px solid #f8f9fa;
 	padding: 3px 0;
+}
+
+.wbgs-mmap-card li .wbgs-copy-one,
+.wbgs-pillar-card li .wbgs-copy-one {
+	margin-inline-start: auto;
+}
+
+.wbgs-mmap-card li .wbgs-searches,
+.wbgs-pillar-card li .wbgs-searches {
+	margin-inline-start: 0;
 }
 
 .wbgs-intent-branch {
@@ -579,10 +613,14 @@
 .wbgs-g .wbgs-tax-list li {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: flex-start;
 	gap: 8px;
 	border-bottom: 1px solid #f8f9fa;
 	padding: 3px 0;
+}
+
+.wbgs-g .wbgs-tax-list li .wbgs-copy-one {
+	margin-inline-start: auto;
 }
 
 .wbgs-g .wbgs-tax-empty {
@@ -621,7 +659,7 @@
 
 .wbgs-g .wbgs-matrix th:first-child,
 .wbgs-g .wbgs-matrix td:first-child {
-	text-align: right;
+	text-align: start;
 }
 
 .wbgs-g .wbgs-shelf-faq h2,

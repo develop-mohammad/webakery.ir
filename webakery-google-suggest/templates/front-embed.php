@@ -11,7 +11,7 @@ if ( $extra_class !== '' ) {
 	$wrap .= ' ' . $extra_class;
 }
 ?>
-<div class="<?php echo esc_attr( $wrap ); ?>" dir="rtl">
+<div class="<?php echo esc_attr( $wrap ); ?>" dir="<?php echo esc_attr( WBGS_Plugin::html_dir() ); ?>">
 	<?php if ( ! $licensed ) : ?>
 		<div class="wbgs-card wbgs-locked">
 			<h2>استخراج قفل است</h2>

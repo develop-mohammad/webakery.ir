@@ -49,6 +49,38 @@
 		return;
 	}
 
+	function siteDir() {
+		if (cfg.dir === 'ltr' || cfg.dir === 'rtl') {
+			return cfg.dir;
+		}
+		if (cfg.isRtl === false) {
+			return 'ltr';
+		}
+		if (cfg.isRtl === true) {
+			return 'rtl';
+		}
+		var htmlDir = (document.documentElement.getAttribute('dir') || '').toLowerCase();
+		if (htmlDir === 'ltr' || htmlDir === 'rtl') {
+			return htmlDir;
+		}
+		if (document.body && document.body.classList.contains('rtl')) {
+			return 'rtl';
+		}
+		if (document.body && document.body.classList.contains('ltr')) {
+			return 'ltr';
+		}
+		return 'rtl';
+	}
+
+	function applyUiDir() {
+		var dir = siteDir();
+		var nodes = document.querySelectorAll('.wbgs-g, .wbgs-wrap, .wbgs-embed');
+		for (var i = 0; i < nodes.length; i++) {
+			nodes[i].setAttribute('dir', dir);
+		}
+	}
+	applyUiDir();
+
 	var running = false;
 	var stopFlag = false;
 	var view = 'list';

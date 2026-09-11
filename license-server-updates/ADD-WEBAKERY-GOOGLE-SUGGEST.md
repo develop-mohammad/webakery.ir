@@ -10,13 +10,13 @@
 'webakery-google-suggest' => [
 	'name'         => 'سجست‌یاب گوگل',
 	'price'        => 199000,          // تومان
-	'version'      => '1.3.4',
+	'version'      => '1.3.5',
 	'file'         => 'webakery-google-suggest.zip',
 	'homepage'     => 'https://webakery.ir/product/webakery-google-suggest/',
 	'requires'     => '5.8',
 	'requires_php' => '7.4',
 	'tested'       => '6.7',
-	'changelog'    => '<h4>1.3.4</h4><ul><li>دکمه کپی در انتهای ردیف و بزرگ‌تر</li></ul><h4>1.3.3</h4><ul><li>کپی تک‌تک عبارت‌ها</li></ul>',
+	'changelog'    => '<h4>1.3.5</h4><ul><li>دکمه کپی سمت چپ در سایت فارسی (با توجه به زبان سایت)</li></ul><h4>1.3.4</h4><ul><li>دکمه کپی در انتهای ردیف و بزرگ‌تر</li></ul><h4>1.3.3</h4><ul><li>کپی تک‌تک عبارت‌ها</li></ul>',
 ],
 ```
 

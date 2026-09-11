@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 $code = WBGS_Frontend::primary_shortcode();
 ?>
-<section class="wbgs-card wbgs-shortcode-box" dir="rtl">
+<section class="wbgs-card wbgs-shortcode-box" dir="<?php echo esc_attr( WBGS_Plugin::html_dir() ); ?>">
 	<h2>قرار دادن در صفحه</h2>
 	<p class="wbgs-hint">این شورت‌کد را در هر برگه یا نوشته بگذارید تا بازدیدکننده‌ها (نه فقط مدیر) سجست‌یاب را روی همان صفحه استفاده کنند.</p>
 	<div class="wbgs-shortcode-row">

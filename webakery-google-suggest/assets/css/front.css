@@ -14,6 +14,14 @@
 	color: #202124;
 }
 
+.wbgs-embed {
+	direction: rtl;
+}
+
+.wbgs-embed[dir="ltr"] {
+	direction: ltr;
+}
+
 .wbgs-embed .wbgs-g {
 	font-family: inherit;
 	max-width: 100%;

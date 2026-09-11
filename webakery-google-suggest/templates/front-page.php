@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 /** @var bool $logged */
 $public = ! empty( WBGS_Plugin::settings()['front_public'] );
 ?><!DOCTYPE html>
-<html <?php language_attributes(); ?> dir="rtl">
+<html <?php language_attributes(); ?>>
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />

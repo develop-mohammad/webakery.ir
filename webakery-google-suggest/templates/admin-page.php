@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
 /** @var array $settings */
 /** @var bool $licensed */
 ?>
-<div class="wrap wbgs-wrap" dir="rtl">
+<div class="wrap wbgs-wrap" dir="<?php echo esc_attr( WBGS_Plugin::html_dir() ); ?>">
 	<h1 class="wbgs-h1">
 		سجست‌یاب گوگل
 		<span class="wbgs-ver">v<?php echo esc_html( WBGS_VERSION ); ?></span>
