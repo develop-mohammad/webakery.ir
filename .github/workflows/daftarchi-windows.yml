@@ -15,7 +15,9 @@ jobs:
   windows:
     runs-on: windows-latest
     permissions:
-      contents: read
+      contents: write
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,7 +34,29 @@ jobs:
         with:
           name: Daftarchi-Windows
           path: |
-            daftarchi/release/Daftarchi-*-win-*.zip
             daftarchi/release/Daftarchi-Setup-*.exe
+            daftarchi/release/Daftarchi-Portable-*.exe
+            daftarchi/release/Daftarchi-*-win-*.zip
           if-no-files-found: error
           retention-days: 14
+      - name: Publish downloadable release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: daftarchi-windows
+          name: دفترچی برای ویندوز
+          prerelease: true
+          make_latest: false
+          files: |
+            daftarchi/release/Daftarchi-Setup-*.exe
+            daftarchi/release/Daftarchi-Portable-*.exe
+            daftarchi/release/Daftarchi-*-win-*.zip
+          body: |
+            نصب دفترچی روی ویندوز ۱۰/۱۱ ۶۴بیتی
+
+            ساده‌ترین فایل: `Daftarchi-Portable-1.0.0.exe` را دانلود و دوبار کلیک کن.
+
+            یا `Daftarchi-Setup-1.0.0.exe` برای نصب با میانبر میزکار.
+
+            اگر ویندوز هشدار SmartScreen داد: More info → Run anyway.
+          fail_on_unmatched_files: true

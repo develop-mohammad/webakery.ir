@@ -1,23 +1,25 @@
-دفترچی — راهنمای اجرا روی ویندوز
+دفترچی — نصب روی ویندوز ۱۰/۱۱ ۶۴بیتی
 سازنده: webakery.ir
 
-نصب
-۱. کل این پوشه را جایی مثل Desktop\Daftarchi نگه دار (فایل‌ها را از هم جدا نکن).
-۲. روی Daftarchi.exe دوبار کلیک کن.
-۳. اگر ویندوز هشدار SmartScreen داد:
-   More info / اطلاعات بیشتر  ←  Run anyway / اجرای به‌هرحال
-   (نسخهٔ فعلی امضای دیجیتال ندارد؛ این هشدار طبیعی است.)
+آسان‌ترین راه
+روی Daftarchi-Portable-1.0.0.exe دوبار کلیک کن. نصب لازم نیست.
 
-میانبر میزکار
-روی Daftarchi.exe راست‌کلیک کن → Show more options → Send to → Desktop (create shortcut)
+یا نصب‌کننده
+روی Daftarchi-Setup-1.0.0.exe دوبار کلیک کن. صبر کن تا برنامه باز شود.
 
-دادهٔ فروشگاه
-فاکتورها و کالاها اینجا ذخیره می‌شوند، نه داخل پوشهٔ برنامه:
+یا پوشهٔ ZIP
+۱. ZIP را Extract / استخراج کن (روی فایل ZIP راست‌کلیک → Extract All).
+۲. داخل پوشه روی Install-Daftarchi.cmd دوبار کلیک کن.
+   میانبر Daftarchi روی میزکار ساخته می‌شود و برنامه باز می‌شود.
+۳. اگر خواستی بدون نصب اجرا کنی: Start-Daftarchi.cmd یا Daftarchi.exe
 
-%APPDATA%\Daftarchi\daftarchi.sqlite
+اگر ویندوز مانع شد
+پیام «Windows protected your PC» / «ویندوز از رایانه شما محافظت کرد» طبیعی است.
+۱. More info / اطلاعات بیشتر
+۲. Run anyway / اجرای به‌هرحال
 
-مسیر کامل معمولاً این است:
-C:\Users\<نام کاربری>\AppData\Roaming\Daftarchi\
+اگر فایل قفل است
+روی فایل exe راست‌کلیک → Properties / ویژگی‌ها → پایین صفحه Unblock / رفع انسداد → OK
 
-بکاپ خودکار (حداکثر ۳۰ نسخه):
-%APPDATA%\Daftarchi\backups
+دادهٔ فروشگاه اینجا ذخیره می‌شود:
+%APPDATA%\Daftarchi\

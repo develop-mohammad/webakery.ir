@@ -4,26 +4,26 @@
 
 ## نصب روی ویندوز
 
-از GitHub Actions (workflow `daftarchi-windows`) فایل `Daftarchi-Windows` را دانلود کن: یا ZIP را باز کن و `Daftarchi.exe` را اجرا کن، یا نصب‌کنندهٔ `Daftarchi-Setup-1.0.0.exe` را بزن.
+ویندوز ۱۰ یا ۱۱ **۶۴بیتی** لازم است.
 
-اگر ویندوز SmartScreen نشان داد: **More info** → **Run anyway**.
+دانلود از صفحهٔ انتشار:
 
-کل پوشه را با هم نگه دار (dllها و `resources` کنار exe لازم‌اند).
+https://github.com/develop-mohammad/webakery.ir/releases/tag/daftarchi-windows
 
-دیتابیس بعد از اجرا اینجا ذخیره می‌شود:
+- `Daftarchi-Portable-1.0.0.exe` — بدون نصب، دوبار کلیک
+- `Daftarchi-Setup-1.0.0.exe` — نصب یک‌کلیکی + میانبر میزکار
+- `Daftarchi-1.0.0-win-x64.zip` — استخراج کن، بعد `Install-Daftarchi.cmd`
 
-`%APPDATA%\Daftarchi\daftarchi.sqlite`
+اگر SmartScreen آمد: **More info** → **Run anyway**.
 
-بکاپ خودکار در `%APPDATA%\Daftarchi\backups`
-
-نصب‌کنندهٔ NSIS (`.exe`) روی خود ویندوز با `npm run build:win -- --nsis` ساخته می‌شود. از لینوکس فقط ZIP تولید می‌شود.
+دیتابیس: `%APPDATA%\Daftarchi\daftarchi.sqlite`
 
 ## ساخت از روی سورس
 
 ```bash
 cd daftarchi
 npm install
-npm run build:win
+npm run build:win -- --nsis
 ```
 
 خروجی در پوشهٔ `release/` است.

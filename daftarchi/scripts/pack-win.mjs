@@ -43,7 +43,7 @@ try {
 
   run('npx', ['vite', 'build'], process.cwd())
 
-  const targets = wantNsis ? ['zip', 'nsis'] : ['zip']
+  const targets = wantNsis ? ['zip', 'portable', 'nsis'] : ['zip']
   run('npx', ['electron-builder', '--win', ...targets, '--x64'], process.cwd())
 } finally {
   if (!isWin && existsSync(linuxBackup)) {

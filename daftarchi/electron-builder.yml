@@ -18,14 +18,23 @@ extraMetadata:
 extraFiles:
   - from: resources/INSTALL-WINDOWS.txt
     to: INSTALL-WINDOWS.txt
+  - from: resources/Start-Daftarchi.cmd
+    to: Start-Daftarchi.cmd
+  - from: resources/Install-Daftarchi.cmd
+    to: Install-Daftarchi.cmd
 npmRebuild: false
+forceCodeSigning: false
 win:
   executableName: Daftarchi
   icon: resources/icon.png
   signAndEditExecutable: false
   artifactName: "${productName}-${version}-win-${arch}.${ext}"
+  requestedExecutionLevel: asInvoker
   target:
     - target: zip
+      arch:
+        - x64
+    - target: portable
       arch:
         - x64
     - target: nsis
@@ -33,18 +42,20 @@ win:
         - x64
 nsis:
   artifactName: "${productName}-Setup-${version}.${ext}"
-  oneClick: false
+  oneClick: true
   perMachine: false
-  allowToChangeInstallationDirectory: true
-  allowElevation: true
+  allowElevation: false
+  allowToChangeInstallationDirectory: false
   createDesktopShortcut: always
   createStartMenuShortcut: true
+  runAfterFinish: true
   shortcutName: Daftarchi
   uninstallDisplayName: Daftarchi
   installerLanguages:
     - en_US
   language: "1033"
   deleteAppDataOnUninstall: false
+  warningsAsErrors: false
 portable:
   artifactName: "${productName}-Portable-${version}.${ext}"
 linux:
