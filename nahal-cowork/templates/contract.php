@@ -31,28 +31,7 @@ $hours    = NCK_Settings::hours();
 		<div class="nck-alert nck-alert-error" data-nck-error hidden></div>
 		<div class="nck-alert nck-alert-ok" data-nck-ok hidden></div>
 
-		<section class="nck-step" data-nck-step data-nck-step-label="متن قرارداد">
-			<article class="nck-paper nck-paper-nested">
-				<p class="nck-intro"><?php echo esc_html( $intro ); ?></p>
-				<p class="nck-preamble" data-nck-preamble data-tpl="<?php echo esc_attr( $s['contract_preamble'] ); ?>"><?php echo esc_html( $preamble ); ?></p>
-				<?php foreach ( $sections as $sec ) : ?>
-					<section class="nck-section">
-						<h3><?php echo esc_html( $sec['title'] ); ?></h3>
-						<?php foreach ( preg_split( '/\n+/', $sec['body'] ) as $p ) : ?>
-							<?php if ( trim( $p ) !== '' ) : ?>
-								<p><?php echo esc_html( $p ); ?></p>
-							<?php endif; ?>
-						<?php endforeach; ?>
-					</section>
-				<?php endforeach; ?>
-				<div class="nck-hours" aria-hidden="true">
-					<span>صبح <?php echo esc_html( NCK_Jalali::fa_digits( $hours['morning_start'] . '–' . $hours['morning_end'] ) ); ?></span>
-					<span>عصر <?php echo esc_html( NCK_Jalali::fa_digits( $hours['evening_start'] . '–' . $hours['evening_end'] ) ); ?></span>
-				</div>
-			</article>
-		</section>
-
-		<section class="nck-step" data-nck-step data-nck-step-label="مشخصات و اشتراک" hidden>
+		<section class="nck-step" data-nck-step data-nck-step-label="مشخصات و اشتراک">
 			<div class="nck-grid">
 				<div class="nck-field">
 					<label for="nck-honorific">عنوان</label>
@@ -79,6 +58,14 @@ $hours    = NCK_Settings::hours();
 			$nck_sign_party = 'امضای عضو';
 			include NCK_PATH . 'templates/sign-pad.php';
 			?>
+		</section>
+
+		<section class="nck-step" data-nck-step data-nck-step-label="مفاد قرارداد" hidden>
+			<p class="nck-form-help">متن قرارداد با اطلاعات شما پر شده است. آن را بخوانید و فایل را دانلود کنید.</p>
+			<?php include NCK_PATH . 'templates/contract-review.php'; ?>
+			<p class="nck-review-actions">
+				<button type="button" class="nck-btn" data-nck-download-review>دانلود قرارداد</button>
+			</p>
 			<label class="nck-agree">
 				<input type="checkbox" name="agree" value="1" required />
 				مفاد قرارداد را خواندم و می‌پذیرم.
@@ -96,7 +83,7 @@ $hours    = NCK_Settings::hours();
 		<nav class="nck-wizard-nav">
 			<button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
 			<button type="button" class="nck-btn" data-nck-next>مرحله بعد</button>
-			<button type="submit" class="nck-btn" data-nck-submit hidden>ثبت قرارداد</button>
+			<button type="submit" class="nck-btn" data-nck-submit hidden>ثبت و پرداخت</button>
 		</nav>
 	</form>
 
@@ -104,7 +91,7 @@ $hours    = NCK_Settings::hours();
 		<p class="nck-done-title">قرارداد شما ثبت شد.</p>
 		<p data-nck-done-msg></p>
 		<p>
-			<a class="nck-btn" data-nck-print-link href="#" target="_blank" rel="noopener">مشاهده و چاپ قرارداد</a>
+			<a class="nck-btn" data-nck-print-link href="#" target="_blank" rel="noopener">دانلود و چاپ قرارداد</a>
 		</p>
 	</div>
 </div>

@@ -23,10 +23,10 @@ $row       = static function ( $label, $value ) {
 	<style>.nck-root{--nck-leaf:<?php echo esc_attr( $s['accent'] ); ?>;}</style>
 </head>
 <body class="nck-print-body">
-	<div class="nck-print-bar">
-		<button type="button" onclick="window.print()">چاپ</button>
-		<button type="button" onclick="window.close()">بستن</button>
-	</div>
+	<?php
+	$nck_save_title = 'پذیرش-فراگیر-' . ( isset( $contract['full_name'] ) ? $contract['full_name'] : 'نهال' );
+	include NCK_PATH . 'templates/print-bar.php';
+	?>
 	<article class="nck-root nck-paper nck-print-paper" dir="rtl">
 		<header class="nck-paper-head">
 			<div class="nck-mark" aria-hidden="true">

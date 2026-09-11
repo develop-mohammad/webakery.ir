@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>نهال — پیش‌نمایش فرم‌ها</title>
-<link rel="stylesheet" href="assets/css/frontend.css?v=125" />
+<link rel="stylesheet" href="assets/css/frontend.css?v=126" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
   body{
@@ -418,9 +418,38 @@
               <div class="nck-field nck-field-wide"><label>سالن</label><input name="hall_name" type="text" required /></div>
               <div class="nck-field"><label>مبلغ (تومان)</label><input name="amount" type="text" dir="ltr" required /></div>
               <div class="nck-field"><label>تعداد صندلی</label><input name="chairs" type="number" min="1" required /></div>
-              <div class="nck-field"><label>تاریخ</label><input name="event_date" type="text" dir="ltr" required value="1404/06/20" /></div>
-              <div class="nck-field"><label>از ساعت</label><input name="start_hour" type="text" dir="ltr" required placeholder="16:00" /></div>
-              <div class="nck-field"><label>تا ساعت</label><input name="end_hour" type="text" dir="ltr" required placeholder="20:00" /></div>
+              <div class="nck-field nck-field-wide">
+                <span class="nck-label">تاریخ برگزاری</span>
+                <div class="nck-cal" data-nck-cal data-today="1405/06/20" data-today-y="1405" data-today-m="6" data-today-d="20">
+                  <button type="button" class="nck-cal-trigger" data-nck-cal-open><span data-nck-cal-label>۲۰ شهریور ۱۴۰۵</span></button>
+                  <input name="event_date" type="hidden" required value="1405/06/20" />
+                  <div class="nck-cal-pop" data-nck-cal-pop hidden role="dialog" aria-label="تقویم شمسی">
+                    <div class="nck-cal-nav">
+                      <button type="button" data-nck-cal-prev>ماه قبل</button>
+                      <strong data-nck-cal-month>شهریور ۱۴۰۵</strong>
+                      <button type="button" data-nck-cal-next>ماه بعد</button>
+                    </div>
+                    <div class="nck-cal-weekdays"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+                    <div class="nck-cal-grid" data-nck-cal-grid></div>
+                  </div>
+                </div>
+              </div>
+              <div class="nck-field nck-field-wide">
+                <span class="nck-label">ساعت اجاره</span>
+                <p class="nck-form-help">ساعت را روی رول بگردانید. فقط ۹ تا ۱۳ و ۱۶ تا ۲۲ قابل انتخاب است.</p>
+                <div class="nck-time-rolls" data-nck-time-rolls>
+                  <div class="nck-roll" data-nck-roll="start">
+                    <p class="nck-roll-caption">از ساعت</p>
+                    <div class="nck-roll-frame" data-nck-roll-frame tabindex="0"><ul class="nck-roll-list"></ul></div>
+                  </div>
+                  <div class="nck-roll" data-nck-roll="end">
+                    <p class="nck-roll-caption">تا ساعت</p>
+                    <div class="nck-roll-frame" data-nck-roll-frame tabindex="0"><ul class="nck-roll-list"></ul></div>
+                  </div>
+                  <input name="start_hour" type="hidden" required value="16:00" />
+                  <input name="end_hour" type="hidden" required value="20:00" />
+                </div>
+              </div>
             </div>
           </section>
           <section class="nck-step" data-nck-step data-nck-step-label="امضا" hidden>
@@ -614,6 +643,7 @@
       nonce: 'preview',
       org: 'مجموعه فرهنگی نهال',
       slot: 'evening',
+      cal: { today: '1405/06/20', y: 1405, m: 6, d: 20, months: ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'] },
       i18n: { signing: 'در حال ثبت…', looking: 'جستجو…', checking: 'ثبت حضور…', error: 'خطا', draw: 'عکس امضا را آپلود کنید یا داخل کادر بکشید.', signature: 'عکس امضا را آپلود کنید یا داخل کادر بکشید.' },
       store: {},
       mock: function (action, data) {
@@ -708,6 +738,6 @@
       });
     }
   </script>
-  <script src="assets/js/frontend.js?v=125"></script>
+  <script src="assets/js/frontend.js?v=126"></script>
 </body>
 </html>

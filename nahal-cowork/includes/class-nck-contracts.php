@@ -298,7 +298,7 @@ class NCK_Contracts {
 
 		return array(
 			'ok'       => true,
-			'message'  => 'قرارداد با موفقیت ثبت شد.',
+			'message'  => 'قرارداد با موفقیت ثبت شد.' . NCK_Pay::tracking_note( $pay['payload'] ),
 			'member'   => $member,
 			'contract' => $contract,
 			'print'    => self::print_url( $contract['print_token'] ),
@@ -341,7 +341,7 @@ class NCK_Contracts {
 
 		return array(
 			'ok'       => true,
-			'message'  => 'قرارداد اجاره سالن ثبت شد.',
+			'message'  => 'قرارداد اجاره سالن ثبت شد.' . NCK_Pay::tracking_note( $p ),
 			'member'   => $member,
 			'contract' => $contract,
 			'print'    => self::print_url( $contract['print_token'] ),
@@ -384,7 +384,7 @@ class NCK_Contracts {
 
 		return array(
 			'ok'       => true,
-			'message'  => 'فرم پذیرش فراگیر ثبت شد.',
+			'message'  => 'فرم پذیرش فراگیر ثبت شد.' . NCK_Pay::tracking_note( $p ),
 			'member'   => $member,
 			'contract' => $contract,
 			'print'    => self::print_url( $contract['print_token'] ),
@@ -431,7 +431,7 @@ class NCK_Contracts {
 
 		return array(
 			'ok'       => true,
-			'message'  => 'فرم «' . $form['title'] . '» ثبت شد.',
+			'message'  => 'فرم «' . $form['title'] . '» ثبت شد.' . NCK_Pay::tracking_note( $p ),
 			'member'   => $member,
 			'contract' => $contract,
 			'print'    => self::print_url( $contract['print_token'] ),

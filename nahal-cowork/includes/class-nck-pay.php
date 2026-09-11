@@ -31,6 +31,33 @@ class NCK_Pay {
 		return 'processing';
 	}
 
+	public static function make_ref() {
+		$t   = class_exists( 'NCK_Jalali' ) ? NCK_Jalali::today() : array( 'y' => (int) gmdate( 'Y' ), 'm' => (int) gmdate( 'n' ), 'd' => (int) gmdate( 'j' ) );
+		$ymd = sprintf( '%04d%02d%02d', (int) $t['y'], (int) $t['m'], (int) $t['d'] );
+		try {
+			$rand = strtoupper( bin2hex( random_bytes( 3 ) ) );
+		} catch ( Exception $e ) {
+			$rand = strtoupper( substr( md5( uniqid( (string) mt_rand(), true ) ), 0, 6 ) );
+		}
+		return 'NCK-' . $ymd . '-' . $rand;
+	}
+
+	public static function tracking_note( array $payload ) {
+		$ref = isset( $payload['pay_ref'] ) ? trim( (string) $payload['pay_ref'] ) : '';
+		if ( $ref === '' ) {
+			return '';
+		}
+		return ' شماره پیگیری: ' . $ref;
+	}
+
+	public static function today_pay_date() {
+		if ( class_exists( 'NCK_Jalali' ) ) {
+			$t = NCK_Jalali::today();
+			return NCK_Jalali::format( $t['y'], $t['m'], $t['d'] );
+		}
+		return gmdate( 'Y/m/d' );
+	}
+
 	public static function sync_enabled() {
 		if ( ! class_exists( 'NCK_Settings' ) ) {
 			return true;
@@ -63,7 +90,7 @@ class NCK_Pay {
 		);
 		$payment = isset( $in['payment'] ) ? (string) $in['payment'] : '';
 		if ( ! isset( $opts[ $payment ] ) ) {
-			return array( 'ok' => false, 'message' => 'روش پرداخت را انتخاب کنید.' );
+			$payment = 'site';
 		}
 
 		$amount = 0;
@@ -81,10 +108,8 @@ class NCK_Pay {
 				return array( 'ok' => false, 'message' => 'تاریخ پرداخت را به صورت ۱۴۰۴/۰۶/۲۰ وارد کنید.' );
 			}
 		}
-
-		$ref = isset( $in['pay_ref'] ) ? trim( (string) $in['pay_ref'] ) : '';
-		if ( function_exists( 'sanitize_text_field' ) ) {
-			$ref = sanitize_text_field( $ref );
+		if ( $pay_date === '' ) {
+			$pay_date = self::today_pay_date();
 		}
 
 		return array(
@@ -93,7 +118,7 @@ class NCK_Pay {
 				'payment'    => $payment,
 				'pay_amount' => $amount,
 				'pay_date'   => $pay_date,
-				'pay_ref'    => $ref,
+				'pay_ref'    => self::make_ref(),
 			),
 		);
 	}
@@ -191,7 +216,7 @@ class NCK_Pay {
 			if ( ! self::should_record( $amount ) ) {
 				return array( 'ok' => false, 'skipped' => true, 'reason' => 'amount' );
 			}
-			$payment = isset( $payload['payment'] ) && $payload['payment'] !== '' ? $payload['payment'] : 'onsite';
+			$payment = isset( $payload['payment'] ) && $payload['payment'] !== '' ? $payload['payment'] : 'site';
 			return array(
 				'ok'    => true,
 				'order' => self::draft(
@@ -269,7 +294,7 @@ class NCK_Pay {
 					$label .= ' — ' . $labels[ $plan ];
 				}
 			}
-			$payment = isset( $payload['payment'] ) && $payload['payment'] !== '' ? $payload['payment'] : 'onsite';
+			$payment = isset( $payload['payment'] ) && $payload['payment'] !== '' ? $payload['payment'] : 'site';
 			return array(
 				'ok'    => true,
 				'order' => self::draft(

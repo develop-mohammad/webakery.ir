@@ -350,6 +350,424 @@
     });
   }
 
+  function pad2(n) {
+    n = String(n);
+    return n.length < 2 ? '0' + n : n;
+  }
+
+  function toGregorian(jy, jm, jd) {
+    jy = +jy;
+    jm = +jm;
+    jd = +jd;
+    jy += 1595;
+    var days = -355668 + (365 * jy) + (Math.floor(jy / 33) * 8) + Math.floor(((jy % 33) + 3) / 4) + jd
+      + (jm < 7 ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+    var gy = 400 * Math.floor(days / 146097);
+    days %= 146097;
+    if (days > 36524) {
+      gy += 100 * Math.floor(--days / 36524);
+      days %= 36524;
+      if (days >= 365) days++;
+    }
+    gy += 4 * Math.floor(days / 1461);
+    days %= 1461;
+    if (days > 364) {
+      gy += Math.floor((days - 1) / 365);
+      days = (days - 1) % 365;
+    }
+    var gd = days + 1;
+    var leap = (gy % 4 === 0 && (gy % 100 !== 0 || gy % 400 === 0));
+    var dim = [0, 31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    var i = 1;
+    for (; gd > dim[i]; i++) gd -= dim[i];
+    return [gy, i, gd];
+  }
+
+  function toJalali(gy, gm, gd) {
+    gy = +gy;
+    gm = +gm;
+    gd = +gd;
+    var gMonths = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+    var jy = (gy <= 1600) ? 0 : 979;
+    gy -= (gy <= 1600) ? 621 : 1600;
+    var gy2 = (gm > 2) ? (gy + 1) : gy;
+    var days = (365 * gy) + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100)
+      + Math.floor((gy2 + 399) / 400) - 80 + gd + gMonths[gm - 1];
+    jy += 33 * Math.floor(days / 12053);
+    days %= 12053;
+    jy += 4 * Math.floor(days / 1461);
+    days %= 1461;
+    if (days > 365) {
+      jy += Math.floor((days - 1) / 365);
+      days = (days - 1) % 365;
+    }
+    var jmDays = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
+    var i = 0;
+    for (; i < 11 && days >= jmDays[i]; i++) days -= jmDays[i];
+    return [jy, i + 1, days + 1];
+  }
+
+  function jalaliMonthLength(jy, jm) {
+    if (jm <= 6) return 31;
+    if (jm <= 11) return 30;
+    var g = toGregorian(jy, 12, 30);
+    var back = toJalali(g[0], g[1], g[2]);
+    return (back[1] === 12 && back[2] === 30) ? 30 : 29;
+  }
+
+  function jalaliWeekday(jy, jm, jd) {
+    var g = toGregorian(jy, jm, jd);
+    var dt = new Date(g[0], g[1] - 1, g[2], 12, 0, 0);
+    return (dt.getDay() + 1) % 7;
+  }
+
+  function jalaliYmd(y, m, d) {
+    return y + '/' + pad2(m) + '/' + pad2(d);
+  }
+
+  function hallToday(calEl) {
+    if (calEl && calEl.getAttribute('data-today-y')) {
+      return {
+        y: +calEl.getAttribute('data-today-y'),
+        m: +calEl.getAttribute('data-today-m'),
+        d: +calEl.getAttribute('data-today-d')
+      };
+    }
+    if (window.NCK && NCK.cal && NCK.cal.y) {
+      return { y: +NCK.cal.y, m: +NCK.cal.m, d: +NCK.cal.d };
+    }
+    var n = new Date();
+    var j = toJalali(n.getFullYear(), n.getMonth() + 1, n.getDate());
+    return { y: j[0], m: j[1], d: j[2] };
+  }
+
+  function monthNames() {
+    if (window.NCK && NCK.cal && NCK.cal.months && NCK.cal.months.length) return NCK.cal.months;
+    return ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+  }
+
+  function longJalali(y, m, d) {
+    var names = monthNames();
+    return faDigits(d) + ' ' + (names[m - 1] || '') + ' ' + faDigits(y);
+  }
+
+  function bindHallCalendar(root) {
+    var wrap = qs(root, '[data-nck-cal]');
+    if (!wrap) return;
+    var pop = qs(wrap, '[data-nck-cal-pop]');
+    var grid = qs(wrap, '[data-nck-cal-grid]');
+    var title = qs(wrap, '[data-nck-cal-month]');
+    var label = qs(wrap, '[data-nck-cal-label]');
+    var input = qs(wrap, '[name="event_date"]');
+    var openBtn = qs(wrap, '[data-nck-cal-open]');
+    var today = hallToday(wrap);
+    var parsed = String((input && input.value) || '').split('/');
+    var sel = {
+      y: parsed.length === 3 ? +parsed[0] : today.y,
+      m: parsed.length === 3 ? +parsed[1] : today.m,
+      d: parsed.length === 3 ? +parsed[2] : today.d
+    };
+    var viewY = sel.y;
+    var viewM = sel.m;
+
+    function todayKey() {
+      return today.y * 10000 + today.m * 100 + today.d;
+    }
+
+    function setDate(y, m, d, close) {
+      sel = { y: y, m: m, d: d };
+      if (input) {
+        input.value = jalaliYmd(y, m, d);
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (label) label.textContent = longJalali(y, m, d);
+      render();
+      if (close) show(pop, false);
+    }
+
+    function render() {
+      if (title) title.textContent = (monthNames()[viewM - 1] || '') + ' ' + faDigits(viewY);
+      if (!grid) return;
+      grid.innerHTML = '';
+      var startWd = jalaliWeekday(viewY, viewM, 1);
+      var len = jalaliMonthLength(viewY, viewM);
+      var i;
+      for (i = 0; i < startWd; i++) {
+        var empty = document.createElement('span');
+        empty.className = 'nck-cal-empty';
+        empty.setAttribute('aria-hidden', 'true');
+        grid.appendChild(empty);
+      }
+      for (i = 1; i <= len; i++) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = faDigits(i);
+        var key = viewY * 10000 + viewM * 100 + i;
+        if (key < todayKey()) {
+          btn.disabled = true;
+          btn.className = 'is-past';
+        } else {
+          (function (y, m, d) {
+            btn.addEventListener('click', function () {
+              setDate(y, m, d, true);
+            });
+          })(viewY, viewM, i);
+        }
+        if (sel.y === viewY && sel.m === viewM && sel.d === i) btn.classList.add('is-on');
+        if (today.y === viewY && today.m === viewM && today.d === i) btn.classList.add('is-today');
+        grid.appendChild(btn);
+      }
+    }
+
+    if (openBtn) {
+      openBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        var on = pop && pop.hidden;
+        show(pop, on);
+        if (on) {
+          viewY = sel.y;
+          viewM = sel.m;
+          render();
+        }
+      });
+    }
+    var prev = qs(wrap, '[data-nck-cal-prev]');
+    var next = qs(wrap, '[data-nck-cal-next]');
+    if (prev) {
+      prev.addEventListener('click', function () {
+        if (viewY === today.y && viewM === today.m) return;
+        viewM -= 1;
+        if (viewM < 1) {
+          viewM = 12;
+          viewY -= 1;
+        }
+        render();
+      });
+    }
+    if (next) {
+      next.addEventListener('click', function () {
+        var maxM = today.m + 18;
+        var maxY = today.y + Math.floor((maxM - 1) / 12);
+        maxM = ((maxM - 1) % 12) + 1;
+        if (viewY > maxY || (viewY === maxY && viewM >= maxM)) return;
+        viewM += 1;
+        if (viewM > 12) {
+          viewM = 1;
+          viewY += 1;
+        }
+        render();
+      });
+    }
+    document.addEventListener('click', function (e) {
+      if (!pop || pop.hidden) return;
+      if (wrap.contains(e.target)) return;
+      show(pop, false);
+    });
+    setDate(sel.y, sel.m, sel.d, false);
+    show(pop, false);
+  }
+
+  var HALL_WINDOWS = [
+    { id: 'morning', start: 9 * 60, end: 13 * 60 },
+    { id: 'evening', start: 16 * 60, end: 22 * 60 }
+  ];
+
+  function parseHallMinutes(v) {
+    var m = String(v || '').match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return null;
+    return (+m[1]) * 60 + (+m[2]);
+  }
+
+  function fmtHallMinutes(min) {
+    return pad2(Math.floor(min / 60)) + ':' + pad2(min % 60);
+  }
+
+  function hallWindowOf(min) {
+    var i;
+    for (i = 0; i < HALL_WINDOWS.length; i++) {
+      if (min >= HALL_WINDOWS[i].start && min <= HALL_WINDOWS[i].end) return HALL_WINDOWS[i].id;
+    }
+    return '';
+  }
+
+  function hallSlots() {
+    var out = [];
+    HALL_WINDOWS.forEach(function (w) {
+      var m;
+      for (m = w.start; m <= w.end; m += 30) out.push(fmtHallMinutes(m));
+    });
+    return out;
+  }
+
+  function bindHallRolls(root) {
+    var wrap = qs(root, '[data-nck-time-rolls]');
+    if (!wrap) return function () {};
+    var startInput = qs(wrap, '[name="start_hour"]');
+    var endInput = qs(wrap, '[name="end_hour"]');
+    var startRoll = qs(wrap, '[data-nck-roll="start"] [data-nck-roll-frame]');
+    var endRoll = qs(wrap, '[data-nck-roll="end"] [data-nck-roll-frame]');
+    if (!startRoll || !endRoll) return function () {};
+
+    function ensureItems(frame) {
+      var list = qs(frame, '.nck-roll-list');
+      if (!list) return;
+      if (list.querySelector('[data-value]')) return;
+      hallSlots().forEach(function (slot) {
+        var li = document.createElement('li');
+        li.setAttribute('data-value', slot);
+        li.textContent = faDigits(slot);
+        list.appendChild(li);
+      });
+    }
+
+    ensureItems(startRoll);
+    ensureItems(endRoll);
+
+    function itemsOf(frame) {
+      return qsa(frame, '[data-value]');
+    }
+
+    function setValue(input, value) {
+      if (!input) return;
+      input.value = value;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function markOn(frame, value) {
+      itemsOf(frame).forEach(function (li) {
+        li.classList.toggle('is-on', li.getAttribute('data-value') === value);
+      });
+    }
+
+    function scrollToValue(frame, value) {
+      var item = frame.querySelector('[data-value="' + value + '"]');
+      if (!item) return;
+      var top = item.offsetTop - (frame.clientHeight - item.offsetHeight) / 2;
+      frame.scrollTop = Math.max(0, top);
+    }
+
+    function nearest(frame, allowOff) {
+      var mid = frame.scrollTop + frame.clientHeight / 2;
+      var best = null;
+      var bestDist = Infinity;
+      itemsOf(frame).forEach(function (li) {
+        if (!allowOff && li.classList.contains('is-off')) return;
+        var c = li.offsetTop + li.offsetHeight / 2;
+        var dist = Math.abs(c - mid);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = li;
+        }
+      });
+      return best;
+    }
+
+    function startVal() {
+      return (startInput && startInput.value) || '16:00';
+    }
+
+    function validEnd(start, end) {
+      var s = parseHallMinutes(start);
+      var e = parseHallMinutes(end);
+      if (s === null || e === null) return false;
+      if (!hallWindowOf(s) || hallWindowOf(s) !== hallWindowOf(e)) return false;
+      return e > s;
+    }
+
+    function firstValidEnd(start) {
+      var found = '';
+      itemsOf(endRoll).forEach(function (li) {
+        var v = li.getAttribute('data-value');
+        if (!found && validEnd(start, v)) found = v;
+      });
+      return found || '20:00';
+    }
+
+    function syncEndAvailability() {
+      var s = startVal();
+      itemsOf(endRoll).forEach(function (li) {
+        var v = li.getAttribute('data-value');
+        li.classList.toggle('is-off', !validEnd(s, v));
+      });
+      itemsOf(startRoll).forEach(function (li) {
+        var v = li.getAttribute('data-value');
+        var sm = parseHallMinutes(v);
+        var win = sm === null ? '' : hallWindowOf(sm);
+        var can = false;
+        if (win) {
+          HALL_WINDOWS.forEach(function (w) {
+            if (w.id === win && sm < w.end) can = true;
+          });
+        }
+        li.classList.toggle('is-off', !can);
+      });
+      var e = (endInput && endInput.value) || '';
+      if (!validEnd(s, e)) {
+        e = firstValidEnd(s);
+        setValue(endInput, e);
+      }
+      markOn(startRoll, s);
+      markOn(endRoll, e);
+      return e;
+    }
+
+    function pickFromFrame(frame, input) {
+      var li = nearest(frame, false);
+      if (!li) return;
+      var v = li.getAttribute('data-value');
+      setValue(input, v);
+      if (input === startInput) syncEndAvailability();
+      else if (!validEnd(startVal(), v)) {
+        v = firstValidEnd(startVal());
+        setValue(endInput, v);
+      }
+      markOn(startRoll, startVal());
+      markOn(endRoll, endInput.value);
+      scrollToValue(frame, input === startInput ? startVal() : endInput.value);
+    }
+
+    function bindFrame(frame, input) {
+      var timer = null;
+      frame.addEventListener('scroll', function () {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(function () {
+          pickFromFrame(frame, input);
+        }, 80);
+      });
+      itemsOf(frame).forEach(function (li) {
+        li.addEventListener('click', function () {
+          if (li.classList.contains('is-off')) return;
+          setValue(input, li.getAttribute('data-value'));
+          if (input === startInput) syncEndAvailability();
+          markOn(frame, li.getAttribute('data-value'));
+          scrollToValue(frame, li.getAttribute('data-value'));
+        });
+      });
+    }
+
+    if (startInput && !startInput.value) startInput.value = '16:00';
+    if (endInput && !endInput.value) endInput.value = '20:00';
+    syncEndAvailability();
+
+    function refresh() {
+      syncEndAvailability();
+      scrollToValue(startRoll, startVal());
+      scrollToValue(endRoll, (endInput && endInput.value) || firstValidEnd(startVal()));
+    }
+
+    bindFrame(startRoll, startInput);
+    bindFrame(endRoll, endInput);
+    return refresh;
+  }
+
+  function bindHallPickers(root) {
+    bindHallCalendar(root);
+    var refreshRolls = bindHallRolls(root);
+    root.nckHallRefresh = function () {
+      if (typeof refreshRolls === 'function') refreshRolls();
+    };
+  }
+
   function updatePreamble(root) {
     var p = qs(root, '[data-nck-preamble]');
     if (!p || !p.dataset.tpl) return;
@@ -383,9 +801,31 @@
       var val = '';
       if (key === 'title') {
         val = honorificLabel((qs(form, '[name="honorific"]') || {}).value, root);
+      } else if (key === 'package') {
+        var pkg = qs(form, '[name="package"]:checked');
+        if (pkg) {
+          var card = pkg.closest('.nck-plan-card');
+          var strong = card ? qs(card, '.nck-plan-copy strong') : null;
+          val = strong ? String(strong.textContent || '').trim() : String(pkg.value || '').trim();
+        }
+      } else if (key === 'shift') {
+        var pickedPkg = qs(form, '[name="package"]:checked');
+        if (pickedPkg && pickedPkg.getAttribute('data-nck-dual') === '1') {
+          val = 'صبح و عصر';
+        } else {
+          var sh = qs(form, '[name="shift"]:checked');
+          if (sh) {
+            val = sh.value === 'morning' ? 'صبح' : (sh.value === 'evening' ? 'عصر' : String(sh.value || '').trim());
+          }
+        }
       } else {
         var input = qs(form, '[name="' + key + '"]');
-        val = input ? String(input.value || '').trim() : '';
+        if (input && input.type === 'radio') {
+          var checked = qs(form, '[name="' + key + '"]:checked');
+          val = checked ? String(checked.value || '').trim() : '';
+        } else {
+          val = input ? String(input.value || '').trim() : '';
+        }
         if (key === 'amount' && val) {
           val = formatFaMoney(val);
         } else if (val && (key === 'phone' || key === 'national_id' || key === 'chairs' || key === 'event_date' || key === 'start_hour' || key === 'end_hour')) {
@@ -393,6 +833,54 @@
         }
       }
       el.textContent = val || blank;
+    });
+  }
+
+  function copyReviewInk(root) {
+    var src = qs(root, '[data-nck-sign-ink]');
+    var dest = qs(root, '[data-nck-review-ink]');
+    var empty = qs(root, '[data-nck-review-empty]');
+    if (!dest) return;
+    var url = src && src.getAttribute('src') ? src.getAttribute('src') : '';
+    if (url) {
+      dest.src = url;
+      dest.hidden = false;
+      dest.removeAttribute('hidden');
+      if (empty) {
+        empty.hidden = true;
+        empty.setAttribute('hidden', '');
+      }
+    } else {
+      dest.removeAttribute('src');
+      dest.hidden = true;
+      dest.setAttribute('hidden', '');
+      if (empty) {
+        empty.hidden = false;
+        empty.removeAttribute('hidden');
+      }
+    }
+  }
+
+  function bindDownloadReview(root) {
+    qsa(root, '[data-nck-download-review]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        fillLive(root);
+        copyReviewInk(root);
+        var article = qs(root, '[data-nck-review]');
+        if (!article) return;
+        var styles = '';
+        Array.prototype.forEach.call(document.querySelectorAll('link[rel="stylesheet"], style'), function (n) {
+          styles += n.outerHTML;
+        });
+        var html = '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' + styles + '</head><body class="nck-print-body" dir="rtl">' + article.outerHTML + '</body></html>';
+        var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'قرارداد-نهال.html';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+      });
     });
   }
 
@@ -512,8 +1000,10 @@
       show(qs(form, '[data-nck-prev]'), i > 0);
       show(qs(form, '[data-nck-next]'), i < steps.length - 1);
       show(qs(form, '[data-nck-submit]'), i === steps.length - 1);
+      fillLive(root);
+      copyReviewInk(root);
+      if (typeof root.nckHallRefresh === 'function') root.nckHallRefresh();
       form.querySelectorAll('[data-nck-from]').forEach(function (el) {
-        if (String(el.value || '').trim()) return;
         var srcName = el.getAttribute('data-nck-from');
         if (!srcName) return;
         var src = qs(form, '[name="' + srcName + '"]');
@@ -623,6 +1113,8 @@
     var wizard = bindWizard(form, root);
     var sig = bindSignature(root);
     bindCoworkPlans(form);
+    bindDownloadReview(root);
+    bindHallPickers(root);
     ['input', 'change'].forEach(function (ev) {
       form.addEventListener(ev, function () {
         updatePreamble(root);

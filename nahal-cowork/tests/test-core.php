@@ -185,8 +185,8 @@ $ok = NCK_Hall::validate(
 $check( 'قرارداد سالن کامل قبول می‌شود', ! empty( $ok['ok'] ), isset( $ok['message'] ) ? $ok['message'] : '' );
 $check( 'ساعت پایان در payload', ! empty( $ok['payload']['end_hour'] ) && '20:00' === $ok['payload']['end_hour'] );
 $check( 'روش پرداخت سالن در payload', ! empty( $ok['ok'] ) && 'card' === $ok['payload']['payment'] );
+$check( 'پیگیری سالن خودکار است', ! empty( $ok['payload']['pay_ref'] ) && 0 === strpos( $ok['payload']['pay_ref'], 'NCK-' ) );
 
-$no_pay_hall = $ok;
 $no_pay_hall = NCK_Hall::validate(
 	array(
 		'name'        => 'علی رضایی',
@@ -201,7 +201,8 @@ $no_pay_hall = NCK_Hall::validate(
 		'chairs'      => '۸۰',
 	)
 );
-$check( 'سالن بدون روش پرداخت رد می‌شود', empty( $no_pay_hall['ok'] ) );
+$check( 'سالن بدون روش پرداخت با سایت ثبت می‌شود', ! empty( $no_pay_hall['ok'] ) && 'site' === $no_pay_hall['payload']['payment'] );
+$check( 'سالن بدون پیگیری خودکار شماره می‌گیرد', ! empty( $no_pay_hall['payload']['pay_ref'] ) && 0 === strpos( $no_pay_hall['payload']['pay_ref'], 'NCK-' ) );
 
 $bad_time = NCK_Hall::validate(
 	array(
@@ -218,6 +219,77 @@ $bad_time = NCK_Hall::validate(
 	)
 );
 $check( 'ساعت وارونه رد می‌شود', empty( $bad_time['ok'] ) );
+
+$out_of_hours = NCK_Hall::validate(
+	array(
+		'name'        => 'علی رضایی',
+		'honorific'   => 'mr',
+		'national_id' => $nid,
+		'phone'       => '09121234567',
+		'hall_name'   => 'سالن اصلی',
+		'amount'      => '1000',
+		'event_date'  => '1404/06/20',
+		'start_hour'  => '8:00',
+		'end_hour'    => '10:00',
+		'chairs'      => '10',
+	)
+);
+$check( 'ساعت ۸ صبح خارج از بازه رد می‌شود', empty( $out_of_hours['ok'] ) );
+
+$gap_hours = NCK_Hall::validate(
+	array(
+		'name'        => 'علی رضایی',
+		'honorific'   => 'mr',
+		'national_id' => $nid,
+		'phone'       => '09121234567',
+		'hall_name'   => 'سالن اصلی',
+		'amount'      => '1000',
+		'event_date'  => '1404/06/20',
+		'start_hour'  => '12:00',
+		'end_hour'    => '17:00',
+		'chairs'      => '10',
+	)
+);
+$check( 'عبور از فاصله ۱۳ تا ۱۶ رد می‌شود', empty( $gap_hours['ok'] ) );
+
+$afternoon = NCK_Hall::validate(
+	array(
+		'name'        => 'علی رضایی',
+		'honorific'   => 'mr',
+		'national_id' => $nid,
+		'phone'       => '09121234567',
+		'hall_name'   => 'سالن اصلی',
+		'amount'      => '1000',
+		'event_date'  => '1404/06/20',
+		'start_hour'  => '14:00',
+		'end_hour'    => '15:00',
+		'chairs'      => '10',
+	)
+);
+$check( 'ساعت ۱۴ خارج از تایم رد می‌شود', empty( $afternoon['ok'] ) );
+
+$morning_ok = NCK_Hall::validate(
+	array(
+		'name'        => 'علی رضایی',
+		'honorific'   => 'mr',
+		'national_id' => $nid,
+		'phone'       => '09121234567',
+		'hall_name'   => 'سالن اصلی',
+		'amount'      => '1000',
+		'event_date'  => '1404/06/20',
+		'start_hour'  => '9:00',
+		'end_hour'    => '13:00',
+		'chairs'      => '10',
+	)
+);
+$check( 'بازه صبح ۹ تا ۱۳ قبول می‌شود', ! empty( $morning_ok['ok'] ), isset( $morning_ok['message'] ) ? $morning_ok['message'] : '' );
+$check( 'ساعت صبح نرمال ۹ است', ! empty( $morning_ok['ok'] ) && '09:00' === $morning_ok['payload']['start_hour'] );
+
+$slots = NCK_Hall::time_slots();
+$check( '۲۲ شیار ساعت سالن', 22 === count( $slots ) );
+$check( '۹ صبح در شیارها هست', in_array( '09:00', $slots, true ) );
+$check( '۲۲ شب در شیارها هست', in_array( '22:00', $slots, true ) );
+$check( '۱۴ در شیارها نیست', ! in_array( '14:00', $slots, true ) );
 
 $no_nid = NCK_Hall::validate( array( 'name' => 'علی رضایی', 'phone' => '09121234567', 'hall_name' => 'سالن', 'amount' => '1', 'event_date' => '1404/01/01', 'start_hour' => '8:00', 'end_hour' => '10:00', 'chairs' => '1' ) );
 $check( 'بدون کد ملی رد می‌شود', empty( $no_nid['ok'] ) );
@@ -280,7 +352,9 @@ $check( 'بدون نام والدین رد می‌شود', empty( NCK_Learner::v
 
 $no_pay = $learner_ok;
 $no_pay['payment'] = '';
-$check( 'بدون وضعیت پرداخت رد می‌شود', empty( NCK_Learner::validate( $no_pay )['ok'] ) );
+$lr_auto = NCK_Learner::validate( $no_pay );
+$check( 'پذیرش بدون روش پرداخت سایت می‌شود', ! empty( $lr_auto['ok'] ) && 'site' === $lr_auto['payload']['payment'] );
+$check( 'پذیرش پیگیری خودکار دارد', ! empty( $lr_auto['payload']['pay_ref'] ) && 0 === strpos( $lr_auto['payload']['pay_ref'], 'NCK-' ) );
 
 $no_goal = $learner_ok;
 $no_goal['goals'] = array();
@@ -336,6 +410,7 @@ $ok_form = NCK_Forms::validate(
 $check( 'فرم کامل با پرداخت قبول می‌شود', ! empty( $ok_form['ok'] ), isset( $ok_form['message'] ) ? $ok_form['message'] : '' );
 $check( 'مبلغ فرم در payload', ! empty( $ok_form['ok'] ) && 1200000 === (int) $ok_form['payload']['pay_amount'] );
 $check( 'روش پرداخت کارت', ! empty( $ok_form['ok'] ) && 'card' === $ok_form['payload']['payment'] );
+$check( 'فرم پیگیری خودکار دارد', ! empty( $ok_form['ok'] ) && 0 === strpos( $ok_form['payload']['pay_ref'], 'NCK-' ) );
 
 $no_amt = NCK_Forms::validate( $saved, array( 'name' => 'سارا محمدی', 'phone' => '09121234567', 'payment' => 'site', 'agree' => 1 ) );
 $check( 'پرداخت بدون مبلغ رد می‌شود', empty( $no_amt['ok'] ) );
@@ -404,11 +479,14 @@ $check( 'فضای کار با مبلغ سفارش می‌سازد', ! empty( $co
 $check( 'روش پرداخت فضای کار از فرم می‌آید', 'on-hold' === $cowork_pay['order']['status'] );
 
 $no_method = NCK_Pay::parse_front_payment( array( 'pay_amount' => '1000' ) );
-$check( 'بدون روش پرداخت رد می‌شود', empty( $no_method['ok'] ) );
+$check( 'بدون روش پرداخت سایت می‌شود', ! empty( $no_method['ok'] ) && 'site' === $no_method['payload']['payment'] );
+$check( 'پیگیری خودکار پیشوند NCK دارد', ! empty( $no_method['payload']['pay_ref'] ) && 0 === strpos( $no_method['payload']['pay_ref'], 'NCK-' ) );
 $ok_pay = NCK_Pay::parse_front_payment( array( 'payment' => 'site', 'pay_amount' => '۲۰۰۰۰۰۰' ) );
 $check( 'پرداخت فضای کار با مبلغ فارسی', ! empty( $ok_pay['ok'] ) && 2000000 === (int) $ok_pay['payload']['pay_amount'] );
 $fee_pay = NCK_Pay::parse_front_payment( array( 'payment' => 'onsite' ), 900000 );
 $check( 'شهریه تنظیمات به‌عنوان مبلغ پیش‌فرض', ! empty( $fee_pay['ok'] ) && 900000 === (int) $fee_pay['payload']['pay_amount'] );
+$ignore_ref = NCK_Pay::parse_front_payment( array( 'payment' => 'site', 'pay_amount' => '1000', 'pay_ref' => 'USER-REF' ) );
+$check( 'ورودی پیگیری کاربر نادیده گرفته می‌شود', ! empty( $ignore_ref['ok'] ) && 'USER-REF' !== $ignore_ref['payload']['pay_ref'] && 0 === strpos( $ignore_ref['payload']['pay_ref'], 'NCK-' ) );
 
 $draft = NCK_Pay::draft( array( 'name' => 'علی رضایی', 'amount' => 10, 'payment' => 'onsite', 'item_name' => 'تست' ) );
 $check( 'created_via نهال است', 'nahal-cowork' === $draft['created_via'] );
@@ -433,6 +511,21 @@ $hall_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/hall.ph
 $pay_tpl  = (string) file_get_contents( dirname( __DIR__ ) . '/templates/pay-step.php' );
 $check( 'قالب پرداخت مشترک هست', false !== strpos( $pay_tpl, 'data-nck-step-label="پرداخت"' ) );
 $check( 'اجاره سالن مرحله پرداخت دارد', false !== strpos( $hall_tpl, 'pay-step.php' ) );
+$check( 'پرداخت فقط سایت است', false !== strpos( $pay_tpl, 'name="payment" value="site"' ) );
+$check( 'فیلد پیگیری دستی در پرداخت نیست', false === strpos( $pay_tpl, 'name="pay_ref"' ) );
+$cowork_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/contract.php' );
+$check( 'فضای کار مرحله مفاد دارد', false !== strpos( $cowork_tpl, 'data-nck-step-label="مفاد قرارداد"' ) );
+$check( 'دانلود قرارداد در مفاد هست', false !== strpos( $cowork_tpl, 'data-nck-download-review' ) );
+$check( 'اجاره سالن مرحله مفاد دارد', false !== strpos( $hall_tpl, 'data-nck-step-label="مفاد قرارداد"' ) );
+$check( 'دانلود قرارداد سالن هست', false !== strpos( $hall_tpl, 'data-nck-download-review' ) );
+$check( 'تقویم شمسی اجاره سالن هست', false !== strpos( $hall_tpl, 'hall-schedule.php' ) );
+$sched_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/hall-schedule.php' );
+$check( 'تاریخ سالن از تقویم باز می‌شود', false !== strpos( $sched_tpl, 'data-nck-cal' ) );
+$check( 'ساعت سالن رول دارد', false !== strpos( $sched_tpl, 'data-nck-time-rolls' ) );
+$check( 'ورودی دستی ساعت سالن حذف شده', false === strpos( $sched_tpl, 'type="text"' ) );
+$js = (string) file_get_contents( dirname( __DIR__ ) . '/assets/js/frontend.js' );
+$check( 'دانلود مفاد در جاوااسکریپت هست', false !== strpos( $js, 'data-nck-download-review' ) );
+$check( 'کپی امضا به مفاد هست', false !== strpos( $js, 'copyReviewInk' ) );
 
 echo "\n--- {$pass} موفق، {$fail} ناموفق ---\n";
 exit( $fail ? 1 : 0 );

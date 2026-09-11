@@ -6,45 +6,22 @@ $nck_pay_required = ! empty( $nck_pay_required );
 $nck_pay_from     = isset( $nck_pay_from ) ? (string) $nck_pay_from : '';
 ?>
 <section class="nck-step" data-nck-step data-nck-step-label="پرداخت" hidden>
-	<fieldset class="nck-fieldset">
-		<legend>وضعیت پرداخت</legend>
-		<div class="nck-chips">
-			<?php
-			$i = 0;
-			foreach ( NCK_Learner::payment_options() as $k => $label ) :
-				?>
-				<label class="nck-chip">
-					<input type="radio" name="payment" value="<?php echo esc_attr( $k ); ?>"<?php echo 0 === $i ? ' required' : ''; ?> />
-					<?php echo esc_html( $label ); ?>
-				</label>
-				<?php
-				$i++;
-			endforeach;
-			?>
+	<input type="hidden" name="payment" value="site" />
+	<div class="nck-pay-site">
+		<p class="nck-pay-site-kicker">پرداخت فقط از طریق سایت انجام می‌شود.</p>
+		<div class="nck-field">
+			<label for="<?php echo esc_attr( $nck_pay_id ); ?>-amount">مبلغ قابل پرداخت (تومان)</label>
+			<input
+				id="<?php echo esc_attr( $nck_pay_id ); ?>-amount"
+				name="pay_amount"
+				type="text"
+				dir="ltr"
+				readonly
+				value="<?php echo esc_attr( $nck_pay_amount ); ?>"
+				<?php echo $nck_pay_required ? 'required' : ''; ?>
+				<?php echo $nck_pay_from !== '' ? 'data-nck-from="' . esc_attr( $nck_pay_from ) . '"' : ''; ?>
+			/>
 		</div>
-		<div class="nck-grid nck-grid-hall" style="margin-top:12px">
-			<div class="nck-field">
-				<label for="<?php echo esc_attr( $nck_pay_id ); ?>-amount">مبلغ پرداخت (تومان)</label>
-				<input
-					id="<?php echo esc_attr( $nck_pay_id ); ?>-amount"
-					name="pay_amount"
-					type="text"
-					dir="ltr"
-					placeholder="مثلاً 2500000"
-					value="<?php echo esc_attr( $nck_pay_amount ); ?>"
-					<?php echo $nck_pay_required ? 'required' : ''; ?>
-					<?php echo $nck_pay_from !== '' ? 'data-nck-from="' . esc_attr( $nck_pay_from ) . '"' : ''; ?>
-				/>
-				<p class="nck-note">با وارد کردن مبلغ، سفارش در ووکامرس و حسابدار هم ثبت می‌شود.</p>
-			</div>
-			<div class="nck-field">
-				<label for="<?php echo esc_attr( $nck_pay_id ); ?>-date">تاریخ پرداخت</label>
-				<input id="<?php echo esc_attr( $nck_pay_id ); ?>-date" name="pay_date" type="text" dir="ltr" placeholder="1404/06/20" />
-			</div>
-			<div class="nck-field">
-				<label for="<?php echo esc_attr( $nck_pay_id ); ?>-ref">شماره پیگیری</label>
-				<input id="<?php echo esc_attr( $nck_pay_id ); ?>-ref" name="pay_ref" type="text" dir="ltr" />
-			</div>
-		</div>
-	</fieldset>
+		<p class="nck-note">شماره پیگیری پس از ثبت، به‌صورت خودکار صادر می‌شود.</p>
+	</div>
 </section>

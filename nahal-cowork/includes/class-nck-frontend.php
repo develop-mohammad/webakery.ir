@@ -42,6 +42,7 @@ class NCK_Frontend {
 			self::$localized = true;
 			$now  = NCK_Jalali::now();
 			$slot = NCK_Shifts::current_slot( $now, NCK_Settings::hours() );
+			$t    = NCK_Jalali::today();
 			wp_localize_script(
 				'nck-frontend',
 				'NCK',
@@ -57,6 +58,13 @@ class NCK_Frontend {
 						'error'     => 'خطایی رخ داد. دوباره تلاش کنید.',
 						'draw'      => 'عکس امضا را آپلود کنید یا داخل کادر بکشید.',
 						'signature' => 'عکس امضا را آپلود کنید یا داخل کادر بکشید.',
+					),
+					'cal'   => array(
+						'today'  => NCK_Jalali::format( $t['y'], $t['m'], $t['d'] ),
+						'y'      => (int) $t['y'],
+						'm'      => (int) $t['m'],
+						'd'      => (int) $t['d'],
+						'months' => NCK_Jalali::month_names(),
 					),
 				)
 			);

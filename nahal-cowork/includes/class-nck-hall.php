@@ -94,6 +94,93 @@ class NCK_Hall {
 	}
 
 	/**
+	 * بازه‌های مجاز اجاره سالن: ۹ تا ۱۳ و ۱۶ تا ۲۲.
+	 *
+	 * @return array<int,array{id:string,start:int,end:int}>
+	 */
+	public static function time_windows() {
+		return array(
+			array(
+				'id'    => 'morning',
+				'start' => 9 * 60,
+				'end'   => 13 * 60,
+			),
+			array(
+				'id'    => 'evening',
+				'start' => 16 * 60,
+				'end'   => 22 * 60,
+			),
+		);
+	}
+
+	public static function format_hour( $minutes ) {
+		$minutes = (int) $minutes;
+		$h       = (int) floor( $minutes / 60 );
+		$i       = $minutes % 60;
+		return sprintf( '%02d:%02d', $h, $i );
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public static function time_slots( $step = 30 ) {
+		$step = max( 1, (int) $step );
+		$out  = array();
+		foreach ( self::time_windows() as $w ) {
+			for ( $m = (int) $w['start']; $m <= (int) $w['end']; $m += $step ) {
+				$out[] = self::format_hour( $m );
+			}
+		}
+		return $out;
+	}
+
+	public static function window_of( $minutes ) {
+		$minutes = (int) $minutes;
+		foreach ( self::time_windows() as $w ) {
+			if ( $minutes >= (int) $w['start'] && $minutes <= (int) $w['end'] ) {
+				return $w['id'];
+			}
+		}
+		return '';
+	}
+
+	public static function is_slot( $minutes, $step = 30 ) {
+		$minutes = (int) $minutes;
+		$step    = max( 1, (int) $step );
+		if ( $minutes % $step !== 0 ) {
+			return false;
+		}
+		return self::window_of( $minutes ) !== '';
+	}
+
+	/**
+	 * @return array{ok:bool,message?:string,start?:string,end?:string}
+	 */
+	public static function check_hours( $start_raw, $end_raw ) {
+		$start = NCK_Shifts::parse_hhmm( $start_raw );
+		$end   = NCK_Shifts::parse_hhmm( $end_raw );
+		if ( null === $start || null === $end ) {
+			return array( 'ok' => false, 'message' => 'ساعت شروع و پایان را از رول انتخاب کنید.' );
+		}
+		if ( ! self::is_slot( $start ) || ! self::is_slot( $end ) ) {
+			return array( 'ok' => false, 'message' => 'ساعت اجاره فقط از ۹ تا ۱۳ یا از ۱۶ تا ۲۲ مجاز است.' );
+		}
+		$sw = self::window_of( $start );
+		$ew = self::window_of( $end );
+		if ( $sw === '' || $ew === '' || $sw !== $ew ) {
+			return array( 'ok' => false, 'message' => 'شروع و پایان باید در یک بازه باشد؛ بین ۱۳ تا ۱۶ سالن اجاره داده نمی‌شود.' );
+		}
+		if ( $end <= $start ) {
+			return array( 'ok' => false, 'message' => 'ساعت پایان باید بعد از ساعت شروع باشد.' );
+		}
+		return array(
+			'ok'    => true,
+			'start' => self::format_hour( $start ),
+			'end'   => self::format_hour( $end ),
+		);
+	}
+
+	/**
 	 * @return array{ok:bool,message:string,payload?:array}
 	 */
 	public static function validate( array $in ) {
@@ -131,13 +218,12 @@ class NCK_Hall {
 			return array( 'ok' => false, 'message' => 'تاریخ برگزاری را به صورت ۱۴۰۴/۰۶/۲۰ وارد کنید.' );
 		}
 
-		$start = NCK_Shifts::parse_hhmm( isset( $in['start_hour'] ) ? $in['start_hour'] : '' );
-		$end   = NCK_Shifts::parse_hhmm( isset( $in['end_hour'] ) ? $in['end_hour'] : '' );
-		if ( null === $start || null === $end ) {
-			return array( 'ok' => false, 'message' => 'ساعت شروع و پایان را به صورت ۱۶:۳۰ وارد کنید.' );
-		}
-		if ( $end <= $start ) {
-			return array( 'ok' => false, 'message' => 'ساعت پایان باید بعد از ساعت شروع باشد.' );
+		$hours = self::check_hours(
+			isset( $in['start_hour'] ) ? $in['start_hour'] : '',
+			isset( $in['end_hour'] ) ? $in['end_hour'] : ''
+		);
+		if ( empty( $hours['ok'] ) ) {
+			return $hours;
 		}
 
 		$chairs = isset( $in['chairs'] ) ? (int) NCK_Phone::latin_digits( $in['chairs'] ) : 0;
@@ -148,8 +234,8 @@ class NCK_Hall {
 		$honorific = isset( $in['honorific'] ) ? (string) $in['honorific'] : 'mr';
 		$honorific = in_array( $honorific, array( 'mr', 'ms' ), true ) ? $honorific : 'mr';
 
-		$start_s = isset( $in['start_hour'] ) ? NCK_Phone::latin_digits( $in['start_hour'] ) : '';
-		$end_s   = isset( $in['end_hour'] ) ? NCK_Phone::latin_digits( $in['end_hour'] ) : '';
+		$start_s = $hours['start'];
+		$end_s   = $hours['end'];
 
 		$pay = class_exists( 'NCK_Pay' ) ? NCK_Pay::parse_front_payment( $in, $amount ) : array( 'ok' => true, 'payload' => array() );
 		if ( empty( $pay['ok'] ) ) {

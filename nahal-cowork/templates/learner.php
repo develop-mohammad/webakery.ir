@@ -46,15 +46,11 @@ $chips = static function ( $name, array $opts, $type = 'checkbox', $required = f
 					<div class="nck-field">
 						<label for="nck-pay-amount">مبلغ پرداخت (تومان)</label>
 						<input id="nck-pay-amount" name="pay_amount" type="text" dir="ltr" placeholder="مثلاً 2500000" />
-						<p class="nck-note">اگر مبلغ را وارد کنید، سفارش در ووکامرس و حسابدار هم ثبت می‌شود.</p>
+						<p class="nck-note">اگر مبلغ را وارد کنید، سفارش در ووکامرس و حسابدار هم ثبت می‌شود. شماره پیگیری به‌صورت خودکار صادر می‌شود.</p>
 					</div>
 					<div class="nck-field">
 						<label for="nck-pay-date">تاریخ پرداخت</label>
 						<input id="nck-pay-date" name="pay_date" type="text" dir="ltr" placeholder="1404/06/20" />
-					</div>
-					<div class="nck-field">
-						<label for="nck-pay-ref">شماره پیگیری</label>
-						<input id="nck-pay-ref" name="pay_ref" type="text" dir="ltr" />
 					</div>
 				</div>
 			</fieldset>

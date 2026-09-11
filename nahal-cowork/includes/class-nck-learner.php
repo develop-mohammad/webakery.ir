@@ -192,7 +192,7 @@ class NCK_Learner {
 		$heard     = self::pick_list( isset( $in['heard'] ) ? $in['heard'] : array(), self::heard_options() );
 		$payment   = self::pick_one( isset( $in['payment'] ) ? $in['payment'] : '', self::payment_options() );
 		if ( ! $payment ) {
-			return array( 'ok' => false, 'message' => 'وضعیت پرداخت را انتخاب کنید.' );
+			$payment = 'site';
 		}
 
 		$pay_date = '';
@@ -269,7 +269,7 @@ class NCK_Learner {
 				'heard'         => $heard,
 				'payment'       => $payment,
 				'pay_date'      => $pay_date,
-				'pay_ref'       => self::text( isset( $in['pay_ref'] ) ? $in['pay_ref'] : '' ),
+				'pay_ref'       => class_exists( 'NCK_Pay' ) ? NCK_Pay::make_ref() : self::text( isset( $in['pay_ref'] ) ? $in['pay_ref'] : '' ),
 				'pay_amount'    => $pay_amount,
 				'learner_code'  => self::text( isset( $in['learner_code'] ) ? $in['learner_code'] : '' ),
 				'admit_date'    => $admit_date,

@@ -342,7 +342,7 @@ class NCK_Forms {
 		}
 
 		$payment = '';
-		$pay_ref = self::text( isset( $in['pay_ref'] ) ? $in['pay_ref'] : '', 80 );
+		$pay_ref = class_exists( 'NCK_Pay' ) ? NCK_Pay::make_ref() : self::text( isset( $in['pay_ref'] ) ? $in['pay_ref'] : '', 80 );
 		$pay_date = '';
 		if ( isset( $in['pay_date'] ) && trim( (string) $in['pay_date'] ) !== '' ) {
 			$pay_date = NCK_Learner::format_date( $in['pay_date'] );
@@ -371,7 +371,7 @@ class NCK_Forms {
 				return array( 'ok' => false, 'message' => 'مبلغ پرداخت را وارد کنید تا در حسابدار و ووکامرس ثبت شود.' );
 			}
 			if ( ! $payment ) {
-				return array( 'ok' => false, 'message' => 'روش پرداخت را انتخاب کنید.' );
+				$payment = 'site';
 			}
 		}
 
@@ -589,14 +589,6 @@ class NCK_Forms {
 			'type'     => 'date',
 			'name'     => 'pay_date',
 			'label'    => 'تاریخ پرداخت',
-			'required' => 0,
-			'role'     => '',
-			'options'  => '',
-		);
-		$fields[] = array(
-			'type'     => 'text',
-			'name'     => 'pay_ref',
-			'label'    => 'شماره پیگیری',
 			'required' => 0,
 			'role'     => '',
 			'options'  => '',
