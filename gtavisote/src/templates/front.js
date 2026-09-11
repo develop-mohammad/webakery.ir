@@ -14,10 +14,16 @@ function home(ctx) {
   const body = `
 <section class="hero">
   <div class="hero__bg" aria-hidden="true"></div>
+  <p class="hero__mark" aria-hidden="true">VI</p>
   <div class="wrap hero__inner">
     <p class="kicker">غیررسمی · فارسی · تا لانچ</p>
-    <h1>GTA VI را از شایعه جدا بخوان؛<br>بعد از فروشگاه بخر.</h1>
-    <p class="lede">وی‌سوت مرجع اخبار، راهنما و فروش نسخه فیزیکی، دیجیتال، باندل کنسول و کالکشن مرتبط با Grand Theft Auto VI است. لانچ رسمی: ۱۹ نوامبر ۲۰۲۶.</p>
+    <h1>GTA VI را از شایعه جدا بخوان؛<br>از فروشگاه بخر.</h1>
+    <p class="lede">اخبار رسمی، راهنمای لئونیدا، و فروش نسخه فیزیکی، دیجیتال، باندل کنسول و کالکشن. شایعه این‌جا قاطی خبر نمی‌شود.</p>
+    <ul class="hero__meta">
+      <li>PlayStation 5</li>
+      <li>Xbox Series X|S</li>
+      <li>۱۹ نوامبر ۲۰۲۶</li>
+    </ul>
     <div class="count" data-launch="2026-11-19T00:00:00+03:30" aria-label="شمارش معکوس">
       <div><b id="d">—</b><span>روز</span></div>
       <div><b id="h">—</b><span>ساعت</span></div>
@@ -25,12 +31,13 @@ function home(ctx) {
       <div><b id="s">—</b><span>ثانیه</span></div>
     </div>
     <div class="hero__cta">
-      <a class="btn btn--pink" href="/shop">ورود به فروشگاه</a>
+      <a class="btn btn--pink" href="/shop">فروشگاه لانچ</a>
       <a class="btn btn--ghost" href="/news">تازه‌ترین خبرها</a>
     </div>
   </div>
+  <div class="hero__sky" aria-hidden="true"></div>
 </section>
-${rumors.length ? `<div class="ticker" aria-label="شایعه‌های اخیر"><span>شایعه</span><div>${ticker}</div></div>` : ''}
+${rumors.length ? `<div class="ticker" aria-label="شایعه‌های اخیر"><span>شایعه</span><div class="ticker__track"><div>${ticker}</div><div>${ticker}</div></div></div>` : ''}
 <section class="wrap block">
   <header class="block__head"><h2>پوشش ویژه</h2><a href="/news">همه اخبار</a></header>
   <div class="feat">${feat}</div>

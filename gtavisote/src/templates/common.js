@@ -34,12 +34,14 @@ function postCard(post, big = false) {
   const href = `/${sectionOf(post.type)}/${post.slug}`;
   return `<article class="card${big ? ' card--big' : ''}">
     <a href="${e(href)}">
-      <img src="${e(post.cover || '/img/cover-news.svg')}" alt="" width="640" height="360" loading="lazy">
-      <div>
+      <div class="card__media">
+        <img src="${e(post.cover || '/img/cover-news.svg')}" alt="" width="640" height="360" loading="lazy">
+      </div>
+      <div class="card__body">
         <span class="tag tag--${e(post.type)}">${e(sectionLabel(post.type))}</span>
         <h3>${e(post.title)}</h3>
         <p>${e(post.excerpt)}</p>
-        <time>${e(jalali.format(post.created_at))}</time>
+        <time datetime="${e(post.created_at || '')}">${e(jalali.format(post.created_at))}</time>
       </div>
     </a>
   </article>`;
@@ -50,10 +52,14 @@ function productCard(product) {
     ? `<s>${e(money(product.compare_at))}</s>` : '';
   return `<article class="pcard">
     <a href="/product/${e(product.slug)}">
-      <img src="${e(product.cover || '/img/product-physical.svg')}" alt="" width="480" height="320" loading="lazy">
-      <span class="tag">${e(kindLabel(product.kind))}</span>
-      <h3>${e(product.title)}</h3>
-      <p class="price"><b>${e(money(product.price))}</b> ${old}</p>
+      <div class="pcard__media">
+        <img src="${e(product.cover || '/img/product-physical.svg')}" alt="" width="480" height="320" loading="lazy">
+        <span class="tag">${e(kindLabel(product.kind))}</span>
+      </div>
+      <div class="pcard__body">
+        <h3>${e(product.title)}</h3>
+        <p class="price"><b>${e(money(product.price))}</b> ${old}</p>
+      </div>
     </a>
   </article>`;
 }
@@ -77,36 +83,37 @@ function layout(ctx, seo, body) {
   <meta property="og:image" content="${e(abs(seo.image || setting('og_image', '/img/og.svg')))}">
   <meta property="og:locale" content="fa_IR">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#07080c">
+  <meta name="theme-color" content="#08070a">
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Oswald:wght@500;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap">
   <link rel="stylesheet" href="${e(asset('css/front.css'))}">
   ${jsonld}
 </head>
 <body>
+  <div class="grain" aria-hidden="true"></div>
   <a class="skip" href="#main">رفتن به محتوا</a>
-  <div class="tape">${e(setting('disclaimer'))}</div>
+  <p class="tape">${e(setting('disclaimer'))}</p>
   <header class="top">
     <div class="wrap top__row">
       <a class="brand" href="/">
-        <img src="/img/logo.svg" width="36" height="36" alt="">
+        <img src="/img/logo.svg" width="32" height="32" alt="">
         <span><strong>VISOTE</strong><small>gtavisote.ir</small></span>
       </a>
-      <nav class="nav" aria-label="اصلی">
+      <button type="button" class="nav-burger" aria-controls="site-nav" aria-expanded="false">منو</button>
+      <nav class="nav" id="site-nav" aria-label="اصلی">
         <a class="${navActive(ctx.path, '/')}" href="/">خانه</a>
         <a class="${navActive(ctx.path, '/news')}" href="/news">اخبار</a>
         <a class="${navActive(ctx.path, '/rumors')}" href="/rumors">شایعه</a>
         <a class="${navActive(ctx.path, '/guide')}" href="/guide">راهنما</a>
         <a class="${navActive(ctx.path, '/shop')}" href="/shop">فروشگاه</a>
-        ${navPages}
       </nav>
       <div class="top__tools">
         <form class="find" action="/search" method="get" role="search">
-          <input type="search" name="q" placeholder="جستجو…" value="${e(ctx.query.q || '')}" aria-label="جستجو">
+          <input type="search" name="q" placeholder="جستجو" value="${e(ctx.query.q || '')}" aria-label="جستجو">
         </form>
-        <a class="bag" href="/cart">سبد <b>${e(faDigits(ctx.cartCount || 0))}</b></a>
+        <a class="bag" href="/cart">سبد<span>${e(faDigits(ctx.cartCount || 0))}</span></a>
       </div>
     </div>
   </header>
@@ -121,7 +128,9 @@ function layout(ctx, seo, body) {
       <div>
         <h2>مسیرها</h2>
         <a href="/news">اخبار</a><a href="/rumors">شایعه</a><a href="/guide">راهنما</a>
-        <a href="/shop">فروشگاه</a><a href="/p/faq">سوال‌ها</a><a href="/p/terms">قوانین</a>
+        <a href="/shop">فروشگاه</a>
+        ${navPages}
+        <a href="/p/terms">قوانین</a>
       </div>
       <div>
         <h2>ارتباط</h2>
@@ -131,7 +140,7 @@ function layout(ctx, seo, body) {
         ${setting('telegram') ? `<a href="${e(setting('telegram'))}">تلگرام</a>` : ''}
       </div>
     </div>
-    <p class="copy wrap">© ${e(faDigits(new Date().getFullYear()))} gtavisote.ir — نسخه ${e(VERSION)}</p>
+    <p class="copy wrap">© ${e(faDigits(new Date().getFullYear()))} gtavisote.ir · ${e(VERSION)}</p>
   </footer>
   <script src="${e(asset('js/front.js'))}" defer></script>
   ${setting('analytics')}
