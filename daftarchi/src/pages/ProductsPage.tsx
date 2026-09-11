@@ -5,7 +5,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table'
-import { Download, Plus, Trash2 } from 'lucide-react'
+import { Download, ExternalLink, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -126,7 +126,7 @@ export function ProductsPage() {
             کالای جدید
           </Button>
           {!connected ? (
-            <span className="text-xs text-muted-foreground">برای گرفتن کالاهای سایت، از منوی ووکامرس وصل شو.</span>
+            <span className="text-xs text-muted-foreground">برای گرفتن کالاهای سایت، از منوی اتصال سایت وصل شو.</span>
           ) : settings.wc_last_pull_at ? (
             <span className="text-xs text-muted-foreground">
               آخرین دریافت: {formatJalaliDateTime(settings.wc_last_pull_at)}
@@ -179,6 +179,25 @@ function CategoryTable({
   const columns = useMemo<ColumnDef<Product>[]>(
     () => [
       { accessorKey: 'name', header: 'نام', cell: (c) => c.getValue<string>() },
+      {
+        id: 'site',
+        header: 'لینک',
+        cell: (c) => {
+          const href = c.row.original.site_url
+          if (!href) return <span className="text-muted-foreground">—</span>
+          return (
+            <a
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-primary hover:underline"
+            >
+              <ExternalLink className="size-3.5" />
+              صفحه سایت
+            </a>
+          )
+        },
+      },
       { accessorKey: 'sku', header: 'SKU', cell: (c) => <span dir="ltr">{c.getValue<string>()}</span> },
       {
         accessorKey: 'buy_price',

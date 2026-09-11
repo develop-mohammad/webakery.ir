@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   wc_push_price: '1',
   wc_push_stock: '1',
   wc_last_pull_at: '',
+  wc_last_sales_at: '',
 }
 
 const DEFAULT_ACCOUNTS = [
@@ -52,6 +53,19 @@ function migrate(database: Database.Database): void {
   database.exec(schemaSql)
   ensureColumn(database, 'categories', 'wc_category_id', 'INTEGER')
   database.exec('CREATE INDEX IF NOT EXISTS idx_categories_wc ON categories(wc_category_id)')
+  ensureColumn(database, 'products', 'site_url', "TEXT NOT NULL DEFAULT ''")
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS wc_orders (
+      id             INTEGER PRIMARY KEY,
+      number         TEXT    NOT NULL DEFAULT '',
+      status         TEXT    NOT NULL DEFAULT '',
+      total          INTEGER NOT NULL DEFAULT 0,
+      customer_name  TEXT    NOT NULL DEFAULT '',
+      item_count     INTEGER NOT NULL DEFAULT 0,
+      created_at     TEXT    NOT NULL
+    )
+  `)
+  database.exec('CREATE INDEX IF NOT EXISTS idx_wc_orders_date ON wc_orders(created_at)')
 
   const version = database
     .prepare('SELECT value FROM schema_meta WHERE key = ?')

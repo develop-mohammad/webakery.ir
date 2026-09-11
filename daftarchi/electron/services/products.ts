@@ -4,13 +4,14 @@ import type { Category, NewProduct, Product, ProductPatch } from '../../shared/m
 const PRODUCT_SELECT = `
   SELECT p.id, p.name, p.sku, p.buy_price, p.sell_price, p.stock,
          p.category_id, COALESCE(c.name, 'بدون دسته') AS category_name,
-         p.stock_alert, p.wc_product_id, p.created_at, p.updated_at
+         p.stock_alert, p.wc_product_id, COALESCE(p.site_url, '') AS site_url,
+         p.created_at, p.updated_at
   FROM products p
   LEFT JOIN categories c ON c.id = p.category_id
 `
 
 function mapProduct(row: Omit<Product, 'low_stock'>): Product {
-  return { ...row, low_stock: row.stock_alert > 0 && row.stock <= row.stock_alert }
+  return { ...row, site_url: row.site_url || '', low_stock: row.stock_alert > 0 && row.stock <= row.stock_alert }
 }
 
 export function listCategories(): Category[] {
@@ -164,6 +165,12 @@ export function findByWcId(wcId: number): Product | undefined {
 
 export function setProductWcId(id: number, wcId: number): void {
   getDb().prepare('UPDATE products SET wc_product_id = ?, updated_at = ? WHERE id = ?').run(wcId, new Date().toISOString(), id)
+}
+
+export function setProductSiteUrl(id: number, url: string): void {
+  getDb()
+    .prepare('UPDATE products SET site_url = ?, updated_at = ? WHERE id = ?')
+    .run(url.trim(), new Date().toISOString(), id)
 }
 
 export function recordHistory(

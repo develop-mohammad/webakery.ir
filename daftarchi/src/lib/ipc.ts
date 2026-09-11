@@ -34,7 +34,8 @@ const fallback: DaftarchiApi = {
   },
   deleteProduct: async () => undefined,
   testWoo: async () => 'آفلاین',
-  pullWoo: async () => ({ categories: 0, created: 0, updated: 0, skipped: 0, message: 'آفلاین' }),
+  pullWoo: async () => ({ categories: 0, created: 0, updated: 0, skipped: 0, orders: 0, message: 'آفلاین' }),
+  pullWooSales: async () => ({ orders: 0, total: 0, message: 'آفلاین' }),
   listInvoices: async () => [],
   createSale: async () => {
     throw new Error('آفلاین')
@@ -44,6 +45,10 @@ const fallback: DaftarchiApi = {
     profit_month: 0,
     invoices_today: 0,
     cash_balance: 0,
+    site_sales_today: 0,
+    site_orders_today: 0,
+    site_sales_period: 0,
+    site_sales_pulled_at: '',
     comparison: {
       preset: 'week',
       current_label: 'این هفته',
@@ -55,6 +60,7 @@ const fallback: DaftarchiApi = {
     },
     peak_hours: [],
     recent_invoices: [],
+    recent_site_orders: [],
   }),
   comparison: async () => ({
     preset: 'week',

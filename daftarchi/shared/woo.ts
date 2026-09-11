@@ -38,6 +38,29 @@ export function shouldFetchNextPage(itemCount: number, page: number, maxPages = 
   return page < maxPages
 }
 
+export function isHttpUrl(raw: string): boolean {
+  try {
+    const parsed = new URL(raw.trim())
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+export const WC_SALE_STATUSES = ['processing', 'completed', 'on-hold'] as const
+
+export function isWcPaidOrder(status: string): boolean {
+  return (WC_SALE_STATUSES as readonly string[]).includes(status)
+}
+
+export function wcGmtToIso(raw?: string): string {
+  const value = (raw || '').trim()
+  if (!value) return new Date().toISOString()
+  const withZ = /Z$/i.test(value) ? value : `${value}Z`
+  const date = new Date(withZ)
+  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString()
+}
+
 export function buildWcUrl(
   siteUrl: string,
   path: string,

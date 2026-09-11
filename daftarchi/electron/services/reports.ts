@@ -1,5 +1,5 @@
-import { getDb } from '../database/db'
-import type { ComparisonSeries, DashboardData, PeakHour, ProfitReport, StocktakeRow } from '../../shared/models'
+import { getAllSettings, getDb } from '../database/db'
+import type { ComparisonSeries, DashboardData, PeakHour, ProfitReport, SiteOrder, StocktakeRow } from '../../shared/models'
 import { listInvoices } from './invoices'
 import { getProduct, recordHistory } from './products'
 import {
@@ -102,14 +102,41 @@ export function dashboardData(preset: 'week' | 'month'): DashboardData {
   const month = monthRangeYmd()
   const profit = profitReport(month.start, month.endExclusive)
   const cash = getDb().prepare('SELECT COALESCE(SUM(balance),0) AS b FROM cash_accounts').get() as { b: number }
+  const range = preset === 'month' ? month : weekRangeYmd()
+  const siteToday = getDb()
+    .prepare(
+      `SELECT COALESCE(SUM(total),0) AS s, COUNT(*) AS c FROM wc_orders
+       WHERE created_at >= ? AND created_at < ?`,
+    )
+    .get(todayStart, tomorrow) as { s: number; c: number }
+  const sitePeriod = (
+    getDb()
+      .prepare(
+        `SELECT COALESCE(SUM(total),0) AS s FROM wc_orders
+         WHERE created_at >= ? AND created_at < ?`,
+      )
+      .get(ymdToIsoStart(range.start), ymdToIsoStart(range.endExclusive)) as { s: number }
+  ).s
+  const recentSite = getDb()
+    .prepare(
+      `SELECT id, number, status, total, customer_name, created_at
+       FROM wc_orders ORDER BY created_at DESC LIMIT 10`,
+    )
+    .all() as SiteOrder[]
+  const settings = getAllSettings()
   return {
     sales_today: todaySales.s,
     profit_month: profit.profit,
     invoices_today: todaySales.c,
     cash_balance: cash.b,
+    site_sales_today: siteToday.s,
+    site_orders_today: siteToday.c,
+    site_sales_period: sitePeriod,
+    site_sales_pulled_at: settings.wc_last_sales_at || '',
     comparison: comparisonSeries(preset),
     peak_hours: peakHours(preset),
     recent_invoices: listInvoices(10),
+    recent_site_orders: recentSite,
   }
 }
 

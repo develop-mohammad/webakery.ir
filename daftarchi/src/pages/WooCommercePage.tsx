@@ -162,10 +162,10 @@ export function WooCommercePage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-[13px] leading-6 text-muted-foreground">
-              اول «ببین وصل می‌شود؟» را بزن. اگر پیام موفقیت دیدی، بعد این دکمه را بزن تا کالاها بیایند صفحهٔ «کالاها».
+              اول «ببین وصل می‌شود؟» را بزن. بعد این دکمه کالاها، لینک صفحهٔ هر کالا، و آمار فروش سایت را می‌آورد.
             </p>
             <Button type="button" disabled={busy} onClick={pull}>
-              {busy ? 'صبر کن، دارد می‌آورد…' : 'کالاهای سایت را بیاور'}
+              {busy ? 'صبر کن، دارد می‌آورد…' : 'کالاها و فروش سایت را بیاور'}
             </Button>
             {settings.wc_last_pull_at ? (
               <p className="text-xs text-muted-foreground">

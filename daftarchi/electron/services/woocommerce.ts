@@ -1,14 +1,17 @@
 import { getAllSettings, setSetting } from '../database/db'
 import { getDb } from '../database/db'
-import type { WcPullResult } from '../../shared/models'
+import type { WcPullResult, WcSalesResult } from '../../shared/models'
 import {
   buildWcUrl,
+  isHttpUrl,
+  isWcPaidOrder,
   normalizeSiteUrl,
   shouldFetchNextPage,
   skuForCatalogItem,
   skuForVariation,
   toToman,
   variationDisplayName,
+  wcGmtToIso,
 } from '../../shared/woo'
 import {
   createCategory,
@@ -16,6 +19,7 @@ import {
   findBySku,
   findByWcId,
   findCategoryByWc,
+  setProductSiteUrl,
   setProductWcId,
   updateProduct,
 } from './products'
@@ -33,6 +37,7 @@ type WcProduct = {
   manage_stock: boolean
   categories: { id: number; name: string }[]
   attributes?: { name?: string; option?: string }[]
+  permalink?: string
 }
 type WcVariation = WcProduct & { parent_id?: number }
 
@@ -111,11 +116,13 @@ function upsertFromSite(
   price: number,
   stock: number,
   categoryId: number | null,
+  siteUrl: string,
 ): 'created' | 'updated' {
   const sku = allocateSku(preferredSku, wcId)
   const existing = findByWcId(wcId) ?? findBySku(sku)
   if (existing) {
     setProductWcId(existing.id, wcId)
+    if (siteUrl) setProductSiteUrl(existing.id, siteUrl)
     const boundBefore = Boolean(existing.wc_product_id)
     updateProduct(
       {
@@ -143,7 +150,13 @@ function upsertFromSite(
     'wc_pull',
   )
   setProductWcId(product.id, wcId)
+  if (siteUrl) setProductSiteUrl(product.id, siteUrl)
   return 'created'
+}
+
+function siteLink(item: { permalink?: string }): string {
+  const url = (item.permalink || '').trim()
+  return isHttpUrl(url) ? url : ''
 }
 
 function importSimple(item: WcProduct, currency: 'toman' | 'rial'): 'created' | 'updated' {
@@ -156,6 +169,7 @@ function importSimple(item: WcProduct, currency: 'toman' | 'rial'): 'created' | 
     price,
     stock,
     categoryIdOf(item),
+    siteLink(item),
   )
 }
 
@@ -169,6 +183,7 @@ async function importVariable(parent: WcProduct, currency: 'toman' | 'rial'): Pr
   let created = 0
   let updated = 0
   const categoryId = categoryIdOf(parent)
+  const parentLink = siteLink(parent)
   for (const item of variations) {
     const price = toToman(item.regular_price || item.price || '0', currency)
     const stock = item.manage_stock ? Number(item.stock_quantity ?? 0) : 0
@@ -180,6 +195,7 @@ async function importVariable(parent: WcProduct, currency: 'toman' | 'rial'): Pr
       price,
       stock,
       categoryId,
+      siteLink(item) || parentLink,
     )
     if (result === 'created') created += 1
     else updated += 1
@@ -223,18 +239,94 @@ export async function pullWooProducts(): Promise<WcPullResult> {
 
   const message = `${created} کالای جدید، ${updated} به‌روز، ${skipped} رد شد`
   setSetting('wc_last_pull_at', new Date().toISOString())
+
+  let orders = 0
+  let salesNote = ''
+  try {
+    const sales = await pullWooSales()
+    orders = sales.orders
+    salesNote = ` — ${sales.message}`
+  } catch {
+    salesNote = ' — آمار فروش سایت نیامد'
+  }
+
+  const fullMessage = `${message}${salesNote}`
   getDb()
     .prepare(
       `INSERT INTO sync_log (direction, action, product_id, message, created_at)
        VALUES ('pull', 'products', NULL, ?, ?)`,
     )
-    .run(`دسته ${categories.length} — ${message}`, new Date().toISOString())
+    .run(`دسته ${categories.length} — ${fullMessage}`, new Date().toISOString())
 
   return {
     categories: categories.length,
     created,
     updated,
     skipped,
-    message,
+    orders,
+    message: fullMessage,
   }
+}
+
+type WcOrder = {
+  id: number
+  number?: string
+  status: string
+  total: string
+  date_created_gmt?: string
+  date_created?: string
+  billing?: { first_name?: string; last_name?: string }
+  line_items?: { quantity?: number }[]
+}
+
+export async function pullWooSales(): Promise<WcSalesResult> {
+  const { currency } = wcConfig()
+  const after = new Date()
+  after.setUTCDate(after.getUTCDate() - 400)
+  const orders = await wcFetchAll<WcOrder>('orders', {
+    status: 'processing,completed,on-hold',
+    after: after.toISOString().slice(0, 19),
+    orderby: 'id',
+    order: 'asc',
+  })
+
+  const upsert = getDb().prepare(
+    `INSERT INTO wc_orders (id, number, status, total, customer_name, item_count, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       number = excluded.number,
+       status = excluded.status,
+       total = excluded.total,
+       customer_name = excluded.customer_name,
+       item_count = excluded.item_count,
+       created_at = excluded.created_at`,
+  )
+
+  let kept = 0
+  let sum = 0
+  const trx = getDb().transaction((rows: WcOrder[]) => {
+    getDb().prepare('DELETE FROM wc_orders').run()
+    for (const order of rows) {
+      if (!isWcPaidOrder(order.status)) continue
+      const total = toToman(order.total || '0', currency)
+      const name = `${order.billing?.first_name || ''} ${order.billing?.last_name || ''}`.trim()
+      const items = (order.line_items || []).reduce((n, line) => n + Number(line.quantity || 0), 0)
+      upsert.run(
+        order.id,
+        String(order.number || order.id),
+        order.status,
+        total,
+        name,
+        items,
+        wcGmtToIso(order.date_created_gmt || order.date_created),
+      )
+      kept += 1
+      sum += total
+    }
+  })
+  trx(orders)
+
+  const message = `${kept} سفارش فروش از سایت`
+  setSetting('wc_last_sales_at', new Date().toISOString())
+  return { orders: kept, total: sum, message }
 }

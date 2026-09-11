@@ -20,6 +20,7 @@ const api = {
   deleteProduct: (id: number) => ipcRenderer.invoke(IPC.productsDelete, id),
   testWoo: () => ipcRenderer.invoke(IPC.wcTest),
   pullWoo: () => ipcRenderer.invoke(IPC.wcPull),
+  pullWooSales: () => ipcRenderer.invoke(IPC.wcPullSales),
   listInvoices: (limit?: number) => ipcRenderer.invoke(IPC.invoicesList, limit),
   createSale: (input: CreateSaleInput, createdAt?: string) =>
     ipcRenderer.invoke(IPC.invoicesCreateSale, input, createdAt),

@@ -16,6 +16,7 @@ export type Product = {
   category_name: string
   stock_alert: number
   wc_product_id: number | null
+  site_url: string
   low_stock: boolean
   created_at: string
   updated_at: string
@@ -91,14 +92,28 @@ export type PeakHour = {
   count: number
 }
 
+export type SiteOrder = {
+  id: number
+  number: string
+  status: string
+  total: number
+  customer_name: string
+  created_at: string
+}
+
 export type DashboardData = {
   sales_today: number
   profit_month: number
   invoices_today: number
   cash_balance: number
+  site_sales_today: number
+  site_orders_today: number
+  site_sales_period: number
+  site_sales_pulled_at: string
   comparison: ComparisonSeries
   peak_hours: PeakHour[]
   recent_invoices: InvoiceListItem[]
+  recent_site_orders: SiteOrder[]
 }
 
 export type ProfitReport = {
@@ -117,10 +132,17 @@ export type StocktakeRow = {
   system_qty: number
 }
 
+export type WcSalesResult = {
+  orders: number
+  total: number
+  message: string
+}
+
 export type WcPullResult = {
   categories: number
   created: number
   updated: number
   skipped: number
+  orders: number
   message: string
 }

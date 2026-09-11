@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict'
 import {
   buildWcUrl,
+  isHttpUrl,
+  isWcPaidOrder,
   normalizeSiteUrl,
   shouldFetchNextPage,
   skuForCatalogItem,
   skuForVariation,
   toToman,
   variationDisplayName,
+  wcGmtToIso,
 } from '../shared/woo.ts'
 
 assert.equal(normalizeSiteUrl('https://shop.com/wp-admin/'), 'https://shop.com')
@@ -27,5 +30,11 @@ assert.equal(url.searchParams.get('page'), '3')
 assert.equal(url.searchParams.get('per_page'), '100')
 assert.equal(url.searchParams.get('status'), 'any')
 assert.equal(url.searchParams.get('orderby'), 'id')
+
+assert.equal(isHttpUrl('https://shop.com/product/tea'), true)
+assert.equal(isHttpUrl('javascript:alert(1)'), false)
+assert.equal(isWcPaidOrder('completed'), true)
+assert.equal(isWcPaidOrder('cancelled'), false)
+assert.ok(wcGmtToIso('2026-01-02T10:00:00').startsWith('2026-01-02'))
 
 console.log('woo helpers ok')
