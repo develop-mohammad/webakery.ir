@@ -435,7 +435,7 @@ class NCK_Contracts {
 	}
 
 	/**
-	 * پس از ذخیره قرارداد: اگر پرداخت سایت است به سبد ووکامرس می‌رود.
+	 * پس از ذخیره قرارداد: اگر پرداخت سایت است سفارش ووکامرس/حسابدار ثبت و به درگاه بانک می‌رود.
 	 *
 	 * @return array{ok:bool,message?:string,pay_url?:string,print?:string,member?:array,contract?:array}
 	 */
@@ -455,7 +455,7 @@ class NCK_Contracts {
 		}
 		$note = NCK_Pay::tracking_note( $pay_payload );
 		if ( $pay_url !== '' ) {
-			$message = 'ثبت شد. در حال انتقال به پرداخت سایت، مثل خرید محصولات ووکامرس…' . $note;
+			$message = 'ثبت شد. سفارش در ووکامرس و حسابدار ذخیره شد؛ در حال انتقال به درگاه بانک…' . $note;
 		} else {
 			$message .= $note;
 		}

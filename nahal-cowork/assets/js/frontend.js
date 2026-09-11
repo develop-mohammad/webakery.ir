@@ -1399,7 +1399,7 @@
           return;
         }
         if (res.data && res.data.pay_url) {
-          setLoading(btn, true, i18n.paying || 'در حال انتقال به پرداخت سایت…');
+          setLoading(btn, true, i18n.paying || 'در حال انتقال به درگاه بانک…');
           window.location.href = res.data.pay_url;
           return;
         }

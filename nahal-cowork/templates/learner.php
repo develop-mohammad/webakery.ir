@@ -41,13 +41,13 @@ $chips = static function ( $name, array $opts, $type = 'checkbox', $required = f
 				<legend>وضعیت پرداخت</legend>
 				<input type="hidden" name="payment" value="site" />
 				<div class="nck-pay-site">
-					<p class="nck-pay-site-kicker">پرداخت فقط از درگاه سایت انجام می‌شود.</p>
+					<p class="nck-pay-site-kicker">پرداخت فقط از درگاه بانک انجام می‌شود.</p>
 				</div>
 				<div class="nck-grid nck-grid-hall" style="margin-top:12px">
 					<div class="nck-field">
 						<label for="nck-pay-amount">مبلغ پرداخت (تومان)</label>
 						<input id="nck-pay-amount" name="pay_amount" type="text" dir="ltr" placeholder="مثلاً 2500000" />
-						<p class="nck-note">اگر مبلغ را وارد کنید، سفارش در ووکامرس و حسابدار هم ثبت می‌شود. شماره پیگیری به‌صورت خودکار صادر می‌شود.</p>
+						<p class="nck-note">اگر مبلغ را وارد کنید، سفارش در ووکامرس و حسابدار ثبت می‌شود و به درگاه بانک می‌روید. شماره پیگیری به‌صورت خودکار صادر می‌شود.</p>
 					</div>
 					<div class="nck-field">
 						<label for="nck-pay-date">تاریخ پرداخت</label>

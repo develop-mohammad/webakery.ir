@@ -56,7 +56,7 @@ class NCK_Frontend {
 					'wcReady'   => NCK_Pay::wc_ready(),
 					'i18n'      => array(
 						'signing'   => 'در حال ثبت…',
-						'paying'    => 'در حال انتقال به پرداخت سایت…',
+						'paying'    => 'در حال انتقال به درگاه بانک…',
 						'login'     => 'در حال رفتن به صفحه ورود…',
 						'looking'   => 'در حال جستجو…',
 						'checking'  => 'در حال ثبت حضور…',

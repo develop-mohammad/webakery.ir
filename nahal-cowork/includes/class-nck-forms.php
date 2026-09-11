@@ -753,7 +753,7 @@ class NCK_Forms {
 		if ( 'payment_method' === $type ) {
 			echo '<div class="nck-pay-site">';
 			echo '<input type="hidden" name="payment" value="site" />';
-			echo '<p class="nck-pay-site-kicker">پرداخت فقط از درگاه سایت انجام می‌شود.</p>';
+			echo '<p class="nck-pay-site-kicker">پرداخت فقط از درگاه بانک انجام می‌شود.</p>';
 			echo '</div>';
 			return;
 		}

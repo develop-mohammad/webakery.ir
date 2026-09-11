@@ -529,6 +529,18 @@ $sent = NCK_Pay::send_to_checkout(
 	array()
 );
 $check( 'ارسال به درگاه بدون ووکامرس رد می‌شود', empty( $sent['ok'] ) && false !== strpos( $sent['message'], 'ووکامرس' ) );
+$check( 'پرداخت در محل درگاه آفلاین است', true === NCK_Pay::is_offline_gateway_id( 'cod' ) );
+$check( 'کارت به کارت درگاه آفلاین است', true === NCK_Pay::is_offline_gateway_id( 'bacs' ) );
+$check( 'زرین‌پال درگاه آفلاین نیست', false === NCK_Pay::is_offline_gateway_id( 'zarinpal' ) );
+$check( 'لینک بانک بدون شناسه خالی است', '' === NCK_Pay::bank_pay_url( 0 ) );
+$check( 'بدون ووکامرس URL تسویه تشخیص داده نمی‌شود', false === NCK_Pay::is_cart_checkout_url( 'https://example.com/checkout/' ) );
+$banked = NCK_Pay::process_bank_pay( 1, 'x' );
+$check( 'پرداخت بانک بدون سفارش رد می‌شود', empty( $banked['ok'] ) );
+$bank_pay = (string) file_get_contents( dirname( __DIR__ ) . '/includes/class-nck-pay.php' );
+$check( 'پرداخت بانک مستقیم در افزونه هست', false !== strpos( $bank_pay, 'nck_bank_pay' ) );
+$check( 'صفحه انتظار بانک هست', is_readable( dirname( __DIR__ ) . '/templates/bank-wait.php' ) );
+$wait_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/bank-wait.php' );
+$check( 'انتظار بانک به درگاه می‌رود', false !== strpos( $wait_tpl, 'درگاه بانک' ) );
 $check( 'لوگو پیش‌فرض خالی است', 0 === (int) NCK_Settings::defaults()['logo_id'] );
 $check( 'بدون وردپرس آدرس لوگو خالی است', '' === NCK_Settings::logo_url() );
 
@@ -555,6 +567,9 @@ $check( 'پرداخت فقط سایت است', false !== strpos( $pay_tpl, 'name
 $check( 'فیلد پیگیری دستی در پرداخت نیست', false === strpos( $pay_tpl, 'name="pay_ref"' ) );
 $check( 'ورود برای درگاه سایت در پرداخت هست', false !== strpos( $pay_tpl, 'data-nck-login-needed' ) );
 $check( 'توضیح ووکامرس در پرداخت هست', false !== strpos( $pay_tpl, 'ووکامرس' ) );
+$check( 'پرداخت مستقیم بانک در مرحله پرداخت هست', false !== strpos( $pay_tpl, 'درگاه بانک' ) );
+$check( 'صفحه تسویه در مرحله پرداخت نیست', false === strpos( $pay_tpl, 'تسویه' ) );
+$check( 'سبد خرید در مرحله پرداخت نیست', false === strpos( $pay_tpl, 'سبد خرید' ) );
 $mark_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/brand-mark.php' );
 $check( 'قالب لوگوی مشترک هست', false !== strpos( $mark_tpl, 'nck-mark' ) );
 $settings_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/admin-settings.php' );
@@ -576,6 +591,7 @@ $js = (string) file_get_contents( dirname( __DIR__ ) . '/assets/js/frontend.js' 
 $check( 'دانلود مفاد در جاوااسکریپت هست', false !== strpos( $js, 'data-nck-download-review' ) );
 $check( 'کپی امضا به مفاد هست', false !== strpos( $js, 'copyReviewInk' ) );
 $check( 'رفتن به درگاه در جاوااسکریپت هست', false !== strpos( $js, 'pay_url' ) );
+$check( 'متن انتقال بانک در جاوااسکریپت هست', false !== strpos( $js, 'درگاه بانک' ) );
 $check( 'ورود اجباری پرداخت در جاوااسکریپت هست', false !== strpos( $js, 'need_login' ) );
 $check( 'بارگذاری ماه سالن در جاوااسکریپت هست', false !== strpos( $js, 'nck_hall_month' ) );
 $learner_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/learner.php' );

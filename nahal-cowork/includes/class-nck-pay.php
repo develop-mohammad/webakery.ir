@@ -42,7 +42,9 @@ class NCK_Pay {
 		add_action( 'woocommerce_payment_complete', array( __CLASS__, 'on_order_paid' ) );
 		add_action( 'woocommerce_order_status_processing', array( __CLASS__, 'on_order_paid' ) );
 		add_action( 'woocommerce_order_status_completed', array( __CLASS__, 'on_order_paid' ) );
+		add_action( 'template_redirect', array( __CLASS__, 'handle_bank_pay' ), 0 );
 		add_action( 'template_redirect', array( __CLASS__, 'guard_checkout' ) );
+		add_action( 'wp_footer', array( __CLASS__, 'autosubmit_order_pay' ), 50 );
 	}
 
 	public static function is_logged_in() {
@@ -106,8 +108,123 @@ class NCK_Pay {
 		return '';
 	}
 
+	public static function is_offline_gateway_id( $id ) {
+		$id = strtolower( (string) $id );
+		return in_array( $id, array( 'bacs', 'cheque', 'cod', 'cash', 'bank', 'banktransfer', 'bank_transfer', 'offline' ), true );
+	}
+
+	public static function is_offline_gateway( $gateway ) {
+		if ( ! is_object( $gateway ) ) {
+			return self::is_offline_gateway_id( $gateway );
+		}
+		$id = isset( $gateway->id ) ? (string) $gateway->id : '';
+		if ( self::is_offline_gateway_id( $id ) ) {
+			return true;
+		}
+		if ( class_exists( 'WC_Gateway_COD' ) && $gateway instanceof WC_Gateway_COD ) {
+			return true;
+		}
+		if ( class_exists( 'WC_Gateway_BACS' ) && $gateway instanceof WC_Gateway_BACS ) {
+			return true;
+		}
+		if ( class_exists( 'WC_Gateway_Cheque' ) && $gateway instanceof WC_Gateway_Cheque ) {
+			return true;
+		}
+		return false;
+	}
+
 	/**
-	 * پرداخت سایت مثل محصول ووکامرس است: ورود + سبد + درگاه.
+	 * درگاه‌های آنلاین فعال ووکامرس (بدون کارت‌به‌کارت / پرداخت در محل).
+	 *
+	 * @return array<string,object>
+	 */
+	public static function online_gateways() {
+		if ( ! function_exists( 'WC' ) || ! WC()->payment_gateways() ) {
+			return array();
+		}
+		$gateways = WC()->payment_gateways()->payment_gateways();
+		if ( ! is_array( $gateways ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $gateways as $id => $gw ) {
+			if ( ! is_object( $gw ) ) {
+				continue;
+			}
+			$enabled = isset( $gw->enabled ) ? (string) $gw->enabled : '';
+			if ( 'yes' !== $enabled ) {
+				continue;
+			}
+			if ( self::is_offline_gateway( $gw ) ) {
+				continue;
+			}
+			$out[ (string) $id ] = $gw;
+		}
+		return $out;
+	}
+
+	public static function chosen_online_gateway() {
+		$list = self::online_gateways();
+		if ( ! $list ) {
+			return null;
+		}
+		$preferred = function_exists( 'get_option' ) ? (string) get_option( 'woocommerce_default_gateway', '' ) : '';
+		if ( $preferred !== '' && isset( $list[ $preferred ] ) ) {
+			return $list[ $preferred ];
+		}
+		foreach ( $list as $gw ) {
+			return $gw;
+		}
+		return null;
+	}
+
+	public static function has_online_gateway() {
+		return (bool) self::chosen_online_gateway();
+	}
+
+	public static function bank_pay_url( $order_id, $key = '' ) {
+		$order_id = (int) $order_id;
+		if ( $order_id < 1 || ! function_exists( 'home_url' ) ) {
+			return '';
+		}
+		$args = array( 'nck_bank_pay' => $order_id );
+		if ( $key !== '' ) {
+			$args['key'] = (string) $key;
+		}
+		return add_query_arg( $args, home_url( '/' ) );
+	}
+
+	/**
+	 * آیا URL همان صفحه تسویه سبد است (نه درگاه بانک و نه پرداخت سفارش).
+	 */
+	public static function is_cart_checkout_url( $url ) {
+		$url = (string) $url;
+		if ( $url === '' ) {
+			return false;
+		}
+		if ( false !== strpos( $url, 'order-pay' ) || false !== strpos( $url, 'order-received' ) ) {
+			return false;
+		}
+		$host = function_exists( 'wp_parse_url' ) ? (string) wp_parse_url( $url, PHP_URL_HOST ) : (string) parse_url( $url, PHP_URL_HOST );
+		$home = function_exists( 'home_url' ) ? (string) wp_parse_url( home_url(), PHP_URL_HOST ) : '';
+		if ( $host !== '' && $home !== '' && strtolower( $host ) !== strtolower( $home ) ) {
+			return false;
+		}
+		$checkout = self::checkout_url();
+		if ( $checkout === '' ) {
+			return false;
+		}
+		$path   = function_exists( 'wp_parse_url' ) ? (string) wp_parse_url( $url, PHP_URL_PATH ) : (string) parse_url( $url, PHP_URL_PATH );
+		$c_path = function_exists( 'wp_parse_url' ) ? (string) wp_parse_url( $checkout, PHP_URL_PATH ) : (string) parse_url( $checkout, PHP_URL_PATH );
+		if ( function_exists( 'untrailingslashit' ) ) {
+			$path   = untrailingslashit( $path );
+			$c_path = untrailingslashit( $c_path );
+		}
+		return $path !== '' && $path === $c_path;
+	}
+
+	/**
+	 * پرداخت سایت: ورود + ثبت سفارش ووکامرس/حسابدار + درگاه بانک (بدون صفحه تسویه).
 	 *
 	 * @return array{ok:bool,message?:string,need_login?:bool,login?:string}
 	 */
@@ -123,11 +240,14 @@ class NCK_Pay {
 				'ok'         => false,
 				'need_login' => true,
 				'login'      => self::login_url(),
-				'message'    => 'برای پرداخت از درگاه سایت، مثل خرید محصولات، ابتدا وارد حساب کاربری شوید.',
+				'message'    => 'برای پرداخت از درگاه بانک، ابتدا وارد حساب کاربری شوید.',
 			);
 		}
 		if ( ! self::wc_ready() ) {
 			return array( 'ok' => false, 'message' => 'ووکامرس فعال نیست؛ پرداخت از درگاه سایت ممکن نیست.' );
+		}
+		if ( ! self::has_online_gateway() ) {
+			return array( 'ok' => false, 'message' => 'درگاه بانکی در ووکامرس فعال نیست. یک درگاه آنلاین را روشن کنید.' );
 		}
 		return array( 'ok' => true );
 	}
@@ -436,20 +556,17 @@ class NCK_Pay {
 	}
 
 	/**
-	 * @return array{ok:bool,message?:string,pay_url?:string}
+	 * ثبت سفارش در ووکامرس/حسابدار و لینک مستقیم درگاه بانک (بدون صفحه تسویه).
+	 *
+	 * @return array{ok:bool,message?:string,pay_url?:string,order_id?:int}
 	 */
 	public static function send_to_checkout( array $contract, array $draft, array $payload = array() ) {
 		if ( ! self::wc_ready() ) {
 			return array( 'ok' => false, 'message' => 'ووکامرس فعال نیست؛ پرداخت از درگاه سایت ممکن نیست.' );
 		}
-		if ( function_exists( 'WC' ) && function_exists( 'wc_load_cart' ) && ( ! WC()->cart || ! WC()->session ) ) {
-			wc_load_cart();
-		}
-		if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-			return array( 'ok' => false, 'message' => 'سبد خرید ووکامرس در دسترس نیست.' );
-		}
-		if ( WC()->session && method_exists( WC()->session, 'has_session' ) && ! WC()->session->has_session() ) {
-			WC()->session->set_customer_session_cookie( true );
+		$gateway = self::chosen_online_gateway();
+		if ( ! $gateway ) {
+			return array( 'ok' => false, 'message' => 'درگاه بانکی در ووکامرس فعال نیست. یک درگاه آنلاین را روشن کنید.' );
 		}
 
 		$product_id = isset( $draft['product_id'] ) ? (int) $draft['product_id'] : 0;
@@ -465,56 +582,208 @@ class NCK_Pay {
 		if ( ! $product_id ) {
 			$product_id = self::ensure_product();
 		}
-		if ( ! $product_id ) {
-			return array( 'ok' => false, 'message' => 'محصول پرداخت نهال ساخته نشد.' );
-		}
 
-		foreach ( WC()->cart->get_cart() as $key => $item ) {
-			if ( ! empty( $item['nck_contract_id'] ) || (int) $item['product_id'] === (int) $product_id ) {
-				WC()->cart->remove_cart_item( $key );
+		$draft['product_id']    = $product_id;
+		$draft['pay_ref']       = isset( $payload['pay_ref'] ) ? (string) $payload['pay_ref'] : ( isset( $draft['pay_ref'] ) ? (string) $draft['pay_ref'] : '' );
+		$draft['gateway_id']    = isset( $gateway->id ) ? (string) $gateway->id : '';
+		$draft['payment_title'] = method_exists( $gateway, 'get_title' ) ? (string) $gateway->get_title() : 'درگاه بانک';
+		$draft['payment']       = 'site';
+		$draft['status']        = 'pending';
+		if ( empty( $draft['email'] ) && function_exists( 'wp_get_current_user' ) ) {
+			$user = wp_get_current_user();
+			if ( $user && $user->exists() && is_email( $user->user_email ) ) {
+				$draft['email'] = $user->user_email;
 			}
 		}
 
-		$added = WC()->cart->add_to_cart(
-			$product_id,
-			1,
-			0,
-			array(),
-			array(
-				'nck_contract_id' => (int) $contract['id'],
-				'nck_kind'        => isset( $draft['kind'] ) ? $draft['kind'] : '',
-				'nck_item_name'   => isset( $draft['item_name'] ) ? $draft['item_name'] : 'پرداخت نهال',
-				'nck_amount'      => (float) $draft['amount'],
-				'nck_pay_ref'     => isset( $payload['pay_ref'] ) ? (string) $payload['pay_ref'] : '',
-			)
-		);
-		if ( ! $added ) {
-			return array( 'ok' => false, 'message' => 'افزودن به سبد خرید ناموفق بود.' );
+		$created = self::create_order( $draft, $contract );
+		if ( empty( $created['ok'] ) || empty( $created['order_id'] ) ) {
+			$msg = isset( $created['message'] ) && $created['message'] !== '' ? $created['message'] : 'ثبت سفارش پرداخت انجام نشد.';
+			return array( 'ok' => false, 'message' => $msg );
 		}
-		WC()->cart->calculate_totals();
 
-		$url = self::checkout_url();
-		if ( $url === '' && function_exists( 'wc_get_cart_url' ) ) {
-			$url = wc_get_cart_url();
-		}
+		$order_id = (int) $created['order_id'];
+		$order    = function_exists( 'wc_get_order' ) ? wc_get_order( $order_id ) : null;
+		$key      = ( $order && method_exists( $order, 'get_order_key' ) ) ? (string) $order->get_order_key() : '';
+		$url      = self::bank_pay_url( $order_id, $key );
 		if ( $url === '' ) {
-			return array( 'ok' => false, 'message' => 'صفحه پرداخت ووکامرس پیدا نشد.' );
+			return array( 'ok' => false, 'message' => 'لینک درگاه بانک ساخته نشد.' );
 		}
 
-		if ( class_exists( 'NCK_Contracts' ) ) {
+		if ( class_exists( 'NCK_Contracts' ) && ! empty( $contract['id'] ) ) {
 			NCK_Contracts::merge_payload(
 				(int) $contract['id'],
 				array(
 					'pay_pending' => 1,
 					'payment'     => 'site',
+					'wc_order_id' => $order_id,
 				)
 			);
 		}
 
+		self::clear_nck_cart();
+
 		return array(
-			'ok'      => true,
-			'pay_url' => $url,
+			'ok'       => true,
+			'pay_url'  => $url,
+			'order_id' => $order_id,
 		);
+	}
+
+	public static function clear_nck_cart() {
+		if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+			return;
+		}
+		foreach ( WC()->cart->get_cart() as $key => $item ) {
+			if ( ! empty( $item['nck_contract_id'] ) ) {
+				WC()->cart->remove_cart_item( $key );
+			}
+		}
+	}
+
+	public static function handle_bank_pay() {
+		if ( empty( $_GET['nck_bank_pay'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+		$order_id = absint( wp_unslash( $_GET['nck_bank_pay'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$key      = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( function_exists( 'nocache_headers' ) ) {
+			nocache_headers();
+		}
+		$result = self::process_bank_pay( $order_id, $key );
+		if ( empty( $result['ok'] ) ) {
+			$msg = isset( $result['message'] ) ? $result['message'] : 'پرداخت انجام نشد.';
+			wp_die( esc_html( $msg ), 'پرداخت نهال', array( 'response' => 400 ) );
+		}
+		if ( ! empty( $result['redirect'] ) ) {
+			self::redirect_pay( (string) $result['redirect'] );
+		}
+		if ( ! empty( $result['html'] ) ) {
+			self::print_gateway_output( (string) $result['html'] );
+			exit;
+		}
+		wp_die( 'انتقال به درگاه بانک انجام نشد.', 'پرداخت نهال', array( 'response' => 500 ) );
+	}
+
+	/**
+	 * @return array{ok:bool,message?:string,redirect?:string,html?:string,already_paid?:bool}
+	 */
+	public static function process_bank_pay( $order_id, $key ) {
+		$order_id = (int) $order_id;
+		if ( $order_id < 1 || ! function_exists( 'wc_get_order' ) ) {
+			return array( 'ok' => false, 'message' => 'سفارش پیدا نشد.' );
+		}
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return array( 'ok' => false, 'message' => 'سفارش پیدا نشد.' );
+		}
+		$expect = method_exists( $order, 'get_order_key' ) ? (string) $order->get_order_key() : '';
+		if ( $expect === '' || ! hash_equals( $expect, (string) $key ) ) {
+			return array( 'ok' => false, 'message' => 'کلید پرداخت نامعتبر است.' );
+		}
+		if ( method_exists( $order, 'needs_payment' ) && ! $order->needs_payment() ) {
+			$thanks = method_exists( $order, 'get_checkout_order_received_url' ) ? (string) $order->get_checkout_order_received_url() : '';
+			return array( 'ok' => true, 'redirect' => $thanks, 'already_paid' => true );
+		}
+
+		$list         = self::online_gateways();
+		$saved_method = method_exists( $order, 'get_payment_method' ) ? (string) $order->get_payment_method() : '';
+		$gateway      = ( $saved_method !== '' && isset( $list[ $saved_method ] ) ) ? $list[ $saved_method ] : self::chosen_online_gateway();
+		if ( ! $gateway ) {
+			return array( 'ok' => false, 'message' => 'درگاه بانکی فعال نیست. سفارش در ووکامرس و حسابدار ثبت شده است.' );
+		}
+
+		if ( method_exists( $order, 'set_payment_method' ) ) {
+			$order->set_payment_method( $gateway );
+		}
+		if ( method_exists( $order, 'set_payment_method_title' ) && method_exists( $gateway, 'get_title' ) ) {
+			$order->set_payment_method_title( $gateway->get_title() );
+		}
+		$order->save();
+
+		if ( function_exists( 'WC' ) && WC()->session && method_exists( WC()->session, 'set' ) ) {
+			WC()->session->set( 'chosen_payment_method', $gateway->id );
+		}
+		$_POST['payment_method'] = $gateway->id; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+
+		if ( ! method_exists( $gateway, 'process_payment' ) ) {
+			return array( 'ok' => false, 'message' => 'درگاه بانک قابل اجرا نیست.' );
+		}
+
+		ob_start();
+		try {
+			$result = $gateway->process_payment( $order->get_id() );
+		} catch ( Exception $e ) {
+			ob_end_clean();
+			return array( 'ok' => false, 'message' => 'اتصال به درگاه بانک انجام نشد.' );
+		}
+		$html = ob_get_clean();
+
+		if ( is_array( $result ) && isset( $result['result'] ) && 'success' === $result['result'] && ! empty( $result['redirect'] ) ) {
+			$url = (string) $result['redirect'];
+			if ( self::is_cart_checkout_url( $url ) ) {
+				return array( 'ok' => false, 'message' => 'درگاه بانک لینک مستقیم نداد. سفارش در ووکامرس و حسابدار ثبت شد.' );
+			}
+			return array( 'ok' => true, 'redirect' => $url );
+		}
+		if ( is_string( $html ) && trim( $html ) !== '' ) {
+			return array( 'ok' => true, 'html' => $html );
+		}
+		return array( 'ok' => false, 'message' => 'درگاه بانک پاسخ نداد. سفارش در ووکامرس و حسابدار ثبت شده است.' );
+	}
+
+	public static function redirect_pay( $url ) {
+		$url = esc_url_raw( (string) $url );
+		if ( $url === '' ) {
+			return;
+		}
+		$nck_bank_url = $url;
+		$tpl          = defined( 'NCK_PATH' ) ? NCK_PATH . 'templates/bank-wait.php' : '';
+		if ( $tpl && is_readable( $tpl ) ) {
+			include $tpl;
+			exit;
+		}
+		$host      = (string) wp_parse_url( $url, PHP_URL_HOST );
+		$home_host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+		if ( $host && $home_host && strtolower( $host ) === strtolower( $home_host ) ) {
+			wp_safe_redirect( $url );
+		} else {
+			wp_redirect( $url ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
+		}
+		exit;
+	}
+
+	public static function print_gateway_output( $html ) {
+		$html = (string) $html;
+		if ( false !== stripos( $html, '<html' ) ) {
+			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			return;
+		}
+		header( 'Content-Type: text/html; charset=UTF-8' );
+		echo '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>انتقال به درگاه بانک</title>';
+		echo '<style>body{font-family:Tahoma,sans-serif;background:#f6f4ef;color:#222;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px}p{line-height:1.8}</style></head><body><div>';
+		echo '<p>در حال انتقال به درگاه بانک…</p>';
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '</div><script>document.addEventListener("DOMContentLoaded",function(){var f=document.querySelector("form");if(f){f.submit();}});</script></body></html>';
+	}
+
+	public static function autosubmit_order_pay() {
+		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+			return;
+		}
+		if ( ! function_exists( 'is_wc_endpoint_url' ) || ! is_wc_endpoint_url( 'order-pay' ) ) {
+			return;
+		}
+		global $wp;
+		$order_id = isset( $wp->query_vars['order-pay'] ) ? absint( $wp->query_vars['order-pay'] ) : 0;
+		if ( $order_id < 1 || ! function_exists( 'wc_get_order' ) ) {
+			return;
+		}
+		$order = wc_get_order( $order_id );
+		if ( ! $order || ! $order->get_meta( '_nck_contract_id' ) ) {
+			return;
+		}
+		echo '<script>document.addEventListener("DOMContentLoaded",function(){var f=document.querySelector("form#order_review,form.checkout,form.woocommerce-checkout");if(!f)return;var b=f.querySelector("#place_order,button[type=submit]");if(b){b.click();}else{f.submit();}});</script>';
 	}
 
 	public static function cart_keys() {
@@ -730,6 +999,8 @@ class NCK_Pay {
 			'email'         => isset( $args['email'] ) ? (string) $args['email'] : '',
 			'kind'          => isset( $args['kind'] ) ? (string) $args['kind'] : '',
 			'product_id'    => isset( $args['product_id'] ) ? (int) $args['product_id'] : 0,
+			'pay_ref'       => isset( $args['pay_ref'] ) ? (string) $args['pay_ref'] : '',
+			'gateway_id'    => isset( $args['gateway_id'] ) ? (string) $args['gateway_id'] : '',
 		);
 	}
 
@@ -790,9 +1061,11 @@ class NCK_Pay {
 						'kind'      => 'hall',
 						'name'      => $name,
 						'phone'     => $phone,
+						'email'     => isset( $payload['email'] ) ? $payload['email'] : '',
 						'amount'    => $amount,
 						'payment'   => $payment,
 						'item_name' => 'اجاره سالن — ' . $hall,
+						'pay_ref'   => isset( $payload['pay_ref'] ) ? $payload['pay_ref'] : '',
 					)
 				),
 			);
@@ -814,9 +1087,11 @@ class NCK_Pay {
 						'kind'      => 'learner',
 						'name'      => $name,
 						'phone'     => $phone,
+						'email'     => isset( $payload['email'] ) ? $payload['email'] : '',
 						'amount'    => $amount,
 						'payment'   => $payment,
 						'item_name' => 'پذیرش فراگیر نهال',
+						'pay_ref'   => isset( $payload['pay_ref'] ) ? $payload['pay_ref'] : '',
 					)
 				),
 			);
@@ -840,6 +1115,7 @@ class NCK_Pay {
 						'payment'   => isset( $payload['payment'] ) ? $payload['payment'] : 'site',
 						'item_name'  => $title,
 						'product_id' => isset( $payload['product_id'] ) ? (int) $payload['product_id'] : 0,
+						'pay_ref'    => isset( $payload['pay_ref'] ) ? $payload['pay_ref'] : '',
 					)
 				),
 			);
@@ -869,9 +1145,11 @@ class NCK_Pay {
 						'kind'      => 'cowork',
 						'name'      => $name,
 						'phone'     => $phone,
+						'email'     => isset( $payload['email'] ) ? $payload['email'] : '',
 						'amount'    => $amount,
 						'payment'   => $payment,
 						'item_name' => $label,
+						'pay_ref'   => isset( $payload['pay_ref'] ) ? $payload['pay_ref'] : '',
 					)
 				),
 			);
@@ -892,15 +1170,48 @@ class NCK_Pay {
 		}
 
 		try {
-			$order = wc_create_order( array( 'status' => 'pending' ) );
+			$customer_id = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
+			$order       = wc_create_order(
+				array(
+					'status'      => 'pending',
+					'customer_id' => $customer_id,
+				)
+			);
 			if ( is_wp_error( $order ) || ! $order ) {
 				return array( 'ok' => false, 'skipped' => true, 'reason' => 'create', 'message' => 'ساخت سفارش ووکامرس ناموفق بود.' );
 			}
 
-			$item = new WC_Order_Item_Fee();
-			$item->set_name( $draft['item_name'] );
-			$item->set_total( (float) $draft['amount'] );
-			$order->add_item( $item );
+			$added_product = false;
+			if ( ! empty( $draft['product_id'] ) && class_exists( 'WC_Order_Item_Product' ) && function_exists( 'wc_get_product' ) ) {
+				$product = wc_get_product( (int) $draft['product_id'] );
+				if ( $product ) {
+					$item = new WC_Order_Item_Product();
+					$item->set_product( $product );
+					$item->set_quantity( 1 );
+					$item->set_subtotal( (float) $draft['amount'] );
+					$item->set_total( (float) $draft['amount'] );
+					if ( ! empty( $draft['item_name'] ) ) {
+						$item->set_name( $draft['item_name'] );
+					}
+					if ( ! empty( $contract['id'] ) ) {
+						$item->add_meta_data( '_nck_contract_id', (int) $contract['id'], true );
+					}
+					if ( ! empty( $draft['kind'] ) ) {
+						$item->add_meta_data( '_nck_kind', $draft['kind'], true );
+					}
+					if ( ! empty( $draft['pay_ref'] ) ) {
+						$item->add_meta_data( '_nck_pay_ref', $draft['pay_ref'], true );
+					}
+					$order->add_item( $item );
+					$added_product = true;
+				}
+			}
+			if ( ! $added_product ) {
+				$item = new WC_Order_Item_Fee();
+				$item->set_name( $draft['item_name'] );
+				$item->set_total( (float) $draft['amount'] );
+				$order->add_item( $item );
+			}
 
 			$order->set_billing_first_name( $draft['first_name'] );
 			$order->set_billing_last_name( $draft['last_name'] );
@@ -908,28 +1219,49 @@ class NCK_Pay {
 				$order->set_billing_email( $draft['email'] );
 			}
 			$order->set_billing_phone( $draft['phone'] );
+			if ( method_exists( $order, 'set_billing_country' ) ) {
+				$order->set_billing_country( 'IR' );
+			}
+			if ( $customer_id && method_exists( $order, 'set_customer_id' ) ) {
+				$order->set_customer_id( $customer_id );
+			}
 			$order->set_created_via( 'nahal-cowork' );
-			$order->set_payment_method( 'nahal-' . ( $draft['payment'] ? $draft['payment'] : 'pay' ) );
+			$gateway_id = isset( $draft['gateway_id'] ) ? (string) $draft['gateway_id'] : '';
+			if ( $gateway_id !== '' ) {
+				$order->set_payment_method( $gateway_id );
+			} else {
+				$order->set_payment_method( 'nahal-' . ( $draft['payment'] ? $draft['payment'] : 'pay' ) );
+			}
 			$order->set_payment_method_title( $draft['payment_title'] );
 
 			$order->update_meta_data( '_nck_kind', $draft['kind'] );
 			$order->update_meta_data( '_nck_form', $draft['kind'] );
+			$order->update_meta_data( '_nck_item_name', $draft['item_name'] );
+			if ( ! empty( $draft['pay_ref'] ) ) {
+				$order->update_meta_data( '_nck_pay_ref', (string) $draft['pay_ref'] );
+			}
 			if ( ! empty( $contract['id'] ) ) {
 				$order->update_meta_data( '_nck_contract_id', (int) $contract['id'] );
 			}
 			if ( ! empty( $contract['print_token'] ) ) {
 				$order->update_meta_data( '_nck_print_token', (string) $contract['print_token'] );
 			}
-			$order->add_order_note( 'ثبت‌شده از افزونه قرارداد نهال (' . $draft['item_name'] . ').' );
+			$note = 'ثبت‌شده از افزونه قرارداد نهال (' . $draft['item_name'] . ').';
+			if ( ! empty( $draft['pay_ref'] ) ) {
+				$note .= ' پیگیری: ' . $draft['pay_ref'];
+			}
+			$order->add_order_note( $note );
 			$order->calculate_totals();
 			$order->save();
 
-			$status = $draft['status'];
+			$status  = isset( $draft['status'] ) ? $draft['status'] : 'pending';
 			$allowed = array( 'pending', 'processing', 'on-hold', 'completed' );
 			if ( ! in_array( $status, $allowed, true ) ) {
 				$status = 'processing';
 			}
-			$order->update_status( $status, 'وضعیت اولیه بر اساس روش پرداخت فرم نهال.', true );
+			if ( 'site' !== $draft['payment'] && 'pending' !== $status ) {
+				$order->update_status( $status, 'وضعیت اولیه بر اساس روش پرداخت فرم نهال.', true );
+			}
 
 			return array(
 				'ok'       => true,
