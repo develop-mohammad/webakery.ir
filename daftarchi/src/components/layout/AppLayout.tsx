@@ -8,7 +8,7 @@ const TITLES: Record<string, { title: string; subtitle: string }> = {
   '/products': { title: 'کالاها', subtitle: 'موجودی، قیمت و برچسب بارکد' },
   '/invoices': { title: 'فاکتورها', subtitle: 'فروش و خرید' },
   '/cash': { title: 'صندوق', subtitle: 'ورودی و خروجی حساب‌ها' },
-  '/customers': { title: 'مشتریان', subtitle: 'بدهی و تسویه' },
+  '/customers': { title: 'مشتریان', subtitle: 'آمار خریداران سایت' },
   '/reports': { title: 'گزارش‌ها', subtitle: 'سود و زیان و خروجی اکسل' },
   '/settings': { title: 'تنظیمات فروشگاه', subtitle: 'نام، تماس و ظاهر فاکتور' },
   '/woocommerce': { title: 'اتصال به سایت', subtitle: 'سه قدم: روی سایت کلید بساز، اینجا بگذار، کالاها را بیاور' },

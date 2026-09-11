@@ -110,6 +110,7 @@ export type DashboardData = {
   site_orders_today: number
   site_sales_period: number
   site_sales_pulled_at: string
+  site_customers: number
   comparison: ComparisonSeries
   peak_hours: PeakHour[]
   recent_invoices: InvoiceListItem[]
@@ -144,5 +145,23 @@ export type WcPullResult = {
   updated: number
   skipped: number
   orders: number
+  customers: number
   message: string
+}
+
+export type SiteCustomer = {
+  name: string
+  phone: string
+  email: string
+  orders_count: number
+  total_spent: number
+  last_order_at: string
+}
+
+export type CustomerStats = {
+  total_customers: number
+  month_buyers: number
+  month_spent: number
+  avg_order: number
+  list: SiteCustomer[]
 }

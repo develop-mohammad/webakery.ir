@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Banknote, FileText, Store, TrendingUp, Wallet } from 'lucide-react'
+import { Banknote, FileText, Store, TrendingUp, Users, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -59,13 +59,14 @@ export function DashboardPage() {
         <Stat label="موجودی صندوق" value={formatToman(data?.cash_balance ?? 0)} icon={Wallet} />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         <Stat label="فروش سایت امروز" value={formatToman(data?.site_sales_today ?? 0)} icon={Store} />
         <Stat
           label={`فروش سایت ${periodLabel}`}
           value={formatToman(data?.site_sales_period ?? 0)}
           icon={Store}
         />
+        <Stat label="مشتریان سایت" value={toFaDigits(data?.site_customers ?? 0)} icon={Users} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

@@ -61,6 +61,12 @@ export function wcGmtToIso(raw?: string): string {
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString()
 }
 
+/** لینک پرداخت مستقیم ووکامرس — مشتری با یک کلیک به تسویه می‌رود */
+export function productPayUrl(siteUrl: string, wcProductId: number | null | undefined): string {
+  if (!siteUrl.trim() || !wcProductId) return ''
+  return `${normalizeSiteUrl(siteUrl)}/checkout/?add-to-cart=${wcProductId}`
+}
+
 export function buildWcUrl(
   siteUrl: string,
   path: string,

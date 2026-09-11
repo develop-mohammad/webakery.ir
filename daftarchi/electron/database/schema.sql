@@ -161,12 +161,14 @@ CREATE TABLE IF NOT EXISTS stocktake_items (
 CREATE INDEX IF NOT EXISTS idx_stocktake_items ON stocktake_items(stocktake_id);
 
 CREATE TABLE IF NOT EXISTS wc_orders (
-  id             INTEGER PRIMARY KEY,
-  number         TEXT    NOT NULL DEFAULT '',
-  status         TEXT    NOT NULL DEFAULT '',
-  total          INTEGER NOT NULL DEFAULT 0,
-  customer_name  TEXT    NOT NULL DEFAULT '',
-  item_count     INTEGER NOT NULL DEFAULT 0,
-  created_at     TEXT    NOT NULL
+  id              INTEGER PRIMARY KEY,
+  number          TEXT    NOT NULL DEFAULT '',
+  status          TEXT    NOT NULL DEFAULT '',
+  total           INTEGER NOT NULL DEFAULT 0,
+  customer_name   TEXT    NOT NULL DEFAULT '',
+  customer_phone  TEXT    NOT NULL DEFAULT '',
+  customer_email  TEXT    NOT NULL DEFAULT '',
+  item_count      INTEGER NOT NULL DEFAULT 0,
+  created_at      TEXT    NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_wc_orders_date ON wc_orders(created_at);

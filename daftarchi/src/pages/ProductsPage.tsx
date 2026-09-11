@@ -5,7 +5,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table'
-import { Download, ExternalLink, Plus, Trash2 } from 'lucide-react'
+import { Copy, Download, ExternalLink, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -16,6 +16,7 @@ import { formatToman } from '@/lib/money'
 import { formatJalaliDateTime, toFaDigits } from '@/lib/jalali'
 import { cn } from '@/lib/utils'
 import type { Category, Product } from '../../shared/models'
+import { productPayUrl } from '../../shared/woo'
 import { useSettings } from '@/components/layout/SettingsProvider'
 
 export function ProductsPage() {
@@ -145,6 +146,7 @@ export function ProductsPage() {
                 key={cat}
                 title={cat}
                 rows={rows}
+                shopUrl={settings.wc_url || ''}
                 onSave={savePatch}
                 onDelete={async (id) => {
                   try {
@@ -165,14 +167,79 @@ export function ProductsPage() {
   )
 }
 
+function payUrlFor(product: Product, shopUrl: string): string {
+  const fromShop = productPayUrl(shopUrl, product.wc_product_id)
+  if (fromShop) return fromShop
+  if (!product.site_url || !product.wc_product_id) return ''
+  try {
+    return productPayUrl(new URL(product.site_url).origin, product.wc_product_id)
+  } catch {
+    return ''
+  }
+}
+
+async function copyText(text: string, ok: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    toast.success(ok)
+  } catch {
+    toast.error('کپی نشد')
+  }
+}
+
+function ProductLinks({ product, shopUrl }: { product: Product; shopUrl: string }) {
+  const page = product.site_url
+  const pay = payUrlFor(product, shopUrl)
+  if (!page && !pay) return <span className="text-muted-foreground">—</span>
+  return (
+    <div className="flex flex-col items-start gap-1 text-xs">
+      {page ? (
+        <a
+          href={page}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-primary hover:underline"
+        >
+          <ExternalLink className="size-3.5" />
+          صفحه سایت
+        </a>
+      ) : null}
+      {pay ? (
+        <span className="inline-flex items-center gap-0.5">
+          <a
+            href={pay}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-primary hover:underline"
+          >
+            لینک پرداخت
+          </a>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            aria-label="کپی لینک پرداخت"
+            onClick={() => copyText(pay, 'لینک پرداخت کپی شد')}
+          >
+            <Copy className="size-3.5" />
+          </Button>
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
 function CategoryTable({
   title,
   rows,
+  shopUrl,
   onSave,
   onDelete,
 }: {
   title: string
   rows: Product[]
+  shopUrl: string
   onSave: (id: number, field: 'sell_price' | 'buy_price' | 'stock', value: number) => void
   onDelete: (id: number) => void
 }) {
@@ -182,21 +249,7 @@ function CategoryTable({
       {
         id: 'site',
         header: 'لینک',
-        cell: (c) => {
-          const href = c.row.original.site_url
-          if (!href) return <span className="text-muted-foreground">—</span>
-          return (
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-primary hover:underline"
-            >
-              <ExternalLink className="size-3.5" />
-              صفحه سایت
-            </a>
-          )
-        },
+        cell: (c) => <ProductLinks product={c.row.original} shopUrl={shopUrl} />,
       },
       { accessorKey: 'sku', header: 'SKU', cell: (c) => <span dir="ltr">{c.getValue<string>()}</span> },
       {
@@ -236,7 +289,7 @@ function CategoryTable({
         ),
       },
     ],
-    [onDelete, onSave],
+    [onDelete, onSave, shopUrl],
   )
 
   const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel() })

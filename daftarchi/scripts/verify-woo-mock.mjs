@@ -7,6 +7,7 @@ import {
   skuForVariation,
   variationDisplayName,
 } from '../shared/woo.ts'
+import { customerFromBilling, customerKey } from '../shared/customers.ts'
 
 function json(res, body, total, pages) {
   res.setHeader('Content-Type', 'application/json')
@@ -68,6 +69,29 @@ const server = http.createServer((req, res) => {
     const chunk = page === 1 ? products.slice(0, 100) : products.slice(100)
     return json(res, chunk, products.length, 2)
   }
+  if (url.pathname.endsWith('/orders')) {
+    const orders = [
+      {
+        id: 501,
+        number: '501',
+        status: 'completed',
+        total: '150000',
+        date_created_gmt: '2026-09-01T10:00:00',
+        billing: { first_name: 'علی', last_name: 'رضایی', phone: '09120000001', email: 'ali@ex.com' },
+        line_items: [{ quantity: 1 }],
+      },
+      {
+        id: 502,
+        number: '502',
+        status: 'processing',
+        total: '80000',
+        date_created_gmt: '2026-09-08T12:00:00',
+        billing: { first_name: 'سارا', last_name: '', phone: '+98 912 000 0002', email: '' },
+        line_items: [{ quantity: 2 }],
+      },
+    ]
+    return json(res, orders, orders.length, 1)
+  }
   res.statusCode = 404
   res.end('no')
 })
@@ -116,5 +140,17 @@ assert.equal(imported.get(201).sku, 'WC-101-201')
 assert.equal(imported.get(201).name, 'تیشرت — قرمز')
 assert.equal(imported.get(202).sku, 'TEE-BLU')
 
+const orders = await fetchAll('orders')
+assert.equal(orders.length, 2)
+const first = customerFromBilling(orders[0].billing)
+const second = customerFromBilling(orders[1].billing)
+assert.equal(first.phone, '09120000001')
+assert.equal(second.phone, '09120000002')
+assert.equal(customerKey(first.name, first.phone, first.email), 'tel:09120000001')
+assert.notEqual(
+  customerKey(first.name, first.phone, first.email),
+  customerKey(second.name, second.phone, second.email),
+)
+
 server.close()
-console.log('woo mock catalog pull ok', imported.size)
+console.log('woo mock catalog pull ok', imported.size, 'orders', orders.length)

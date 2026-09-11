@@ -4,6 +4,7 @@ import type {
   Category,
   ComparisonSeries,
   CreateSaleInput,
+  CustomerStats,
   DashboardData,
   InvoiceListItem,
   NewProduct,
@@ -15,7 +16,7 @@ import type {
   WcSalesResult,
 } from './models'
 
-export type { Category, Product, ProductPatch, NewProduct, InvoiceListItem, CreateSaleInput, DashboardData, ComparisonSeries, ProfitReport, StocktakeRow, WcPullResult, WcSalesResult }
+export type { Category, Product, ProductPatch, NewProduct, InvoiceListItem, CreateSaleInput, CustomerStats, DashboardData, ComparisonSeries, ProfitReport, StocktakeRow, WcPullResult, WcSalesResult }
 
 export const IPC = {
   ping: 'ping',
@@ -33,6 +34,7 @@ export const IPC = {
   wcTest: 'wc:test',
   wcPull: 'wc:pull',
   wcPullSales: 'wc:pullSales',
+  customersStats: 'customers:stats',
   invoicesList: 'invoices:list',
   invoicesCreateSale: 'invoices:createSale',
   dashboard: 'dashboard:get',
@@ -68,6 +70,7 @@ export type DaftarchiApi = {
   testWoo: () => Promise<string>
   pullWoo: () => Promise<WcPullResult>
   pullWooSales: () => Promise<WcSalesResult>
+  customersStats: () => Promise<CustomerStats>
   listInvoices: (limit?: number) => Promise<InvoiceListItem[]>
   createSale: (input: CreateSaleInput, createdAt?: string) => Promise<InvoiceListItem>
   dashboard: (preset: 'week' | 'month') => Promise<DashboardData>

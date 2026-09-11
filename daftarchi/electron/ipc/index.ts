@@ -13,6 +13,7 @@ import {
   updateProduct,
 } from '../services/products'
 import { pullWooProducts, pullWooSales, testWooConnection } from '../services/woocommerce'
+import { customerStats } from '../services/customers'
 import { createSale, listInvoices } from '../services/invoices'
 import {
   addManualExpense,
@@ -60,6 +61,7 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.wcTest, () => testWooConnection())
   ipcMain.handle(IPC.wcPull, () => pullWooProducts())
   ipcMain.handle(IPC.wcPullSales, () => pullWooSales())
+  ipcMain.handle(IPC.customersStats, () => customerStats())
   ipcMain.handle(IPC.invoicesList, (_e, limit?: number) => listInvoices(Number(limit) || 50))
   ipcMain.handle(IPC.invoicesCreateSale, (_e, input: CreateSaleInput, createdAt?: string) =>
     createSale(input, createdAt),

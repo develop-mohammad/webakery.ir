@@ -5,6 +5,7 @@ import {
   isWcPaidOrder,
   normalizeSiteUrl,
   shouldFetchNextPage,
+  productPayUrl,
   skuForCatalogItem,
   skuForVariation,
   toToman,
@@ -36,5 +37,13 @@ assert.equal(isHttpUrl('javascript:alert(1)'), false)
 assert.equal(isWcPaidOrder('completed'), true)
 assert.equal(isWcPaidOrder('cancelled'), false)
 assert.ok(wcGmtToIso('2026-01-02T10:00:00').startsWith('2026-01-02'))
+
+assert.equal(
+  productPayUrl('https://shop.com/', 88),
+  'https://shop.com/checkout/?add-to-cart=88',
+)
+assert.equal(productPayUrl('https://shop.com/wp-admin', 201), 'https://shop.com/checkout/?add-to-cart=201')
+assert.equal(productPayUrl('', 1), '')
+assert.equal(productPayUrl('https://shop.com', null), '')
 
 console.log('woo helpers ok')

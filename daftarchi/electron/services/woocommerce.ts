@@ -1,6 +1,8 @@
 import { getAllSettings, setSetting } from '../database/db'
 import { getDb } from '../database/db'
 import type { WcPullResult, WcSalesResult } from '../../shared/models'
+import { customerFromBilling } from '../../shared/customers'
+import { customerStats } from './customers'
 import {
   buildWcUrl,
   isHttpUrl,
@@ -250,6 +252,7 @@ export async function pullWooProducts(): Promise<WcPullResult> {
     salesNote = ' — آمار فروش سایت نیامد'
   }
 
+  const customers = orders ? customerStats().total_customers : 0
   const fullMessage = `${message}${salesNote}`
   getDb()
     .prepare(
@@ -264,6 +267,7 @@ export async function pullWooProducts(): Promise<WcPullResult> {
     updated,
     skipped,
     orders,
+    customers,
     message: fullMessage,
   }
 }
@@ -275,7 +279,7 @@ type WcOrder = {
   total: string
   date_created_gmt?: string
   date_created?: string
-  billing?: { first_name?: string; last_name?: string }
+  billing?: { first_name?: string; last_name?: string; phone?: string; email?: string }
   line_items?: { quantity?: number }[]
 }
 
@@ -291,13 +295,15 @@ export async function pullWooSales(): Promise<WcSalesResult> {
   })
 
   const upsert = getDb().prepare(
-    `INSERT INTO wc_orders (id, number, status, total, customer_name, item_count, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO wc_orders (id, number, status, total, customer_name, customer_phone, customer_email, item_count, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        number = excluded.number,
        status = excluded.status,
        total = excluded.total,
        customer_name = excluded.customer_name,
+       customer_phone = excluded.customer_phone,
+       customer_email = excluded.customer_email,
        item_count = excluded.item_count,
        created_at = excluded.created_at`,
   )
@@ -309,14 +315,16 @@ export async function pullWooSales(): Promise<WcSalesResult> {
     for (const order of rows) {
       if (!isWcPaidOrder(order.status)) continue
       const total = toToman(order.total || '0', currency)
-      const name = `${order.billing?.first_name || ''} ${order.billing?.last_name || ''}`.trim()
+      const customer = customerFromBilling(order.billing)
       const items = (order.line_items || []).reduce((n, line) => n + Number(line.quantity || 0), 0)
       upsert.run(
         order.id,
         String(order.number || order.id),
         order.status,
         total,
-        name,
+        customer.name,
+        customer.phone,
+        customer.email,
         items,
         wcGmtToIso(order.date_created_gmt || order.date_created),
       )
@@ -326,7 +334,8 @@ export async function pullWooSales(): Promise<WcSalesResult> {
   })
   trx(orders)
 
-  const message = `${kept} سفارش فروش از سایت`
+  const buyers = customerStats().total_customers
+  const message = `${kept} سفارش فروش از سایت — ${buyers} مشتری`
   setSetting('wc_last_sales_at', new Date().toISOString())
   return { orders: kept, total: sum, message }
 }

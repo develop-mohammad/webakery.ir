@@ -66,6 +66,8 @@ function migrate(database: Database.Database): void {
     )
   `)
   database.exec('CREATE INDEX IF NOT EXISTS idx_wc_orders_date ON wc_orders(created_at)')
+  ensureColumn(database, 'wc_orders', 'customer_phone', "TEXT NOT NULL DEFAULT ''")
+  ensureColumn(database, 'wc_orders', 'customer_email', "TEXT NOT NULL DEFAULT ''")
 
   const version = database
     .prepare('SELECT value FROM schema_meta WHERE key = ?')

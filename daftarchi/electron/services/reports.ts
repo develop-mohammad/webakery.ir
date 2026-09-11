@@ -2,6 +2,7 @@ import { getAllSettings, getDb } from '../database/db'
 import type { ComparisonSeries, DashboardData, PeakHour, ProfitReport, SiteOrder, StocktakeRow } from '../../shared/models'
 import { listInvoices } from './invoices'
 import { getProduct, recordHistory } from './products'
+import { customerStats } from './customers'
 import {
   addDaysYmd,
   dayKeyTehran,
@@ -133,6 +134,7 @@ export function dashboardData(preset: 'week' | 'month'): DashboardData {
     site_orders_today: siteToday.c,
     site_sales_period: sitePeriod,
     site_sales_pulled_at: settings.wc_last_sales_at || '',
+    site_customers: customerStats().total_customers,
     comparison: comparisonSeries(preset),
     peak_hours: peakHours(preset),
     recent_invoices: listInvoices(10),
