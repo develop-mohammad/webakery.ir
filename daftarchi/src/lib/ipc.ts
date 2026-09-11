@@ -20,6 +20,55 @@ const fallback: DaftarchiApi = {
     if (entries.theme) localStorage.setItem('daftarchi-theme', entries.theme)
     return fallback.getSettings()
   },
+  listCategories: async () => [],
+  createCategory: async () => {
+    throw new Error('آفلاین')
+  },
+  listProducts: async () => [],
+  searchProducts: async () => [],
+  createProduct: async () => {
+    throw new Error('آفلاین')
+  },
+  updateProduct: async () => {
+    throw new Error('آفلاین')
+  },
+  deleteProduct: async () => undefined,
+  testWoo: async () => 'آفلاین',
+  pullWoo: async () => ({ categories: 0, created: 0, updated: 0, skipped: 0, message: 'آفلاین' }),
+  listInvoices: async () => [],
+  createSale: async () => {
+    throw new Error('آفلاین')
+  },
+  dashboard: async () => ({
+    sales_today: 0,
+    profit_month: 0,
+    invoices_today: 0,
+    cash_balance: 0,
+    comparison: {
+      preset: 'week',
+      current_label: 'این هفته',
+      previous_label: 'هفتهٔ قبل',
+      current_total: 0,
+      previous_total: 0,
+      delta_percent: 0,
+      points: [],
+    },
+    peak_hours: [],
+    recent_invoices: [],
+  }),
+  comparison: async () => ({
+    preset: 'week',
+    current_label: '',
+    previous_label: '',
+    current_total: 0,
+    previous_total: 0,
+    delta_percent: 0,
+    points: [],
+  }),
+  profit: async () => ({ sales: 0, cogs: 0, expenses: 0, profit: 0, top_products: [] }),
+  stocktakeRows: async () => [],
+  applyStocktake: async () => 0,
+  addExpense: async () => undefined,
 }
 
 export function api(): DaftarchiApi {

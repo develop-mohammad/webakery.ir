@@ -28,7 +28,6 @@ const MAIN_NAV = [
 ] as const
 
 const SOON_NAV = [
-  { to: '/woocommerce', label: 'ووکامرس', icon: Store },
   { to: '/telegram', label: 'تلگرام', icon: Send },
   { to: '/license', label: 'لایسنس', icon: KeyRound },
 ] as const
@@ -65,6 +64,7 @@ export function Sidebar() {
       <Separator />
       <div className="p-2 pb-3">
         <NavItem to="/settings" label="تنظیمات فروشگاه" icon={Settings} />
+        <NavItem to="/woocommerce" label="ووکامرس" icon={Store} />
         <div className="mt-1 space-y-0.5">
           {SOON_NAV.map((item) => (
             <NavItem key={item.to} to={item.to} label={item.label} icon={item.icon} soon />

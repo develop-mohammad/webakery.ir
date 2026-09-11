@@ -12,11 +12,13 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 
 CREATE TABLE IF NOT EXISTS categories (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  name       TEXT NOT NULL UNIQUE COLLATE NOCASE,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  name            TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  wc_category_id  INTEGER,
+  created_at      TEXT NOT NULL,
+  updated_at      TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_categories_wc ON categories(wc_category_id);
 
 CREATE TABLE IF NOT EXISTS products (
   id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -139,3 +141,21 @@ CREATE TABLE IF NOT EXISTS sync_log (
   message    TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS stocktakes (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  note         TEXT NOT NULL DEFAULT '',
+  status       TEXT NOT NULL DEFAULT 'completed',
+  created_at   TEXT NOT NULL,
+  completed_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS stocktake_items (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  stocktake_id INTEGER NOT NULL REFERENCES stocktakes(id) ON DELETE CASCADE,
+  product_id   INTEGER NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+  system_qty   INTEGER NOT NULL,
+  counted_qty  INTEGER NOT NULL,
+  diff_qty     INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_stocktake_items ON stocktake_items(stocktake_id);

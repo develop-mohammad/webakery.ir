@@ -10,6 +10,7 @@ import { InvoicesPage } from '@/pages/InvoicesPage'
 import { ProductsPage } from '@/pages/ProductsPage'
 import { ReportsPage } from '@/pages/ReportsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { WooCommercePage } from '@/pages/WooCommercePage'
 
 export default function App() {
   return (
@@ -26,15 +27,7 @@ export default function App() {
             <Route path="customers" element={<CustomersPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<SettingsPage />} />
-            <Route
-              path="woocommerce"
-              element={
-                <ComingSoonPage
-                  title="اتصال ووکامرس"
-                  body="کالاها از API سایت گرفته می‌شوند و قیمت فروش از دفترچی به فروشگاه فرستاده می‌شود."
-                />
-              }
-            />
+            <Route path="woocommerce" element={<WooCommercePage />} />
             <Route
               path="telegram"
               element={

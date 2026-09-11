@@ -50,12 +50,15 @@ export function closeDatabase(): void {
 
 function migrate(database: Database.Database): void {
   database.exec(schemaSql)
+  ensureColumn(database, 'categories', 'wc_category_id', 'INTEGER')
 
   const version = database
     .prepare('SELECT value FROM schema_meta WHERE key = ?')
     .get('version') as { value: string } | undefined
   if (!version) {
-    database.prepare('INSERT INTO schema_meta (key, value) VALUES (?, ?)').run('version', '1')
+    database.prepare('INSERT INTO schema_meta (key, value) VALUES (?, ?)').run('version', '2')
+  } else if (Number(version.value) < 2) {
+    database.prepare('UPDATE schema_meta SET value = ? WHERE key = ?').run('2', 'version')
   }
 
   const insertSetting = database.prepare(
@@ -70,6 +73,18 @@ function migrate(database: Database.Database): void {
   )
   for (const account of DEFAULT_ACCOUNTS) {
     insertAccount.run(account.code, account.name)
+  }
+}
+
+function ensureColumn(
+  database: Database.Database,
+  table: string,
+  column: string,
+  type: string,
+): void {
+  const cols = database.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
+  if (!cols.some((col) => col.name === column)) {
+    database.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`)
   }
 }
 
