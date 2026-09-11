@@ -1,0 +1,8 @@
+/data/*.json
+/data/*.lock
+/public/uploads/*
+!/public/uploads/.gitkeep
+.env
+.DS_Store
+npm-debug.log
+node_modules/

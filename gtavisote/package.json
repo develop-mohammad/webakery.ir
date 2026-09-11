@@ -1,0 +1,14 @@
+{
+  "name": "gtavisote",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GTA VISOTE — Persian GTA VI news, rumors, guides and shop. Custom CMS, no WordPress, no PHP.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check": "node tools/self-check.js"
+  }
+}

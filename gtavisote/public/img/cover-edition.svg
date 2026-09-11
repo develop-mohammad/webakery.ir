@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450">
+  <rect width="800" height="450" fill="#10141c"/>
+  <rect x="220" y="80" width="360" height="280" rx="8" fill="none" stroke="#e2b15a" stroke-width="8"/>
+  <text x="400" y="240" text-anchor="middle" fill="#e2b15a" font-size="42" font-family="Arial">ULTIMATE</text>
+</svg>
