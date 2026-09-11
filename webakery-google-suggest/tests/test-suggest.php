@@ -371,6 +371,7 @@ wbgs_assert( false !== strpos( $js_src, 'wbgs-copy-one' ), 'copy button class ex
 wbgs_assert( substr_count( $js_src, 'copyPhraseBtn(row.text)' ) >= 4, 'copy wired on list, tree, tax, cluster, faq' );
 $css_src = file_get_contents( dirname( __DIR__ ) . '/assets/css/google.css' );
 wbgs_assert( false !== strpos( $css_src, '.wbgs-copy-one' ), 'copy button styled' );
+wbgs_assert( false !== strpos( $css_src, 'minmax(0, 1fr) auto auto 5.5em auto' ), 'copy is last list column' );
 $preview_src = file_get_contents( dirname( __DIR__ ) . '/canvas-preview.html' );
 wbgs_assert( false !== strpos( $preview_src, 'wbgs-copy-one' ), 'preview has per-phrase copy' );
 

@@ -852,10 +852,10 @@
 			}
 			tag(isBranded(row.text) ? 'wbgs-intent-branded' : 'wbgs-intent-unbranded', extraLabel(isBranded(row.text) ? 'branded' : 'unbranded'));
 			li.appendChild(kw);
-			li.appendChild(copyPhraseBtn(row.text));
 			li.appendChild(intentBadge(row));
 			li.appendChild(compBadge(row));
 			li.appendChild(searchesCell(row));
+			li.appendChild(copyPhraseBtn(row.text));
 			listEl.appendChild(li);
 		});
 	}
@@ -955,9 +955,9 @@
 				kw.className = 'wbgs-kw';
 				kw.textContent = row.text;
 				line.appendChild(kw);
-				line.appendChild(copyPhraseBtn(row.text));
 				line.appendChild(intentBadge(row));
 				line.appendChild(searchesCell(row));
+				line.appendChild(copyPhraseBtn(row.text));
 				wrap.appendChild(line);
 			});
 		}
@@ -971,7 +971,7 @@
 		treeEl.innerHTML = '';
 		var head = document.createElement('div');
 		head.className = 'wbgs-ktree-head';
-		['عبارت', 'اینتنت', 'سرچ ماهانه'].forEach(function (label) {
+		['عبارت', 'اینتنت', 'سرچ ماهانه', 'کپی'].forEach(function (label) {
 			var cell = document.createElement('span');
 			cell.textContent = label;
 			head.appendChild(cell);
@@ -1033,8 +1033,8 @@
 				var t = document.createElement('span');
 				t.textContent = row.text;
 				li.appendChild(t);
-				li.appendChild(copyPhraseBtn(row.text));
 				li.appendChild(searchesCell(row));
+				li.appendChild(copyPhraseBtn(row.text));
 				ul.appendChild(li);
 			});
 			card.appendChild(ul);

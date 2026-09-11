@@ -112,10 +112,10 @@
       ? ' <span class="wbgs-intent wbgs-intent-branded">برند شده</span>'
       : ' <span class="wbgs-intent wbgs-intent-unbranded">بدون برند</span>';
     li.innerHTML = '<span class="wbgs-kw"><span class="wbgs-kw-text"></span>' + badges + '</span>' +
-      '<button type="button" class="wbgs-copy-one">کپی</button>' +
       '<span class="wbgs-intent wbgs-intent-' + row.intent + '"></span>' +
       '<span class="wbgs-comp wbgs-comp-' + (row.band === 'بالا' ? 'high' : row.band === 'پایین' ? 'low' : 'mid') + '"></span>' +
-      '<span class="wbgs-searches is-empty">—</span>';
+      '<span class="wbgs-searches is-empty">—</span>' +
+      '<button type="button" class="wbgs-copy-one">کپی</button>';
     li.querySelector('.wbgs-kw-text').textContent = row.text;
     li.querySelector('.wbgs-intent.wbgs-intent-' + row.intent).textContent = row.intent_fa;
     li.querySelector('.wbgs-comp').textContent = row.comp + ' ' + row.band;
