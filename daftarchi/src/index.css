@@ -1,0 +1,88 @@
+@import '@fontsource/vazirmatn/400.css';
+@import '@fontsource/vazirmatn/500.css';
+@import '@fontsource/vazirmatn/600.css';
+@import '@fontsource/vazirmatn/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 170 33% 97%;
+    --foreground: 180 22% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 180 22% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 180 22% 12%;
+    --primary: 178 76% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 170 22% 93%;
+    --secondary-foreground: 180 18% 20%;
+    --muted: 170 18% 94%;
+    --muted-foreground: 175 10% 42%;
+    --accent: 174 40% 92%;
+    --accent-foreground: 178 50% 22%;
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --warning: 28 86% 48%;
+    --warning-foreground: 0 0% 100%;
+    --border: 172 16% 86%;
+    --input: 172 16% 86%;
+    --ring: 178 76% 32%;
+    --radius: 0.65rem;
+  }
+
+  .dark {
+    --background: 180 16% 8%;
+    --foreground: 168 20% 94%;
+    --card: 180 14% 11%;
+    --card-foreground: 168 20% 94%;
+    --popover: 180 14% 11%;
+    --popover-foreground: 168 20% 94%;
+    --primary: 174 62% 46%;
+    --primary-foreground: 180 20% 8%;
+    --secondary: 180 12% 16%;
+    --secondary-foreground: 168 16% 90%;
+    --muted: 180 10% 16%;
+    --muted-foreground: 170 10% 64%;
+    --accent: 178 24% 18%;
+    --accent-foreground: 174 50% 78%;
+    --destructive: 0 62% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --warning: 28 80% 52%;
+    --warning-foreground: 0 0% 8%;
+    --border: 180 10% 20%;
+    --input: 180 10% 20%;
+    --ring: 174 62% 46%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    @apply h-full;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'ss01' on, 'kern' on;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 999px;
+}

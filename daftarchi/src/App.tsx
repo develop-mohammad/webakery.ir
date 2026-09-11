@@ -1,0 +1,55 @@
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AppLayout } from '@/components/layout/AppLayout'
+import { SettingsProvider } from '@/components/layout/SettingsProvider'
+import { Toaster } from '@/components/ui/sonner'
+import { CashPage } from '@/pages/CashPage'
+import { ComingSoonPage } from '@/pages/ComingSoonPage'
+import { CustomersPage } from '@/pages/CustomersPage'
+import { DashboardPage } from '@/pages/DashboardPage'
+import { InvoicesPage } from '@/pages/InvoicesPage'
+import { ProductsPage } from '@/pages/ProductsPage'
+import { ReportsPage } from '@/pages/ReportsPage'
+import { SettingsPage } from '@/pages/SettingsPage'
+
+export default function App() {
+  return (
+    <SettingsProvider>
+      <HashRouter>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="products" element={<ProductsPage />} />
+            <Route path="invoices" element={<InvoicesPage />} />
+            <Route path="cash" element={<CashPage />} />
+            <Route path="customers" element={<CustomersPage />} />
+            <Route path="reports" element={<ReportsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route
+              path="woocommerce"
+              element={
+                <ComingSoonPage
+                  title="اتصال ووکامرس"
+                  body="کالاها از API سایت گرفته می‌شوند و قیمت فروش از دفترچی به فروشگاه فرستاده می‌شود."
+                />
+              }
+            />
+            <Route
+              path="telegram"
+              element={
+                <ComingSoonPage title="ربات تلگرام" body="فروش تلگرامی بعد از فاز ۱ به همین موجودی وصل می‌شود." />
+              }
+            />
+            <Route
+              path="license"
+              element={
+                <ComingSoonPage title="لایسنس تک‌سیستمی" body="فعال‌سازی روی یک سیستم بعد از اتمام فاز ۱ اضافه می‌شود." />
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </HashRouter>
+      <Toaster />
+    </SettingsProvider>
+  )
+}
