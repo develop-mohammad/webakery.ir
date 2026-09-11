@@ -64,7 +64,7 @@ export function Sidebar() {
       <Separator />
       <div className="p-2 pb-3">
         <NavItem to="/settings" label="تنظیمات فروشگاه" icon={Settings} />
-        <NavItem to="/woocommerce" label="ووکامرس" icon={Store} />
+        <NavItem to="/woocommerce" label="اتصال سایت" icon={Store} />
         <div className="mt-1 space-y-0.5">
           {SOON_NAV.map((item) => (
             <NavItem key={item.to} to={item.to} label={item.label} icon={item.icon} soon />

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useSettings } from '@/components/layout/SettingsProvider'
@@ -30,7 +30,7 @@ export function WooCommercePage() {
     setBusy(true)
     try {
       await persist()
-      toast.success('اتصال ذخیره شد')
+      toast.success('ذخیره شد')
     } catch {
       toast.error('ذخیره نشد')
     } finally {
@@ -45,7 +45,7 @@ export function WooCommercePage() {
       const msg = await api().testWoo()
       toast.success(msg)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'اتصال برقرار نشد')
+      toast.error(err instanceof Error ? err.message : 'وصل نشد. آدرس و دو کلید را دوباره چک کن.')
     } finally {
       setBusy(false)
     }
@@ -59,72 +59,127 @@ export function WooCommercePage() {
       await refresh()
       toast.success(result.message)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'دریافت انجام نشد')
+      toast.error(err instanceof Error ? err.message : 'کالاها نیامدند')
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <form onSubmit={save} className="mx-auto max-w-xl space-y-4">
+    <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>اتصال به سایت ووکامرس</CardTitle>
-          <CardDescription>
-            از ووکامرس ← تنظیمات ← پیشرفته ← REST API یک کلید با دسترسی خواندن/نوشتن بساز. بعد «دریافت همه کالاها» همهٔ محصولات
-            منتشرشده، پیش‌نویس، متغیر و بدون SKU را وارد حسابداری می‌کند. قیمت فروش بعد از اولین دریافت مال دفترچی است.
-          </CardDescription>
+          <CardTitle className="text-base">قدم ۱ — روی سایت این کار را بکن</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <Label>آدرس سایت</Label>
-            <Input
-              dir="ltr"
-              className="text-left"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://shop.com"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Consumer Key</Label>
-            <Input dir="ltr" className="text-left" value={key} onChange={(e) => setKey(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Consumer Secret</Label>
-            <Input dir="ltr" className="text-left" type="password" value={secret} onChange={(e) => setSecret(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>واحد پول سایت</Label>
-            <select
-              className="h-9 w-full rounded-md border bg-transparent px-2 text-sm"
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-            >
-              <option value="toman">تومان</option>
-              <option value="rial">ریال (÷۱۰ هنگام ورود)</option>
-            </select>
-          </div>
-          {settings.wc_last_pull_at ? (
-            <p className="text-xs text-muted-foreground">
-              آخرین دریافت کالا: {formatJalaliDateTime(settings.wc_last_pull_at)}
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground">هنوز کالایی از سایت گرفته نشده است.</p>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={busy}>
-              ذخیره اتصال
-            </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={test}>
-              تست اتصال
-            </Button>
-            <Button type="button" variant="secondary" disabled={busy} onClick={pull}>
-              {busy ? 'در حال دریافت…' : 'دریافت همه کالاهای سایت'}
-            </Button>
-          </div>
+        <CardContent>
+          <ol className="space-y-2.5 text-[13.5px] leading-7">
+            <li>
+              <b>۱.</b> سایت فروشگاهت را در اینترنت باز کن و وارد <b>پیشخوان</b> شو
+              <span className="block text-muted-foreground">همان جایی که محصول اضافه می‌کنی، نه صفحهٔ مشتری.</span>
+            </li>
+            <li>
+              <b>۲.</b> از منوی راست بزن: <b>ووکامرس</b> ← <b>پیکربندی</b>
+            </li>
+            <li>
+              <b>۳.</b> بالای صفحه بزن: <b>پیشرفته</b> ← <b>REST API</b>
+            </li>
+            <li>
+              <b>۴.</b> بزن: <b>افزودن کلید</b>
+            </li>
+            <li>
+              <b>۵.</b> دسترسی را بگذار روی <b>خواندن/نوشتن</b> و ذخیره کن
+            </li>
+            <li>
+              <b>۶.</b> دو تا نوشته بهت می‌دهد. هر دو را کپی کن:
+              <span className="mt-1 block rounded-md bg-muted px-2 py-1.5 font-mono text-[12px] leading-6" dir="ltr">
+                کلید اول با ck_ شروع می‌شود
+                <br />
+                کلید دوم با cs_ شروع می‌شود
+              </span>
+            </li>
+          </ol>
         </CardContent>
       </Card>
-    </form>
+
+      <form onSubmit={save}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">قدم ۲ — همان‌ها را اینجا بگذار</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>آدرس فروشگاهت</Label>
+              <Input
+                dir="ltr"
+                className="text-left"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://example.com"
+              />
+              <p className="text-[11px] text-muted-foreground">فقط آدرس اصلی. wp-admin ننویس.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>کلید اول (ck_)</Label>
+              <Input
+                dir="ltr"
+                className="text-left"
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                placeholder="ck_...."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>کلید دوم (cs_)</Label>
+              <Input
+                dir="ltr"
+                className="text-left"
+                type="password"
+                value={secret}
+                onChange={(e) => setSecret(e.target.value)}
+                placeholder="cs_...."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>قیمت‌های سایت به چه واحدی است؟</Label>
+              <select
+                className="h-9 w-full rounded-md border bg-transparent px-2 text-sm"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+              >
+                <option value="toman">تومان</option>
+                <option value="rial">ریال</option>
+              </select>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button type="button" variant="outline" disabled={busy} onClick={test}>
+                ببین وصل می‌شود؟
+              </Button>
+              <Button type="submit" variant="ghost" disabled={busy}>
+                فقط ذخیره
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="text-base">قدم ۳ — کالاها را بیاور داخل دفترچی</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-[13px] leading-6 text-muted-foreground">
+              وقتی تست بالا سبز شد، این دکمه را بزن. همه کالاهای سایت می‌آیند صفحهٔ «کالاها».
+            </p>
+            <Button type="button" disabled={busy} onClick={pull}>
+              {busy ? 'صبر کن، دارد می‌آورد…' : 'کالاهای سایت را بیاور'}
+            </Button>
+            {settings.wc_last_pull_at ? (
+              <p className="text-xs text-muted-foreground">
+                آخرین بار آمد: {formatJalaliDateTime(settings.wc_last_pull_at)}
+              </p>
+            ) : null}
+          </CardContent>
+        </Card>
+      </form>
+    </div>
   )
 }
