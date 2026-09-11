@@ -41,10 +41,10 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  if (process.env.VITE_DEV_SERVER_URL) {
+  if (!app.isPackaged && process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
   } else {
-    mainWindow.loadFile(path.join(APP_ROOT, 'dist', 'index.html'))
+    mainWindow.loadFile(path.join(app.getAppPath(), 'dist', 'index.html'))
   }
 }
 

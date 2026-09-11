@@ -7,6 +7,7 @@ import electron from 'vite-plugin-electron/simple'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
+  base: './',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
