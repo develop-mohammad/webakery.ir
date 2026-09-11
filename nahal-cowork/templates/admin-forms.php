@@ -63,7 +63,7 @@ if ( $form || $is_new ) :
 						<?php if ( ! empty( $form['product_id'] ) && function_exists( 'get_edit_post_link' ) ) : ?>
 							<p>
 								<a class="button button-small" href="<?php echo esc_url( get_edit_post_link( (int) $form['product_id'] ) ); ?>" target="_blank" rel="noopener">
-									ویرایش محصول #<?php echo esc_html( (string) (int) $form['product_id'] ); ?>
+									ویرایش محصول <?php echo esc_html( (string) (int) $form['product_id'] ); ?>
 								</a>
 							</p>
 							<p class="description">با هر ذخیره، عنوان و مبلغ این محصول با فرم هماهنگ می‌شود.</p>
@@ -146,7 +146,7 @@ if ( $form || $is_new ) :
 						<td><code><?php echo esc_html( NCK_Forms::shortcode( $row ) ); ?></code></td>
 						<td>
 							<?php if ( ! empty( $row['product_id'] ) && function_exists( 'get_edit_post_link' ) ) : ?>
-								<a href="<?php echo esc_url( get_edit_post_link( (int) $row['product_id'] ) ); ?>" target="_blank" rel="noopener">#<?php echo esc_html( (string) (int) $row['product_id'] ); ?></a>
+								<a href="<?php echo esc_url( get_edit_post_link( (int) $row['product_id'] ) ); ?>" target="_blank" rel="noopener"><?php echo esc_html( (string) (int) $row['product_id'] ); ?></a>
 							<?php else : ?>
 								—
 							<?php endif; ?>
