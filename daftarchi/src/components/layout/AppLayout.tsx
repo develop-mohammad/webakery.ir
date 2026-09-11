@@ -11,7 +11,7 @@ const TITLES: Record<string, { title: string; subtitle: string }> = {
   '/customers': { title: 'مشتریان', subtitle: 'بدهی و تسویه' },
   '/reports': { title: 'گزارش‌ها', subtitle: 'سود و زیان و خروجی اکسل' },
   '/settings': { title: 'تنظیمات فروشگاه', subtitle: 'نام، تماس و ظاهر فاکتور' },
-  '/woocommerce': { title: 'اتصال ووکامرس', subtitle: 'همگام‌سازی کالا و قیمت با سایت' },
+  '/woocommerce': { title: 'اتصال ووکامرس', subtitle: 'وصل شو و همه کالاهای سایت را وارد حسابداری کن' },
   '/telegram': { title: 'ربات تلگرام', subtitle: 'فروش تلگرامی' },
   '/license': { title: 'لایسنس', subtitle: 'فعال‌سازی تک‌سیستمی' },
 }

@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { api } from '@/lib/ipc'
 import { formatToman } from '@/lib/money'
-import { toFaDigits } from '@/lib/jalali'
+import { formatJalaliDateTime, toFaDigits } from '@/lib/jalali'
 import { cn } from '@/lib/utils'
 import type { Category, Product } from '../../shared/models'
 import { useSettings } from '@/components/layout/SettingsProvider'
@@ -119,7 +119,7 @@ export function ProductsPage() {
           />
           <Button variant="outline" onClick={pullSite} disabled={loading || !connected}>
             <Download className="size-4" />
-            {loading ? 'در حال دریافت…' : 'دریافت از سایت'}
+            {loading ? 'در حال دریافت…' : 'دریافت همه کالاهای سایت'}
           </Button>
           <Button onClick={() => setOpen(true)}>
             <Plus className="size-4" />
@@ -128,8 +128,12 @@ export function ProductsPage() {
           {!connected ? (
             <span className="text-xs text-muted-foreground">برای گرفتن کالاهای سایت، از منوی ووکامرس وصل شو.</span>
           ) : settings.wc_last_pull_at ? (
-            <span className="text-xs text-muted-foreground">آخرین همگام با سایت ذخیره شده است.</span>
-          ) : null}
+            <span className="text-xs text-muted-foreground">
+              آخرین دریافت: {formatJalaliDateTime(settings.wc_last_pull_at)}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">اتصال هست؛ همه کالاها را از سایت بگیر.</span>
+          )}
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto rounded-lg border bg-card">
