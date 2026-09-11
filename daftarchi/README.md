@@ -4,7 +4,7 @@
 
 ## نصب روی ویندوز
 
-فایل `Daftarchi-1.0.0-win-x64.zip` را دانلود و از حالت فشرده خارج کن، بعد `Daftarchi.exe` را اجرا کن.
+از GitHub Actions (workflow `daftarchi-windows`) فایل `Daftarchi-Windows` را دانلود کن: یا ZIP را باز کن و `Daftarchi.exe` را اجرا کن، یا نصب‌کنندهٔ `Daftarchi-Setup-1.0.0.exe` را بزن.
 
 اگر ویندوز SmartScreen نشان داد: **More info** → **Run anyway**.
 

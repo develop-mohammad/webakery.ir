@@ -1,0 +1,38 @@
+name: daftarchi-windows
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "daftarchi/**"
+      - ".github/workflows/daftarchi-windows.yml"
+  push:
+    paths:
+      - "daftarchi/**"
+      - ".github/workflows/daftarchi-windows.yml"
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: daftarchi/package-lock.json
+      - name: Install and pack
+        working-directory: daftarchi
+        run: |
+          npm ci
+          npm run build:win -- --nsis
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Daftarchi-Windows
+          path: |
+            daftarchi/release/Daftarchi-*-win-*.zip
+            daftarchi/release/Daftarchi-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 14
