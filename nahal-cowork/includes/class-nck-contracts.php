@@ -235,7 +235,7 @@ class NCK_Contracts {
 		);
 	}
 
-	public static function sign_flow( $name, $honorific, $phone, $plan, $signature, $ip ) {
+	public static function sign_flow( $name, $honorific, $phone, $plan, $signature, $ip, array $pay_in = array() ) {
 		$phone = NCK_Phone::normalize( $phone );
 		$name  = sanitize_text_field( $name );
 		$plan  = in_array( $plan, array( 'morning', 'evening', 'both' ), true ) ? $plan : '';
@@ -248,6 +248,12 @@ class NCK_Contracts {
 		}
 		if ( ! $plan ) {
 			return array( 'ok' => false, 'message' => 'نوع اشتراک (صبح، عصر یا هر دو) را انتخاب کنید.' );
+		}
+
+		$fee     = (int) NCK_Settings::get( 'cowork_fee', 0 );
+		$pay     = NCK_Pay::parse_front_payment( $pay_in, $fee );
+		if ( empty( $pay['ok'] ) ) {
+			return $pay;
 		}
 
 		$sig = NCK_Contract::validate_signature( $signature );
@@ -266,7 +272,8 @@ class NCK_Contracts {
 			$signature,
 			$ip,
 			array(
-				'kind' => 'cowork',
+				'kind'    => 'cowork',
+				'payload' => $pay['payload'],
 			)
 		);
 		if ( ! $contract ) {

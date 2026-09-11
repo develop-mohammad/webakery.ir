@@ -119,7 +119,7 @@ $s = NCK_Settings::all();
 			<th><label for="cowork_fee">شهریه فضای کار (تومان)</label></th>
 			<td>
 				<input id="cowork_fee" type="text" dir="ltr" name="settings[cowork_fee]" value="<?php echo esc_attr( (string) $s['cowork_fee'] ); ?>" />
-				<p class="description">اگر بیشتر از صفر باشد، بعد از امضای قرارداد فضای کار یک سفارش ساخته می‌شود. صفر یعنی بدون سفارش.</p>
+				<p class="description">مبلغ پیش‌فرض مرحله پرداخت قرارداد فضای کار. اگر صفر باشد، عضو خودش مبلغ را وارد می‌کند؛ خالی یعنی بدون سفارش حسابدار.</p>
 			</td>
 		</tr>
 		<tr>
@@ -138,7 +138,7 @@ $s = NCK_Settings::all();
 			<th><label for="contract_intro">مقدمه</label></th>
 			<td>
 				<textarea id="contract_intro" class="large-text" rows="2" name="settings[contract_intro]"><?php echo esc_textarea( $s['contract_intro'] ); ?></textarea>
-				<p class="description">جملهٔ خوشامد ابتدای قرارداد. پیش‌فرض: «خوشحالیم که نهال را انتخاب کرده‌اید.»</p>
+				<p class="description">جملهٔ خوشامد ابتدای قرارداد. پیش‌فرض: «خوشحالیم که نهال را برای کار، تمرکز و رشد خود انتخاب کرده‌اید.»</p>
 			</td>
 		</tr>
 		<tr>

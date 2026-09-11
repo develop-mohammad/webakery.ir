@@ -13,6 +13,7 @@ require_once dirname( __DIR__ ) . '/includes/class-nck-contract.php';
 require_once dirname( __DIR__ ) . '/includes/class-nck-hall.php';
 require_once dirname( __DIR__ ) . '/includes/class-nck-learner.php';
 require_once dirname( __DIR__ ) . '/includes/class-nck-settings.php';
+require_once dirname( __DIR__ ) . '/includes/class-nck-pay.php';
 
 $pass = 0;
 $fail = 0;
@@ -67,7 +68,10 @@ $check( 'سهمیه تمام‌شده رد می‌شود', empty( $gate['ok'] ) 
 echo "\n=== قرارداد فضای کار ===\n";
 $check( 'مقدمه خوشحالیم است', 0 === strpos( NCK_Contract::default_intro(), 'خوشحالیم' ) );
 $check( 'خواستیم در مقدمه نیست', false === strpos( NCK_Contract::default_intro(), 'خواستیم' ) );
+$check( 'نهال بدون گیومه است', false === strpos( NCK_Contract::default_intro(), '«نهال»' ) );
+$check( 'متن مقدمه', 'خوشحالیم که نهال را برای کار، تمرکز و رشد خود انتخاب کرده‌اید.' === NCK_Contract::default_intro() );
 $check( 'جمله غلط قبلی تشخیص داده می‌شود', NCK_Settings::is_legacy_intro( NCK_Contract::legacy_intro() ) );
+$check( 'گیومه قبلی هم میراث است', NCK_Settings::is_legacy_intro( 'خوشحالیم که «نهال» را برای کار، تمرکز و رشد خود انتخاب کرده‌اید.' ) );
 $check( 'جمله درست میراث نیست', ! NCK_Settings::is_legacy_intro( NCK_Contract::default_intro() ) );
 $vars = NCK_Contract::vars_from( array( 'name' => 'سارا محمدی', 'phone' => '09121234567', 'title' => 'ms', 'org' => 'مجموعه فرهنگی نهال' ) );
 $filled = NCK_Contract::fill_template( NCK_Contract::default_preamble(), $vars );
@@ -97,10 +101,30 @@ $ok = NCK_Hall::validate(
 		'start_hour'  => '16:00',
 		'end_hour'    => '20:00',
 		'chairs'      => '۸۰',
+		'payment'     => 'card',
+		'pay_amount'  => '۲۰۰۰۰۰۰',
 	)
 );
 $check( 'قرارداد سالن کامل قبول می‌شود', ! empty( $ok['ok'] ), isset( $ok['message'] ) ? $ok['message'] : '' );
 $check( 'ساعت پایان در payload', ! empty( $ok['payload']['end_hour'] ) && '20:00' === $ok['payload']['end_hour'] );
+$check( 'روش پرداخت سالن در payload', ! empty( $ok['ok'] ) && 'card' === $ok['payload']['payment'] );
+
+$no_pay_hall = $ok;
+$no_pay_hall = NCK_Hall::validate(
+	array(
+		'name'        => 'علی رضایی',
+		'honorific'   => 'mr',
+		'national_id' => $nid,
+		'phone'       => '09121234567',
+		'hall_name'   => 'سالن همایش',
+		'amount'      => '۲۰۰۰۰۰۰',
+		'event_date'  => '1404/06/20',
+		'start_hour'  => '16:00',
+		'end_hour'    => '20:00',
+		'chairs'      => '۸۰',
+	)
+);
+$check( 'سالن بدون روش پرداخت رد می‌شود', empty( $no_pay_hall['ok'] ) );
 
 $bad_time = NCK_Hall::validate(
 	array(
@@ -185,7 +209,6 @@ $lr_pay = NCK_Learner::validate( $learner_ok );
 $check( 'مبلغ پذیرش در payload می‌ماند', ! empty( $lr_pay['ok'] ) && 2500000 === (int) $lr_pay['payload']['pay_amount'] );
 
 require_once dirname( __DIR__ ) . '/includes/class-nck-forms.php';
-require_once dirname( __DIR__ ) . '/includes/class-nck-pay.php';
 
 echo "\n=== فرم‌ساز سفارشی ===\n";
 $blank = NCK_Forms::blank();
@@ -246,10 +269,11 @@ $check( 'جدا کردن نام خانوادگی', 'سارا' === $split['first'
 $hall_pay = NCK_Pay::from_contract(
 	'hall',
 	array( 'full_name' => 'علی رضایی', 'phone' => '09121234567' ),
-	array( 'amount' => 2000000, 'hall_name' => 'سالن همایش' )
+	array( 'amount' => 2000000, 'hall_name' => 'سالن همایش', 'payment' => 'card' )
 );
 $check( 'اجاره سالن سفارش می‌سازد', ! empty( $hall_pay['ok'] ) && 2000000 === $hall_pay['order']['amount'] );
 $check( 'عنوان سفارش سالن', false !== strpos( $hall_pay['order']['item_name'], 'سالن همایش' ) );
+$check( 'اجاره سالن روش کارت از فرم', 'on-hold' === $hall_pay['order']['status'] );
 
 $learn_skip = NCK_Pay::from_contract(
 	'learner',
@@ -275,6 +299,21 @@ $check( 'فرم سفارشی سفارش می‌سازد', ! empty( $form_pay['ok
 $cowork_skip = NCK_Pay::from_contract( 'cowork', array( 'full_name' => 'سارا', 'phone' => '09121234567', 'plan' => 'morning' ), array() );
 $check( 'فضای کار بدون شهریه سفارش ندارد', ! empty( $cowork_skip['skipped'] ) );
 
+$cowork_pay = NCK_Pay::from_contract(
+	'cowork',
+	array( 'full_name' => 'سارا محمدی', 'phone' => '09121234567', 'plan' => 'morning' ),
+	array( 'pay_amount' => 1500000, 'payment' => 'card' )
+);
+$check( 'فضای کار با مبلغ سفارش می‌سازد', ! empty( $cowork_pay['ok'] ) && 1500000 === $cowork_pay['order']['amount'] );
+$check( 'روش پرداخت فضای کار از فرم می‌آید', 'on-hold' === $cowork_pay['order']['status'] );
+
+$no_method = NCK_Pay::parse_front_payment( array( 'pay_amount' => '1000' ) );
+$check( 'بدون روش پرداخت رد می‌شود', empty( $no_method['ok'] ) );
+$ok_pay = NCK_Pay::parse_front_payment( array( 'payment' => 'site', 'pay_amount' => '۲۰۰۰۰۰۰' ) );
+$check( 'پرداخت فضای کار با مبلغ فارسی', ! empty( $ok_pay['ok'] ) && 2000000 === (int) $ok_pay['payload']['pay_amount'] );
+$fee_pay = NCK_Pay::parse_front_payment( array( 'payment' => 'onsite' ), 900000 );
+$check( 'شهریه تنظیمات به‌عنوان مبلغ پیش‌فرض', ! empty( $fee_pay['ok'] ) && 900000 === (int) $fee_pay['payload']['pay_amount'] );
+
 $draft = NCK_Pay::draft( array( 'name' => 'علی رضایی', 'amount' => 10, 'payment' => 'onsite', 'item_name' => 'تست' ) );
 $check( 'created_via نهال است', 'nahal-cowork' === $draft['created_via'] );
 $check( 'ووکامرس در تست هسته خاموش است', false === NCK_Pay::wc_ready() );
@@ -294,6 +333,10 @@ $check( 'فرم سفارشی با slug', in_array( '[nahal_form slug="workshop"]
 $check( 'پورتال عضو', in_array( '[nahal_portal]', $codes, true ) );
 $help = (string) file_get_contents( dirname( __DIR__ ) . '/templates/admin-shortcodes.php' );
 $check( 'قالب راهنما در افزونه هست', false !== strpos( $help, 'شورت‌کد چیست' ) );
+$hall_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/hall.php' );
+$pay_tpl  = (string) file_get_contents( dirname( __DIR__ ) . '/templates/pay-step.php' );
+$check( 'قالب پرداخت مشترک هست', false !== strpos( $pay_tpl, 'data-nck-step-label="پرداخت"' ) );
+$check( 'اجاره سالن مرحله پرداخت دارد', false !== strpos( $hall_tpl, 'pay-step.php' ) );
 
 echo "\n--- {$pass} موفق، {$fail} ناموفق ---\n";
 exit( $fail ? 1 : 0 );

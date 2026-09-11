@@ -151,22 +151,31 @@ class NCK_Hall {
 		$start_s = isset( $in['start_hour'] ) ? NCK_Phone::latin_digits( $in['start_hour'] ) : '';
 		$end_s   = isset( $in['end_hour'] ) ? NCK_Phone::latin_digits( $in['end_hour'] ) : '';
 
+		$pay = class_exists( 'NCK_Pay' ) ? NCK_Pay::parse_front_payment( $in, $amount ) : array( 'ok' => true, 'payload' => array() );
+		if ( empty( $pay['ok'] ) ) {
+			return $pay;
+		}
+		$pay_p = isset( $pay['payload'] ) && is_array( $pay['payload'] ) ? $pay['payload'] : array();
+
 		return array(
 			'ok'      => true,
 			'message' => '',
-			'payload' => array(
-				'kind'         => 'hall',
-				'honorific'    => $honorific,
-				'name'         => $name,
-				'national_id'  => $nid,
-				'phone'        => $phone,
-				'hall_name'    => $hall,
-				'amount'       => $amount,
-				'event_date'   => NCK_Jalali::format( $date['y'], $date['m'], $date['d'] ),
-				'start_hour'   => $start_s,
-				'end_hour'     => $end_s,
-				'chairs'       => $chairs,
-				'projector'    => ! empty( $in['projector'] ) ? 1 : 0,
+			'payload' => array_merge(
+				array(
+					'kind'         => 'hall',
+					'honorific'    => $honorific,
+					'name'         => $name,
+					'national_id'  => $nid,
+					'phone'        => $phone,
+					'hall_name'    => $hall,
+					'amount'       => $amount,
+					'event_date'   => NCK_Jalali::format( $date['y'], $date['m'], $date['d'] ),
+					'start_hour'   => $start_s,
+					'end_hour'     => $end_s,
+					'chairs'       => $chairs,
+					'projector'    => ! empty( $in['projector'] ) ? 1 : 0,
+				),
+				$pay_p
 			),
 		);
 	}

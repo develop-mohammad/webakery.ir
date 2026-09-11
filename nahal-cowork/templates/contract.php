@@ -95,6 +95,14 @@ $hours    = NCK_Settings::hours();
 			</label>
 		</section>
 
+		<?php
+		$nck_pay_id       = 'nck-cowork-pay';
+		$nck_pay_amount   = ! empty( $s['cowork_fee'] ) ? (string) $s['cowork_fee'] : '';
+		$nck_pay_required = ! empty( $s['cowork_fee'] );
+		$nck_pay_from     = '';
+		include NCK_PATH . 'templates/pay-step.php';
+		?>
+
 		<nav class="nck-wizard-nav">
 			<button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
 			<button type="button" class="nck-btn" data-nck-next>مرحله بعد</button>

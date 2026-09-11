@@ -37,6 +37,29 @@ $front_css = NCK_URL . 'assets/css/frontend.css?v=' . NCK_VERSION;
 		</header>
 		<p class="nck-intro"><?php echo esc_html( $intro ); ?></p>
 		<p class="nck-preamble"><?php echo esc_html( $preamble ); ?></p>
+		<?php
+		$pay = class_exists( 'NCK_Contracts' ) ? NCK_Contracts::payload( $contract ) : array();
+		if ( ! empty( $pay['pay_amount'] ) || ! empty( $pay['payment'] ) ) :
+			$pay_opts = NCK_Learner::payment_options();
+			$pay_key  = isset( $pay['payment'] ) ? $pay['payment'] : '';
+			$fa       = static function ( $v ) {
+				return NCK_Jalali::fa_digits( (string) $v );
+			};
+			?>
+			<section class="nck-section">
+				<h3>پرداخت</h3>
+				<p>روش: <?php echo esc_html( isset( $pay_opts[ $pay_key ] ) ? $pay_opts[ $pay_key ] : '—' ); ?></p>
+				<?php if ( ! empty( $pay['pay_amount'] ) ) : ?>
+					<p>مبلغ: <?php echo esc_html( NCK_Hall::format_money( (int) $pay['pay_amount'] ) ); ?></p>
+				<?php endif; ?>
+				<?php if ( ! empty( $pay['pay_date'] ) ) : ?>
+					<p>تاریخ: <?php echo esc_html( $fa( $pay['pay_date'] ) ); ?></p>
+				<?php endif; ?>
+				<?php if ( ! empty( $pay['pay_ref'] ) ) : ?>
+					<p>پیگیری: <?php echo esc_html( $pay['pay_ref'] ); ?></p>
+				<?php endif; ?>
+			</section>
+		<?php endif; ?>
 		<?php foreach ( $sections as $sec ) : ?>
 			<section class="nck-section">
 				<h3><?php echo esc_html( $sec['title'] ); ?></h3>

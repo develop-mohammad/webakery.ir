@@ -50,6 +50,54 @@ class NCK_Pay {
 		return (int) $amount > 0;
 	}
 
+	/**
+	 * خواندن روش و مبلغ پرداخت از فرم فرانت.
+	 *
+	 * @return array{ok:bool,message?:string,payload?:array}
+	 */
+	public static function parse_front_payment( array $in, $fallback_amount = 0 ) {
+		$opts    = class_exists( 'NCK_Learner' ) ? NCK_Learner::payment_options() : array(
+			'site'   => 'سایت',
+			'card'   => 'کارت به کارت',
+			'onsite' => 'در محل کارت کشیده شد',
+		);
+		$payment = isset( $in['payment'] ) ? (string) $in['payment'] : '';
+		if ( ! isset( $opts[ $payment ] ) ) {
+			return array( 'ok' => false, 'message' => 'روش پرداخت را انتخاب کنید.' );
+		}
+
+		$amount = 0;
+		if ( isset( $in['pay_amount'] ) && trim( (string) $in['pay_amount'] ) !== '' ) {
+			$amount = NCK_Hall::parse_amount( $in['pay_amount'] );
+		}
+		if ( $amount < 1 ) {
+			$amount = max( 0, (int) $fallback_amount );
+		}
+
+		$pay_date = '';
+		if ( isset( $in['pay_date'] ) && trim( (string) $in['pay_date'] ) !== '' ) {
+			$pay_date = class_exists( 'NCK_Learner' ) ? NCK_Learner::format_date( $in['pay_date'] ) : trim( (string) $in['pay_date'] );
+			if ( $pay_date === '' ) {
+				return array( 'ok' => false, 'message' => 'تاریخ پرداخت را به صورت ۱۴۰۴/۰۶/۲۰ وارد کنید.' );
+			}
+		}
+
+		$ref = isset( $in['pay_ref'] ) ? trim( (string) $in['pay_ref'] ) : '';
+		if ( function_exists( 'sanitize_text_field' ) ) {
+			$ref = sanitize_text_field( $ref );
+		}
+
+		return array(
+			'ok'      => true,
+			'payload' => array(
+				'payment'    => $payment,
+				'pay_amount' => $amount,
+				'pay_date'   => $pay_date,
+				'pay_ref'    => $ref,
+			),
+		);
+	}
+
 	public static function maybe_record( $contract ) {
 		if ( ! is_array( $contract ) || empty( $contract['id'] ) ) {
 			return;
@@ -135,11 +183,15 @@ class NCK_Pay {
 		$phone = isset( $contract['phone'] ) ? $contract['phone'] : '';
 
 		if ( 'hall' === $kind ) {
-			$amount = isset( $payload['amount'] ) ? (int) $payload['amount'] : 0;
-			$hall   = isset( $payload['hall_name'] ) ? $payload['hall_name'] : 'سالن';
+			$amount = isset( $payload['pay_amount'] ) ? (int) $payload['pay_amount'] : 0;
+			if ( $amount < 1 ) {
+				$amount = isset( $payload['amount'] ) ? (int) $payload['amount'] : 0;
+			}
+			$hall = isset( $payload['hall_name'] ) ? $payload['hall_name'] : 'سالن';
 			if ( ! self::should_record( $amount ) ) {
 				return array( 'ok' => false, 'skipped' => true, 'reason' => 'amount' );
 			}
+			$payment = isset( $payload['payment'] ) && $payload['payment'] !== '' ? $payload['payment'] : 'onsite';
 			return array(
 				'ok'    => true,
 				'order' => self::draft(
@@ -148,7 +200,7 @@ class NCK_Pay {
 						'name'      => $name,
 						'phone'     => $phone,
 						'amount'    => $amount,
-						'payment'   => 'onsite',
+						'payment'   => $payment,
 						'item_name' => 'اجاره سالن — ' . $hall,
 					)
 				),
@@ -202,14 +254,14 @@ class NCK_Pay {
 		}
 
 		if ( 'cowork' === $kind ) {
-			$amount = 0;
-			if ( class_exists( 'NCK_Settings' ) ) {
+			$amount = isset( $payload['pay_amount'] ) ? (int) $payload['pay_amount'] : 0;
+			if ( $amount < 1 && class_exists( 'NCK_Settings' ) ) {
 				$amount = (int) NCK_Settings::get( 'cowork_fee', 0 );
 			}
 			if ( ! self::should_record( $amount ) ) {
 				return array( 'ok' => false, 'skipped' => true, 'reason' => 'amount' );
 			}
-			$plan = isset( $contract['plan'] ) ? $contract['plan'] : '';
+			$plan  = isset( $contract['plan'] ) ? $contract['plan'] : '';
 			$label = 'اشتراک فضای کار نهال';
 			if ( class_exists( 'NCK_Shifts' ) ) {
 				$labels = NCK_Shifts::plan_labels();
@@ -217,6 +269,7 @@ class NCK_Pay {
 					$label .= ' — ' . $labels[ $plan ];
 				}
 			}
+			$payment = isset( $payload['payment'] ) && $payload['payment'] !== '' ? $payload['payment'] : 'onsite';
 			return array(
 				'ok'    => true,
 				'order' => self::draft(
@@ -225,7 +278,7 @@ class NCK_Pay {
 						'name'      => $name,
 						'phone'     => $phone,
 						'amount'    => $amount,
-						'payment'   => 'onsite',
+						'payment'   => $payment,
 						'item_name' => $label,
 					)
 				),

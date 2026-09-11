@@ -58,12 +58,18 @@ class NCK_Ajax {
 		$signature  = isset( $_POST['signature'] ) ? wp_unslash( $_POST['signature'] ) : ''; // phpcs:ignore
 		$agree      = ! empty( $_POST['agree'] ); // phpcs:ignore
 		$ip         = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$pay_in     = array(
+			'payment'    => self::post_text( 'payment' ),
+			'pay_amount' => self::post_text( 'pay_amount' ),
+			'pay_date'   => self::post_text( 'pay_date' ),
+			'pay_ref'    => self::post_text( 'pay_ref' ),
+		);
 
 		if ( ! $agree ) {
 			wp_send_json_error( array( 'message' => 'برای ثبت قرارداد باید مفاد آن را بپذیرید.' ) );
 		}
 
-		$result = NCK_Contracts::sign_flow( $name, $honorific, $phone, $plan, $signature, $ip );
+		$result = NCK_Contracts::sign_flow( $name, $honorific, $phone, $plan, $signature, $ip, $pay_in );
 		if ( empty( $result['ok'] ) ) {
 			wp_send_json_error( array( 'message' => $result['message'] ) );
 		}
@@ -99,6 +105,10 @@ class NCK_Ajax {
 			'end_hour'    => isset( $_POST['end_hour'] ) ? wp_unslash( $_POST['end_hour'] ) : '', // phpcs:ignore
 			'chairs'      => isset( $_POST['chairs'] ) ? wp_unslash( $_POST['chairs'] ) : '', // phpcs:ignore
 			'projector'   => ! empty( $_POST['projector'] ), // phpcs:ignore
+			'payment'     => self::post_text( 'payment' ),
+			'pay_amount'  => self::post_text( 'pay_amount' ),
+			'pay_date'    => self::post_text( 'pay_date' ),
+			'pay_ref'     => self::post_text( 'pay_ref' ),
 		);
 		$signature = isset( $_POST['signature'] ) ? wp_unslash( $_POST['signature'] ) : ''; // phpcs:ignore
 		$ip        = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';

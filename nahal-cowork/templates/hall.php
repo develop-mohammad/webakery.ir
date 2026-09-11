@@ -148,6 +148,14 @@ $blank = '…………………….';
 			</label>
 		</section>
 
+		<?php
+		$nck_pay_id       = 'nck-hall-pay';
+		$nck_pay_amount   = '';
+		$nck_pay_required = true;
+		$nck_pay_from     = 'amount';
+		include NCK_PATH . 'templates/pay-step.php';
+		?>
+
 		<nav class="nck-wizard-nav">
 			<button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
 			<button type="button" class="nck-btn" data-nck-next>مرحله بعد</button>

@@ -303,6 +303,13 @@
       show(qs(form, '[data-nck-prev]'), i > 0);
       show(qs(form, '[data-nck-next]'), i < steps.length - 1);
       show(qs(form, '[data-nck-submit]'), i === steps.length - 1);
+      form.querySelectorAll('[data-nck-from]').forEach(function (el) {
+        if (String(el.value || '').trim()) return;
+        var srcName = el.getAttribute('data-nck-from');
+        if (!srcName) return;
+        var src = qs(form, '[name="' + srcName + '"]');
+        if (src && src.value) el.value = src.value;
+      });
       var ol = form.querySelector('[data-nck-step-dots]');
       if (ol) {
         ol.innerHTML = '';

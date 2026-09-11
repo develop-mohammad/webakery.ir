@@ -52,7 +52,7 @@ class NCK_Settings {
 	}
 
 	public static function is_legacy_intro( $text ) {
-		return trim( (string) $text ) === NCK_Contract::legacy_intro();
+		return in_array( trim( (string) $text ), NCK_Contract::legacy_intros(), true );
 	}
 
 	public static function fix_legacy_intro() {

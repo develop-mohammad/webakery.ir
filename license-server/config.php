@@ -151,12 +151,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه ۱.۴.۳: رفع نمایش ویجت + راهنمای مخفی بودن برای ادمین. ، ۳ ماهه ۳۵۰ و دائمی ۷۹۹ هزار تومان.',
     ],
     'nahal-cowork' => [
-        'version'      => '1.2.2',
+        'version'      => '1.2.3',
         'package'      => 'https://webakery.ir/license-server/updates/nahal-cowork.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۲.۲: اصلاح جمله مقدمه قرارداد به «خوشحالیم که نهال را انتخاب کرده‌اید».',
+        'changelog'    => 'نسخه ۱.۲.۳: مرحله پرداخت در پایان قرارداد فضای کار و اجاره سالن.',
     ],
 ] );
 

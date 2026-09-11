@@ -65,6 +65,24 @@ $payload   = NCK_Contracts::payload( $contract );
 			<p class="nck-note">ویدئو پروژکتور درخواست شده است. <?php echo esc_html( $note ); ?></p>
 		<?php endif; ?>
 
+		<?php if ( ! empty( $payload['pay_amount'] ) || ! empty( $payload['payment'] ) ) : ?>
+			<?php
+			$pay_opts = NCK_Learner::payment_options();
+			$pay_key  = isset( $payload['payment'] ) ? $payload['payment'] : '';
+			?>
+			<section class="nck-section">
+				<h3>پرداخت</h3>
+				<p>روش: <?php echo esc_html( isset( $pay_opts[ $pay_key ] ) ? $pay_opts[ $pay_key ] : '—' ); ?></p>
+				<p>مبلغ: <?php echo esc_html( NCK_Hall::format_money( ! empty( $payload['pay_amount'] ) ? (int) $payload['pay_amount'] : (int) $payload['amount'] ) ); ?></p>
+				<?php if ( ! empty( $payload['pay_date'] ) ) : ?>
+					<p>تاریخ: <?php echo esc_html( NCK_Jalali::fa_digits( $payload['pay_date'] ) ); ?></p>
+				<?php endif; ?>
+				<?php if ( ! empty( $payload['pay_ref'] ) ) : ?>
+					<p>پیگیری: <?php echo esc_html( $payload['pay_ref'] ); ?></p>
+				<?php endif; ?>
+			</section>
+		<?php endif; ?>
+
 		<footer class="nck-sign-row">
 			<div>
 				<p>امضای برگزارکننده مراسم</p>

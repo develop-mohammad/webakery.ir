@@ -246,8 +246,8 @@
           </header>
           <div class="nck-wizard-head" data-nck-wizard-head>
             <div class="nck-wizard-frac-wrap">
-              <p class="nck-wizard-frac" dir="ltr"><strong data-nck-step-now>۱</strong><span class="nck-wizard-slash">/</span><span data-nck-step-all>۳</span></p>
-              <p class="nck-wizard-caption">مرحله <span data-nck-step-now>۱</span> از <span data-nck-step-all>۳</span> — <span data-nck-step-title></span></p>
+              <p class="nck-wizard-frac" dir="ltr"><strong data-nck-step-now>۱</strong><span class="nck-wizard-slash">/</span><span data-nck-step-all>۴</span></p>
+              <p class="nck-wizard-caption">مرحله <span data-nck-step-now>۱</span> از <span data-nck-step-all>۴</span> — <span data-nck-step-title></span></p>
             </div>
             <div class="nck-wizard-track"><span class="nck-wizard-fill" data-nck-step-fill></span></div>
             <ol class="nck-wizard-dots" data-nck-step-dots></ol>
@@ -255,7 +255,7 @@
           <div class="nck-alert nck-alert-error" data-nck-error hidden></div>
           <section class="nck-step" data-nck-step data-nck-step-label="متن قرارداد">
             <article class="nck-paper nck-paper-nested">
-              <p class="nck-intro">خوشحالیم که «نهال» را برای کار، تمرکز و رشد خود انتخاب کرده‌اید.</p>
+              <p class="nck-intro">خوشحالیم که نهال را برای کار، تمرکز و رشد خود انتخاب کرده‌اید.</p>
               <p class="nck-preamble" data-nck-preamble data-tpl="این قرارداد بین «{{org}}» و «{{title}} {{name}}» با شماره تماس {{phone}} منعقد می‌گردد.">این قرارداد بین «مجموعه فرهنگی نهال» و «آقای/خانم …………………..» با شماره تماس ………………….. منعقد می‌گردد.</p>
               <section class="nck-section"><h3>موضوع قرارداد</h3><p>ارائه خدمات فضای کار اشتراکی در محیط مشخص و از پیش تعیین‌شده در مجموعه نهال.</p></section>
               <section class="nck-section"><h3>انتخاب شیفت استفاده</h3><p>هر اشتراک شامل ۲۶ شیفت استفاده در ماه می‌باشد.</p></section>
@@ -283,6 +283,21 @@
             </div>
             <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
           </section>
+          <section class="nck-step" data-nck-step data-nck-step-label="پرداخت" hidden>
+            <fieldset class="nck-fieldset">
+              <legend>وضعیت پرداخت</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="radio" name="payment" value="site" required /> سایت</label>
+                <label class="nck-chip"><input type="radio" name="payment" value="card" /> کارت به کارت</label>
+                <label class="nck-chip"><input type="radio" name="payment" value="onsite" /> در محل کارت کشیده شد</label>
+              </div>
+              <div class="nck-grid nck-grid-hall" style="margin-top:12px">
+                <div class="nck-field"><label>مبلغ پرداخت (تومان)</label><input name="pay_amount" type="text" dir="ltr" /></div>
+                <div class="nck-field"><label>تاریخ پرداخت</label><input name="pay_date" type="text" dir="ltr" placeholder="1404/06/20" /></div>
+                <div class="nck-field"><label>شماره پیگیری</label><input name="pay_ref" type="text" dir="ltr" /></div>
+              </div>
+            </fieldset>
+          </section>
           <nav class="nck-wizard-nav">
             <button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
             <button type="button" class="nck-btn" data-nck-next>مرحله بعد</button>
@@ -309,8 +324,8 @@
           </header>
           <div class="nck-wizard-head" data-nck-wizard-head>
             <div class="nck-wizard-frac-wrap">
-              <p class="nck-wizard-frac" dir="ltr"><strong data-nck-step-now>۱</strong><span class="nck-wizard-slash">/</span><span data-nck-step-all>۴</span></p>
-              <p class="nck-wizard-caption">مرحله <span data-nck-step-now>۱</span> از <span data-nck-step-all>۴</span> — <span data-nck-step-title></span></p>
+              <p class="nck-wizard-frac" dir="ltr"><strong data-nck-step-now>۱</strong><span class="nck-wizard-slash">/</span><span data-nck-step-all>۵</span></p>
+              <p class="nck-wizard-caption">مرحله <span data-nck-step-now>۱</span> از <span data-nck-step-all>۵</span> — <span data-nck-step-title></span></p>
             </div>
             <div class="nck-wizard-track"><span class="nck-wizard-fill" data-nck-step-fill></span></div>
             <ol class="nck-wizard-dots" data-nck-step-dots></ol>
@@ -347,6 +362,21 @@
               <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
             </div>
             <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
+          </section>
+          <section class="nck-step" data-nck-step data-nck-step-label="پرداخت" hidden>
+            <fieldset class="nck-fieldset">
+              <legend>وضعیت پرداخت</legend>
+              <div class="nck-chips">
+                <label class="nck-chip"><input type="radio" name="payment" value="site" required /> سایت</label>
+                <label class="nck-chip"><input type="radio" name="payment" value="card" /> کارت به کارت</label>
+                <label class="nck-chip"><input type="radio" name="payment" value="onsite" /> در محل کارت کشیده شد</label>
+              </div>
+              <div class="nck-grid nck-grid-hall" style="margin-top:12px">
+                <div class="nck-field"><label>مبلغ پرداخت (تومان)</label><input name="pay_amount" type="text" dir="ltr" data-nck-from="amount" required /></div>
+                <div class="nck-field"><label>تاریخ پرداخت</label><input name="pay_date" type="text" dir="ltr" placeholder="1404/06/20" /></div>
+                <div class="nck-field"><label>شماره پیگیری</label><input name="pay_ref" type="text" dir="ltr" /></div>
+              </div>
+            </fieldset>
           </section>
           <nav class="nck-wizard-nav">
             <button type="button" class="nck-btn-ghost" data-nck-prev>مرحله قبل</button>
