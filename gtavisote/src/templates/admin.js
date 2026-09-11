@@ -1,6 +1,10 @@
 'use strict';
 
 const { e, faDigits, money, jalali, csrfField, kindLabel, sectionLabel, store, setting } = require('./common');
+
+function orderStatus(s) {
+  return { pending: 'در انتظار', paid: 'پرداخت شد', shipped: 'ارسال شد', cancelled: 'لغو شد' }[s] || s;
+}
 const { asset, VERSION } = require('../util');
 
 function shell(ctx, title, body) {
@@ -75,7 +79,7 @@ function dashboard(ctx) {
     <h2>سفارش‌های اخیر</h2>
     <table class="table">
       <thead><tr><th>کد</th><th>خریدار</th><th>مبلغ</th><th>وضعیت</th></tr></thead>
-      <tbody>${orders.map((o) => `<tr><td><a href="/admin/orders/${e(o.id)}">${e(o.code)}</a></td><td>${e(o.name)}</td><td>${e(money(o.total))}</td><td>${e(o.status)}</td></tr>`).join('') || '<tr><td colspan="4">سفارشی نیست.</td></tr>'}</tbody>
+      <tbody>${orders.map((o) => `<tr><td><a href="/admin/orders/${e(o.id)}">${e(o.code)}</a></td><td>${e(o.name)}</td><td>${e(money(o.total))}</td><td>${e(orderStatus(o.status))}</td></tr>`).join('') || '<tr><td colspan="4">سفارشی نیست.</td></tr>'}</tbody>
     </table>`;
   return shell(ctx, 'داشبورد', body);
 }
@@ -88,7 +92,7 @@ function list(ctx, heading, newUrl, kind, rows) {
       <td><a href="/admin/orders/${e(o.id)}">${e(o.code)}</a></td>
       <td>${e(o.name)}</td>
       <td>${e(money(o.total))}</td>
-      <td>${e(o.status)}</td>
+      <td>${e(orderStatus(o.status))}</td>
       <td>${e(jalali.format(o.created_at))}</td>
     </tr>`).join('');
   } else {
@@ -215,7 +219,7 @@ function orderView(ctx, item) {
       <input type="hidden" name="id" value="${e(item.id)}">
       <label>وضعیت
         <select name="status">
-          ${['pending', 'paid', 'shipped', 'cancelled'].map((s) => `<option value="${s}" ${item.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+          ${['pending', 'paid', 'shipped', 'cancelled'].map((s) => `<option value="${s}" ${item.status === s ? 'selected' : ''}>${e(orderStatus(s))}</option>`).join('')}
         </select>
       </label>
       <label>یادداشت ادمین <textarea name="admin_note" rows="3">${e(item.admin_note || '')}</textarea></label>
