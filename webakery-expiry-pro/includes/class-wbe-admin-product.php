@@ -29,6 +29,8 @@ class WBE_Admin_Product {
 		add_filter( 'manage_edit-product_sortable_columns', array( $this, 'sortable' ) );
 		add_action( 'admin_notices', array( $this, 'incomplete_notice' ) );
 		add_action( 'wp_ajax_wbe_copy_variation_batches', array( $this, 'ajax_copy_variation' ) );
+		add_action( 'quick_edit_custom_box', array( $this, 'quick_edit_box' ), 10, 2 );
+		add_action( 'woocommerce_product_quick_edit_save', array( $this, 'save_quick_edit' ), 15 );
 	}
 
 	/**
@@ -105,31 +107,32 @@ class WBE_Admin_Product {
 		);
 	}
 
-	public function render() {
-		global $post;
-		if ( ! $post ) {
-			return;
-		}
-		$pid = (int) $post->ID;
-		if ( function_exists( 'wc_get_product' ) ) {
+	/**
+	 * متغیرهای باکس بچ برای ویرایش تکی یا سریع.
+	 *
+	 * @param int $pid
+	 * @return array<string,mixed>|null null یعنی محصول متغیر است.
+	 */
+	public static function panel_vars( $pid ) {
+		$pid = (int) $pid;
+		if ( $pid && function_exists( 'wc_get_product' ) ) {
 			$wc_check = wc_get_product( $pid );
-			// پنل ساده فقط برای محصول غیرمتغیر؛ متغیرها روی هر تنوع فیلد دارند.
 			if ( $wc_check && method_exists( $wc_check, 'is_type' ) && $wc_check->is_type( 'variable' ) ) {
-				return;
+				return null;
 			}
 		}
-		$batches        = WBE_Product::batches( $pid );
-		$override       = get_post_meta( $pid, WBE_Product::META_CALENDAR, true );
-		$effective      = WBE_Product::calendar( $pid );
-		$global         = WBE_Settings::calendar();
-		$hide_cd        = (string) get_post_meta( $pid, WBE_Product::META_HIDE_COUNTDOWN, true ) === '1';
+		$batches      = $pid ? WBE_Product::batches( $pid ) : array();
+		$override     = $pid ? get_post_meta( $pid, WBE_Product::META_CALENDAR, true ) : '';
+		$effective    = $pid ? WBE_Product::calendar( $pid ) : WBE_Settings::calendar();
+		$global       = WBE_Settings::calendar();
+		$hide_cd      = $pid && (string) get_post_meta( $pid, WBE_Product::META_HIDE_COUNTDOWN, true ) === '1';
 		$wc_price     = '';
-		$wc_sale        = '';
-		$wc_disc        = '';
-		$wc_stock       = '';
-		$sale_from_fa   = '';
-		$sale_to_fa     = '';
-		if ( function_exists( 'wc_get_product' ) ) {
+		$wc_sale      = '';
+		$wc_disc      = '';
+		$wc_stock     = '';
+		$sale_from_fa = '';
+		$sale_to_fa   = '';
+		if ( $pid && function_exists( 'wc_get_product' ) ) {
 			$wc_product = wc_get_product( $pid );
 			if ( $wc_product ) {
 				$wc_price  = $wc_product->get_regular_price( 'edit' );
@@ -144,7 +147,132 @@ class WBE_Admin_Product {
 				$sale_to_fa   = $pair[1] ? WBE_Jalali::format_ymd( $pair[1], $effective, false ) : '';
 			}
 		}
+		return compact( 'batches', 'override', 'effective', 'global', 'hide_cd', 'wc_price', 'wc_sale', 'wc_disc', 'wc_stock', 'sale_from_fa', 'sale_to_fa' );
+	}
+
+	/**
+	 * دادهٔ JSON برای پر کردن ویرایش سریع از ردیف جدول محصولات.
+	 *
+	 * @param int $pid
+	 * @return array<string,mixed>
+	 */
+	public static function quick_edit_payload( $pid ) {
+		$vars = self::panel_vars( (int) $pid );
+		if ( null === $vars ) {
+			return array( 'type' => 'variable' );
+		}
+		$today      = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
+		$batches    = $vars['batches'];
+		$active_idx = ( ! empty( $batches ) ) ? WBE_Engine::active_index( $batches, $today ) : null;
+		$active     = ( null !== $active_idx && isset( $batches[ $active_idx ] ) ) ? $batches[ $active_idx ] : null;
+		$a_price    = $active && isset( $active['price'] ) ? $active['price'] : $vars['wc_price'];
+		$a_disc     = $active ? (int) WBE_Engine::discount_of( $active ) : ( '' !== $vars['wc_disc'] ? (int) $vars['wc_disc'] : 0 );
+		$a_sale     = '';
+		if ( $active ) {
+			$a_sale = (string) WBE_Engine::effective_sale( $active );
+		} elseif ( ! empty( $vars['wc_sale'] ) ) {
+			$a_sale = (string) $vars['wc_sale'];
+		} elseif ( $a_disc > 0 && $a_price ) {
+			$a_sale = (string) WBE_Engine::sale_price( $a_price, $a_disc );
+		}
+		$a_stock  = $active ? (int) $active['stock'] : ( '' !== $vars['wc_stock'] && null !== $vars['wc_stock'] ? (int) $vars['wc_stock'] : '' );
+		$a_expiry = ( $active && ! empty( $active['expiry'] ) ) ? WBE_Jalali::format_ymd( $active['expiry'], $vars['effective'], false ) : '';
+		$reserves = array();
+		if ( ! empty( $batches ) ) {
+			foreach ( $batches as $i => $b ) {
+				if ( null !== $active_idx && (int) $i === (int) $active_idx ) {
+					continue;
+				}
+				$reserves[] = array(
+					'id'       => isset( $b['id'] ) ? $b['id'] : '',
+					'price'    => isset( $b['price'] ) ? $b['price'] : '',
+					'discount' => isset( $b['discount'] ) && (int) $b['discount'] > 0 ? (int) $b['discount'] : '',
+					'stock'    => isset( $b['stock'] ) ? $b['stock'] : '',
+					'expiry'   => ! empty( $b['expiry'] ) ? WBE_Jalali::format_ymd( $b['expiry'], $vars['effective'], false ) : '',
+				);
+			}
+		}
+		return array(
+			'type'       => 'simple',
+			'calendar'   => $vars['override'],
+			'effective'  => $vars['effective'],
+			'hide_cd'    => ! empty( $vars['hide_cd'] ),
+			'sale_from'  => $vars['sale_from_fa'],
+			'sale_to'    => $vars['sale_to_fa'],
+			'active'     => array(
+				'id'       => $active && isset( $active['id'] ) ? $active['id'] : '',
+				'price'    => $a_price,
+				'discount' => $a_disc > 0 ? (string) $a_disc : '',
+				'sale'     => $a_sale,
+				'stock'    => $a_stock,
+				'expiry'   => $a_expiry,
+			),
+			'reserves'   => $reserves,
+		);
+	}
+
+	public function render() {
+		global $post;
+		if ( ! $post ) {
+			return;
+		}
+		$vars = self::panel_vars( (int) $post->ID );
+		if ( null === $vars ) {
+			return;
+		}
+		extract( $vars, EXTR_SKIP ); // phpcs:ignore WordPress.PHP.DontExtract
 		include WBE_PATH . 'includes/views/product-batches.php';
+	}
+
+	/**
+	 * همان باکس ویرایش تکی داخل ویرایش سریع لیست محصولات.
+	 *
+	 * @param string $column_name
+	 * @param string $post_type
+	 */
+	public function quick_edit_box( $column_name, $post_type ) {
+		if ( 'wbe_expiry' !== $column_name || 'product' !== $post_type ) {
+			return;
+		}
+		if ( ! current_user_can( 'edit_products' ) ) {
+			return;
+		}
+		static $printed = false;
+		if ( $printed ) {
+			return;
+		}
+		$printed      = true;
+		$wbe_qe       = true;
+		$batches      = array();
+		$override     = '';
+		$effective    = WBE_Settings::calendar();
+		$global       = $effective;
+		$hide_cd      = false;
+		$wc_price     = '';
+		$wc_sale      = '';
+		$wc_disc      = '';
+		$wc_stock     = '';
+		$sale_from_fa = '';
+		$sale_to_fa   = '';
+		echo '<fieldset class="inline-edit-col wbe-qe-wrap">';
+		echo '<legend class="inline-edit-legend">انقضای کالا</legend>';
+		echo '<input type="hidden" name="wbe_qe_ready" value="0" class="wbe-qe-ready" />';
+		echo '<p class="wbe-qe-variable" hidden>برای محصول متغیر بچ‌ها روی هر تنوع است؛ از ویرایش محصول یا ویرایش گروهی استفاده کنید.</p>';
+		include WBE_PATH . 'includes/views/product-batches.php';
+		echo '</fieldset>';
+	}
+
+	/**
+	 * @param WC_Product $product
+	 */
+	public function save_quick_edit( $product ) {
+		if ( empty( $_POST['wbe_qe_ready'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return;
+		}
+		$this->save( $product );
+		if ( $product && method_exists( $product, 'get_id' ) ) {
+			$this->sync_after_save( (int) $product->get_id() );
+		}
 	}
 
 	/**
@@ -353,9 +481,11 @@ class WBE_Admin_Product {
 		}
 		if ( ! $exp ) {
 			echo '—';
-			return;
+		} else {
+			echo esc_html( WBE_Jalali::format_ymd( $exp, WBE_Product::calendar( $post_id ), true ) );
 		}
-		echo esc_html( WBE_Jalali::format_ymd( $exp, WBE_Product::calendar( $post_id ), true ) );
+		$payload = self::quick_edit_payload( $post_id );
+		echo '<script type="application/json" class="wbe-qe-json">' . wp_json_encode( $payload ) . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 
 	public function sortable( $cols ) {

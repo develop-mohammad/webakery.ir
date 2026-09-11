@@ -850,7 +850,7 @@ class WBE_Admin_Bulk {
 		fprintf( $out, chr( 0xEF ) . chr( 0xBB ) . chr( 0xBF ) );
 		fputcsv(
 			$out,
-			array( 'ID', 'نوع', 'نام', 'SKU', 'برند', 'وضعیت', 'قیمت اصلی', 'تخفیف', 'جشنواره', 'از', 'تا', 'موجودی', 'انقضا', 'تعداد رزرو' )
+			array( 'ID', 'نوع', 'نام', 'SKU', 'برند', 'وضعیت', 'قیمت اصلی', 'تخفیف', 'جشنواره', 'از', 'تا', 'موجودی', 'کل موجودی', 'انقضا', 'تعداد رزرو' )
 		);
 		foreach ( $rows as $r ) {
 			fputcsv(
@@ -868,6 +868,7 @@ class WBE_Admin_Bulk {
 					$r['from_fa'],
 					$r['to_fa'],
 					$r['stock'],
+					isset( $r['total_stock'] ) ? $r['total_stock'] : ( (int) $r['stock'] + (int) ( isset( $r['reserved'] ) ? $r['reserved'] : 0 ) ),
 					$r['expiry_fa'],
 					isset( $r['reserves'] ) && is_array( $r['reserves'] ) ? count( $r['reserves'] ) : 0,
 				)

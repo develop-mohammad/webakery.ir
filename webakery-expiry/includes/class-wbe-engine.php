@@ -178,6 +178,23 @@ class WBE_Engine {
 	}
 
 	/**
+	 * جمع موجودی فعال و همهٔ بچ‌های رزرو.
+	 *
+	 * @param array $batches
+	 * @return int
+	 */
+	public static function total_stock( array $batches ) {
+		$sum = 0;
+		foreach ( $batches as $batch ) {
+			if ( ! is_array( $batch ) ) {
+				continue;
+			}
+			$sum += isset( $batch['stock'] ) ? max( 0, (int) $batch['stock'] ) : 0;
+		}
+		return $sum;
+	}
+
+	/**
 	 * تنظیم جمع موجودی رزرو روی بچ‌های غیر فعال.
 	 * اگر چند بچ رزرو باشد، کل مقدار روی اولین رزرو می‌نشیند و بقیه صفر می‌شوند.
 	 *
@@ -1073,6 +1090,7 @@ class WBE_Engine {
 		$sale     = $active ? (string) self::effective_sale( $active ) : '';
 		$stock    = $active ? (int) $active['stock'] : '';
 		$reserved = self::reserved_stock( $batches, $today );
+		$total    = self::total_stock( $batches );
 		$expiry   = ( $active && ! empty( $active['expiry'] ) ) ? (string) $active['expiry'] : '';
 
 		$ridx      = self::primary_reserve_index( $batches, $today );
@@ -1109,6 +1127,9 @@ class WBE_Engine {
 			$discount = self::discount_from_prices( $regular, $wc_sale );
 			$sale     = ( '' !== $wc_sale && null !== $wc_sale ) ? (string) $wc_sale : $regular;
 			$stock    = isset( $wc['stock'] ) && '' !== $wc['stock'] && null !== $wc['stock'] ? (int) $wc['stock'] : '';
+			if ( empty( $batches ) ) {
+				$total = ( '' !== $stock && null !== $stock ) ? (int) $stock : 0;
+			}
 		}
 		$from = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_from ) : '';
 		$to   = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::datetime_to_ymd( $sale_to ) : '';
@@ -1121,6 +1142,7 @@ class WBE_Engine {
 			'discount'       => $discount,
 			'sale'           => $sale,
 			'stock'          => $stock,
+			'total_stock'    => $total,
 			'reserved'       => $reserved,
 			'res_price'      => $res_price,
 			'res_discount'   => ( '' === $res_disc || null === $res_disc ) ? '' : (int) $res_disc,

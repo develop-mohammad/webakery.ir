@@ -246,6 +246,7 @@ wbe_check( 'درصد تقریبی از مبلغ دقیق ساخته می‌شو�
 
 $res_sum = WBE_Engine::reserved_stock( $bulk, '2026-01-15' );
 wbe_check( 'موجودی رزرو = بچ‌های غیر فعال', 8 === $res_sum );
+wbe_check( 'کل موجودی = فعال + رزرو', 12 === WBE_Engine::total_stock( $bulk ) );
 
 $set_res = WBE_Engine::set_reserved_stock( $bulk, 15, '2026-01-15' );
 wbe_check( 'تنظیم موجودی رزرو روی بچ غیر فعال', 15 === (int) $set_res[1]['stock'] && 4 === (int) $set_res[0]['stock'] );
@@ -269,6 +270,7 @@ wbe_check( 'ویرایش موجودی رزرو', 20 === (int) $res_edit[1]['stoc
 wbe_check( 'ویرایش انقضای رزرو', '2026-11-15' === $res_edit[1]['expiry'] );
 $res_row = WBE_Engine::bulk_row_from_record( 1, 'x', 'S', $bulk, 'gregorian', '', '', '2026-01-15' );
 wbe_check( 'ردیف گروهی فیلد رزرو دارد', '90000' === $res_row['res_price'] && 8 === (int) $res_row['res_stock'] );
+wbe_check( 'ردیف گروهی کل موجودی دارد', 12 === (int) $res_row['total_stock'] );
 wbe_check( 'res_price عملیات بچ است', true === WBE_Engine::has_batch_ops( array( 'res_price' => 1 ) ) );
 
 $three = array(
@@ -406,6 +408,7 @@ wbe_check(
 	'50000' === $plain_row['regular']
 	&& 20 === (int) $plain_row['discount']
 	&& 12 === (int) $plain_row['stock']
+	&& 12 === (int) $plain_row['total_stock']
 	&& 'draft' === $plain_row['status']
 	&& false === $plain_row['has_batches']
 	&& false === $plain_row['has_active']
@@ -760,7 +763,12 @@ wbe_check( 'ویرایش گروهی ستون وضعیت دارد', false !== str
 wbe_check( 'تکی فیلد جشنواره تقویم دارد', false !== strpos( $single_view, 'class="wbe-date"' ) );
 wbe_check( 'تنوع دکمه کپی به همه دارد', false !== strpos( $var_view, 'wbe-copy-variations' ) );
 wbe_check( 'گروهی فیلد تاریخ تقویم دارد', false !== strpos( $bulk_view, 'wbe-date' ) );
+wbe_check( 'گروهی ستون کل موجودی دارد', false !== strpos( $bulk_view, 'کل موجودی' ) && false !== strpos( $bulk_view, 'wbe-total-stock' ) );
 wbe_check( 'اسکریپت تقویم شمسی هست', is_file( dirname( __DIR__ ) . '/assets/datepicker.js' ) );
+$admin_prod = file_get_contents( dirname( __DIR__ ) . '/includes/class-wbe-admin-product.php' );
+$admin_js   = file_get_contents( dirname( __DIR__ ) . '/assets/admin.js' );
+wbe_check( 'ویرایش سریع هوک باکس تکی دارد', false !== strpos( $admin_prod, 'quick_edit_custom_box' ) && false !== strpos( $admin_prod, 'quick_edit_box' ) );
+wbe_check( 'ویرایش سریع داده ردیف را می‌خواند', false !== strpos( $admin_prod, 'wbe-qe-json' ) && false !== strpos( $admin_js, 'fillWbeQuickEdit' ) );
 
 echo "\n=== کندی گروهی و گزارش باگ ===\n";
 require_once dirname( __DIR__ ) . '/includes/class-wbe-support.php';
@@ -786,6 +794,7 @@ $help = file_get_contents( dirname( __DIR__ ) . '/includes/views/help.php' );
 $bug  = file_get_contents( dirname( __DIR__ ) . '/includes/views/bug-report.php' );
 wbe_check( 'راهنما صفحه دارد', false !== strpos( $help, 'رفع کندی' ) && false !== strpos( $help, 'موجودی رزرو' ) );
 wbe_check( 'راهنما تقویم و کپی تنوع دارد', false !== strpos( $help, 'کپی بچ‌ها به همه تنوع‌ها' ) );
+wbe_check( 'راهنما ویرایش سریع و کل موجودی دارد', false !== strpos( $help, 'ویرایش سریع' ) && false !== strpos( $help, 'کل موجودی' ) );
 wbe_check( 'راهنما رایگان و پرو را یکسان می‌گوید', false !== strpos( $help, 'امکانات یکسان' ) );
 wbe_check( 'فرم گزارش باگ تلگرام دارد', false !== strpos( $bug, 't.me' ) && false !== strpos( $bug, 'wbe-bug-capture' ) && false !== strpos( $bug, 'wbe-bug-desc' ) );
 
@@ -804,7 +813,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.2.17' );
+	define( 'WBE_VERSION', '1.2.18' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

@@ -28,8 +28,12 @@ $a_stock  = $active ? (int) $active['stock'] : ( isset( $wc_stock ) && '' !== $w
 $a_expiry = ( $active && ! empty( $active['expiry'] ) ) ? WBE_Jalali::format_ymd( $active['expiry'], $effective, false ) : '';
 $a_id     = $active && isset( $active['id'] ) ? $active['id'] : '';
 $a_disc_v = $a_disc > 0 ? (string) $a_disc : '';
+$panel_class = 'wbe-product-panel';
+if ( ! empty( $wbe_qe ) ) {
+	$panel_class .= ' wbe-qe-panel';
+}
 ?>
-<div class="wbe-product-panel" id="wbe-product-panel" dir="rtl" data-calendar="<?php echo esc_attr( $effective ); ?>" data-wc-price="<?php echo esc_attr( isset( $wc_price ) ? $wc_price : '' ); ?>">
+<div class="<?php echo esc_attr( $panel_class ); ?>" id="wbe-product-panel" dir="rtl" data-calendar="<?php echo esc_attr( $effective ); ?>" data-wc-price="<?php echo esc_attr( isset( $wc_price ) ? $wc_price : '' ); ?>">
 	<?php wp_nonce_field( 'wbe_save_batches', 'wbe_batches_nonce' ); ?>
 
 	<p class="form-field wbe-calendar-field">

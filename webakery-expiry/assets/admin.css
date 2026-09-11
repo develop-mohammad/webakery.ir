@@ -184,6 +184,39 @@
 	width: 9em;
 }
 
+.column-wbe_expiry .wbe-qe-json {
+	display: none !important;
+}
+
+.inline-edit-row .wbe-qe-wrap {
+	clear: both;
+	float: none;
+	width: 100%;
+	max-width: none;
+	margin: 10px 0 4px;
+	padding: 8px 0 0;
+	box-sizing: border-box;
+}
+
+.inline-edit-row .wbe-qe-wrap .wbe-product-panel {
+	max-width: none;
+}
+
+.inline-edit-row .wbe-qe-wrap .wbe-active-grid {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.inline-edit-row .wbe-qe-variable {
+	margin: 0 0 8px;
+	color: #646970;
+}
+
+.wbe-bulk-table .wbe-total-stock {
+	font-weight: 600;
+	white-space: nowrap;
+	min-width: 4.5em;
+}
+
 .wbe-batches-table [hidden],
 .wbe-product-panel [hidden] {
 	display: none !important;

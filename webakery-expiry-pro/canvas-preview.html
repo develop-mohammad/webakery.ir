@@ -135,6 +135,35 @@
         </div>
       </section>
 
+      <section class="card inline-edit-row" id="wbe-qe-preview">
+        <strong>پیشخوان — ویرایش سریع محصول</strong>
+        <p class="muted">همان باکس موجودی فعال و رزرو داخل ویرایش سریع لیست محصولات.</p>
+        <fieldset class="wbe-qe-wrap">
+          <legend>انقضای کالا</legend>
+          <div class="wbe-product-panel wbe-qe-panel" dir="rtl">
+            <div class="wbe-active-box">
+              <div class="wbe-batches__head"><strong>موجودی فعال (قابل ویرایش)</strong></div>
+              <div class="wbe-active-grid">
+                <p class="form-field"><label>۱. قیمت اصلی</label><input type="text" value="180000" dir="ltr" /></p>
+                <p class="form-field"><label>۲. درصد تخفیف</label><input type="number" value="10" dir="ltr" /></p>
+                <p class="form-field"><label>۳. قیمت جشنواره</label><input type="text" value="162000" dir="ltr" /></p>
+                <p class="form-field"><label>۶. موجودی</label><input type="number" value="12" /></p>
+                <p class="form-field"><label>۷. تاریخ انقضا</label><input type="text" class="wbe-date" value="1405/01/10" dir="ltr" /></p>
+              </div>
+            </div>
+            <div class="wbe-batches wbe-reserve-box">
+              <div class="wbe-batches__head"><strong>موجودی رزرو (قابل ویرایش)</strong></div>
+              <table class="widefat wbe-batches-table">
+                <thead><tr><th>قیمت اصلی</th><th>تخفیف ٪</th><th>موجودی</th><th>تاریخ انقضا</th></tr></thead>
+                <tbody>
+                  <tr class="wbe-batch-row is-reserve"><td>90000</td><td>0</td><td>8</td><td>۱۴۰۵/۰۶/۰۱</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </fieldset>
+      </section>
+
       <section class="card" id="wbe-bulk-preview">
         <strong>پیشخوان — ویرایش گروهی همه محصولات</strong>
         <p class="muted">انقضای کالا ← ویرایش گروهی. همه محصولات ووکامرس در همین افزونه؛ افزونهٔ جدا لازم نیست. نام، SKU، وضعیت، قیمت، موجودی و انقضا. فیلتر دسته و برند. اگر انقضا را پر کنید بچ ساخته می‌شود.</p>
@@ -166,11 +195,11 @@
         </div>
         <table class="widefat wbe-report wbe-bulk-table" style="width:100%;border-collapse:collapse">
           <thead>
-            <tr><th></th><th>نام</th><th>SKU</th><th>وضعیت</th><th>تخفیف ٪</th><th>جشنواره</th><th>موجودی</th><th>انقضا</th></tr>
+            <tr><th></th><th>نام</th><th>SKU</th><th>وضعیت</th><th>تخفیف ٪</th><th>جشنواره</th><th>موجودی</th><th>کل موجودی</th><th>انقضا</th></tr>
           </thead>
           <tbody>
-            <tr><td><input type="checkbox" checked /></td><td>شیر خشک نمونه<div class="muted">نستله</div></td><td>M1</td><td>منتشرشده</td><td>10</td><td>162000</td><td>12</td><td>۱۴۰۵/۰۱/۱۰</td></tr>
-            <tr><td><input type="checkbox" checked /></td><td>بیسکویت جو</td><td>B2</td><td>منتشرشده</td><td>0</td><td>90000</td><td>80</td><td>—</td></tr>
+            <tr><td><input type="checkbox" checked /></td><td>شیر خشک نمونه<div class="muted">نستله</div></td><td>M1</td><td>منتشرشده</td><td>10</td><td>162000</td><td>12</td><td class="wbe-total-stock">20</td><td>۱۴۰۵/۰۱/۱۰</td></tr>
+            <tr><td><input type="checkbox" checked /></td><td>بیسکویت جو</td><td>B2</td><td>منتشرشده</td><td>0</td><td>90000</td><td>80</td><td class="wbe-total-stock">80</td><td>—</td></tr>
           </tbody>
         </table>
       </section>

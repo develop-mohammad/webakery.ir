@@ -19,7 +19,7 @@ $needs_brand = empty( $needs_brand ) ? ! WBE_Admin_Bulk::has_brand_filter( $filt
 $ph_date     = ( 'jalali' === $calendar ) ? '۱۴۰۵/۰۶/۰۵' : '2026/08/27';
 $action      = admin_url( 'admin-post.php' );
 $count       = is_array( $rows ) ? count( $rows ) : 0;
-$colspan     = 11;
+$colspan     = 12;
 $csv_url     = wp_nonce_url(
 	add_query_arg(
 		array(
@@ -37,7 +37,7 @@ $csv_url     = wp_nonce_url(
 ?>
 <div class="wrap wbe-wrap wbe-bulk-wrap" dir="rtl" data-calendar="<?php echo esc_attr( $calendar ); ?>">
 	<h1>ویرایش گروهی محصول</h1>
-	<p class="wbe-sub">ابتدا <strong>برند</strong> را انتخاب کنید. ستون‌های <strong>موجودی فعال</strong> همیشه هستند؛ ستون‌های <strong>موجودی رزرو</strong> با سوییچ پایین روشن/خاموش می‌شوند و تماماً قابل ویرایش‌اند.</p>
+	<p class="wbe-sub">ابتدا <strong>برند</strong> را انتخاب کنید. ستون‌های <strong>موجودی فعال</strong> همیشه هستند؛ <strong>کل موجودی</strong> جمع فعال و رزرو است. ستون‌های <strong>موجودی رزرو</strong> با سوییچ پایین روشن/خاموش می‌شوند و تماماً قابل ویرایش‌اند.</p>
 
 	<div id="wbe-bulk-notice" hidden class="notice is-dismissible"></div>
 	<?php if ( $updated || $skipped ) : ?>
@@ -193,6 +193,7 @@ $csv_url     = wp_nonce_url(
 						<th class="wbe-th-active">شروع جشنواره</th>
 						<th class="wbe-th-active">پایان جشنواره</th>
 						<th class="wbe-th-active">موجودی</th>
+						<th class="wbe-th-active" title="جمع موجودی فعال و همهٔ بچ‌های رزرو">کل موجودی</th>
 						<th class="wbe-th-active">تاریخ انقضا</th>
 					</tr>
 				</thead>
@@ -215,7 +216,7 @@ $csv_url     = wp_nonce_url(
 							$is_var   = ! empty( $r['is_variation'] );
 							$edit_id  = ( $is_var && ! empty( $r['parent_id'] ) ) ? (int) $r['parent_id'] : (int) $r['id'];
 							?>
-							<tr class="<?php echo esc_attr( $row_class ); ?>" data-id="<?php echo (int) $r['id']; ?>" data-name="<?php echo esc_attr( $r['name'] . ' ' . $r['sku'] . ' ' . ( isset( $r['brand'] ) ? $r['brand'] : '' ) ); ?>">
+							<tr class="<?php echo esc_attr( $row_class ); ?>" data-id="<?php echo (int) $r['id']; ?>" data-reserved="<?php echo (int) ( isset( $r['reserved'] ) ? $r['reserved'] : 0 ); ?>" data-name="<?php echo esc_attr( $r['name'] . ' ' . $r['sku'] . ' ' . ( isset( $r['brand'] ) ? $r['brand'] : '' ) ); ?>">
 								<th class="check-column">
 									<input type="checkbox" class="wbe-bulk-id" name="ids[]" value="<?php echo (int) $r['id']; ?>" />
 								</th>
@@ -250,6 +251,7 @@ $csv_url     = wp_nonce_url(
 								<td><input type="text" class="small-text wbe-date" data-field="from" data-orig="<?php echo esc_attr( $r['from_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][from]" value="<?php echo esc_attr( $r['from_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" /></td>
 								<td><input type="text" class="small-text wbe-date" data-field="to" data-orig="<?php echo esc_attr( $r['to_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][to]" value="<?php echo esc_attr( $r['to_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" /></td>
 								<td><input type="text" class="small-text" data-field="stock" data-orig="<?php echo esc_attr( (string) $r['stock'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][stock]" value="<?php echo esc_attr( (string) $r['stock'] ); ?>" dir="ltr" /></td>
+								<td class="wbe-total-stock" data-field="total_stock"><?php echo esc_html( (string) ( isset( $r['total_stock'] ) ? $r['total_stock'] : ( (int) $r['stock'] + (int) ( isset( $r['reserved'] ) ? $r['reserved'] : 0 ) ) ) ); ?></td>
 								<td><input type="text" class="small-text wbe-date" data-field="expiry" data-orig="<?php echo esc_attr( $r['expiry_fa'] ); ?>" name="wbe_row[<?php echo (int) $r['id']; ?>][expiry]" value="<?php echo esc_attr( $r['expiry_fa'] ); ?>" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" /></td>
 							</tr>
 							<?php if ( $show_res ) : ?>
@@ -307,6 +309,6 @@ $csv_url     = wp_nonce_url(
 				</tbody>
 			</table>
 		</div>
-		<p class="wbe-muted">موجودی فعال در ردیف اصلی است. با روشن بودن «نمایش رزرو»، همهٔ بچ‌های رزرو زیر همان محصول دیده و ویرایش می‌شوند (مثلاً ۳ رزرو با قیمت/موجودی/انقضای جدا).</p>
+		<p class="wbe-muted">موجودی فعال در ردیف اصلی است. «کل موجودی» جمع فعال و رزرو است. با روشن بودن «نمایش رزرو»، همهٔ بچ‌های رزرو زیر همان محصول دیده و ویرایش می‌شوند (مثلاً ۳ رزرو با قیمت/موجودی/انقضای جدا).</p>
 	</form>
 </div>

@@ -123,9 +123,35 @@
 		}
 	});
 
-	$(document).on('change', '#wbe_active_price', function () {
-		$('#_regular_price').val($(this).val());
-		syncSaleFromDisc($('#wbe-product-panel .wbe-active-box'));
+	function syncActiveToWc($panel) {
+		if (!$panel || !$panel.length) {
+			return;
+		}
+		var $row = $panel.closest('.inline-edit-row');
+		var price = $panel.find('#wbe_active_price').val();
+		var sale = $panel.find('#wbe_active_sale').val();
+		var stock = $panel.find('#wbe_active_stock').val();
+		if ($row.length) {
+			$row.find('input[name="_regular_price"]').val(price);
+			$row.find('input[name="_sale_price"]').val(sale);
+			$row.find('input[name="_stock"]').val(stock);
+		} else {
+			$('#_regular_price').val(price);
+			if ($('#_sale_price').length) {
+				$('#_sale_price').val(sale);
+			}
+			if ($('#_stock').length) {
+				$('#_stock').val(stock);
+			}
+		}
+	}
+
+	$(document).on('change', '#wbe_active_price, #wbe_active_sale, #wbe_active_stock', function () {
+		var $panel = $(this).closest('.wbe-product-panel');
+		syncActiveToWc($panel);
+		if ($(this).is('#wbe_active_price')) {
+			syncSaleFromDisc($panel.find('.wbe-active-box'));
+		}
 	});
 
 	$(document).on('change', '#wbe-batches-body input[name*="[price]"]', function () {
@@ -241,6 +267,29 @@
 		lastCheck = this;
 	});
 
+	function refreshBulkTotalStock($tr) {
+		if (!$tr || !$tr.length) {
+			return;
+		}
+		var active = parseNum($tr.find('[data-field="stock"]').val());
+		if (isNaN(active) || active < 0) {
+			active = 0;
+		}
+		var res = 0;
+		var $resBody = $('.wbe-bulk-reserves-row[data-parent-id="' + $tr.data('id') + '"] .wbe-reserves-body');
+		if ($resBody.length) {
+			$resBody.find('[data-field$=".stock"]').each(function () {
+				var n = parseNum($(this).val());
+				if (n > 0) {
+					res += Math.floor(n);
+				}
+			});
+		} else {
+			res = parseInt($tr.attr('data-reserved'), 10) || 0;
+		}
+		$tr.find('.wbe-total-stock').text(String(Math.floor(active) + res));
+	}
+
 	$(document).on('input change', '.wbe-bulk-row [data-field], .wbe-bulk-reserves-row [data-field]', function () {
 		var $i = $(this);
 		var $resRow = $i.closest('.wbe-bulk-reserves-row');
@@ -250,6 +299,7 @@
 		if (!$tr.length) {
 			return;
 		}
+		refreshBulkTotalStock($tr);
 		var dirty = false;
 		$tr.find('[data-field]').each(function () {
 			if (String($(this).val()) !== String($(this).attr('data-orig'))) {
@@ -361,7 +411,9 @@
 		var idx = $body.find('tr.wbe-reserve-mini-row').length;
 		var ph = $('#wbe_expiry').attr('placeholder') || '';
 		$body.append(reserveTpl(pid, idx, ph));
-		$('.wbe-bulk-row[data-id="' + pid + '"]').addClass('is-dirty');
+		var $added = $('.wbe-bulk-row[data-id="' + pid + '"]');
+		$added.addClass('is-dirty');
+		refreshBulkTotalStock($added);
 	});
 
 	$(document).on('click', '.wbe-bulk-remove-reserve', function (e) {
@@ -375,7 +427,9 @@
 				'<tr class="wbe-reserve-empty-hint"><td colspan="6" class="wbe-muted">رزروی نیست — «افزودن رزرو» را بزنید.</td></tr>'
 			);
 		}
-		$('.wbe-bulk-row[data-id="' + pid + '"]').addClass('is-dirty').data('reservesCleared', true);
+		var $removed = $('.wbe-bulk-row[data-id="' + pid + '"]');
+		$removed.addClass('is-dirty').data('reservesCleared', true);
+		refreshBulkTotalStock($removed);
 	});
 
 	function changeAmount(current, mode, value) {
@@ -901,4 +955,89 @@
 				$btn.prop('disabled', false);
 			});
 	});
+
+	function fillWbeQuickEdit(postId) {
+		var $src = $('#post-' + postId + ' .wbe-qe-json');
+		var $row = $('#edit-' + postId);
+		if (!$row.length) {
+			$row = $('.inline-edit-row');
+		}
+		var $panel = $row.find('.wbe-product-panel');
+		var $ready = $row.find('.wbe-qe-ready');
+		var $note = $row.find('.wbe-qe-variable');
+		$ready.val('0');
+		if (!$panel.length || !$src.length) {
+			if ($panel.length) {
+				$panel.attr('hidden', 'hidden');
+			}
+			return;
+		}
+		var data;
+		try {
+			data = JSON.parse($.trim($src.text() || '{}'));
+		} catch (err) {
+			$panel.attr('hidden', 'hidden');
+			return;
+		}
+		if (data.type === 'variable') {
+			$panel.attr('hidden', 'hidden');
+			$note.removeAttr('hidden');
+			return;
+		}
+		$note.attr('hidden', 'hidden');
+		$panel.removeAttr('hidden');
+		$panel.attr('data-calendar', data.effective || '');
+		$row.find('#wbe_calendar').val(data.calendar || '');
+		$row.find('#wbe_hide_countdown').prop('checked', !!data.hide_cd);
+		var a = data.active || {};
+		$row.find('#wbe_active_id, input[name="wbe_active[id]"]').val(a.id || '');
+		$row.find('#wbe_active_price').val(a.price || '');
+		$row.find('#wbe_active_discount').val(a.discount || '');
+		$row.find('#wbe_active_sale').val(a.sale || '');
+		$row.find('#wbe_active_stock').val(a.stock === 0 || a.stock ? a.stock : '');
+		$row.find('#wbe_active_expiry').val(a.expiry || '');
+		$row.find('#wbe_sale_from').val(data.sale_from || '');
+		$row.find('#wbe_sale_to').val(data.sale_to || '');
+		var $body = $row.find('#wbe-batches-body');
+		var $tpl = $row.find('.wbe-batch-tpl').first();
+		$body.empty();
+		var reserves = data.reserves || [];
+		if (!reserves.length) {
+			$body.html(
+				'<tr class="wbe-batch-row is-reserve wbe-reserve-empty"><td colspan="5" class="wbe-muted">هنوز بچ رزرو ندارید — «افزودن بچ رزرو» را بزنید.</td></tr>'
+			);
+		} else if ($tpl.length) {
+			$.each(reserves, function (i, b) {
+				var $nr = $tpl.clone().removeAttr('id').removeClass('wbe-batch-tpl');
+				$nr.find('[data-name]').each(function () {
+					var name = $(this).attr('data-name');
+					$(this).attr('name', 'wbe_reserve[' + i + '][' + name + ']').removeAttr('data-name');
+				});
+				$nr.find('input[name$="[id]"]').val(b.id || '');
+				$nr.find('input[name$="[price]"]').val(b.price || '');
+				$nr.find('input[name$="[discount]"]').val(b.discount || '');
+				$nr.find('input[name$="[stock]"]').val(b.stock === 0 || b.stock ? b.stock : '');
+				$nr.find('input[name$="[expiry]"]').val(b.expiry || '');
+				$body.append($nr);
+			});
+		}
+		syncActiveToWc($panel);
+		$ready.val('1');
+	}
+
+	if (typeof window.inlineEditPost !== 'undefined' && window.inlineEditPost.edit) {
+		var wbePrevInlineEdit = window.inlineEditPost.edit;
+		window.inlineEditPost.edit = function (id) {
+			wbePrevInlineEdit.apply(this, arguments);
+			var postId = 0;
+			if (typeof id === 'object') {
+				postId = parseInt(this.getId(id), 10);
+			} else {
+				postId = parseInt(id, 10);
+			}
+			if (postId) {
+				fillWbeQuickEdit(postId);
+			}
+		};
+	}
 })(jQuery);
