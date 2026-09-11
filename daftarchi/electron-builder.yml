@@ -1,7 +1,6 @@
 appId: ir.webakery.daftarchi
 productName: Daftarchi
 copyright: Copyright © webakery.ir
-artifactName: "${productName}-Setup-${version}.${ext}"
 directories:
   output: release
   buildResources: resources
@@ -9,37 +8,42 @@ files:
   - dist/**/*
   - dist-electron/**/*
   - package.json
+  - "!**/*.linux.node"
 asar: true
 asarUnpack:
   - "**/*.node"
   - "**/better-sqlite3/**"
 extraMetadata:
   main: dist-electron/main.js
-npmRebuild: true
+extraFiles:
+  - from: resources/INSTALL-WINDOWS.txt
+    to: INSTALL-WINDOWS.txt
+npmRebuild: false
 win:
   executableName: Daftarchi
   icon: resources/icon.png
   signAndEditExecutable: false
+  artifactName: "${productName}-${version}-win-${arch}.${ext}"
   target:
+    - target: zip
+      arch:
+        - x64
     - target: nsis
       arch:
         - x64
-    - target: portable
-      arch:
-        - x64
 nsis:
+  artifactName: "${productName}-Setup-${version}.${ext}"
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
   allowElevation: true
   createDesktopShortcut: always
   createStartMenuShortcut: true
-  shortcutName: دفترچی
-  uninstallDisplayName: دفترچی
+  shortcutName: Daftarchi
+  uninstallDisplayName: Daftarchi
   installerLanguages:
-    - fa_IR
     - en_US
-  language: "1065"
+  language: "1033"
   deleteAppDataOnUninstall: false
 portable:
   artifactName: "${productName}-Portable-${version}.${ext}"

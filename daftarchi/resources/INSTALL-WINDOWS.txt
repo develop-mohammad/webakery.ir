@@ -1,0 +1,23 @@
+دفترچی — راهنمای اجرا روی ویندوز
+سازنده: webakery.ir
+
+نصب
+۱. کل این پوشه را جایی مثل Desktop\Daftarchi نگه دار (فایل‌ها را از هم جدا نکن).
+۲. روی Daftarchi.exe دوبار کلیک کن.
+۳. اگر ویندوز هشدار SmartScreen داد:
+   More info / اطلاعات بیشتر  ←  Run anyway / اجرای به‌هرحال
+   (نسخهٔ فعلی امضای دیجیتال ندارد؛ این هشدار طبیعی است.)
+
+میانبر میزکار
+روی Daftarchi.exe راست‌کلیک کن → Show more options → Send to → Desktop (create shortcut)
+
+دادهٔ فروشگاه
+فاکتورها و کالاها اینجا ذخیره می‌شوند، نه داخل پوشهٔ برنامه:
+
+%APPDATA%\Daftarchi\daftarchi.sqlite
+
+مسیر کامل معمولاً این است:
+C:\Users\<نام کاربری>\AppData\Roaming\Daftarchi\
+
+بکاپ خودکار (حداکثر ۳۰ نسخه):
+%APPDATA%\Daftarchi\backups
