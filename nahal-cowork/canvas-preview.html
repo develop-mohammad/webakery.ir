@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>نهال — پیش‌نمایش فرم‌ها</title>
-<link rel="stylesheet" href="assets/css/frontend.css?v=120" />
+<link rel="stylesheet" href="assets/css/frontend.css?v=124" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
   body{
@@ -212,9 +212,38 @@
               <label class="nck-agree"><input type="checkbox" name="agree_contact" value="1" required /> مسئولیت به‌روزرسانی اطلاعات تماس و تغییرات را بر عهده می‌گیرم.</label>
               <label class="nck-agree"><input type="checkbox" name="agree_photo" value="1" required /> استفاده از تصاویر فرزندم (عکس و فیلم) در کلاس‌ها توسط مجموعه نهال موافقم.</label>
             </fieldset>
-            <div class="nck-sign-wrap">
-              <div class="nck-sign-head"><span>امضای والدین / سرپرست</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
-              <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+            <div class="nck-sign-wrap" data-nck-sign-wrap>
+              <div class="nck-sign-head">
+                <span>امضای والدین / سرپرست</span>
+                <button type="button" class="nck-link" data-nck-clear>پاک کردن</button>
+              </div>
+              <div class="nck-sign-modes" role="tablist">
+                <button type="button" class="nck-sign-mode is-on" data-nck-sign-mode="upload" role="tab" aria-selected="true">آپلود عکس امضا</button>
+                <button type="button" class="nck-sign-mode" data-nck-sign-mode="draw" role="tab" aria-selected="false">کشیدن با دست</button>
+              </div>
+              <div data-nck-sign-panel="upload">
+                <label class="nck-sign-drop">
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-nck-sign-file hidden />
+                  <strong>عکس امضا را انتخاب کنید</strong>
+                  <span>PNG یا JPG — پس‌زمینه روشن حذف می‌شود و امضا روی خط قرارداد می‌نشیند.</span>
+                </label>
+              </div>
+              <div data-nck-sign-panel="draw" hidden>
+                <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+                <p class="nck-form-help">با ماوس یا انگشت داخل کادر امضا کنید.</p>
+              </div>
+              <div class="nck-sign-plate" data-nck-sign-plate>
+                <p class="nck-sign-plate-kicker">پیش‌نمایش روی قرارداد</p>
+                <div class="nck-sign-plate-stage">
+                  <img class="nck-sign-plate-ink" data-nck-sign-ink alt="" hidden />
+                  <span class="nck-sign-plate-empty" data-nck-sign-empty>امضا اینجا، روی خط قرارداد قرار می‌گیرد.</span>
+                  <span class="nck-sign-plate-line" aria-hidden="true"></span>
+                </div>
+                <div class="nck-sign-plate-meta">
+                  <span>والدین / سرپرست</span>
+                  <strong data-nck-live="name">…</strong>
+                </div>
+              </div>
             </div>
             <div class="nck-field"><label>تاریخ</label><input name="sign_date" type="text" dir="ltr" value="1404/06/20" /></div>
             <p class="nck-slogan">هوای رشدت رو داریم</p>
@@ -277,9 +306,38 @@
             </div>
           </section>
           <section class="nck-step" data-nck-step data-nck-step-label="امضا" hidden>
-            <div class="nck-sign-wrap">
-              <div class="nck-sign-head"><span>امضا</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
-              <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+            <div class="nck-sign-wrap" data-nck-sign-wrap>
+              <div class="nck-sign-head">
+                <span>امضا</span>
+                <button type="button" class="nck-link" data-nck-clear>پاک کردن</button>
+              </div>
+              <div class="nck-sign-modes" role="tablist">
+                <button type="button" class="nck-sign-mode is-on" data-nck-sign-mode="upload" role="tab" aria-selected="true">آپلود عکس امضا</button>
+                <button type="button" class="nck-sign-mode" data-nck-sign-mode="draw" role="tab" aria-selected="false">کشیدن با دست</button>
+              </div>
+              <div data-nck-sign-panel="upload">
+                <label class="nck-sign-drop">
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-nck-sign-file hidden />
+                  <strong>عکس امضا را انتخاب کنید</strong>
+                  <span>PNG یا JPG — پس‌زمینه روشن حذف می‌شود و امضا روی خط قرارداد می‌نشیند.</span>
+                </label>
+              </div>
+              <div data-nck-sign-panel="draw" hidden>
+                <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+                <p class="nck-form-help">با ماوس یا انگشت داخل کادر امضا کنید.</p>
+              </div>
+              <div class="nck-sign-plate" data-nck-sign-plate>
+                <p class="nck-sign-plate-kicker">پیش‌نمایش روی قرارداد</p>
+                <div class="nck-sign-plate-stage">
+                  <img class="nck-sign-plate-ink" data-nck-sign-ink alt="" hidden />
+                  <span class="nck-sign-plate-empty" data-nck-sign-empty>امضا اینجا، روی خط قرارداد قرار می‌گیرد.</span>
+                  <span class="nck-sign-plate-line" aria-hidden="true"></span>
+                </div>
+                <div class="nck-sign-plate-meta">
+                  <span>طرف قرارداد</span>
+                  <strong data-nck-live="name">…</strong>
+                </div>
+              </div>
             </div>
             <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
           </section>
@@ -357,9 +415,38 @@
             </div>
           </section>
           <section class="nck-step" data-nck-step data-nck-step-label="امضا" hidden>
-            <div class="nck-sign-wrap">
-              <div class="nck-sign-head"><span>امضای برگزارکننده</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
-              <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+            <div class="nck-sign-wrap" data-nck-sign-wrap>
+              <div class="nck-sign-head">
+                <span>امضای برگزارکننده</span>
+                <button type="button" class="nck-link" data-nck-clear>پاک کردن</button>
+              </div>
+              <div class="nck-sign-modes" role="tablist">
+                <button type="button" class="nck-sign-mode is-on" data-nck-sign-mode="upload" role="tab" aria-selected="true">آپلود عکس امضا</button>
+                <button type="button" class="nck-sign-mode" data-nck-sign-mode="draw" role="tab" aria-selected="false">کشیدن با دست</button>
+              </div>
+              <div data-nck-sign-panel="upload">
+                <label class="nck-sign-drop">
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-nck-sign-file hidden />
+                  <strong>عکس امضا را انتخاب کنید</strong>
+                  <span>PNG یا JPG — پس‌زمینه روشن حذف می‌شود و امضا روی خط قرارداد می‌نشیند.</span>
+                </label>
+              </div>
+              <div data-nck-sign-panel="draw" hidden>
+                <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+                <p class="nck-form-help">با ماوس یا انگشت داخل کادر امضا کنید.</p>
+              </div>
+              <div class="nck-sign-plate" data-nck-sign-plate>
+                <p class="nck-sign-plate-kicker">پیش‌نمایش روی قرارداد</p>
+                <div class="nck-sign-plate-stage">
+                  <img class="nck-sign-plate-ink" data-nck-sign-ink alt="" hidden />
+                  <span class="nck-sign-plate-empty" data-nck-sign-empty>امضا اینجا، روی خط قرارداد قرار می‌گیرد.</span>
+                  <span class="nck-sign-plate-line" aria-hidden="true"></span>
+                </div>
+                <div class="nck-sign-plate-meta">
+                  <span>امضای برگزارکننده</span>
+                  <strong data-nck-live="name">…</strong>
+                </div>
+              </div>
             </div>
             <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> مفاد قرارداد را خواندم و می‌پذیرم.</label>
           </section>
@@ -461,9 +548,38 @@
           </section>
           <section class="nck-step" data-nck-step data-nck-step-label="تأیید و ثبت" hidden>
             <label class="nck-agree"><input type="checkbox" name="agree" value="1" required /> اطلاعات واردشده صحیح است و ثبت این فرم را می‌پذیرم.</label>
-            <div class="nck-sign-wrap">
-              <div class="nck-sign-head"><span>امضا</span><button type="button" class="nck-link" data-nck-clear>پاک کردن</button></div>
-              <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+            <div class="nck-sign-wrap" data-nck-sign-wrap>
+              <div class="nck-sign-head">
+                <span>امضا</span>
+                <button type="button" class="nck-link" data-nck-clear>پاک کردن</button>
+              </div>
+              <div class="nck-sign-modes" role="tablist">
+                <button type="button" class="nck-sign-mode is-on" data-nck-sign-mode="upload" role="tab" aria-selected="true">آپلود عکس امضا</button>
+                <button type="button" class="nck-sign-mode" data-nck-sign-mode="draw" role="tab" aria-selected="false">کشیدن با دست</button>
+              </div>
+              <div data-nck-sign-panel="upload">
+                <label class="nck-sign-drop">
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-nck-sign-file hidden />
+                  <strong>عکس امضا را انتخاب کنید</strong>
+                  <span>PNG یا JPG — پس‌زمینه روشن حذف می‌شود و امضا روی خط قرارداد می‌نشیند.</span>
+                </label>
+              </div>
+              <div data-nck-sign-panel="draw" hidden>
+                <canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
+                <p class="nck-form-help">با ماوس یا انگشت داخل کادر امضا کنید.</p>
+              </div>
+              <div class="nck-sign-plate" data-nck-sign-plate>
+                <p class="nck-sign-plate-kicker">پیش‌نمایش روی قرارداد</p>
+                <div class="nck-sign-plate-stage">
+                  <img class="nck-sign-plate-ink" data-nck-sign-ink alt="" hidden />
+                  <span class="nck-sign-plate-empty" data-nck-sign-empty>امضا اینجا، روی خط قرارداد قرار می‌گیرد.</span>
+                  <span class="nck-sign-plate-line" aria-hidden="true"></span>
+                </div>
+                <div class="nck-sign-plate-meta">
+                  <span>طرف قرارداد</span>
+                  <strong data-nck-live="name">…</strong>
+                </div>
+              </div>
             </div>
             <p class="nck-slogan">هوای رشدت رو داریم</p>
           </section>
@@ -489,7 +605,7 @@
       nonce: 'preview',
       org: 'مجموعه فرهنگی نهال',
       slot: 'evening',
-      i18n: { signing: 'در حال ثبت…', looking: 'جستجو…', checking: 'ثبت حضور…', error: 'خطا', draw: 'لطفاً داخل کادر امضا کنید.' },
+      i18n: { signing: 'در حال ثبت…', looking: 'جستجو…', checking: 'ثبت حضور…', error: 'خطا', draw: 'عکس امضا را آپلود کنید یا داخل کادر بکشید.', signature: 'عکس امضا را آپلود کنید یا داخل کادر بکشید.' },
       store: {},
       mock: function (action, data) {
         var store = window.NCK.store;
@@ -583,6 +699,6 @@
       });
     }
   </script>
-  <script src="assets/js/frontend.js?v=120"></script>
+  <script src="assets/js/frontend.js?v=124"></script>
 </body>
 </html>

@@ -30,14 +30,24 @@
 	margin-top: 28px;
 	padding-top: 16px;
 	border-top: 1px solid #e4d8bf;
+	align-items: stretch;
+}
+.nck-print-paper .nck-sign-plate{
+	margin-top: 0;
+	background: transparent;
+	border: 0;
+	padding: 0;
+}
+.nck-print-paper .nck-sign-plate-ink{
+	max-width: 220px;
+	max-height: 78px;
+	print-color-adjust: exact;
+	-webkit-print-color-adjust: exact;
 }
 .nck-sign-img{
 	display: block;
 	max-width: 260px;
 	height: auto;
-	background: #fff;
-	border: 1px solid #e4d8bf;
-	border-radius: 8px;
 }
 .nck-org-sign{
 	font-weight: 700;

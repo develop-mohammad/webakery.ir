@@ -111,29 +111,99 @@ class NCK_Contract {
 	}
 
 	/**
-	 * @return array{ok:bool,message:string}
+	 * @return array{ok:bool,message:string,raw?:string,info?:array}
 	 */
 	public static function validate_signature( $data_url ) {
 		$data = (string) $data_url;
-		if ( strlen( $data ) < 80 || strlen( $data ) > 500000 ) {
-			return array( 'ok' => false, 'message' => 'امضا کامل نیست. لطفاً داخل کادر امضا کنید.' );
+		if ( strlen( $data ) < 80 || strlen( $data ) > 8000000 ) {
+			return array( 'ok' => false, 'message' => 'امضا کامل نیست. عکس امضا را آپلود کنید یا داخل کادر بکشید.' );
 		}
-		if ( ! preg_match( '#^data:image/(png|jpeg);base64,#', $data ) ) {
-			return array( 'ok' => false, 'message' => 'قالب امضا نامعتبر است.' );
+		if ( ! preg_match( '#^data:image/(png|jpe?g|webp|gif);base64,#i', $data ) ) {
+			return array( 'ok' => false, 'message' => 'فقط تصویر PNG، JPG یا WEBP پذیرفته می‌شود.' );
 		}
 		$comma = strpos( $data, ',' );
 		$raw   = base64_decode( substr( $data, $comma + 1 ), true );
 		if ( ! $raw || strlen( $raw ) < 40 ) {
-			return array( 'ok' => false, 'message' => 'امضا ذخیره نشد. دوباره امضا کنید.' );
+			return array( 'ok' => false, 'message' => 'امضا ذخیره نشد. دوباره عکس بگیرید یا داخل کادر امضا کنید.' );
 		}
 		$info = @getimagesizefromstring( $raw ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		if ( ! is_array( $info ) || empty( $info[0] ) || empty( $info[1] ) ) {
 			return array( 'ok' => false, 'message' => 'تصویر امضا خوانده نشد.' );
 		}
-		if ( (int) $info[0] < 80 || (int) $info[1] < 40 ) {
-			return array( 'ok' => false, 'message' => 'کادر امضا خیلی کوچک است.' );
+		if ( (int) $info[0] < 40 || (int) $info[1] < 20 ) {
+			return array( 'ok' => false, 'message' => 'تصویر امضا خیلی کوچک است.' );
 		}
-		return array( 'ok' => true, 'message' => '' );
+		return array(
+			'ok'      => true,
+			'message' => '',
+			'raw'     => $raw,
+			'info'    => $info,
+		);
+	}
+
+	/**
+	 * پس‌زمینه روشن را شفاف می‌کند تا امضا مثل جوهر روی خط قرارداد بنشیند.
+	 *
+	 * @return array{ok:bool,message?:string,data?:string}
+	 */
+	public static function prepare_signature( $data_url ) {
+		$check = self::validate_signature( $data_url );
+		if ( empty( $check['ok'] ) ) {
+			return $check;
+		}
+		if ( ! function_exists( 'imagecreatefromstring' ) || ! function_exists( 'imagecreatetruecolor' ) ) {
+			return array( 'ok' => true, 'data' => (string) $data_url );
+		}
+		$src = @imagecreatefromstring( $check['raw'] ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		if ( ! $src ) {
+			return array( 'ok' => false, 'message' => 'تصویر امضا خوانده نشد.' );
+		}
+		$w     = imagesx( $src );
+		$h     = imagesy( $src );
+		$scale = min( 1, 720 / max( 1, $w ), 240 / max( 1, $h ) );
+		$nw    = max( 1, (int) round( $w * $scale ) );
+		$nh    = max( 1, (int) round( $h * $scale ) );
+		$dst   = imagecreatetruecolor( $nw, $nh );
+		imagealphablending( $dst, false );
+		imagesavealpha( $dst, true );
+		$clear = imagecolorallocatealpha( $dst, 0, 0, 0, 127 );
+		imagefilledrectangle( $dst, 0, 0, $nw, $nh, $clear );
+		imagealphablending( $dst, true );
+		imagecopyresampled( $dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h );
+		imagedestroy( $src );
+
+		imagealphablending( $dst, false );
+		imagesavealpha( $dst, true );
+		for ( $y = 0; $y < $nh; $y++ ) {
+			for ( $x = 0; $x < $nw; $x++ ) {
+				$rgba = imagecolorat( $dst, $x, $y );
+				$a    = ( $rgba >> 24 ) & 0x7F;
+				$r    = ( $rgba >> 16 ) & 0xFF;
+				$g    = ( $rgba >> 8 ) & 0xFF;
+				$b    = $rgba & 0xFF;
+				$lum  = (int) ( 0.299 * $r + 0.587 * $g + 0.114 * $b );
+				if ( $a > 100 || $lum >= 228 ) {
+					imagesetpixel( $dst, $x, $y, imagecolorallocatealpha( $dst, 0, 0, 0, 127 ) );
+					continue;
+				}
+				$ink = (int) max( 12, min( 48, $lum * 0.28 ) );
+				$gd_a = (int) round( max( 0, min( 70, ( $lum - 40 ) / 3 ) ) );
+				imagesetpixel( $dst, $x, $y, imagecolorallocatealpha( $dst, $ink, $ink, (int) min( 55, $ink + 6 ), $gd_a ) );
+			}
+		}
+
+		ob_start();
+		imagepng( $dst, null, 6 );
+		$png = ob_get_clean();
+		imagedestroy( $dst );
+		if ( ! $png ) {
+			return array( 'ok' => false, 'message' => 'پردازش امضا انجام نشد.' );
+		}
+		$out = 'data:image/png;base64,' . base64_encode( $png );
+		if ( strlen( $out ) > 900000 ) {
+			return array( 'ok' => false, 'message' => 'حجم تصویر امضا زیاد است. عکس نزدیک‌تری از خود امضا بگیرید.' );
+		}
+		return array( 'ok' => true, 'data' => $out );
 	}
 
 	public static function allowed_html() {

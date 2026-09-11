@@ -71,17 +71,21 @@ $front_css = NCK_URL . 'assets/css/frontend.css?v=' . NCK_VERSION;
 			</section>
 		<?php endforeach; ?>
 		<footer class="nck-sign-row">
-			<div>
-				<p>امضای عضو</p>
-				<?php if ( ! empty( $contract['signature_png'] ) ) : ?>
-					<img class="nck-sign-img" src="<?php echo esc_attr( $contract['signature_png'] ); ?>" alt="امضا" />
-				<?php endif; ?>
-				<p><?php echo esc_html( $contract['full_name'] ); ?></p>
-			</div>
-			<div>
-				<p>مجموعه</p>
-				<p class="nck-org-sign"><?php echo esc_html( $s['org_name'] ); ?></p>
-			</div>
+			<?php
+			$plate_src  = ! empty( $contract['signature_png'] ) ? $contract['signature_png'] : '';
+			$plate_name = $contract['full_name'];
+			$plate_role = 'امضای عضو';
+			$plate_date = $vars['date'];
+			$plate_org  = false;
+			include NCK_PATH . 'templates/sign-plate.php';
+			$plate_src   = '';
+			$plate_name  = $s['org_name'];
+			$plate_role  = 'مهر و امضای مجموعه';
+			$plate_date  = '';
+			$plate_extra = $s['org_tagline'];
+			$plate_org   = true;
+			include NCK_PATH . 'templates/sign-plate.php';
+			?>
 		</footer>
 	</article>
 </body>

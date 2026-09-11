@@ -256,10 +256,11 @@ class NCK_Contracts {
 			return $pay;
 		}
 
-		$sig = NCK_Contract::validate_signature( $signature );
-		if ( ! $sig['ok'] ) {
+		$sig = NCK_Contract::prepare_signature( $signature );
+		if ( empty( $sig['ok'] ) ) {
 			return $sig;
 		}
+		$signature = $sig['data'];
 
 		$member = NCK_Members::upsert( $name, $honorific, $phone );
 		if ( ! $member ) {
@@ -303,10 +304,11 @@ class NCK_Contracts {
 		if ( empty( $check['ok'] ) ) {
 			return $check;
 		}
-		$sig = NCK_Contract::validate_signature( $signature );
-		if ( ! $sig['ok'] ) {
+		$sig = NCK_Contract::prepare_signature( $signature );
+		if ( empty( $sig['ok'] ) ) {
 			return $sig;
 		}
+		$signature = $sig['data'];
 
 		$p      = $check['payload'];
 		$member = NCK_Members::upsert( $p['name'], $p['honorific'], $p['phone'], $p['national_id'] );
@@ -345,10 +347,11 @@ class NCK_Contracts {
 		if ( empty( $check['ok'] ) ) {
 			return $check;
 		}
-		$sig = NCK_Contract::validate_signature( $signature );
-		if ( ! $sig['ok'] ) {
+		$sig = NCK_Contract::prepare_signature( $signature );
+		if ( empty( $sig['ok'] ) ) {
 			return $sig;
 		}
+		$signature = $sig['data'];
 
 		$p      = $check['payload'];
 		$member = NCK_Members::upsert( $p['name'], 'mr', $p['contact_phone'], $p['national_id'] );
@@ -388,10 +391,11 @@ class NCK_Contracts {
 			return $check;
 		}
 		if ( ! empty( $form['require_signature'] ) ) {
-			$sig = NCK_Contract::validate_signature( $signature );
-			if ( ! $sig['ok'] ) {
+			$sig = NCK_Contract::prepare_signature( $signature );
+			if ( empty( $sig['ok'] ) ) {
 				return $sig;
 			}
+			$signature = $sig['data'];
 		} else {
 			$signature = '';
 		}

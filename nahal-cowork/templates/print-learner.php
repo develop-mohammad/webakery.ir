@@ -110,20 +110,21 @@ $row       = static function ( $label, $value ) {
 		</section>
 
 		<footer class="nck-sign-row">
-			<div>
-				<p>امضای والدین / سرپرست</p>
-				<?php if ( ! empty( $contract['signature_png'] ) ) : ?>
-					<img class="nck-sign-img" src="<?php echo esc_attr( $contract['signature_png'] ); ?>" alt="امضا" />
-				<?php endif; ?>
-				<p><?php echo esc_html( $contract['full_name'] ); ?></p>
-				<?php if ( ! empty( $p['sign_date'] ) ) : ?>
-					<p>تاریخ: <?php echo esc_html( $fa( $p['sign_date'] ) ); ?></p>
-				<?php endif; ?>
-			</div>
-			<div>
-				<p><?php echo esc_html( NCK_Learner::center_name() ); ?></p>
-				<p class="nck-slogan"><?php echo esc_html( NCK_Learner::slogan() ); ?></p>
-			</div>
+			<?php
+			$plate_src  = ! empty( $contract['signature_png'] ) ? $contract['signature_png'] : '';
+			$plate_name = $contract['full_name'];
+			$plate_role = 'امضای والدین / سرپرست';
+			$plate_date = ! empty( $p['sign_date'] ) ? $fa( $p['sign_date'] ) : '';
+			$plate_org  = false;
+			include NCK_PATH . 'templates/sign-plate.php';
+			$plate_src   = '';
+			$plate_name  = NCK_Learner::center_name();
+			$plate_role  = 'مجموعه نهال';
+			$plate_date  = '';
+			$plate_extra = NCK_Learner::slogan();
+			$plate_org   = true;
+			include NCK_PATH . 'templates/sign-plate.php';
+			?>
 		</footer>
 	</article>
 </body>

@@ -56,13 +56,11 @@ $need_sign = ! empty( $form['require_signature'] );
 				اطلاعات واردشده صحیح است و ثبت این فرم را می‌پذیرم.
 			</label>
 			<?php if ( $need_sign ) : ?>
-				<div class="nck-sign-wrap">
-					<div class="nck-sign-head">
-						<span>امضا</span>
-						<button type="button" class="nck-link" data-nck-clear>پاک کردن</button>
-					</div>
-					<canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
-				</div>
+				<?php
+				$nck_sign_title = 'امضا';
+				$nck_sign_party = 'امضا';
+				include NCK_PATH . 'templates/sign-pad.php';
+				?>
 			<?php endif; ?>
 			<?php if ( $form['slogan'] !== '' ) : ?>
 				<p class="nck-slogan"><?php echo esc_html( $form['slogan'] ); ?></p>

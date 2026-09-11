@@ -84,18 +84,21 @@ $payload   = NCK_Contracts::payload( $contract );
 		<?php endif; ?>
 
 		<footer class="nck-sign-row">
-			<div>
-				<p>امضای برگزارکننده مراسم</p>
-				<?php if ( ! empty( $contract['signature_png'] ) ) : ?>
-					<img class="nck-sign-img" src="<?php echo esc_attr( $contract['signature_png'] ); ?>" alt="امضا" />
-				<?php endif; ?>
-				<p><?php echo esc_html( $vars['title'] . ' ' . $contract['full_name'] ); ?></p>
-			</div>
-			<div>
-				<p>امضا</p>
-				<p class="nck-org-sign"><?php echo esc_html( $s['hall_signer'] ); ?></p>
-				<p><?php echo esc_html( $s['hall_org'] ); ?></p>
-			</div>
+			<?php
+			$plate_src  = ! empty( $contract['signature_png'] ) ? $contract['signature_png'] : '';
+			$plate_name = trim( $vars['title'] . ' ' . $contract['full_name'] );
+			$plate_role = 'امضای برگزارکننده مراسم';
+			$plate_date = isset( $vars['date'] ) ? $vars['date'] : '';
+			$plate_org  = false;
+			include NCK_PATH . 'templates/sign-plate.php';
+			$plate_src   = '';
+			$plate_name  = $s['hall_signer'];
+			$plate_role  = 'امضا و مهر مجموعه';
+			$plate_date  = '';
+			$plate_extra = $s['hall_org'];
+			$plate_org   = true;
+			include NCK_PATH . 'templates/sign-plate.php';
+			?>
 		</footer>
 	</article>
 </body>

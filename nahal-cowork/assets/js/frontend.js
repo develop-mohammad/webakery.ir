@@ -5,6 +5,10 @@
     return root.querySelector(sel);
   }
 
+  function qsa(root, sel) {
+    return Array.prototype.slice.call(root.querySelectorAll(sel));
+  }
+
   function show(el, on) {
     if (!el) return;
     if (on) {
@@ -75,12 +79,15 @@
     return 'آقای';
   }
 
-  function bindPad(canvas) {
+  function bindPad(canvas, onChange) {
     if (!canvas) return { drawn: false, clear: function () {}, toDataURL: function () { return ''; } };
     var ctx = canvas.getContext('2d');
     var drawing = false;
     var drawn = false;
     var last = null;
+    function notify() {
+      if (typeof onChange === 'function') onChange();
+    }
 
     function pos(e) {
       var r = canvas.getBoundingClientRect();
@@ -112,7 +119,9 @@
     });
     canvas.addEventListener('mousemove', paint);
     window.addEventListener('mouseup', function () {
+      var was = drawing;
       drawing = false;
+      if (was && drawn) notify();
     });
     canvas.addEventListener('touchstart', function (e) {
       drawing = true;
@@ -120,7 +129,9 @@
     }, { passive: false });
     canvas.addEventListener('touchmove', paint, { passive: false });
     canvas.addEventListener('touchend', function () {
+      var was = drawing;
       drawing = false;
+      if (was && drawn) notify();
     });
 
     return {
@@ -128,9 +139,207 @@
       clear: function () {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawn = false;
+        notify();
       },
       toDataURL: function () {
         return canvas.toDataURL('image/png');
+      }
+    };
+  }
+
+  function inkifyCanvas(srcCanvas) {
+    var w = srcCanvas.width;
+    var h = srcCanvas.height;
+    var scale = Math.min(1, 720 / Math.max(1, w), 240 / Math.max(1, h));
+    var out = document.createElement('canvas');
+    out.width = Math.max(1, Math.round(w * scale));
+    out.height = Math.max(1, Math.round(h * scale));
+    var ctx = out.getContext('2d');
+    ctx.drawImage(srcCanvas, 0, 0, out.width, out.height);
+    var img = ctx.getImageData(0, 0, out.width, out.height);
+    var d = img.data;
+    var i;
+    for (i = 0; i < d.length; i += 4) {
+      var r = d[i];
+      var g = d[i + 1];
+      var b = d[i + 2];
+      var a = d[i + 3];
+      var lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      var ink = 1 - lum / 255;
+      if (a < 18 || lum > 236 || ink < 0.06) {
+        d[i] = 255;
+        d[i + 1] = 255;
+        d[i + 2] = 255;
+        d[i + 3] = 0;
+        continue;
+      }
+      d[i] = Math.round(22 + r * 0.1);
+      d[i + 1] = Math.round(20 + g * 0.1);
+      d[i + 2] = Math.round(18 + b * 0.08);
+      d[i + 3] = Math.min(255, Math.round(a * (0.3 + ink * 0.7)));
+    }
+    ctx.putImageData(img, 0, 0);
+    return out.toDataURL('image/png');
+  }
+
+  function fileToInk(file, ok, fail) {
+    if (!file) {
+      fail('عکس امضا انتخاب نشد.');
+      return;
+    }
+    if (!/^image\/(png|jpe?g|webp|gif)$/i.test(file.type || '')) {
+      fail('فقط تصویر PNG، JPG یا WEBP پذیرفته می‌شود.');
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      fail('حجم تصویر حداکثر ۶ مگابایت باشد.');
+      return;
+    }
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      var w = img.naturalWidth || img.width;
+      var h = img.naturalHeight || img.height;
+      if (w < 40 || h < 20) {
+        fail('تصویر امضا خیلی کوچک است.');
+        return;
+      }
+      var c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0);
+      ok(inkifyCanvas(c));
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      fail('خواندن تصویر ممکن نشد.');
+    };
+    img.src = url;
+  }
+
+  function bindSignature(root) {
+    var wrap = qs(root, '[data-nck-sign-wrap]');
+    var padEl = qs(root, '[data-nck-pad]');
+    var uploaded = '';
+    var ink = wrap ? qs(wrap, '[data-nck-sign-ink]') : null;
+    var empty = wrap ? qs(wrap, '[data-nck-sign-empty]') : null;
+
+    function showInk(src) {
+      if (ink) {
+        if (src) {
+          ink.src = src;
+          ink.hidden = false;
+        } else {
+          ink.removeAttribute('src');
+          ink.hidden = true;
+        }
+      }
+      if (empty) empty.hidden = !!src;
+    }
+
+    var pad = bindPad(padEl, function () {
+      if (pad.drawn) {
+        uploaded = '';
+        showInk(inkifyCanvas(padEl));
+      } else if (!uploaded) {
+        showInk('');
+      }
+    });
+
+    if (!wrap && !padEl) {
+      return {
+        has: false,
+        isReady: function () { return true; },
+        getData: function () { return ''; }
+      };
+    }
+
+    if (!wrap) {
+      return {
+        has: true,
+        isReady: function () { return pad.drawn; },
+        getData: function () { return pad.drawn ? pad.toDataURL() : ''; }
+      };
+    }
+
+    var file = qs(wrap, '[data-nck-sign-file]');
+    var drop = qs(wrap, '.nck-sign-drop');
+    var modes = qsa(wrap, '[data-nck-sign-mode]');
+    var panels = qsa(wrap, '[data-nck-sign-panel]');
+
+    function setMode(mode) {
+      modes.forEach(function (btn) {
+        var on = btn.getAttribute('data-nck-sign-mode') === mode;
+        btn.classList.toggle('is-on', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      panels.forEach(function (p) {
+        p.hidden = p.getAttribute('data-nck-sign-panel') !== mode;
+      });
+    }
+
+    function handleFile(f) {
+      if (!f) return;
+      fileToInk(f, function (data) {
+        uploaded = data;
+        pad.clear();
+        uploaded = data;
+        showInk(data);
+        setMode('upload');
+        setAlert(root, '', '');
+      }, function (msg) {
+        setAlert(root, 'err', msg);
+      });
+    }
+
+    modes.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setMode(btn.getAttribute('data-nck-sign-mode'));
+      });
+    });
+
+    if (file) {
+      file.addEventListener('change', function () {
+        handleFile(file.files && file.files[0]);
+        file.value = '';
+      });
+    }
+
+    if (drop) {
+      drop.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        drop.classList.add('is-over');
+      });
+      drop.addEventListener('dragleave', function () {
+        drop.classList.remove('is-over');
+      });
+      drop.addEventListener('drop', function (e) {
+        e.preventDefault();
+        drop.classList.remove('is-over');
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        handleFile(f);
+      });
+    }
+
+    qsa(wrap, '[data-nck-clear]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        uploaded = '';
+        pad.clear();
+        showInk('');
+        if (file) file.value = '';
+      });
+    });
+
+    return {
+      has: true,
+      isReady: function () {
+        return !!(uploaded || pad.drawn);
+      },
+      getData: function () {
+        if (uploaded) return uploaded;
+        if (pad.drawn && padEl) return inkifyCanvas(padEl);
+        return '';
       }
     };
   }
@@ -377,11 +586,7 @@
     var form = qs(root, formSel);
     if (!form) return;
     var wizard = bindWizard(form, root);
-    var pad = bindPad(qs(root, '[data-nck-pad]'));
-    var clearBtn = qs(root, '[data-nck-clear]');
-    if (clearBtn) {
-      clearBtn.addEventListener('click', function () { pad.clear(); });
-    }
+    var sig = bindSignature(root);
     ['input', 'change'].forEach(function (ev) {
       form.addEventListener(ev, function () {
         updatePreamble(root);
@@ -402,15 +607,15 @@
           return;
         }
       }
-      if (!pad.drawn && qs(root, '[data-nck-pad]')) {
-        setAlert(root, 'err', i18n.draw || 'لطفاً داخل کادر امضا کنید.');
+      if (sig.has && !sig.isReady()) {
+        setAlert(root, 'err', i18n.signature || i18n.draw || 'عکس امضا را آپلود کنید یا داخل کادر بکشید.');
         return;
       }
       var btn = qs(form, '[data-nck-submit]');
       setLoading(btn, true, i18n.signing);
       setAlert(root, '', '');
       var fd = collectForm(form);
-      fd.signature = pad.toDataURL();
+      if (sig.has) fd.signature = sig.getData();
       post(action, fd).then(function (res) {
         setLoading(btn, false);
         if (!res || !res.success) {

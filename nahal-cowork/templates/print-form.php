@@ -90,11 +90,16 @@ $row       = static function ( $label, $value ) {
 		<?php endif; ?>
 
 		<?php if ( ! empty( $contract['signature_png'] ) ) : ?>
-			<section class="nck-section">
-				<h3>امضا</h3>
-				<img class="nck-sign-img" src="<?php echo esc_attr( $contract['signature_png'] ); ?>" alt="امضا" />
-				<p class="nck-note">تاریخ ثبت: <?php echo esc_html( $fa( $contract['signed_at'] ) ); ?></p>
-			</section>
+			<footer class="nck-sign-row">
+				<?php
+				$plate_src  = $contract['signature_png'];
+				$plate_name = $contract['full_name'];
+				$plate_role = 'امضا';
+				$plate_date = $fa( $contract['signed_at'] );
+				$plate_org  = false;
+				include NCK_PATH . 'templates/sign-plate.php';
+				?>
+			</footer>
 		<?php endif; ?>
 	</article>
 </body>

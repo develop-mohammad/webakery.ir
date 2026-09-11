@@ -135,13 +135,11 @@ $blank = '…………………….';
 		</section>
 
 		<section class="nck-step" data-nck-step data-nck-step-label="امضا" hidden>
-			<div class="nck-sign-wrap">
-				<div class="nck-sign-head">
-					<span>امضای برگزارکننده مراسم</span>
-					<button type="button" class="nck-link" data-nck-clear>پاک کردن</button>
-				</div>
-				<canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
-			</div>
+			<?php
+			$nck_sign_title = 'امضای برگزارکننده مراسم';
+			$nck_sign_party = 'امضای برگزارکننده';
+			include NCK_PATH . 'templates/sign-pad.php';
+			?>
 			<label class="nck-agree">
 				<input type="checkbox" name="agree" value="1" required />
 				مفاد قرارداد را خواندم و می‌پذیرم.

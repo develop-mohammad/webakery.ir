@@ -81,14 +81,11 @@ $hours    = NCK_Settings::hours();
 		</section>
 
 		<section class="nck-step" data-nck-step data-nck-step-label="امضا" hidden>
-			<div class="nck-sign-wrap">
-				<div class="nck-sign-head">
-					<span>امضا</span>
-					<button type="button" class="nck-link" data-nck-clear>پاک کردن</button>
-				</div>
-				<canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
-				<p class="nck-form-help">با ماوس یا انگشت داخل کادر امضا کنید.</p>
-			</div>
+			<?php
+			$nck_sign_title = 'امضا';
+			$nck_sign_party = 'امضای عضو';
+			include NCK_PATH . 'templates/sign-pad.php';
+			?>
 			<label class="nck-agree">
 				<input type="checkbox" name="agree" value="1" required />
 				مفاد قرارداد را خواندم و می‌پذیرم.

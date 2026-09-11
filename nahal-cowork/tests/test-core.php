@@ -80,6 +80,83 @@ $check( 'عنوان خانم', 'خانم' === $vars['title'] );
 $sig = NCK_Contract::validate_signature( 'not-an-image' );
 $check( 'امضای نامعتبر رد می‌شود', empty( $sig['ok'] ) );
 
+function nck_test_make_sig( $mime = 'png' ) {
+	$im    = imagecreatetruecolor( 200, 80 );
+	$white = imagecolorallocate( $im, 255, 255, 255 );
+	$ink   = imagecolorallocate( $im, 22, 18, 16 );
+	imagefilledrectangle( $im, 0, 0, 199, 79, $white );
+	imagesetthickness( $im, 5 );
+	imageline( $im, 18, 52, 70, 28, $ink );
+	imageline( $im, 70, 28, 120, 58, $ink );
+	imageline( $im, 120, 58, 182, 24, $ink );
+	ob_start();
+	if ( 'jpeg' === $mime ) {
+		imagejpeg( $im, null, 90 );
+		$prefix = 'data:image/jpeg;base64,';
+	} else {
+		imagepng( $im );
+		$prefix = 'data:image/png;base64,';
+	}
+	$bin = ob_get_clean();
+	imagedestroy( $im );
+	return $prefix . base64_encode( $bin );
+}
+
+function nck_test_sig_ink_pixels( $data_url ) {
+	$comma = strpos( $data_url, ',' );
+	$raw   = base64_decode( substr( $data_url, $comma + 1 ), true );
+	$im    = imagecreatefromstring( $raw );
+	$w     = imagesx( $im );
+	$h     = imagesy( $im );
+	$clear = 0;
+	$ink   = 0;
+	for ( $y = 0; $y < $h; $y++ ) {
+		for ( $x = 0; $x < $w; $x++ ) {
+			$a = ( imagecolorat( $im, $x, $y ) >> 24 ) & 0x7F;
+			if ( $a > 110 ) {
+				$clear++;
+			} else {
+				$ink++;
+			}
+		}
+	}
+	imagedestroy( $im );
+	return array( $clear, $ink );
+}
+
+$tiny = imagecreatetruecolor( 12, 12 );
+imagefilledrectangle( $tiny, 0, 0, 11, 11, imagecolorallocate( $tiny, 0, 0, 0 ) );
+ob_start();
+imagepng( $tiny );
+$tiny_bin = ob_get_clean();
+imagedestroy( $tiny );
+$tiny_sig = NCK_Contract::validate_signature( 'data:image/png;base64,' . base64_encode( $tiny_bin ) );
+$check( 'امضای خیلی کوچک رد می‌شود', empty( $tiny_sig['ok'] ) );
+
+$png_src = nck_test_make_sig( 'png' );
+$png_ok  = NCK_Contract::validate_signature( $png_src );
+$check( 'PNG امضا قبول می‌شود', ! empty( $png_ok['ok'] ) );
+
+$jpeg_src = nck_test_make_sig( 'jpeg' );
+$jpeg_ok  = NCK_Contract::validate_signature( $jpeg_src );
+$check( 'JPEG امضا قبول می‌شود', ! empty( $jpeg_ok['ok'] ) );
+
+$prepared = NCK_Contract::prepare_signature( $png_src );
+$check( 'پردازش امضا موفق است', ! empty( $prepared['ok'] ) && ! empty( $prepared['data'] ) );
+$check( 'خروجی امضا PNG است', 0 === strpos( $prepared['data'], 'data:image/png;base64,' ) );
+$pixels = nck_test_sig_ink_pixels( $prepared['data'] );
+$check( 'پس‌زمینه سفید شفاف می‌شود', $pixels[0] > 1000, $pixels[0] );
+$check( 'جوهر امضا باقی می‌ماند', $pixels[1] > 30, $pixels[1] );
+
+$jpeg_prep = NCK_Contract::prepare_signature( $jpeg_src );
+$check( 'JPEG هم جوهرسازی می‌شود', ! empty( $jpeg_prep['ok'] ) );
+$jpeg_px = nck_test_sig_ink_pixels( $jpeg_prep['data'] );
+$check( 'JPEG پس‌زمینه شفاف است', $jpeg_px[0] > 800, $jpeg_px[0] );
+
+$pad_html = (string) file_get_contents( dirname( __DIR__ ) . '/templates/sign-pad.php' );
+$check( 'قالب امضا آپلود عکس دارد', false !== strpos( $pad_html, 'data-nck-sign-file' ) );
+$check( 'قالب امضا پیش‌نمایش پلاک دارد', false !== strpos( $pad_html, 'data-nck-sign-ink' ) );
+
 echo "\n=== اجاره سالن ===\n";
 $nine = '001000000';
 $digit = NCK_Hall::nid_check_digit( $nine );

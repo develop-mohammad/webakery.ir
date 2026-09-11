@@ -204,13 +204,11 @@ $chips = static function ( $name, array $opts, $type = 'checkbox', $required = f
 					استفاده از تصاویر فرزندم (عکس و فیلم) در کلاس‌ها توسط مجموعه نهال موافقم.
 				</label>
 			</fieldset>
-			<div class="nck-sign-wrap">
-				<div class="nck-sign-head">
-					<span>امضای والدین / سرپرست</span>
-					<button type="button" class="nck-link" data-nck-clear>پاک کردن</button>
-				</div>
-				<canvas class="nck-sign" width="720" height="180" data-nck-pad></canvas>
-			</div>
+			<?php
+			$nck_sign_title = 'امضای والدین / سرپرست';
+			$nck_sign_party = 'امضای والدین';
+			include NCK_PATH . 'templates/sign-pad.php';
+			?>
 			<div class="nck-field">
 				<label for="nck-sign-date">تاریخ</label>
 				<input id="nck-sign-date" name="sign_date" type="text" dir="ltr" value="<?php echo esc_attr( $today ); ?>" placeholder="1404/06/20" />
