@@ -199,6 +199,25 @@
     render();
   }
 
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-nck-copy]');
+    if (!btn) return;
+    e.preventDefault();
+    var text = btn.getAttribute('data-nck-copy') || '';
+    function done() {
+      var old = btn.textContent;
+      btn.textContent = 'کپی شد';
+      window.setTimeout(function () { btn.textContent = old; }, 1400);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        window.prompt('کپی کنید:', text);
+      });
+    } else {
+      window.prompt('کپی کنید:', text);
+    }
+  });
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bindFormBuilder);
   } else {

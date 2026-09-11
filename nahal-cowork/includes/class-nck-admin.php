@@ -133,6 +133,7 @@ class NCK_Admin {
 			'contracts'  => 'قراردادها',
 			'forms'      => 'فرم‌ها',
 			'attendance' => 'حضور',
+			'shortcodes' => 'شورت‌کدها',
 			'settings'   => 'تنظیمات',
 			'license'    => 'لایسنس',
 		);
@@ -146,9 +147,56 @@ class NCK_Admin {
 	}
 
 	public static function links( $links ) {
-		$url = admin_url( 'admin.php?page=' . NCK_MENU );
+		$url  = admin_url( 'admin.php?page=' . NCK_MENU );
+		$help = admin_url( 'admin.php?page=' . NCK_MENU . '&tab=shortcodes' );
+		array_unshift( $links, '<a href="' . esc_url( $help ) . '">شورت‌کدها</a>' );
 		array_unshift( $links, '<a href="' . esc_url( $url ) . '">نهال</a>' );
 		return $links;
+	}
+
+	/**
+	 * راهنمای شورت‌کدهای فرانت برای برگه و المنتور.
+	 *
+	 * @return array<int, array<string, string>>
+	 */
+	public static function shortcode_guide() {
+		return array(
+			array(
+				'code'  => '[nahal_contract]',
+				'title' => 'قرارداد فضای کار',
+				'who'   => 'کسی که می‌خواهد عضو فضای کار اشتراکی شود و قرارداد ببندد.',
+				'page'  => 'یک برگه جدا، مثلاً «قرارداد فضای کار».',
+				'pay'   => 'فقط اگر در تنظیمات، شهریه فضای کار بیشتر از صفر باشد.',
+			),
+			array(
+				'code'  => '[nahal_hall]',
+				'title' => 'اجاره سالن',
+				'who'   => 'کسی که سالن را برای مراسم یا برنامه اجاره می‌کند.',
+				'page'  => 'یک برگه جدا، مثلاً «اجاره سالن».',
+				'pay'   => 'مبلغ اجاره روی فرم وارد می‌شود و سفارش ووکامرس ساخته می‌شود.',
+			),
+			array(
+				'code'  => '[nahal_admission]',
+				'title' => 'پذیرش فراگیر',
+				'who'   => 'ثبت‌نام فراگیر در دوره‌های آموزشی نهال.',
+				'page'  => 'یک برگه جدا، مثلاً «پذیرش فراگیر».',
+				'pay'   => 'اگر مبلغ شهریه روی فرم یا تنظیمات باشد، سفارش ساخته می‌شود.',
+			),
+			array(
+				'code'  => '[nahal_form slug="workshop"]',
+				'title' => 'فرم سفارشی',
+				'who'   => 'هر فرمی که خودتان در تب «فرم‌ها» می‌سازید (کارگاه، اردو، …).',
+				'page'  => 'برگه جدا برای همان فرم. به‌جای workshop همان شناسه انگلیسی فرم را بگذارید.',
+				'pay'   => 'اگر در همان فرم پرداخت را روشن کرده باشید.',
+			),
+			array(
+				'code'  => '[nahal_portal]',
+				'title' => 'پورتال عضو',
+				'who'   => 'عضو فعلی که می‌خواهد باقی‌مانده شیفت را ببیند یا حضور ثبت کند.',
+				'page'  => 'یک برگه جدا، مثلاً «پورتال اعضا». این فرم قرارداد نیست.',
+				'pay'   => 'پرداخت ندارد.',
+			),
+		);
 	}
 
 	public static function notice() {

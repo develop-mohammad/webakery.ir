@@ -57,6 +57,7 @@ $export = wp_nonce_url( admin_url( 'admin.php?page=' . NCK_MENU . '&nck_export=a
 			<a class="button" href="<?php echo esc_url( $export ); ?>">خروجی CSV حضور این ماه</a>
 			<a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=' . NCK_MENU . '&nck_export=members' ), 'nck_export' ) ); ?>">خروجی CSV اعضا</a>
 			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=' . NCK_MENU . '&tab=forms' ) ); ?>">فرم‌ساز</a>
+			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=' . NCK_MENU . '&tab=shortcodes' ) ); ?>">راهنمای شورت‌کدها</a>
 		</p>
 		<?php if ( ! NCK_Pay::wc_ready() ) : ?>
 			<p class="nck-note">ووکامرس فعال نیست؛ فرم‌ها ذخیره می‌شوند ولی سفارش حسابدار ساخته نمی‌شود.</p>

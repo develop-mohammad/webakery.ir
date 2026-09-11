@@ -9,12 +9,8 @@ defined( 'ABSPATH' ) || exit;
 		<span class="nck-ver">v<?php echo esc_html( NCK_VERSION ); ?></span>
 	</h1>
 	<p class="nck-sub">
-		فضای کار اشتراکی و اجاره سالن ·
-		<code>[nahal_contract]</code>
-		<code>[nahal_hall]</code>
-		<code>[nahal_admission]</code>
-		<code>[nahal_form]</code>
-		<code>[nahal_portal]</code>
+		هر شورت‌کد را در یک برگه جدا بگذارید تا همان فرم روی سایت دیده شود.
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . NCK_MENU . '&tab=shortcodes' ) ); ?>">راهنمای شورت‌کدها</a>
 		· سازنده: <a href="https://webakery.ir" target="_blank" rel="noopener">webakery.ir</a>
 	</p>
 

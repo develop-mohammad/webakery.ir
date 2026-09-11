@@ -274,5 +274,21 @@ $draft = NCK_Pay::draft( array( 'name' => 'علی رضایی', 'amount' => 10, '
 $check( 'created_via نهال است', 'nahal-cowork' === $draft['created_via'] );
 $check( 'ووکامرس در تست هسته خاموش است', false === NCK_Pay::wc_ready() );
 
+require_once dirname( __DIR__ ) . '/includes/class-nck-admin.php';
+echo "\n=== راهنمای شورت‌کد ===\n";
+$guide = NCK_Admin::shortcode_guide();
+$codes = array();
+foreach ( $guide as $row ) {
+	$codes[] = $row['code'];
+}
+$check( 'پنج شورت‌کد توضیح داده شده', 5 === count( $guide ) );
+$check( 'قرارداد فضای کار', in_array( '[nahal_contract]', $codes, true ) );
+$check( 'اجاره سالن', in_array( '[nahal_hall]', $codes, true ) );
+$check( 'پذیرش فراگیر', in_array( '[nahal_admission]', $codes, true ) );
+$check( 'فرم سفارشی با slug', in_array( '[nahal_form slug="workshop"]', $codes, true ) );
+$check( 'پورتال عضو', in_array( '[nahal_portal]', $codes, true ) );
+$help = (string) file_get_contents( dirname( __DIR__ ) . '/templates/admin-shortcodes.php' );
+$check( 'قالب راهنما در افزونه هست', false !== strpos( $help, 'شورت‌کد چیست' ) );
+
 echo "\n--- {$pass} موفق، {$fail} ناموفق ---\n";
 exit( $fail ? 1 : 0 );

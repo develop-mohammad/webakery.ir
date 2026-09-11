@@ -91,3 +91,8 @@
 @media (max-width: 900px){
 	.nck-cards{ grid-template-columns: 1fr 1fr; }
 }
+.nck-steps{ padding-right: 18px; }
+.nck-steps li{ margin: 4px 0; }
+.nck-sc-table code{ font-size: 13px; white-space: nowrap; }
+.nck-sc-table td p.description{ margin: 4px 0 0; }
+.nck-copy-ok{ color: #15803d; margin-right: 8px; font-size: 12px; }

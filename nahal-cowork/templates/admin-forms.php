@@ -102,8 +102,9 @@ if ( $form || $is_new ) :
 	</form>
 <?php else : ?>
 	<div class="nck-panel">
-		<p>فرم‌های ثابت افزونه: <code>[nahal_contract]</code> <code>[nahal_hall]</code> <code>[nahal_admission]</code></p>
-		<p>اینجا فرم‌های خودتان را می‌سازید — کارگاه، اردو، ثبت‌نام دوره و هر چیزی که به پرداخت برسد.</p>
+		<p>فرم‌های آماده افزونه را با شورت‌کد جدا روی برگه می‌گذارید: فضای کار <code dir="ltr">[nahal_contract]</code>، سالن <code dir="ltr">[nahal_hall]</code>، پذیرش <code dir="ltr">[nahal_admission]</code>.</p>
+		<p>اینجا فرم‌های خودتان را می‌سازید — کارگاه، اردو، ثبت‌نام دوره. بعد از ذخیره، ستون «شورت‌کد» را در برگه بچسبانید.</p>
+		<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=' . NCK_MENU . '&tab=shortcodes' ) ); ?>">توضیح کامل شورت‌کدها</a></p>
 		<p>
 			<a class="button button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=' . NCK_MENU . '&tab=forms&form=new' ) ); ?>">افزودن فرم جدید</a>
 		</p>
