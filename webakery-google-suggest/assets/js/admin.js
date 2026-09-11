@@ -852,6 +852,7 @@
 			}
 			tag(isBranded(row.text) ? 'wbgs-intent-branded' : 'wbgs-intent-unbranded', extraLabel(isBranded(row.text) ? 'branded' : 'unbranded'));
 			li.appendChild(kw);
+			li.appendChild(copyPhraseBtn(row.text));
 			li.appendChild(intentBadge(row));
 			li.appendChild(compBadge(row));
 			li.appendChild(searchesCell(row));
@@ -954,6 +955,7 @@
 				kw.className = 'wbgs-kw';
 				kw.textContent = row.text;
 				line.appendChild(kw);
+				line.appendChild(copyPhraseBtn(row.text));
 				line.appendChild(intentBadge(row));
 				line.appendChild(searchesCell(row));
 				wrap.appendChild(line);
@@ -1031,6 +1033,7 @@
 				var t = document.createElement('span');
 				t.textContent = row.text;
 				li.appendChild(t);
+				li.appendChild(copyPhraseBtn(row.text));
 				li.appendChild(searchesCell(row));
 				ul.appendChild(li);
 			});
@@ -1415,7 +1418,10 @@
 		}
 		rows.forEach(function (row) {
 			var li = document.createElement('li');
-			li.textContent = row.text;
+			var t = document.createElement('span');
+			t.textContent = row.text;
+			li.appendChild(t);
+			li.appendChild(copyPhraseBtn(row.text));
 			ul.appendChild(li);
 		});
 		return ul;
@@ -1642,16 +1648,69 @@
 	}
 
 	function copyLines(lines) {
-		var text = (lines || []).join('\n');
-		if (navigator.clipboard && navigator.clipboard.writeText) {
-			navigator.clipboard.writeText(text).then(function () {
-				setStatus(i18n('copy_ok'), 'ok');
-			}).catch(function () {
-				setStatus(i18n('copy_err'), 'error');
-			});
+		writeClipboard((lines || []).join('\n'));
+	}
+
+	function writeClipboard(text, btn) {
+		text = String(text || '');
+		if (!text) {
+			setStatus(i18n('copy_err'), 'error');
 			return;
 		}
-		setStatus(i18n('copy_err'), 'error');
+		function markOk() {
+			setStatus(i18n('copy_ok'), 'ok');
+			if (btn) {
+				btn.textContent = 'کپی شد';
+				btn.classList.add('is-ok');
+				window.setTimeout(function () {
+					btn.textContent = i18n('copy_one') || 'کپی';
+					btn.classList.remove('is-ok');
+				}, 1200);
+			}
+		}
+		function markErr() {
+			setStatus(i18n('copy_err'), 'error');
+		}
+		function fallback() {
+			var ta = document.createElement('textarea');
+			ta.value = text;
+			ta.setAttribute('readonly', '');
+			ta.style.position = 'fixed';
+			ta.style.left = '-9999px';
+			document.body.appendChild(ta);
+			ta.select();
+			var ok = false;
+			try {
+				ok = document.execCommand('copy');
+			} catch (e) {
+				ok = false;
+			}
+			document.body.removeChild(ta);
+			if (ok) {
+				markOk();
+			} else {
+				markErr();
+			}
+		}
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(markOk).catch(fallback);
+			return;
+		}
+		fallback();
+	}
+
+	function copyPhraseBtn(text) {
+		var btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'wbgs-copy-one';
+		btn.textContent = i18n('copy_one') || 'کپی';
+		btn.title = 'کپی همین عبارت';
+		btn.addEventListener('click', function (ev) {
+			ev.preventDefault();
+			ev.stopPropagation();
+			writeClipboard(text, btn);
+		});
+		return btn;
 	}
 
 	function shelfText(seed, rows) {
@@ -1791,7 +1850,10 @@
 			ul.className = 'wbgs-tax-list';
 			faq.forEach(function (row) {
 				var li = document.createElement('li');
-				li.textContent = row.text;
+				var t = document.createElement('span');
+				t.textContent = row.text;
+				li.appendChild(t);
+				li.appendChild(copyPhraseBtn(row.text));
 				ul.appendChild(li);
 			});
 			faqBox.appendChild(ul);

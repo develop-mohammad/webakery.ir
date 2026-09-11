@@ -171,7 +171,7 @@
 
 .wbgs-list li {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto auto 5.5em;
+	grid-template-columns: minmax(0, 1fr) auto auto auto 5.5em;
 	align-items: center;
 	gap: 10px;
 	padding: 6px 0;

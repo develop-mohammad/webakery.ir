@@ -152,7 +152,7 @@
 
 .wbgs-g .wbgs-list li {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto auto 5.5em;
+	grid-template-columns: minmax(0, 1fr) auto auto auto 5.5em;
 	align-items: center;
 	gap: 10px;
 	padding: 10px 14px;
@@ -176,6 +176,31 @@
 	padding: 2px 8px;
 	margin-left: 6px;
 	white-space: nowrap;
+}
+
+.wbgs-copy-one {
+	border: 1px solid #dadce0;
+	background: #fff;
+	border-radius: 6px;
+	font: inherit;
+	font-size: 11px;
+	font-weight: 700;
+	padding: 2px 8px;
+	cursor: pointer;
+	color: #3c4043;
+	white-space: nowrap;
+	line-height: 1.4;
+}
+
+.wbgs-copy-one:hover {
+	border-color: #1a73e8;
+	color: #1a73e8;
+}
+
+.wbgs-copy-one.is-ok {
+	border-color: #15803d;
+	color: #15803d;
+	background: #dcfce7;
 }
 
 .wbgs-intent-informational { background: #e0f2fe; color: #0369a1; }
@@ -550,6 +575,10 @@
 }
 
 .wbgs-g .wbgs-tax-list li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
 	border-bottom: 1px solid #f8f9fa;
 	padding: 3px 0;
 }

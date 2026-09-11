@@ -112,12 +112,24 @@
       ? ' <span class="wbgs-intent wbgs-intent-branded">برند شده</span>'
       : ' <span class="wbgs-intent wbgs-intent-unbranded">بدون برند</span>';
     li.innerHTML = '<span class="wbgs-kw"><span class="wbgs-kw-text"></span>' + badges + '</span>' +
+      '<button type="button" class="wbgs-copy-one">کپی</button>' +
       '<span class="wbgs-intent wbgs-intent-' + row.intent + '"></span>' +
       '<span class="wbgs-comp wbgs-comp-' + (row.band === 'بالا' ? 'high' : row.band === 'پایین' ? 'low' : 'mid') + '"></span>' +
       '<span class="wbgs-searches is-empty">—</span>';
     li.querySelector('.wbgs-kw-text').textContent = row.text;
     li.querySelector('.wbgs-intent.wbgs-intent-' + row.intent).textContent = row.intent_fa;
     li.querySelector('.wbgs-comp').textContent = row.comp + ' ' + row.band;
+    (function (phrase, btn) {
+      btn.addEventListener('click', function () {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(phrase).then(function () {
+            btn.textContent = 'کپی شد';
+            btn.classList.add('is-ok');
+            setTimeout(function () { btn.textContent = 'کپی'; btn.classList.remove('is-ok'); }, 1200);
+          });
+        }
+      });
+    })(row.text, li.querySelector('.wbgs-copy-one'));
     list.appendChild(li);
   });
   tree.innerHTML = '<div class="wbgs-ktree-head"><span>عبارت</span><span>اینتنت</span><span>سرچ ماهانه</span></div>' +

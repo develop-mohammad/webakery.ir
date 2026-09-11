@@ -365,6 +365,15 @@ $faq_txt = WBGS_Entity::faq_text( 'کفش', $shelf_rows );
 wbgs_assert( false !== strpos( $faq_txt, 'کفش چیست' ), 'faq text has question' );
 wbgs_assert( false === strpos( $faq_txt, 'مقاله کامل' ), 'faq text does not invent an article' );
 
+$js_src = file_get_contents( dirname( __DIR__ ) . '/assets/js/admin.js' );
+wbgs_assert( false !== strpos( $js_src, 'function copyPhraseBtn' ), 'per-phrase copy helper exists' );
+wbgs_assert( false !== strpos( $js_src, 'wbgs-copy-one' ), 'copy button class exists' );
+wbgs_assert( substr_count( $js_src, 'copyPhraseBtn(row.text)' ) >= 4, 'copy wired on list, tree, tax, cluster, faq' );
+$css_src = file_get_contents( dirname( __DIR__ ) . '/assets/css/google.css' );
+wbgs_assert( false !== strpos( $css_src, '.wbgs-copy-one' ), 'copy button styled' );
+$preview_src = file_get_contents( dirname( __DIR__ ) . '/canvas-preview.html' );
+wbgs_assert( false !== strpos( $preview_src, 'wbgs-copy-one' ), 'preview has per-phrase copy' );
+
 if ( $failed ) {
 	echo "\n$failed failed\n";
 	exit( 1 );
