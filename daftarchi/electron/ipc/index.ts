@@ -14,6 +14,13 @@ import {
 } from '../services/products'
 import { pullWooProducts, pullWooSales, testWooConnection } from '../services/woocommerce'
 import { customerStats } from '../services/customers'
+import {
+  activateLicense,
+  assertLicenseActive,
+  licenseSnapshot,
+  payUrl,
+  refreshLicense,
+} from '../services/license'
 import { createSale, listInvoices } from '../services/invoices'
 import {
   addManualExpense,
@@ -48,24 +55,41 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IPC.categoriesList, () => listCategories())
-  ipcMain.handle(IPC.categoriesCreate, (_e, name: string) => createCategory(String(name || '')))
+  ipcMain.handle(IPC.categoriesCreate, (_e, name: string) => {
+    assertLicenseActive()
+    return createCategory(String(name || ''))
+  })
   ipcMain.handle(IPC.productsList, (_e, filter?: { categoryId?: number | null; search?: string }) =>
     listProducts(filter),
   )
   ipcMain.handle(IPC.productsSearch, (_e, query: string) => searchProducts(String(query || '')))
-  ipcMain.handle(IPC.productsCreate, (_e, input: NewProduct) => createProduct(input))
-  ipcMain.handle(IPC.productsUpdate, (_e, patch: ProductPatch) => updateProduct(patch))
+  ipcMain.handle(IPC.productsCreate, (_e, input: NewProduct) => {
+    assertLicenseActive()
+    return createProduct(input)
+  })
+  ipcMain.handle(IPC.productsUpdate, (_e, patch: ProductPatch) => {
+    assertLicenseActive()
+    return updateProduct(patch)
+  })
   ipcMain.handle(IPC.productsDelete, (_e, id: number) => {
+    assertLicenseActive()
     deleteProduct(Number(id))
   })
   ipcMain.handle(IPC.wcTest, () => testWooConnection())
-  ipcMain.handle(IPC.wcPull, () => pullWooProducts())
-  ipcMain.handle(IPC.wcPullSales, () => pullWooSales())
+  ipcMain.handle(IPC.wcPull, () => {
+    assertLicenseActive()
+    return pullWooProducts()
+  })
+  ipcMain.handle(IPC.wcPullSales, () => {
+    assertLicenseActive()
+    return pullWooSales()
+  })
   ipcMain.handle(IPC.customersStats, () => customerStats())
   ipcMain.handle(IPC.invoicesList, (_e, limit?: number) => listInvoices(Number(limit) || 50))
-  ipcMain.handle(IPC.invoicesCreateSale, (_e, input: CreateSaleInput, createdAt?: string) =>
-    createSale(input, createdAt),
-  )
+  ipcMain.handle(IPC.invoicesCreateSale, (_e, input: CreateSaleInput, createdAt?: string) => {
+    assertLicenseActive()
+    return createSale(input, createdAt)
+  })
   ipcMain.handle(IPC.dashboard, (_e, preset: 'week' | 'month') => dashboardData(preset === 'month' ? 'month' : 'week'))
   ipcMain.handle(IPC.reportsComparison, (_e, preset: 'week' | 'month') =>
     comparisonSeries(preset === 'month' ? 'month' : 'week'),
@@ -77,10 +101,17 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.reportsStocktake, () => stocktakeRows())
   ipcMain.handle(
     IPC.reportsApplyStocktake,
-    (_e, counts: { product_id: number; counted_qty: number }[], note: string) =>
-      applyStocktake(counts || [], String(note || '')),
+    (_e, counts: { product_id: number; counted_qty: number }[], note: string) => {
+      assertLicenseActive()
+      return applyStocktake(counts || [], String(note || ''))
+    },
   )
   ipcMain.handle(IPC.reportsExpense, (_e, amount: number, note: string) => {
+    assertLicenseActive()
     addManualExpense(Math.floor(Number(amount) || 0), String(note || ''))
   })
+  ipcMain.handle(IPC.licenseStatus, () => licenseSnapshot())
+  ipcMain.handle(IPC.licenseActivate, (_e, key: string) => activateLicense(String(key || '')))
+  ipcMain.handle(IPC.licenseRefresh, () => refreshLicense())
+  ipcMain.handle(IPC.licensePayUrl, (_e, planId: string) => payUrl(String(planId || '3m')))
 }

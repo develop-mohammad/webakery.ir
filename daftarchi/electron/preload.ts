@@ -32,6 +32,10 @@ const api = {
   applyStocktake: (counts: { product_id: number; counted_qty: number }[], note: string) =>
     ipcRenderer.invoke(IPC.reportsApplyStocktake, counts, note),
   addExpense: (amount: number, note: string) => ipcRenderer.invoke(IPC.reportsExpense, amount, note),
+  licenseStatus: () => ipcRenderer.invoke(IPC.licenseStatus),
+  activateLicense: (key: string) => ipcRenderer.invoke(IPC.licenseActivate, key),
+  refreshLicense: () => ipcRenderer.invoke(IPC.licenseRefresh),
+  licensePayUrl: (planId: string) => ipcRenderer.invoke(IPC.licensePayUrl, planId),
 }
 
 contextBridge.exposeInMainWorld('daftarchi', api)

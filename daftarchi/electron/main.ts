@@ -5,6 +5,7 @@ import { app, BrowserWindow, shell } from 'electron'
 import { backupDatabase, getAppPaths } from './backup'
 import { closeDatabase, openDatabase } from './database/db'
 import { registerIpc } from './ipc/index'
+import { ensureLicenseDefaults, refreshLicense } from './services/license'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -53,6 +54,8 @@ app.whenReady().then(() => {
   backupDatabase(paths.dbPath, paths.backups)
   openDatabase(paths.dbPath)
   registerIpc()
+  ensureLicenseDefaults()
+  refreshLicense().catch(() => undefined)
   createWindow()
 
   app.on('activate', () => {

@@ -165,3 +165,5 @@ export type CustomerStats = {
   avg_order: number
   list: SiteCustomer[]
 }
+
+export type { LicenseKind, LicenseQuote, LicenseSnapshot, LicenseWarning } from './license'

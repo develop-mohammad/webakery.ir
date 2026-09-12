@@ -1,4 +1,5 @@
 import type { AppInfo, DaftarchiApi, SettingsMap } from '../../shared/ipc'
+import { buildSnapshot, licensePayUrl } from '../../shared/license'
 
 const fallback: DaftarchiApi = {
   ping: async () => 'offline',
@@ -91,6 +92,24 @@ const fallback: DaftarchiApi = {
   stocktakeRows: async () => [],
   applyStocktake: async () => 0,
   addExpense: async () => undefined,
+  licenseStatus: async () =>
+    buildSnapshot({
+      installAtMs: Date.now(),
+      machineId: 'preview.pc',
+      key: '',
+      email: '',
+      expiresAt: '',
+      periodsPaid: 0,
+      serverStatus: 'unknown',
+    }),
+  activateLicense: async () => ({
+    ok: false,
+    message: 'آفلاین',
+    snapshot: await fallback.licenseStatus(),
+  }),
+  refreshLicense: async () => fallback.licenseStatus(),
+  licensePayUrl: async (planId) =>
+    licensePayUrl({ planId, machineId: 'preview.pc' }),
 }
 
 export function api(): DaftarchiApi {

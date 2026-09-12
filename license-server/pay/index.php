@@ -125,6 +125,8 @@ $plugin     = preg_replace('/[^a-z0-9_-]/i', '', $_GET['plugin']  ?? 'wccp');
 $domain_get = trim($_GET['domain']  ?? '');
 $return_get = trim($_GET['return']  ?? '');
 $plan_get   = preg_replace('/[^a-z0-9_-]/i', '', $_GET['plan'] ?? '');
+$email_get  = trim($_GET['email'] ?? '');
+$key_get    = trim($_GET['key'] ?? '');
 if ( ls_has_plans( $plugin ) ) {
     if ( ! ls_plan( $plugin, $plan_get ) ) {
         $plan_get = ls_default_plan_id( $plugin );
@@ -133,6 +135,8 @@ if ( ls_has_plans( $plugin ) ) {
     $plan_get = '';
 }
 $BASE_PRICE = ls_amount_for( $plugin, $plan_get );
+$loyalty_lic = LicenseManager::find_for_customer( $plugin, $email_get, $key_get, $domain_get );
+$loyalty     = LicenseManager::quote_amount( $BASE_PRICE, $loyalty_lic );
 
 /* ─── کالبک زیبال ──────────────────────────────────────────────── */
 if ( isset($_GET['zibal_cb']) ) {
@@ -287,9 +291,13 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
         } else {
             // ─── اعتبارسنجی و اعمال کد تخفیف ───
             $coupon_info = null;
-            $final_amount = $BASE_PRICE;
+            $loyalty_now = LicenseManager::quote_amount(
+                $BASE_PRICE,
+                LicenseManager::find_for_customer( $plugin_p, $email_val, '', $clean_domain )
+            );
+            $final_amount = (int) $loyalty_now['final'];
             if ( $coupon_raw !== '' ) {
-                $coupon_info = CouponManager::validate( $coupon_raw, $plugin_p, $BASE_PRICE );
+                $coupon_info = CouponManager::validate( $coupon_raw, $plugin_p, $final_amount );
                 if ( ! $coupon_info['valid'] ) {
                     $form_error = 'کد تخفیف: ' . $coupon_info['message'];
                     $domain_get = $domain_raw;
@@ -331,6 +339,8 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
                         'coupon_id'      => $coupon_info ? $coupon_info['coupon']['id'] : null,
                         'coupon_code'    => $coupon_info ? $coupon_info['coupon']['code'] : null,
                         'coupon_discount'=> $coupon_info ? $coupon_info['discount'] : 0,
+                        'loyalty_percent'=> $loyalty_now['percent'] ?? 0,
+                        'loyalty_discount'=> $loyalty_now['discount'] ?? 0,
                         'status'         => 'pending',
                         'license_key'    => null,
                         'created_at'     => date('Y-m-d H:i:s'),
@@ -350,7 +360,7 @@ if ( defined('LS_PLUGIN_LABELS') && is_array(LS_PLUGIN_LABELS) ) {
     $labels = array_merge($labels, LS_PLUGIN_LABELS);
 }
 $plugin_label = $labels[$plugin] ?? $plugin;
-$amount_toman = number_format((int)($BASE_PRICE / 10));
+$amount_toman = number_format((int)(($loyalty['final'] ?? $BASE_PRICE) / 10));
 $has_plans    = ls_has_plans( $plugin );
 $plans_list   = ls_plans_for( $plugin );
 
@@ -390,18 +400,24 @@ if ( $has_plans ) {
         $checked = ( $plan_get === $pinfo['id'] ) ? ' checked' : '';
         $active  = ( $plan_get === $pinfo['id'] ) ? ' is-active' : '';
         $badge   = $pinfo['badge'] !== '' ? '<span class="plan-badge">' . htmlspecialchars( $pinfo['badge'] ) . '</span>' : '';
-        $toman   = number_format( (int) ( $pinfo['price'] / 10 ) );
+        $q       = LicenseManager::quote_amount( (int) $pinfo['price'], $loyalty_lic );
+        $toman   = number_format( (int) ( $q['final'] / 10 ) );
+        $old     = $q['percent'] > 0 ? '<div class="plan-price-old">' . number_format( (int) ( $pinfo['price'] / 10 ) ) . '</div>' : '';
+        $off     = $q['percent'] > 0 ? '<div class="plan-hint">تمدید زودهنگام ' . $q['percent'] . '٪</div>' : '';
         $plans_html .= '<label class="plan-card' . $active . '">'
             . '<input type="radio" name="plan" value="' . htmlspecialchars( $pinfo['id'] ) . '"' . $checked . '>'
             . $badge
             . '<div class="plan-label">' . htmlspecialchars( $pinfo['label'] ) . '</div>'
+            . $old
             . '<div class="plan-price">' . $toman . ' <small>تومان</small></div>'
+            . $off
             . ( $pinfo['hint'] !== '' ? '<div class="plan-hint">' . htmlspecialchars( $pinfo['hint'] ) . '</div>' : '' )
             . '</label>';
         $plans_js[ $pinfo['id'] ] = [
-            'price' => (int) $pinfo['price'],
+            'price' => (int) $q['final'],
+            'list'  => (int) $pinfo['price'],
             'label' => $pinfo['label'],
-            'toman' => (int) ( $pinfo['price'] / 10 ),
+            'toman' => (int) ( $q['final'] / 10 ),
         ];
     }
     $plans_html .= '</div></div>';
@@ -422,9 +438,11 @@ $coupon_html = '
 $current_meta  = ( defined('LS_PLUGIN_META') && is_array(LS_PLUGIN_META) ) ? ( LS_PLUGIN_META[ $plugin ] ?? [] ) : [];
 $current_icon  = $current_meta['icon'] ?? '🔑';
 
-$features_html = $has_plans
+$features_html = $plugin === 'daftarchi'
+    ? '<span>✅ شارژ دوره‌ای</span><span>✅ یک سیستم</span><span>✅ تخفیف تمدید زودهنگام</span><span>✅ هشدار پایان دوره</span>'
+    : ( $has_plans
     ? '<span>✅ ماهانه / ۳ ماهه / دائمی</span><span>✅ تمدید و ارتقا</span><span>✅ آپدیت</span><span>✅ پشتیبانی</span>'
-    : '<span>✅ لایسنس مادام‌العمر</span><span>✅ آپدیت خودکار</span><span>✅ پشتیبانی ۶ ماهه</span>';
+    : '<span>✅ لایسنس مادام‌العمر</span><span>✅ آپدیت خودکار</span><span>✅ پشتیبانی ۶ ماهه</span>' );
 
 $form_html = '
 <div class="card">
@@ -436,18 +454,21 @@ $form_html = '
         </div>
     </div>
     ' . $error_html . '
+    ' . ( ! empty( $loyalty['early'] ) && (int) $loyalty['percent'] > 0
+        ? '<div class="notice-ok">تمدید زودهنگام: ' . (int) $loyalty['percent'] . '٪ تخفیف به‌خاطر سابقهٔ ' . (int) $loyalty['periods_paid'] . ' دوره.</div>'
+        : '' ) . '
     <form method="post" autocomplete="on" id="pay_form">
         <input type="hidden" name="plugin"     value="' . htmlspecialchars($plugin) . '">
         <input type="hidden" name="return_url" value="' . htmlspecialchars($return_get) . '">
         ' . $plans_html . '
         <div class="field">
             <label>ایمیل شما</label>
-            <input type="email" name="email" placeholder="name@example.com" required autofocus>
+            <input type="email" name="email" placeholder="name@example.com" value="' . htmlspecialchars($email_get) . '" required autofocus>
         </div>
         <div class="field">
-            <label>آدرس سایت (دامنه‌ای که پلاگین روی آن نصب است)</label>
-            <input type="text" name="domain" value="' . htmlspecialchars($domain_get) . '" placeholder="example.com" required>
-            <span class="hint">بدون https:// — مثال: myshop.ir</span>
+            <label>' . ( $plugin === 'daftarchi' ? 'شناسه این سیستم' : 'آدرس سایت (دامنه‌ای که پلاگین روی آن نصب است)' ) . '</label>
+            <input type="text" name="domain" value="' . htmlspecialchars($domain_get) . '" placeholder="' . ( $plugin === 'daftarchi' ? 'darchi-xxxx.pc' : 'example.com' ) . '" required>
+            <span class="hint">' . ( $plugin === 'daftarchi' ? 'همان شناسه‌ای که دفترچی نشان می‌دهد — عوضش نکن.' : 'بدون https:// — مثال: myshop.ir' ) . '</span>
         </div>
         ' . $coupon_html . '
         <div id="final_price_box" style="display:none;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px 14px;margin:14px 0">
@@ -669,6 +690,7 @@ body{font-family:"Vazirmatn",Tahoma,sans-serif;background:linear-gradient(160deg
 .plan-badge{position:absolute;top:-9px;left:10px;font-size:10px;font-weight:800;color:#fff;background:#ef4444;border-radius:20px;padding:2px 8px}
 .plan-label{font-size:14px;font-weight:800;color:#111827;margin-bottom:6px}
 .plan-price{font-size:18px;font-weight:800;color:#6c63ff}
+.plan-price-old{font-size:12px;color:#9ca3af;text-decoration:line-through}
 .plan-price small{font-size:11px;font-weight:600;color:#6b7280}
 .plan-hint{font-size:11px;color:#6b7280;margin-top:6px;line-height:1.5}
 .price-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -691,6 +713,7 @@ input:focus{outline:none;border-color:#6c63ff;box-shadow:0 0 0 3px rgba(108,99,2
 .login-hint a{color:#6c63ff;font-weight:bold;text-decoration:none}
 .login-hint a:hover{text-decoration:underline}
 .notice-error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px}
+.notice-ok{background:#f0fdf4;color:#166534;border:1px solid #86efac;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px}
 .btn{display:inline-block;padding:10px 20px;background:#6c63ff;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;margin-top:10px}
 .key-box{background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px 16px;margin:14px 0;display:flex;align-items:center;gap:10px;direction:ltr;justify-content:space-between}
 #lk{font-family:monospace;font-size:13px;color:#166534;font-weight:bold;word-break:break-all}

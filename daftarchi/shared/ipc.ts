@@ -15,8 +15,9 @@ import type {
   WcPullResult,
   WcSalesResult,
 } from './models'
+import type { LicenseSnapshot } from './license'
 
-export type { Category, Product, ProductPatch, NewProduct, InvoiceListItem, CreateSaleInput, CustomerStats, DashboardData, ComparisonSeries, ProfitReport, StocktakeRow, WcPullResult, WcSalesResult }
+export type { Category, Product, ProductPatch, NewProduct, InvoiceListItem, CreateSaleInput, CustomerStats, DashboardData, ComparisonSeries, ProfitReport, StocktakeRow, WcPullResult, WcSalesResult, LicenseSnapshot }
 
 export const IPC = {
   ping: 'ping',
@@ -43,6 +44,10 @@ export const IPC = {
   reportsStocktake: 'reports:stocktake',
   reportsApplyStocktake: 'reports:applyStocktake',
   reportsExpense: 'reports:expense',
+  licenseStatus: 'license:status',
+  licenseActivate: 'license:activate',
+  licenseRefresh: 'license:refresh',
+  licensePayUrl: 'license:payUrl',
 } as const
 
 export type SettingsMap = Record<string, string>
@@ -79,4 +84,8 @@ export type DaftarchiApi = {
   stocktakeRows: () => Promise<StocktakeRow[]>
   applyStocktake: (counts: { product_id: number; counted_qty: number }[], note: string) => Promise<number>
   addExpense: (amount: number, note: string) => Promise<void>
+  licenseStatus: () => Promise<LicenseSnapshot>
+  activateLicense: (key: string) => Promise<{ ok: boolean; message: string; snapshot: LicenseSnapshot }>
+  refreshLicense: () => Promise<LicenseSnapshot>
+  licensePayUrl: (planId: string) => Promise<string>
 }

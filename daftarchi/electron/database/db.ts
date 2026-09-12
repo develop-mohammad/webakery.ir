@@ -22,6 +22,14 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   wc_push_stock: '1',
   wc_last_pull_at: '',
   wc_last_sales_at: '',
+  license_key: '',
+  license_email: '',
+  license_status: 'unknown',
+  license_expires_at: '',
+  license_periods_paid: '0',
+  license_install_at: '',
+  license_machine_id: '',
+  license_last_check: '',
 }
 
 const DEFAULT_ACCOUNTS = [

@@ -27,10 +27,7 @@ const MAIN_NAV = [
   { to: '/reports', label: 'گزارش‌ها', icon: BarChart3 },
 ] as const
 
-const SOON_NAV = [
-  { to: '/telegram', label: 'تلگرام', icon: Send },
-  { to: '/license', label: 'لایسنس', icon: KeyRound },
-] as const
+const SOON_NAV = [{ to: '/telegram', label: 'تلگرام', icon: Send }] as const
 
 export function Sidebar() {
   const { settings } = useSettings()
@@ -65,6 +62,7 @@ export function Sidebar() {
       <div className="p-2 pb-3">
         <NavItem to="/settings" label="تنظیمات فروشگاه" icon={Settings} />
         <NavItem to="/woocommerce" label="اتصال سایت" icon={Store} />
+        <NavItem to="/license" label="لایسنس" icon={KeyRound} />
         <div className="mt-1 space-y-0.5">
           {SOON_NAV.map((item) => (
             <NavItem key={item.to} to={item.to} label={item.label} icon={item.icon} soon />
