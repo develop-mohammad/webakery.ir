@@ -35,7 +35,7 @@ $sms = file_get_contents( $root . '/includes/class-wap-sms.php' );
 assert( strpos( $sms, 'مبلغ خالص' ) !== false || strpos( $sms, 'amount_rial' ) !== false );
 
 $boot = file_get_contents( $root . '/hesabdar.php' );
-assert( strpos( $boot, '1.21.0' ) !== false );
+assert( strpos( $boot, '1.22.0' ) !== false );
 assert( strpos( $boot, 'class-wap-zarinpal-reconcile.php' ) !== false );
 
 echo "ALL SETTLE DISPLAY SMOKE TESTS PASSED\n";

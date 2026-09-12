@@ -904,6 +904,54 @@ a.wap-bar-fill:hover { filter: brightness(1.1); }
     word-break: break-all;
 }
 
+/* مسیر خرید → شاپرک → واریز */
+.wap-flow-steps {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0 0 18px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+}
+.wap-flow-step {
+    flex: 1 1 160px;
+    min-width: 140px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    border: 1px solid #e8eaed;
+}
+.wap-flow-step.is-done { background: #e8f0fe; border-color: #d2e3fc; }
+.wap-flow-step.is-active { background: #fff7e6; border-color: #fde7c3; }
+.wap-flow-num {
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #1a73e8;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    margin-left: 6px;
+}
+.wap-flow-step strong { display: block; margin: 4px 0 2px; font-size: 14px; }
+.wap-flow-step small { color: #5f6368; font-size: 12px; line-height: 1.5; }
+.wap-flow-arrow {
+    display: flex;
+    align-items: center;
+    color: #9aa0a6;
+    font-size: 18px;
+    padding: 0 2px;
+}
+@media (max-width: 720px) {
+    .wap-flow-arrow { display: none; }
+}
+
 .wap-bulk-bar {
     display: flex;
     align-items: center;

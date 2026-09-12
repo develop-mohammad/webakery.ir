@@ -12,7 +12,7 @@ class WAP_Admin {
 
     public static function menu() {
         add_menu_page( 'پرتال حسابدار', 'پرتال حسابدار', 'manage_options', 'wap-accountants', array( __CLASS__, 'page' ), 'dashicons-id-alt', 57 );
-        add_submenu_page( 'wap-accountants', 'پیامک واریز شاپرک', 'پیامک واریز شاپرک', 'manage_options', 'wap-payment-sms', array( __CLASS__, 'sms_page' ) );
+        add_submenu_page( 'wap-accountants', 'پیامک واریز خالص', 'پیامک واریز خالص', 'manage_options', 'wap-payment-sms', array( __CLASS__, 'sms_page' ) );
         add_submenu_page( 'wap-accountants', 'خروجی تصویری گزارش', 'خروجی تصویری', 'manage_options', 'wap-report-image', array( __CLASS__, 'report_image_page' ) );
     }
 
@@ -98,11 +98,11 @@ class WAP_Admin {
         $settle_flash = isset( $_GET['wap_settle_msg'] ) ? sanitize_text_field( wp_unslash( $_GET['wap_settle_msg'] ) ) : '';
         ?>
         <div class="wrap">
-            <h1>پیامک واریز شاپرک</h1>
+            <h1>پیامک واریز خالص</h1>
             <p style="max-width:760px;line-height:1.8">
-                فقط <strong>یک پیامک</strong> برای واریز به حساب ارسال می‌شود —
-                همان واریزی که معمولاً <strong>یک روز بعد</strong> توسط زرین‌پال (شاپرک) انجام می‌شود.
-                <br>پیامک لحظهٔ پرداخت مشتری ارسال نمی‌شود.
+                فقط <strong>یک نوع پیامک</strong> ارسال می‌شود: وقتی واریز خالص به حساب انجام شد.
+                <br>متن پیامک فقط شامل <strong>تاریخ واریز</strong> و <strong>مبلغ خالص</strong> است.
+                <br>مسیر خرید مشتری ← تأیید شاپرک ← واریز به حساب در تب «شاپرک» پرتال قابل مشاهده است.
             </p>
 
             <?php if ( $notice ) : ?>
@@ -151,13 +151,10 @@ class WAP_Admin {
                     </tr>
                 </table>
 
-                <h2>واریز شاپرک به حساب (تسویه زرین‌پال)</h2>
+                <h2>واریز خالص به حساب</h2>
                 <p class="description" style="max-width:680px">
-                    زرین‌پال وب‌هوک لحظه‌ای برای تسویه ندارد. افزونه هر ساعت لیست تسویه‌های وضعیت
-                    <code>PAID</code> را از API می‌گیرد و برای هر واریز جدید <strong>یک پیامک</strong> می‌فرستد
-                    (معمولاً همان واریز روز بعد به حساب).
-                    <br><strong>مرچنت‌کد UUID کافی نیست</strong> — به <code>terminal_id</code> عددی و
-                    <code>Access Token</code> (OAuth پنل API زرین‌پال) نیاز دارید.
+                    افزونه هر ساعت تسویه‌های زرین‌پال را چک می‌کند. فقط وقتی وضعیت
+                    <code>تسویه شده</code> شد، <strong>یک پیامک</strong> با تاریخ و مبلغ خالص می‌فرستد.
                 </p>
                 <table class="form-table" role="presentation">
                     <tr>
@@ -165,7 +162,7 @@ class WAP_Admin {
                         <td>
                             <label>
                                 <input type="checkbox" name="wap_sms[settle_enabled]" value="1" <?php checked( (int) $s['settle_enabled'], 1 ); ?>>
-                                پایش تسویه و ارسال پیامک هنگام واریز به حساب (PAID)
+                                ارسال پیامک هنگام واریز خالص به حساب
                             </label>
                         </td>
                     </tr>
@@ -191,10 +188,10 @@ class WAP_Admin {
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="wap_settle_msg">متن پیامک واریز</label></th>
+                        <th>متن پیامک (ثابت)</th>
                         <td>
-                            <textarea id="wap_settle_msg" name="wap_sms[settle_message]" class="large-text" rows="4"><?php echo esc_textarea( $s['settle_message'] ); ?></textarea>
-                            <p class="description"><code>{amount}</code> <code>{amount_rial}</code> <code>{reference_id}</code> <code>{reconcile_id}</code> <code>{reconciled_at}</code> <code>{status}</code></p>
+                            <pre style="background:#f6f7f7;border:1px solid #dcdcde;padding:12px 14px;border-radius:4px;max-width:420px;white-space:pre-wrap;direction:rtl;font-family:Tahoma,sans-serif"><?php echo esc_html( WAP_SMS::fixed_settle_template() ); ?></pre>
+                            <p class="description">فقط همین دو مقدار ارسال می‌شود: مبلغ خالص و تاریخ واریز. قابل ویرایش نیست.</p>
                         </td>
                     </tr>
                 </table>

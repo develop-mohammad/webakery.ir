@@ -1372,12 +1372,32 @@ class WAP_Portal {
 
         <p class="wap-hint" style="margin:8px 0 16px;line-height:1.8;color:#475569">
             <?php echo esc_html( WAP_Zarinpal_Fee::tariff_note() ); ?>
-            واریز شاپرک معمولاً یک روز کاری بعد از خرید است؛ اختلاف بازهٔ سفارش و واریز طبیعی است.
+            مسیر کامل: خرید مشتری ← تأیید شاپرک ← واریز خالص به حساب. فقط مرحلهٔ واریز پیامک می‌شود (تاریخ + مبلغ خالص).
         </p>
 
         <?php if ( $report['error'] !== '' ) : ?>
             <div class="wap-alert"><?php echo esc_html( $report['error'] ); ?></div>
         <?php endif; ?>
+
+        <div class="wap-flow-steps" data-wap-no-capture>
+            <div class="wap-flow-step is-done">
+                <span class="wap-flow-num">۱</span>
+                <strong>خرید مشتری</strong>
+                <small><?php echo esc_html( number_format( $s['wc_count'] ) ); ?> سفارش — <?php echo esc_html( number_format( $s['wc_gross'] ) ); ?> تومان</small>
+            </div>
+            <div class="wap-flow-arrow" aria-hidden="true">←</div>
+            <div class="wap-flow-step <?php echo ! empty( $s['settle_pending_count'] ) ? 'is-active' : ''; ?>">
+                <span class="wap-flow-num">۲</span>
+                <strong>تأیید شاپرک</strong>
+                <small><?php echo esc_html( number_format( (int) ( $s['settle_pending_count'] ?? 0 ) ) ); ?> در حال تسویه</small>
+            </div>
+            <div class="wap-flow-arrow" aria-hidden="true">←</div>
+            <div class="wap-flow-step is-done">
+                <span class="wap-flow-num">۳</span>
+                <strong>واریز به حساب</strong>
+                <small><?php echo esc_html( number_format( $s['settle_count'] ) ); ?> تسویه شده — <?php echo esc_html( number_format( $s['settle_total_rial'] ?? 0 ) ); ?> ریال</small>
+            </div>
+        </div>
 
         <div class="wap-export-bar" data-wap-no-capture>
             <span class="wap-export-label">خروجی گزارش:</span>
@@ -1389,36 +1409,36 @@ class WAP_Portal {
         <div id="wap_capture" class="wap-capture">
         <div class="wap-cards">
             <div class="wap-card">
-                <div class="wap-card-label">خرید ووکامرس (زرین‌پال)</div>
+                <div class="wap-card-label">۱) خرید مشتری</div>
                 <div class="wap-card-value"><?php echo esc_html( number_format( $s['wc_gross'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
-                <div class="wap-card-accent"><?php echo esc_html( number_format( $s['wc_count'] ) ); ?> سفارش</div>
+                <div class="wap-card-accent"><?php echo esc_html( number_format( $s['wc_count'] ) ); ?> سفارش زرین‌پال</div>
             </div>
             <div class="wap-card">
-                <div class="wap-card-label">کارمزد زرین‌پال</div>
+                <div class="wap-card-label">کارمزد درگاه</div>
                 <div class="wap-card-value"><?php echo esc_html( number_format( $s['wc_fee'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
-                <div class="wap-card-accent">تعرفه رسمی ۰٫۵٪+۵۰۰</div>
+                <div class="wap-card-accent">خالص مورد انتظار: <?php echo esc_html( number_format( $s['wc_net'] ) ); ?></div>
+            </div>
+            <div class="wap-card">
+                <div class="wap-card-label">۲) تأیید شاپرک</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( (int) ( $s['settle_pending_count'] ?? 0 ) ) ); ?></div>
+                <div class="wap-card-accent">در حال تسویه / منتظر واریز</div>
             </div>
             <div class="wap-card wap-card-net">
-                <div class="wap-card-label">خالص مورد انتظار</div>
-                <div class="wap-card-value"><?php echo esc_html( number_format( $s['wc_net'] ) ); ?> <small><?php echo esc_html( $currency ); ?></small></div>
-                <div class="wap-card-accent">خرید − کارمزد</div>
-            </div>
-            <div class="wap-card">
-                <div class="wap-card-label">واریز شاپرک (عین پنل زرین‌پال)</div>
-                <div class="wap-card-value"><?php echo esc_html( number_format( $s['settle_total_rial'] ?? ( $s['settle_total'] * 10 ) ) ); ?> <small>ریال</small></div>
-                <div class="wap-card-accent"><?php echo esc_html( number_format( $s['settle_count'] ) ); ?> تسویه — معادل <?php echo esc_html( number_format( $s['settle_total'] ) ); ?> تومان — Δ خالص: <?php echo esc_html( number_format( $s['diff_net_settle'] ) ); ?></div>
+                <div class="wap-card-label">۳) واریز خالص به حساب</div>
+                <div class="wap-card-value"><?php echo esc_html( number_format( $s['settle_total_rial'] ?? 0 ) ); ?> <small>ریال</small></div>
+                <div class="wap-card-accent"><?php echo esc_html( number_format( $s['settle_count'] ) ); ?> تسویه شده — پیامک فقط همین مرحله</div>
             </div>
         </div>
 
         <div class="wap-table-wrap" style="margin-bottom:24px">
-            <h3 style="margin:0 0 10px">خریدهای ووکامرس (درگاه زرین‌پال)</h3>
+            <h3 style="margin:0 0 10px">۱) خرید مشتری (سفارش‌های زرین‌پال)</h3>
             <table class="wap-table">
                 <thead>
                     <tr>
                         <th>سفارش</th>
-                        <th>تاریخ</th>
+                        <th>تاریخ خرید</th>
                         <th>خریدار</th>
-                        <th>وضعیت</th>
+                        <th>وضعیت سفارش</th>
                         <th>مبلغ</th>
                         <th>کارمزد</th>
                         <th>خالص</th>
@@ -1442,9 +1462,13 @@ class WAP_Portal {
             </table>
         </div>
 
-        <div class="wap-table-wrap">
-            <h3 style="margin:0 0 10px">تسویه‌های واریزشده (مثل پنل زرین‌پال)</h3>
-            <p class="wap-hint" style="margin:0 0 12px;line-height:1.7">همین واریزها پیامک می‌شوند. وضعیت «تسویه شده» = واریز به حساب انجام شده است.</p>
+        <?php
+        $pending = $report['settles_pending'] ?? array();
+        $paid    = $report['settles_paid'] ?? array();
+        ?>
+        <div class="wap-table-wrap" style="margin-bottom:24px">
+            <h3 style="margin:0 0 10px">۲) تأیید شاپرک (در حال تسویه)</h3>
+            <p class="wap-hint" style="margin:0 0 12px">هنوز به حساب واریز نشده — پیامک ارسال نمی‌شود.</p>
             <table class="wap-table wap-settle-table">
                 <thead>
                     <tr>
@@ -1452,15 +1476,44 @@ class WAP_Portal {
                         <th>تاریخ تخمینی واریز</th>
                         <th>شناسه ارجاع بانکی</th>
                         <th>شناسه تسویه</th>
-                        <th>مبلغ خالص تسویه (ریال)</th>
+                        <th>مبلغ خالص (ریال)</th>
                     </tr>
                 </thead>
                 <tbody>
-                <?php if ( empty( $report['settles'] ) ) : ?>
-                    <tr><td colspan="5" class="wap-empty">تسویهٔ واریزشده‌ای در این بازه نیست. Token و Terminal را در «پیامک واریز شاپرک» تنظیم کنید.</td></tr>
-                <?php else : foreach ( $report['settles'] as $r ) : ?>
+                <?php if ( empty( $pending ) ) : ?>
+                    <tr><td colspan="5" class="wap-empty">مورد در حال تسویه‌ای نیست.</td></tr>
+                <?php else : foreach ( $pending as $r ) : ?>
                     <tr>
-                        <td><span class="wap-settle-badge wap-settle-<?php echo esc_attr( strtolower( (string) $r['status'] ) ); ?>"><?php echo esc_html( $r['status_label'] ?? WAP_Zarinpal_Report::status_label( (string) $r['status'] ) ); ?></span></td>
+                        <td><span class="wap-settle-badge wap-settle-in_progress"><?php echo esc_html( $r['status_label'] ); ?></span></td>
+                        <td dir="ltr"><?php echo esc_html( $r['payable_display'] ?: '—' ); ?></td>
+                        <td dir="ltr" class="wap-settle-ref"><?php echo esc_html( $r['reference_id'] ?: '—' ); ?></td>
+                        <td dir="ltr"><?php echo esc_html( $r['id'] ); ?></td>
+                        <td dir="ltr"><strong><?php echo esc_html( number_format( $r['amount_rial'] ) ); ?></strong></td>
+                    </tr>
+                <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="wap-table-wrap">
+            <h3 style="margin:0 0 10px">۳) واریز خالص به حساب (تسویه شده)</h3>
+            <p class="wap-hint" style="margin:0 0 12px">فقط برای این مرحله پیامک ارسال می‌شود — فقط تاریخ واریز و مبلغ خالص.</p>
+            <table class="wap-table wap-settle-table">
+                <thead>
+                    <tr>
+                        <th>وضعیت</th>
+                        <th>تاریخ واریز</th>
+                        <th>شناسه ارجاع بانکی</th>
+                        <th>شناسه تسویه</th>
+                        <th>مبلغ خالص واریزی (ریال)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if ( empty( $paid ) ) : ?>
+                    <tr><td colspan="5" class="wap-empty">واریز تسویه‌شده‌ای در این بازه نیست. Token و Terminal را در «پیامک واریز خالص» تنظیم کنید.</td></tr>
+                <?php else : foreach ( $paid as $r ) : ?>
+                    <tr>
+                        <td><span class="wap-settle-badge wap-settle-paid"><?php echo esc_html( $r['status_label'] ); ?></span></td>
                         <td dir="ltr"><?php echo esc_html( $r['payable_display'] ?: ( $r['payable_jalali'] ?: '—' ) ); ?></td>
                         <td dir="ltr" class="wap-settle-ref"><?php echo esc_html( $r['reference_id'] ); ?></td>
                         <td dir="ltr"><?php echo esc_html( $r['id'] ); ?></td>

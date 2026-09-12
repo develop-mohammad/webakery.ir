@@ -71,13 +71,8 @@ class WAP_Zarinpal_Reconcile {
 		if ( $phone !== '' ) {
 			$msg = WAP_SMS::render_settle_message(
 				array(
-					'amount'        => '1,250,000',
-					'amount_rial'   => '12,500,000',
-					'reference_id'  => 'TEST-REF',
-					'reconcile_id'  => 'test',
-					'status'        => 'PAID',
-					'reconciled_at' => current_time( 'mysql' ),
-					'payable_at'    => current_time( 'mysql' ),
+					'amount_rial' => '38,795,000',
+					'payable_at'  => 'امروز ۰۴:۰۰',
 				)
 			);
 			$r = WAP_SMS::send( $phone, $msg );

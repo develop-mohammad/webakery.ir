@@ -82,16 +82,18 @@ class WAP_Zarinpal_Report {
 		$settles = array();
 		$settle_total = 0.0;
 		$settle_rial  = 0.0;
+		$settle_paid_count = 0;
+		$settle_pending_count = 0;
 		$settle_err = '';
 		$fetched = self::fetch_settles( $f );
 		if ( is_wp_error( $fetched ) ) {
 			$settle_err = $fetched->get_error_message();
 		} else {
 			foreach ( $fetched as $row ) {
-				// مبلغ API زرین‌پال دقیقاً ریال است (مثل پنل)
 				$amount_rial = (float) ( $row['amount'] ?? 0 );
 				$amount_toman = $amount_rial / 10;
 				$status = (string) ( $row['status'] ?? '' );
+				$status_u = strtoupper( $status );
 				$settles[] = array(
 					'id'               => (string) ( $row['id'] ?? '' ),
 					'status'           => $status,
@@ -106,10 +108,14 @@ class WAP_Zarinpal_Report {
 					'payable_display'  => self::format_iso_display( (string) ( $row['payable_at'] ?? '' ) ),
 					'reconciled_display' => self::format_iso_display( (string) ( $row['reconciled_at'] ?? '' ) ),
 				);
-				$settle_total += $amount_toman;
-				$settle_rial  += $amount_rial;
+				if ( $status_u === 'PAID' ) {
+					$settle_total += $amount_toman;
+					$settle_rial  += $amount_rial;
+					$settle_paid_count++;
+				} elseif ( $status_u === 'IN_PROGRESS' ) {
+					$settle_pending_count++;
+				}
 			}
-			// مرتب‌سازی مثل پنل: جدیدترین تاریخ تخمینی واریز اول
 			usort( $settles, function( $a, $b ) {
 				$ka = (string) ( $a['payable_at'] ?: $a['reconciled_at'] );
 				$kb = (string) ( $b['payable_at'] ?: $b['reconciled_at'] );
@@ -119,17 +125,24 @@ class WAP_Zarinpal_Report {
 
 		$out['orders']  = $order_rows;
 		$out['settles'] = $settles;
+		$out['settles_paid'] = array_values( array_filter( $settles, function( $r ) {
+			return strtoupper( (string) ( $r['status'] ?? '' ) ) === 'PAID';
+		} ) );
+		$out['settles_pending'] = array_values( array_filter( $settles, function( $r ) {
+			return strtoupper( (string) ( $r['status'] ?? '' ) ) === 'IN_PROGRESS';
+		} ) );
 		$out['error']   = $settle_err;
 		$out['summary'] = array(
-			'wc_count'          => count( $order_rows ),
-			'wc_gross'          => $gross,
-			'wc_fee'            => $fee_sum,
-			'wc_net'            => $net_sum,
-			'settle_count'      => count( $settles ),
-			'settle_total'      => $settle_total,
-			'settle_total_rial' => $settle_rial,
-			'diff_net_settle'   => $settle_total - $net_sum,
-			'fee_source'        => $fee_source,
+			'wc_count'             => count( $order_rows ),
+			'wc_gross'             => $gross,
+			'wc_fee'               => $fee_sum,
+			'wc_net'               => $net_sum,
+			'settle_count'         => $settle_paid_count,
+			'settle_pending_count' => $settle_pending_count,
+			'settle_total'         => $settle_total,
+			'settle_total_rial'    => $settle_rial,
+			'diff_net_settle'      => $settle_total - $net_sum,
+			'fee_source'           => $fee_source,
 		);
 		return $out;
 	}
@@ -214,7 +227,8 @@ class WAP_Zarinpal_Report {
 		}
 
 		list( $from, $to ) = self::gregorian_range( $f );
-		$opts = array( 'filter' => 'PAID' );
+		// همه وضعیت‌ها تا مسیر خرید→شاپرک→واریز در پنل دیده شود
+		$opts = array( 'filter' => 'ALL' );
 		if ( $from !== '' ) {
 			$opts['created_from_date'] = $from;
 		}
@@ -227,7 +241,6 @@ class WAP_Zarinpal_Report {
 			return $items;
 		}
 
-		// اگر API تاریخ را اعمال نکرده باشد، فیلتر محلی روی reconciled_at / payable_at
 		$ts_from = ! empty( $f['date_from'] ) ? WAP_Jalali::str_to_timestamp( $f['date_from'], false ) : 0;
 		$ts_to   = ! empty( $f['date_to'] ) ? WAP_Jalali::str_to_timestamp( $f['date_to'], true ) : 0;
 		if ( ! $ts_from && ! $ts_to ) {
@@ -240,10 +253,10 @@ class WAP_Zarinpal_Report {
 				continue;
 			}
 			$status = strtoupper( (string) ( $row['status'] ?? '' ) );
-			if ( $status !== 'PAID' ) {
+			if ( ! in_array( $status, array( 'PAID', 'IN_PROGRESS', 'REVERSED' ), true ) ) {
 				continue;
 			}
-			$iso = (string) ( $row['reconciled_at'] ?? $row['payable_at'] ?? '' );
+			$iso = (string) ( $row['payable_at'] ?? $row['reconciled_at'] ?? '' );
 			$ts  = $iso !== '' ? strtotime( $iso ) : 0;
 			if ( $ts_from && $ts && $ts < $ts_from ) {
 				continue;

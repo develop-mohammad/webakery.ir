@@ -11,7 +11,7 @@ class WAP_SMS {
 
 	public static function defaults(): array {
 		return array(
-			// پرداخت لحظه‌ای سفارش غیرفعال است — فقط واریز شاپرک
+			// پرداخت لحظه‌ای سفارش غیرفعال است — فقط واریز خالص به حساب
 			'enabled'          => 0,
 			'only_zarinpal'    => 1,
 			'username'         => '',
@@ -25,8 +25,13 @@ class WAP_SMS {
 			'zp_terminal_id'   => '',
 			'zp_merchant_id'   => '',
 			'zp_access_token'  => '',
-			'settle_message'   => "واریز شاپرک به حساب (تسویه شده)\nمبلغ خالص: {amount_rial} ریال\nشناسه تسویه: {reconcile_id}\nارجاع بانکی: {reference_id}\nتاریخ واریز: {payable_at}",
+			'settle_message'   => self::fixed_settle_template(),
 		);
+	}
+
+	/** تنها متن مجاز پیامک: تاریخ واریز + مبلغ خالص. */
+	public static function fixed_settle_template(): string {
+		return "واریز خالص به حساب\nمبلغ: {amount_rial} ریال\nتاریخ واریز: {payable_at}";
 	}
 
 	public static function get( $key = null, $default = null ) {
@@ -35,8 +40,9 @@ class WAP_SMS {
 			$opts = array();
 		}
 		$opts = array_merge( self::defaults(), $opts );
-		// همیشه پیامک پرداخت مشتری خاموش بماند
-		$opts['enabled'] = 0;
+		// همیشه پیامک پرداخت مشتری خاموش + متن واریز ثابت
+		$opts['enabled']        = 0;
+		$opts['settle_message'] = self::fixed_settle_template();
 		if ( $key === null ) {
 			return $opts;
 		}
@@ -46,7 +52,7 @@ class WAP_SMS {
 	public static function save( array $input ): array {
 		$cur  = self::get();
 		$out  = self::defaults();
-		$out['enabled']       = 0; // فقط واریز شاپرک
+		$out['enabled']       = 0; // فقط واریز خالص
 		$out['only_zarinpal'] = 1;
 		$out['username']      = sanitize_text_field( $input['username'] ?? '' );
 		$pass = (string) ( $input['password'] ?? '' );
@@ -61,7 +67,7 @@ class WAP_SMS {
 		$out['zp_merchant_id'] = sanitize_text_field( $input['zp_merchant_id'] ?? '' );
 		$token = (string) ( $input['zp_access_token'] ?? '' );
 		$out['zp_access_token'] = ( $token !== '' ) ? $token : (string) ( $cur['zp_access_token'] ?? '' );
-		$out['settle_message']  = sanitize_textarea_field( $input['settle_message'] ?? $out['settle_message'] );
+		$out['settle_message']  = self::fixed_settle_template();
 		update_option( self::OPTION, $out, false );
 		if ( class_exists( 'WAP_Zarinpal_Reconcile' ) ) {
 			WAP_Zarinpal_Reconcile::maybe_schedule();
@@ -187,7 +193,7 @@ class WAP_SMS {
 	 * @param array<string,string> $vars
 	 */
 	public static function render_settle_message( array $vars ): string {
-		$tpl = (string) self::get( 'settle_message' );
+		$tpl = self::fixed_settle_template();
 		foreach ( $vars as $k => $v ) {
 			$tpl = str_replace( '{' . $k . '}', (string) $v, $tpl );
 		}
