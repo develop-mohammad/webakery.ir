@@ -34,7 +34,7 @@ assert( WAP_SMS::normalize_phone( '123' ) === '' );
 $opts = WAP_SMS::get();
 assert( (int) $opts['enabled'] === 0, 'payment SMS always off' );
 assert( (int) $opts['settle_enabled'] === 1, 'settle SMS default on' );
-assert( strpos( (string) $opts['settle_message'], 'شاپرک' ) !== false || strpos( (string) $opts['settle_message'], '{amount}' ) !== false );
+assert( strpos( (string) $opts['settle_message'], '{amount_rial}' ) !== false && strpos( (string) $opts['settle_message'], '{payable_at}' ) !== false );
 
 $msg = WAP_SMS::render_settle_message( array(
 	'amount_rial'   => '12,500,000',
@@ -48,14 +48,14 @@ assert( (string) WAP_SMS::get('settle_message') === WAP_SMS::fixed_settle_templa
 
 $admin = file_get_contents( $root . '/includes/class-wap-admin.php' );
 assert( strpos( $admin, 'پیامک بعد از پرداخت مشتری' ) === false, 'no payment SMS UI' );
-assert( strpos( $admin, 'واریز شاپرک به حساب' ) !== false, 'settle SMS UI present' );
+assert( strpos( $admin, 'واریز خالص' ) !== false || strpos( $admin, 'واریزی خالص' ) !== false, 'settle SMS UI present' );
 assert( strpos( $admin, 'wap_test_settle_sms' ) !== false, 'settle test action' );
 
 $boot = file_get_contents( $root . '/hesabdar.php' );
 assert( strpos( $boot, 'class-wap-payment-notify.php' ) === false, 'payment notify not loaded' );
 assert( strpos( $boot, 'WAP_Payment_Notify' ) === false, 'payment notify not inited' );
 assert( strpos( $boot, 'class-wap-zarinpal-reconcile.php' ) !== false, 'reconcile loaded' );
-assert( strpos( $boot, "1.22.0" ) !== false, 'version 1.22.0' );
+assert( strpos( $boot, "1.23.0" ) !== false, 'version 1.23.0' );
 assert( ! is_readable( $root . '/includes/class-wap-payment-notify.php' ), 'payment notify file removed' );
 
 echo "ALL SETTLE-ONLY SMS SMOKE TESTS PASSED\n";

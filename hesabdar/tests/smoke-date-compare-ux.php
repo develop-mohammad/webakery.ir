@@ -6,7 +6,7 @@ $files = array(
   $root.'/assets/jalali-calendar.js' => array('setWholeMonth','jcal-months','کل این ماه'),
   $root.'/assets/app.js' => array('wapValidateDateForm','wapSubmitFilters','wapFillSameLastYear','wapFillPreviousMonth','wap_compare_from','data-wap-compare-previous-month'),
   $root.'/assets/style.css' => array('wap-month-bar','jcal-months'),
-  $root.'/hesabdar.php' => array("1.22.0"),
+  $root.'/hesabdar.php' => array("1.23.0"),
 );
 foreach ($files as $file=>$needles) {
   if (!is_readable($file)) { fwrite(STDERR,"FAIL missing $file\n"); exit(1);} 

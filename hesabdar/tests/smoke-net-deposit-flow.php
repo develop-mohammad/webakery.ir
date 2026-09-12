@@ -46,6 +46,6 @@ assert( strpos( $admin, 'fixed_settle_template' ) !== false );
 assert( strpos( $admin, 'name="wap_sms[settle_message]"' ) === false );
 
 $boot = file_get_contents( $root . '/hesabdar.php' );
-assert( strpos( $boot, '1.22.0' ) !== false );
+assert( strpos( $boot, '1.23.0' ) !== false );
 
 echo "ALL NET-DEPOSIT SMS + FLOW SMOKE PASSED\n";

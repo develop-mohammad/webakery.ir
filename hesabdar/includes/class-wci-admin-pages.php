@@ -1584,7 +1584,7 @@ function wci_shaparak_report_page() {
         wp_die( 'Unauthorized' );
     }
     if ( ! class_exists( 'WAP_Zarinpal_Report' ) ) {
-        echo '<div class="wrap"><div class="notice notice-error"><p>ماژول گزارش شاپرک بارگذاری نشده است.</p></div></div>';
+        echo '<div class="wrap"><div class="notice notice-error"><p>ماژول واریزی خالص بارگذاری نشده است.</p></div></div>';
         return;
     }
     $report = WAP_Zarinpal_Report::build();
@@ -1593,8 +1593,8 @@ function wci_shaparak_report_page() {
     $is_jalali = function_exists( 'wci_is_jalali' ) ? wci_is_jalali() : true;
 
     echo '<div class="wrap wci-wrap">';
-    echo '<h1>شاپرک، خرید ووکامرس و کارمزد زرین‌پال</h1>';
-    echo '<p style="max-width:820px;line-height:1.8">' . esc_html( WAP_Zarinpal_Fee::tariff_note() ) . ' واریز شاپرک معمولاً با یک روز تأخیر نسبت به خرید است.</p>';
+    echo '<h1>واریزی خالص</h1>';
+    echo '<p style="max-width:820px;line-height:1.8">مسیر خرید مشتری ← تأیید شاپرک ← واریز به حساب. ' . esc_html( WAP_Zarinpal_Fee::tariff_note() ) . '</p>';
 
     echo '<form method="get" class="wci-filter-bar">';
     echo '<input type="hidden" name="page" value="wci-shaparak">';
@@ -1642,7 +1642,7 @@ function wci_shaparak_report_page() {
     echo '<span>🛒 خرید ووکامرس: <strong>' . esc_html( number_format( $s['wc_gross'] ) ) . '</strong> (' . esc_html( number_format( $s['wc_count'] ) ) . ')</span>';
     echo '<span>💳 کارمزد: <strong>' . esc_html( number_format( $s['wc_fee'] ) ) . '</strong></span>';
     echo '<span>✅ خالص: <strong>' . esc_html( number_format( $s['wc_net'] ) ) . '</strong></span>';
-    echo '<span>🏦 واریز شاپرک: <strong>' . esc_html( number_format( $s['settle_total_rial'] ?? 0 ) ) . '</strong> ریال / ' . esc_html( number_format( $s['settle_total'] ) ) . ' تومان (' . esc_html( number_format( $s['settle_count'] ) ) . ')</span>';
+    echo '<span>🏦 واریزی خالص: <strong>' . esc_html( number_format( $s['settle_total_rial'] ?? 0 ) ) . '</strong> ریال / ' . esc_html( number_format( $s['settle_total'] ) ) . ' تومان (' . esc_html( number_format( $s['settle_count'] ) ) . ')</span>';
     echo '<span>Δ اختلاف: <strong>' . esc_html( number_format( $s['diff_net_settle'] ) ) . '</strong></span>';
     echo '</div>';
 
@@ -1667,7 +1667,7 @@ function wci_shaparak_report_page() {
     }
     echo '</tbody></table>';
 
-    echo '<h2>تسویه‌های واریزشده (مثل پنل زرین‌پال)</h2>';
+    echo '<h2>واریزی خالص — تسویه‌های واریزشده</h2>';
     echo '<p class="description">همین واریزها پیامک می‌شوند. وضعیت «تسویه شده» = واریز به حساب.</p>';
     echo '<table class="widefat striped"><thead><tr><th>وضعیت</th><th>تاریخ تخمینی واریز</th><th>شناسه ارجاع بانکی</th><th>شناسه تسویه</th><th>مبلغ خالص تسویه (ریال)</th></tr></thead><tbody>';
     if ( empty( $report['settles'] ) ) {
@@ -1688,7 +1688,7 @@ function wci_shaparak_report_page() {
 
     $img_cfg = class_exists( 'WAP_Report_Image' ) ? WAP_Report_Image::client_config() : array();
     $img_cfg['view'] = 'shaparak';
-    $img_cfg['labelFa'] = 'شاپرک';
+    $img_cfg['labelFa'] = 'واریزی خالص';
     echo '<script>window.WAP_IMAGE=' . wp_json_encode( $img_cfg ) . ';</script>';
     echo '<script src="' . esc_url( WAP_URL . 'assets/app.js?v=' . WAP_VERSION ) . '"></script>';
     echo '</div>';

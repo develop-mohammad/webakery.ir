@@ -418,7 +418,7 @@ class WAP_Portal {
                         } elseif ( $view === 'products' ) {
                             echo 'تحلیل فروش به تفکیک محصول';
                         } elseif ( $view === 'shaparak' ) {
-                            echo 'تطبیق واریز شاپرک، خرید ووکامرس و کارمزد زرین‌پال';
+                            echo 'واریزی خالص — مسیر خرید تا واریز به حساب';
                         } elseif ( $view === 'analytics' ) {
                             echo 'نمودار فروش، منبع ورود، مشتریان ثابت و پیک خرید';
                         } else {
@@ -449,7 +449,7 @@ class WAP_Portal {
                     'analytics' => 'داشبورد',
                     'orders'    => 'سفارش‌ها',
                     'products'  => 'محصولات',
-                    'shaparak'  => 'شاپرک / کارمزد',
+                    'shaparak'  => 'واریزی خالص',
                 );
                 foreach ( $tabs as $tab_key => $tab_label ) :
                     if ( class_exists( 'WAP_Report_Image' ) && ! WAP_Report_Image::can_view_tab( $tab_key ) ) {
@@ -1330,7 +1330,7 @@ class WAP_Portal {
 
     private static function render_shaparak_tab() {
         if ( ! class_exists( 'WAP_Zarinpal_Report' ) ) {
-            echo '<div class="wap-alert">ماژول گزارش شاپرک بارگذاری نشده است.</div>';
+            echo '<div class="wap-alert">ماژول واریزی خالص بارگذاری نشده است.</div>';
             return;
         }
         $report  = WAP_Zarinpal_Report::build();
@@ -1372,7 +1372,7 @@ class WAP_Portal {
 
         <p class="wap-hint" style="margin:8px 0 16px;line-height:1.8;color:#475569">
             <?php echo esc_html( WAP_Zarinpal_Fee::tariff_note() ); ?>
-            مسیر کامل: خرید مشتری ← تأیید شاپرک ← واریز خالص به حساب. فقط مرحلهٔ واریز پیامک می‌شود (تاریخ + مبلغ خالص).
+            مسیر کامل واریزی خالص: خرید مشتری ← تأیید شاپرک ← واریز به حساب. فقط مرحلهٔ واریز پیامک می‌شود (تاریخ + مبلغ خالص).
         </p>
 
         <?php if ( $report['error'] !== '' ) : ?>

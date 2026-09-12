@@ -156,7 +156,7 @@ class WAP_Report_Image {
             'sales'     => 'گزارش-مالی',
             'orders'    => 'سفارش‌ها',
             'products'  => 'محصولات',
-            'shaparak'  => 'شاپرک',
+            'shaparak'  => 'واریزی خالص',
             'analytics' => 'داشبورد',
             'preview'   => 'پیش‌نمایش',
             'report'    => 'گزارش',

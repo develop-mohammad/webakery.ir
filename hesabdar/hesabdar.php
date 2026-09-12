@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hesabdar
  * Description: مدیریت کامل مشتریان و فروش ووکامرس (سفارش‌ها، ایجاد/ویرایش سفارش، محصولات، گزارش مالی، فاکتور) از داخل پیشخوان + پرتال مستقل و مینیمال ورود حسابدار بدون دسترسی به پیشخوان.
- * Version:     1.22.0
+ * Version:     1.23.0
  * Plugin URI:  https://webakery.ir
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,7 +22,7 @@ if ( defined( 'HESABDAR_LOADED' ) ) {
 }
 define( 'HESABDAR_LOADED', true );
 
-define( 'WAP_VERSION', '1.22.0' );
+define( 'WAP_VERSION', '1.23.0' );
 define( 'WAP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WAP_URL', plugin_dir_url( __FILE__ ) );
 
@@ -359,7 +359,7 @@ function hesabdar_register_wci_hooks() {
 		add_submenu_page( 'wci-orders', 'ویرایش سفارش', '—', $cap, 'wci-order-edit', hesabdar_wci_page_cb( 'wci_order_edit_page' ) );
 		add_submenu_page( 'wci-orders', 'فروش محصولات', 'فروش محصولات', $cap, 'wci-products', hesabdar_wci_page_cb( 'wci_products_page' ) );
 		add_submenu_page( 'wci-orders', 'گزارش مالی', 'گزارش مالی', $cap, 'wci-reports', hesabdar_wci_page_cb( 'wci_reports_page' ) );
-		add_submenu_page( 'wci-orders', 'شاپرک و کارمزد', 'شاپرک و کارمزد', $cap, 'wci-shaparak', hesabdar_wci_page_cb( 'wci_shaparak_report_page' ) );
+		add_submenu_page( 'wci-orders', 'واریزی خالص', 'واریزی خالص', $cap, 'wci-shaparak', hesabdar_wci_page_cb( 'wci_shaparak_report_page' ) );
 		add_submenu_page( 'wci-orders', 'داشبورد تصویری', 'داشبورد تصویری', $cap, 'wci-analytics', function() {
 			if ( ! hesabdar_user_can_wci() ) {
 				wp_die( 'Unauthorized' );

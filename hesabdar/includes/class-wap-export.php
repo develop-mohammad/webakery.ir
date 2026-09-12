@@ -212,9 +212,9 @@ class WAP_Export {
         fputcsv( $fp, array( 'جمع خرید ووکامرس (تومان)', $s['wc_gross'] ?? 0 ) );
         fputcsv( $fp, array( 'جمع کارمزد زرین‌پال (تومان)', $s['wc_fee'] ?? 0 ) );
         fputcsv( $fp, array( 'خالص مورد انتظار (تومان)', $s['wc_net'] ?? 0 ) );
-        fputcsv( $fp, array( 'تعداد واریز شاپرک', $s['settle_count'] ?? 0 ) );
-        fputcsv( $fp, array( 'جمع واریز شاپرک (ریال — عین پنل)', $s['settle_total_rial'] ?? 0 ) );
-        fputcsv( $fp, array( 'جمع واریز شاپرک (تومان)', $s['settle_total'] ?? 0 ) );
+        fputcsv( $fp, array( 'تعداد واریزی خالص', $s['settle_count'] ?? 0 ) );
+        fputcsv( $fp, array( 'جمع واریزی خالص (ریال)', $s['settle_total_rial'] ?? 0 ) );
+        fputcsv( $fp, array( 'جمع واریزی خالص (تومان)', $s['settle_total'] ?? 0 ) );
         fputcsv( $fp, array( 'اختلاف واریز − خالص (تومان)', $s['diff_net_settle'] ?? 0 ) );
         fputcsv( $fp, array() );
         fputcsv( $fp, array( '--- سفارش‌های ووکامرس ---' ) );
@@ -233,7 +233,7 @@ class WAP_Export {
             ) );
         }
         fputcsv( $fp, array() );
-        fputcsv( $fp, array( '--- تسویه‌های واریزشده (مثل پنل زرین‌پال) ---' ) );
+        fputcsv( $fp, array( '--- واریزی خالص (تسویه زرین‌پال) ---' ) );
         fputcsv( $fp, array( 'وضعیت', 'تاریخ تخمینی واریز', 'شناسه ارجاع بانکی', 'شناسه تسویه', 'مبلغ خالص تسویه (ریال)', 'معادل تومان', 'تاریخ شمسی واریز' ) );
         foreach ( (array) ( $report['settles'] ?? array() ) as $r ) {
             fputcsv( $fp, array(
@@ -265,9 +265,9 @@ class WAP_Export {
                     array( 'جمع خرید ووکامرس (تومان)', (float) ( $s['wc_gross'] ?? 0 ) ),
                     array( 'جمع کارمزد زرین‌پال (تومان)', (float) ( $s['wc_fee'] ?? 0 ) ),
                     array( 'خالص مورد انتظار (تومان)', (float) ( $s['wc_net'] ?? 0 ) ),
-                    array( 'تعداد واریز شاپرک', (int) ( $s['settle_count'] ?? 0 ) ),
-                    array( 'جمع واریز شاپرک (ریال — عین پنل)', (float) ( $s['settle_total_rial'] ?? 0 ) ),
-                    array( 'جمع واریز شاپرک (تومان)', (float) ( $s['settle_total'] ?? 0 ) ),
+                    array( 'تعداد واریزی خالص', (int) ( $s['settle_count'] ?? 0 ) ),
+                    array( 'جمع واریزی خالص (ریال)', (float) ( $s['settle_total_rial'] ?? 0 ) ),
+                    array( 'جمع واریزی خالص (تومان)', (float) ( $s['settle_total'] ?? 0 ) ),
                     array( 'اختلاف واریز − خالص (تومان)', (float) ( $s['diff_net_settle'] ?? 0 ) ),
                 ),
             ),
@@ -275,7 +275,7 @@ class WAP_Export {
                 'headers' => array( 'شماره', 'تاریخ شمسی', 'خریدار', 'وضعیت', 'روش', 'مبلغ تومان', 'کارمزد', 'خالص', 'تراکنش' ),
                 'rows'    => array(),
             ),
-            'واریز شاپرک' => array(
+            'واریزی خالص' => array(
                 'headers' => array( 'وضعیت', 'تاریخ تخمینی واریز', 'شناسه ارجاع بانکی', 'شناسه تسویه', 'مبلغ خالص تسویه (ریال)', 'معادل تومان', 'تاریخ شمسی واریز' ),
                 'rows'    => array(),
             ),
@@ -294,7 +294,7 @@ class WAP_Export {
             );
         }
         foreach ( (array) ( $report['settles'] ?? array() ) as $r ) {
-            $sheets['واریز شاپرک']['rows'][] = array(
+            $sheets['واریزی خالص']['rows'][] = array(
                 (string) ( $r['status_label'] ?? ( $r['status'] ?? '' ) ),
                 (string) ( $r['payable_display'] ?? ( $r['payable_at'] ?? '' ) ),
                 (string) ( $r['reference_id'] ?? '' ),

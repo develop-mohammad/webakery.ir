@@ -102,7 +102,7 @@ class WAP_Admin {
             <p style="max-width:760px;line-height:1.8">
                 فقط <strong>یک نوع پیامک</strong> ارسال می‌شود: وقتی واریز خالص به حساب انجام شد.
                 <br>متن پیامک فقط شامل <strong>تاریخ واریز</strong> و <strong>مبلغ خالص</strong> است.
-                <br>مسیر خرید مشتری ← تأیید شاپرک ← واریز به حساب در تب «شاپرک» پرتال قابل مشاهده است.
+                <br>مسیر خرید مشتری ← تأیید شاپرک ← واریز به حساب در تب «واریزی خالص» پرتال قابل مشاهده است.
             </p>
 
             <?php if ( $notice ) : ?>
@@ -285,7 +285,7 @@ class WAP_Admin {
                         <td>
                             <label><input type="checkbox" name="wap_ri[restrict_accountant]" value="1" <?php checked( (int) $s['restrict_accountant'], 1 ); ?>> فقط تب‌های انتخابی برای حسابدار</label>
                             <div style="margin-top:8px">
-                                <?php foreach ( array( 'sales' => 'گزارش مالی', 'orders' => 'سفارش‌ها', 'products' => 'محصولات', 'shaparak' => 'شاپرک', 'analytics' => 'داشبورد' ) as $k => $lbl ) : ?>
+                                <?php foreach ( array( 'sales' => 'گزارش مالی', 'orders' => 'سفارش‌ها', 'products' => 'محصولات', 'shaparak' => 'واریزی خالص', 'analytics' => 'داشبورد' ) as $k => $lbl ) : ?>
                                     <label style="margin-left:12px"><input type="checkbox" name="wap_ri[accountant_tabs][]" value="<?php echo esc_attr( $k ); ?>" <?php checked( in_array( $k, (array) $s['accountant_tabs'], true ) ); ?>> <?php echo esc_html( $lbl ); ?></label>
                                 <?php endforeach; ?>
                             </div>

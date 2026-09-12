@@ -223,7 +223,7 @@ class WAP_Zarinpal_Report {
 		$token = trim( (string) WAP_SMS::get( 'zp_access_token', '' ) );
 		$tid   = trim( (string) WAP_SMS::get( 'zp_terminal_id', '' ) );
 		if ( $token === '' || $tid === '' ) {
-			return new WP_Error( 'wap_zp_cfg', 'Access Token و Terminal ID را در «پیامک واریز شاپرک» وارد کنید.' );
+            return new WP_Error( 'wap_zp_cfg', 'Access Token و Terminal ID را در «پیامک واریز خالص» وارد کنید.' );
 		}
 
 		list( $from, $to ) = self::gregorian_range( $f );
