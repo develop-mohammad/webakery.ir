@@ -3,6 +3,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * ارسال پیامک از طریق ملی‌پیامک برای Hesabdar.
+ * فقط برای واریز شاپرک به حساب (تسویه زرین‌پال — معمولاً یک روز بعد).
  */
 class WAP_SMS {
 
@@ -10,6 +11,7 @@ class WAP_SMS {
 
 	public static function defaults(): array {
 		return array(
+			// پرداخت لحظه‌ای سفارش غیرفعال است — فقط واریز شاپرک
 			'enabled'          => 0,
 			'only_zarinpal'    => 1,
 			'username'         => '',
@@ -17,10 +19,9 @@ class WAP_SMS {
 			'sender'           => '',
 			'pattern'          => '',
 			'recipients'       => '',
-			'message'          => "پرداخت موفق زرین‌پال\nسفارش #{order_id}\nمبلغ: {total} تومان\nخریدار: {customer}\nروش: {payment}",
+			'message'          => '',
 			'merchant_note'    => '',
-			// تسویه شاپرک → حساب
-			'settle_enabled'   => 0,
+			'settle_enabled'   => 1,
 			'zp_terminal_id'   => '',
 			'zp_merchant_id'   => '',
 			'zp_access_token'  => '',
@@ -34,6 +35,8 @@ class WAP_SMS {
 			$opts = array();
 		}
 		$opts = array_merge( self::defaults(), $opts );
+		// همیشه پیامک پرداخت مشتری خاموش بماند
+		$opts['enabled'] = 0;
 		if ( $key === null ) {
 			return $opts;
 		}
@@ -43,16 +46,15 @@ class WAP_SMS {
 	public static function save( array $input ): array {
 		$cur  = self::get();
 		$out  = self::defaults();
-		$out['enabled']       = ! empty( $input['enabled'] ) ? 1 : 0;
-		$out['only_zarinpal'] = ! empty( $input['only_zarinpal'] ) ? 1 : 0;
+		$out['enabled']       = 0; // فقط واریز شاپرک
+		$out['only_zarinpal'] = 1;
 		$out['username']      = sanitize_text_field( $input['username'] ?? '' );
-		// رمز خالی = حفظ رمز قبلی
 		$pass = (string) ( $input['password'] ?? '' );
 		$out['password']      = ( $pass !== '' ) ? $pass : (string) ( $cur['password'] ?? '' );
 		$out['sender']        = sanitize_text_field( $input['sender'] ?? '' );
 		$out['pattern']       = sanitize_text_field( $input['pattern'] ?? '' );
 		$out['recipients']    = sanitize_textarea_field( $input['recipients'] ?? '' );
-		$out['message']       = sanitize_textarea_field( $input['message'] ?? $out['message'] );
+		$out['message']       = '';
 		$out['merchant_note'] = sanitize_text_field( $input['merchant_note'] ?? '' );
 		$out['settle_enabled'] = ! empty( $input['settle_enabled'] ) ? 1 : 0;
 		$out['zp_terminal_id'] = sanitize_text_field( $input['zp_terminal_id'] ?? '' );
@@ -121,7 +123,6 @@ class WAP_SMS {
 
 		$pattern = trim( (string) self::get( 'pattern' ) );
 		if ( $pattern !== '' ) {
-			// پترن خدماتی: معمولاً فقط متغیرها را می‌فرستد؛ اینجا کل متن را به‌عنوان text می‌فرستیم
 			$resp = wp_remote_post(
 				'https://rest.payamak-panel.com/api/SendSMS/BaseServiceNumber',
 				array(
@@ -159,7 +160,6 @@ class WAP_SMS {
 		$code = (int) wp_remote_retrieve_response_code( $resp );
 		$body = wp_remote_retrieve_body( $resp );
 		$data = json_decode( $body, true );
-		// API ملی‌پیامک معمولاً عدد برگشتی > 0 یعنی موفقیت، یا Value/RetStatus
 		$ok = false;
 		if ( is_array( $data ) ) {
 			if ( isset( $data['Value'] ) && is_numeric( $data['Value'] ) && (float) $data['Value'] > 0 ) {
@@ -182,13 +182,24 @@ class WAP_SMS {
 	}
 
 	/**
+	 * متن پیامک واریز شاپرک.
+	 *
 	 * @param array<string,string> $vars
 	 */
-	public static function render_message( array $vars ): string {
-		$tpl = (string) self::get( 'message' );
+	public static function render_settle_message( array $vars ): string {
+		$tpl = (string) self::get( 'settle_message' );
 		foreach ( $vars as $k => $v ) {
 			$tpl = str_replace( '{' . $k . '}', (string) $v, $tpl );
 		}
 		return $tpl;
+	}
+
+	/**
+	 * سازگاری عقب‌رو — دیگر برای پرداخت مشتری استفاده نمی‌شود.
+	 *
+	 * @param array<string,string> $vars
+	 */
+	public static function render_message( array $vars ): string {
+		return self::render_settle_message( $vars );
 	}
 }

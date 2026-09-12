@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hesabdar
  * Description: مدیریت کامل مشتریان و فروش ووکامرس (سفارش‌ها، ایجاد/ویرایش سفارش، محصولات، گزارش مالی، فاکتور) از داخل پیشخوان + پرتال مستقل و مینیمال ورود حسابدار بدون دسترسی به پیشخوان.
- * Version:     1.19.1
+ * Version:     1.20.0
  * Plugin URI:  https://webakery.ir
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,7 +22,7 @@ if ( defined( 'HESABDAR_LOADED' ) ) {
 }
 define( 'HESABDAR_LOADED', true );
 
-define( 'WAP_VERSION', '1.19.1' );
+define( 'WAP_VERSION', '1.20.0' );
 define( 'WAP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WAP_URL', plugin_dir_url( __FILE__ ) );
 
@@ -81,7 +81,6 @@ function hesabdar_bootstrap_core() {
 		'class-wap-portal.php',
 		'class-wap-admin.php',
 		'class-wap-sms.php',
-		'class-wap-payment-notify.php',
 		'class-wap-zarinpal-reconcile.php',
 		'class-wap-zarinpal-fee.php',
 		'class-wap-zarinpal-report.php',
@@ -610,9 +609,6 @@ add_filter( 'login_redirect', function( $redirect_to, $requested_redirect_to, $u
 WAP_Admin::init();
 if ( class_exists( 'WAP_Traffic' ) ) {
 	WAP_Traffic::init();
-}
-if ( class_exists( 'WAP_Payment_Notify' ) ) {
-	WAP_Payment_Notify::init();
 }
 if ( class_exists( 'WAP_Zarinpal_Reconcile' ) ) {
 	WAP_Zarinpal_Reconcile::init();

@@ -18,6 +18,7 @@ class WAP_Zarinpal_Reconcile {
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'cron_poll' ) );
 		add_action( 'admin_post_wap_poll_reconciles_now', array( __CLASS__, 'handle_manual_poll' ) );
+		add_action( 'admin_post_wap_test_settle_sms', array( __CLASS__, 'handle_test_sms' ) );
 		add_action( 'init', array( __CLASS__, 'maybe_schedule' ), 20 );
 	}
 
@@ -52,6 +53,45 @@ class WAP_Zarinpal_Reconcile {
 			admin_url( 'admin.php' )
 		);
 		wp_safe_redirect( $redirect );
+		exit;
+	}
+
+	/** ارسال پیامک تست با متن واریز شاپرک. */
+	public static function handle_test_sms(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'Unauthorized' );
+		}
+		check_admin_referer( 'wap_test_settle_sms' );
+		$phone = isset( $_POST['wap_test_phone'] ) ? WAP_SMS::normalize_phone( (string) wp_unslash( $_POST['wap_test_phone'] ) ) : '';
+		if ( $phone === '' ) {
+			$list = WAP_SMS::recipient_list();
+			$phone = $list[0] ?? '';
+		}
+		$msg_key = 'no_phone';
+		if ( $phone !== '' ) {
+			$msg = WAP_SMS::render_settle_message(
+				array(
+					'amount'        => '1,250,000',
+					'amount_rial'   => '12,500,000',
+					'reference_id'  => 'TEST-REF',
+					'reconcile_id'  => 'test',
+					'status'        => 'PAID',
+					'reconciled_at' => current_time( 'mysql' ),
+					'payable_at'    => current_time( 'mysql' ),
+				)
+			);
+			$r = WAP_SMS::send( $phone, $msg );
+			$msg_key = is_wp_error( $r ) ? $r->get_error_message() : 'ok';
+		}
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'        => 'wap-payment-sms',
+					'wap_sms_msg' => rawurlencode( $msg_key ),
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 
@@ -123,11 +163,7 @@ class WAP_Zarinpal_Reconcile {
 				'reconciled_at' => (string) ( $row['reconciled_at'] ?? '' ),
 				'payable_at'    => (string) ( $row['payable_at'] ?? '' ),
 			);
-			$tpl = (string) WAP_SMS::get( 'settle_message' );
-			$msg = $tpl;
-			foreach ( $vars as $k => $v ) {
-				$msg = str_replace( '{' . $k . '}', $v, $msg );
-			}
+			$msg = WAP_SMS::render_settle_message( $vars );
 
 			if ( empty( $recipients ) ) {
 				return new WP_Error( 'wap_sms_recipients', 'شماره گیرنده پیامک تنظیم نشده است.' );

@@ -121,7 +121,7 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.19.1',
+        'version'      => '1.20.0',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
