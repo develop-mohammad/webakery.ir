@@ -487,9 +487,23 @@ class WBE_Engine {
 		$price    = (float) $price;
 		$discount = max( 0, min( 100, (float) $discount ) );
 		if ( $discount <= 0 ) {
-			return $price;
+			return self::round_money( $price, 'round' );
 		}
-		return (float) round( $price * ( 100 - $discount ) / 100 );
+		return self::round_money( $price * ( 100 - $discount ) / 100, 'round' );
+	}
+
+	/**
+	 * مبلغ ذخیره‌شده بدون زبالهٔ اعشار شناور.
+	 *
+	 * @param float|string $amount
+	 * @return string
+	 */
+	public static function format_money( $amount ) {
+		$n = self::round_money( $amount, 'round' );
+		if ( abs( $n - round( $n ) ) < 0.0000001 ) {
+			return (string) (int) round( $n );
+		}
+		return rtrim( rtrim( number_format( $n, 2, '.', '' ), '0' ), '.' );
 	}
 
 	/**
@@ -849,7 +863,7 @@ class WBE_Engine {
 	}
 
 	/**
-	 * گرد کردن مبلغ بعد از تغییر درصدی.
+	 * گرد کردن مبلغ. round = دو رقم اعشار؛ ceil/floor = عدد صحیح.
 	 *
 	 * @param float  $amount
 	 * @param string $mode   none|round|ceil|floor
@@ -863,7 +877,6 @@ class WBE_Engine {
 			case 'floor':
 				return (float) floor( $amount );
 			case 'round':
-				return (float) round( $amount );
 			default:
 				return round( $amount, 2 );
 		}
@@ -981,7 +994,7 @@ class WBE_Engine {
 		if ( ! empty( $ops['regular_mode'] ) && 'none' !== $ops['regular_mode'] && array_key_exists( 'regular_value', $ops ) && null !== $ops['regular_value'] && '' !== $ops['regular_value'] ) {
 			$regular    = self::change_amount( $regular, $ops['regular_mode'], $ops['regular_value'] );
 			$regular    = self::round_money( $regular, $round );
-			$b['price'] = (string) $regular;
+			$b['price'] = self::format_money( $regular );
 		}
 
 		if ( ! empty( $ops['clear_sale'] ) ) {
@@ -994,12 +1007,15 @@ class WBE_Engine {
 				$b['discount'] = 0;
 				unset( $b['sale'] );
 			} else {
-				$b['sale']     = (string) $new_sale;
+				$b['sale']     = self::format_money( $new_sale );
 				$b['discount'] = self::discount_from_prices( $regular, $new_sale );
 			}
 		} elseif ( array_key_exists( 'discount', $ops ) && null !== $ops['discount'] && '' !== $ops['discount'] ) {
 			$b['discount'] = max( 0, min( 100, (int) round( (float) $ops['discount'] ) ) );
-			unset( $b['sale'] ); // درصد، مبلغ جشنواره را از نو حساب می‌کند.
+			$b['sale']     = self::format_money( self::sale_price( $regular, $b['discount'] ) );
+			if ( (float) $b['discount'] <= 0 ) {
+				unset( $b['sale'] );
+			}
 		}
 
 		if ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] ) {
@@ -1061,8 +1077,8 @@ class WBE_Engine {
 		}
 
 		return array(
-			'regular'  => (string) $regular,
-			'sale'     => $sale_out,
+			'regular'  => self::format_money( $regular ),
+			'sale'     => '' === $sale_out ? '' : self::format_money( $sale_out ),
 			'stock'    => $stock,
 			'discount' => $discount,
 		);

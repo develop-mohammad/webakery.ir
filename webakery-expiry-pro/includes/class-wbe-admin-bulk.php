@@ -159,13 +159,15 @@ class WBE_Admin_Bulk {
 		$regular = array_key_exists( 'regular', $row ) ? WBE_Engine::parse_amount( $row['regular'] ) : null;
 		if ( null !== $regular ) {
 			$ops['regular_mode']  = 'set';
-			$ops['regular_value'] = $regular;
+			$ops['regular_value'] = WBE_Engine::round_money( $regular, 'round' );
+			$ops['round']         = 'round';
 		}
 
 		$sale = array_key_exists( 'sale', $row ) ? WBE_Engine::parse_amount( $row['sale'] ) : null;
 		if ( null !== $sale ) {
 			$ops['sale_mode']  = 'set';
-			$ops['sale_value'] = $sale;
+			$ops['sale_value'] = WBE_Engine::round_money( $sale, 'round' );
+			$ops['round']      = 'round';
 		}
 
 		$disc = array_key_exists( 'discount', $row ) ? WBE_Engine::parse_amount( $row['discount'] ) : null;

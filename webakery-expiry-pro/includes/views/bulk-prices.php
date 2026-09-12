@@ -156,12 +156,11 @@ $csv_url     = wp_nonce_url(
 				</select>
 			</div>
 			<div class="wbe-bulk-field">
-				<label for="wbe_round">گرد کردن درصد</label>
+				<label for="wbe_round">گرد کردن مبلغ</label>
 				<select id="wbe_round" name="wbe_round">
-					<option value="">بدون گرد کردن</option>
-					<option value="round">نزدیک‌ترین</option>
-					<option value="ceil">به بالا</option>
-					<option value="floor">به پایین</option>
+					<option value="round" selected>۲ رقم اعشار</option>
+					<option value="ceil">به بالا (صحیح)</option>
+					<option value="floor">به پایین (صحیح)</option>
 				</select>
 			</div>
 			<label class="wbe-check">

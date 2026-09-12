@@ -194,7 +194,7 @@
 			$sale.val('');
 			return;
 		}
-		$sale.val(Math.round((price * (100 - disc)) / 100));
+		$sale.val(formatMoney((price * (100 - disc)) / 100));
 	}
 
 	function syncDiscFromSale($ctx) {
@@ -327,7 +327,7 @@
 				var regular = parseFloat($tr.find('[data-field="regular"]').val()) || 0;
 				var disc = parseFloat($tr.find('[data-field="discount"]').val()) || 0;
 				disc = Math.max(0, Math.min(100, disc));
-				var sale = disc > 0 ? Math.round((regular * (100 - disc)) / 100) : regular;
+				var sale = disc > 0 ? formatMoney((regular * (100 - disc)) / 100) : formatMoney(regular);
 				$sale.val(sale);
 			}
 		}
@@ -450,20 +450,34 @@
 		if (out < 0) {
 			out = 0;
 		}
-		return Math.round(out * 100) / 100;
+		return money2(out);
+	}
+
+	function money2(amount) {
+		var n = parseFloat(amount);
+		if (isNaN(n)) {
+			return 0;
+		}
+		return Math.round((n + Number.EPSILON) * 100) / 100;
+	}
+
+	function formatMoney(amount) {
+		var n = money2(amount);
+		if (Math.abs(n - Math.round(n)) < 1e-8) {
+			return String(Math.round(n));
+		}
+		return String(n);
 	}
 
 	function roundMoney(amount, mode) {
+		amount = parseFloat(amount) || 0;
 		if (mode === 'ceil') {
 			return Math.ceil(amount);
 		}
 		if (mode === 'floor') {
 			return Math.floor(amount);
 		}
-		if (mode === 'round') {
-			return Math.round(amount);
-		}
-		return Math.round(amount * 100) / 100;
+		return money2(amount);
 	}
 
 	function setField($tr, field, val) {
@@ -494,7 +508,7 @@
 		var stockMode = $('#wbe_stock_mode').val() || 'none';
 		var stockVal = $('input[name="wbe_stock_value"]').val();
 		var expiry = $('#wbe_expiry').val();
-		var round = $('#wbe_round').val();
+		var round = $('#wbe_round').val() || 'round';
 		var clear = $('input[name="wbe_clear_sale"]').prop('checked');
 		var setStatus = $('#wbe_set_status').val() || '';
 		var has = (regularMode !== 'none' && regularVal !== '') ||
@@ -518,7 +532,7 @@
 			var stock = parseFloat($tr.find('[data-field="stock"]').val()) || 0;
 			if (regularMode !== 'none' && regularVal !== '') {
 				regular = roundMoney(changeAmount(regular, regularMode, regularVal), round);
-				setField($tr, 'regular', regular);
+				setField($tr, 'regular', formatMoney(regular));
 			}
 			if (clear) {
 				setField($tr, 'discount', 0);
@@ -528,7 +542,7 @@
 				setField($tr, 'to', '');
 			} else if (saleMode !== 'none' && saleVal !== '') {
 				sale = roundMoney(changeAmount(sale, saleMode, saleVal), round);
-				setField($tr, 'sale', sale);
+				setField($tr, 'sale', formatMoney(sale));
 				$tr.find('[data-field="sale"]').data('manual', true);
 				var d = regular > 0 && sale < regular ? Math.round(100 - (sale / regular) * 100) : 0;
 				setField($tr, 'discount', d);
@@ -536,7 +550,7 @@
 				var dv = parseFloat(disc) || 0;
 				setField($tr, 'discount', dv);
 				$tr.find('[data-field="sale"]').data('manual', false);
-				setField($tr, 'sale', Math.round(regular * (100 - Math.max(0, Math.min(100, dv))) / 100));
+				setField($tr, 'sale', formatMoney(roundMoney((regular * (100 - Math.max(0, Math.min(100, dv)))) / 100, round)));
 			}
 			if (from !== '') {
 				setField($tr, 'from', from);
