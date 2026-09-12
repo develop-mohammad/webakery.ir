@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450">
+  <rect width="800" height="450" fill="#120c16"/>
+  <rect x="0" y="280" width="800" height="170" fill="#07080c"/>
+  <polygon points="40,280 90,180 140,280" fill="#1c1422"/>
+  <polygon points="150,280 210,120 280,280" fill="#24182c"/>
+  <polygon points="300,280 380,90 470,280" fill="#1a2230"/>
+  <polygon points="500,280 560,140 640,280" fill="#24182c"/>
+  <polygon points="660,280 720,160 790,280" fill="#1c1422"/>
+  <circle cx="640" cy="70" r="36" fill="#ffb070"/>
+  <text x="40" y="50" fill="#ff3b7a" font-size="28" font-family="Arial">NEWS</text>
+</svg>

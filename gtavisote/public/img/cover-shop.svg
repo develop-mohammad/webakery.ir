@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450">
+  <rect width="800" height="450" fill="#121016"/>
+  <rect x="140" y="90" width="220" height="140" rx="12" fill="#1a2030" stroke="#2ee0c5"/>
+  <rect x="430" y="180" width="220" height="140" rx="12" fill="#20141c" stroke="#ff3b7a"/>
+  <text x="40" y="50" fill="#f4efe4" font-size="28" font-family="Arial">SHOP GUIDE</text>
+</svg>

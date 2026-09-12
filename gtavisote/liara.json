@@ -1,0 +1,12 @@
+{
+  "platform": "node",
+  "port": 8787,
+  "node": {
+    "version": "22",
+    "timezone": "Asia/Tehran"
+  },
+  "disks": [
+    { "name": "data", "mountTo": "data" },
+    { "name": "uploads", "mountTo": "public/uploads" }
+  ]
+}

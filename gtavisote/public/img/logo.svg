@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="VISOTE">
+  <rect width="64" height="64" rx="8" fill="#07080c"/>
+  <path d="M10 48 L32 12 L54 48" fill="none" stroke="#ff3b7a" stroke-width="5"/>
+  <path d="M18 48 L32 24 L46 48" fill="none" stroke="#2ee0c5" stroke-width="3"/>
+</svg>

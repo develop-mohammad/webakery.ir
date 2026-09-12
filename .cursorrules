@@ -6,6 +6,7 @@
 - هر افزونه در پوشهٔ مستقل خودش است (مثل `nobat-man/`, `webakery-login/`, `hesabdar/`).
 - برای توزیع، ZIP هم‌نام در ریشه ساخته می‌شود (مثل `webakery-login.zip`).
 - سازنده همیشه `webakery.ir` است؛ هدر افزونه WordPress را حفظ کن.
+- `gtavisote/` سایت مستقل Node.js است (بدون PHP/وردپرس). با `node server.js` اجرا می‌شود؛ داده در `gtavisote/data/`. استقرار لیارا: `gtavisote/HOST-FA.txt` و `gtavisote/liara.json`.
 
 ## الگوی افزونه وردپرس
 - PHP 7.4+، وردپرس 5.8+، بدون فریم‌ورک سنگین.
