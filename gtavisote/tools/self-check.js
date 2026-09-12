@@ -92,7 +92,7 @@ async function main() {
         body: new URLSearchParams({
           _csrf: token,
           site_url: BASE,
-          email: 'admin@gtavisote.ir',
+          email: 'admin@gtavistore.ir',
           username: 'admin',
           password: 'visote-admin-1',
           password2: 'visote-admin-1',
@@ -105,6 +105,7 @@ async function main() {
     if (home.status === 302) home = await req('GET', home.location || '/', { cookie });
     assert(home.status === 200, `home ${home.status}`);
     assert(home.body.includes('VISOTE'), 'brand');
+    assert(home.body.includes('gtavistore.ir'), 'domain');
     assert(home.body.includes('شایعه'), 'rumor nav');
     assert(home.body.includes('فروشگاه'), 'shop nav');
     assert(home.body.includes('application/ld+json'), 'jsonld');

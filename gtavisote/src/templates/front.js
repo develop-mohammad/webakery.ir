@@ -324,7 +324,7 @@ function install(error, siteUrl, csrf) {
     <form method="post" class="form" action="/install">
       <input type="hidden" name="_csrf" value="${c.e(csrf)}">
       <label>آدرس سایت <input name="site_url" value="${c.e(siteUrl)}" required></label>
-      <label>ایمیل ادمین <input name="email" type="email" placeholder="admin@gtavisote.ir"></label>
+      <label>ایمیل ادمین <input name="email" type="email" placeholder="admin@gtavistore.ir"></label>
       <label>نام کاربری <input name="username" value="admin" required></label>
       <label>رمز (حداقل ۸) <input name="password" type="password" required></label>
       <label>تکرار رمز <input name="password2" type="password" required></label>

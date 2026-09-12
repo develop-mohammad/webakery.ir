@@ -1,9 +1,9 @@
 # وی‌سوت | GTA VISOTE
 
 مرجع فارسی اخبار، شایعه، راهنما و فروشگاه محصولات مرتبط با **GTA VI**  
-دامنه: [gtavisote.ir](https://gtavisote.ir)
+دامنه: [gtavistore.ir](https://gtavistore.ir)
 
-نسخه **1.0.2** — Node.js — **بدون وردپرس و بدون PHP**
+نسخه **1.0.3** — Node.js — **بدون وردپرس و بدون PHP**
 
 ## چرا این‌جوری؟
 

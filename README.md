@@ -6,8 +6,8 @@
 
 سایت و CMS مستقل برای اخبار، شایعه، راهنما و فروشگاه محصولات مرتبط با GTA VI — **بدون وردپرس و بدون PHP** (Node.js).
 
-- نسخه: **1.0.0**
-- دامنه: **gtavisote.ir**
+- نسخه: **1.0.3**
+- دامنه: **gtavistore.ir**
 - مسیر: `gtavisote/`
 - اجرا: `cd gtavisote && node server.js`
 - راهنما: `gtavisote/INSTALL-FA.txt` و `gtavisote/VERSIONING.md`

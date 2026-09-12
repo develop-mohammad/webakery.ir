@@ -270,7 +270,7 @@ async function handle(req, res) {
       else if (pass !== pass2) error = 'تکرار رمز مطابقت ندارد.';
       else if (!siteUrl) error = 'آدرس سایت را بنویسید.';
       if (error) return html(res, sess, 200, frontT.install(error, siteUrl, sess.csrf));
-      seed.run({ username: user, password: pass, email: email || 'admin@gtavisote.ir', site_url: siteUrl });
+      seed.run({ username: user, password: pass, email: email || 'admin@gtavistore.ir', site_url: siteUrl });
       fs.writeFileSync(LOCK, `${VERSION}\n${new Date().toISOString()}\n`);
       const u = store.findBy('users', 'username', user);
       sess.userId = u ? u.id : null;

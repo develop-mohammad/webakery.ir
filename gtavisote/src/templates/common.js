@@ -99,7 +99,7 @@ function layout(ctx, seo, body) {
     <div class="wrap top__row">
       <a class="brand" href="/">
         <img src="/img/logo.svg" width="32" height="32" alt="">
-        <span><strong>VISOTE</strong><small>gtavisote.ir</small></span>
+        <span><strong>VISOTE</strong><small>gtavistore.ir</small></span>
       </a>
       <button type="button" class="nav-burger" aria-controls="site-nav" aria-expanded="false">منو</button>
       <nav class="nav" id="site-nav" aria-label="اصلی">
@@ -140,7 +140,7 @@ function layout(ctx, seo, body) {
         ${setting('telegram') ? `<a href="${e(setting('telegram'))}">تلگرام</a>` : ''}
       </div>
     </div>
-    <p class="copy wrap">© ${e(faDigits(new Date().getFullYear()))} gtavisote.ir · ${e(VERSION)}</p>
+    <p class="copy wrap">© ${e(faDigits(new Date().getFullYear()))} gtavistore.ir · ${e(VERSION)}</p>
   </footer>
   <script src="${e(asset('js/front.js'))}" defer></script>
   ${setting('analytics')}
