@@ -786,6 +786,11 @@ $admin_prod = file_get_contents( dirname( __DIR__ ) . '/includes/class-wbe-admin
 $admin_js   = file_get_contents( dirname( __DIR__ ) . '/assets/admin.js' );
 wbe_check( 'ویرایش سریع هوک باکس تکی دارد', false !== strpos( $admin_prod, 'quick_edit_custom_box' ) && false !== strpos( $admin_prod, 'quick_edit_box' ) );
 wbe_check( 'ویرایش سریع داده ردیف را می‌خواند', false !== strpos( $admin_prod, 'wbe-qe-json' ) && false !== strpos( $admin_js, 'fillWbeQuickEdit' ) );
+wbe_check( 'کپی تنوع مبدأ را با edit_post می‌سنجد', false !== strpos( $admin_prod, "current_user_can( 'edit_post', \$from )" ) );
+wbe_check( 'کپی تنوع هدف را با edit_products باز نمی‌کند', false === strpos( $admin_prod, "current_user_can( 'edit_post', \$id ) && ! current_user_can( 'edit_products' )" ) );
+wbe_check( 'کپی تنوع نوع تنوع را چک می‌کند', false !== strpos( $admin_prod, "'product_variation'" ) );
+$prod_src = file_get_contents( dirname( __DIR__ ) . '/includes/class-wbe-product.php' );
+wbe_check( 'owns_price_stock بدون ووکامرس رد می‌کند', 1 === preg_match( '/function owns_price_stock[\s\S]*?wc_get_product[\s\S]*?return false;/', $prod_src ) );
 
 echo "\n=== کندی گروهی و گزارش باگ ===\n";
 require_once dirname( __DIR__ ) . '/includes/class-wbe-support.php';
@@ -830,7 +835,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.2.19' );
+	define( 'WBE_VERSION', '1.2.20' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

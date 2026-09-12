@@ -68,7 +68,10 @@ class WBE_Admin_Product {
 		}
 		check_ajax_referer( 'wbe_admin', 'nonce' );
 		$from = isset( $_POST['from'] ) ? (int) $_POST['from'] : 0;
-		if ( $from <= 0 ) {
+		if ( $from <= 0 || ! current_user_can( 'edit_post', $from ) ) {
+			wp_send_json_error( array( 'message' => 'دسترسی غیرمجاز' ), 403 );
+		}
+		if ( function_exists( 'get_post_type' ) && 'product_variation' !== get_post_type( $from ) ) {
 			wp_send_json_error( array( 'message' => 'تنوع مبدأ مشخص نیست.' ) );
 		}
 		$override = isset( $_POST['calendar'] ) ? sanitize_key( wp_unslash( $_POST['calendar'] ) ) : '';
@@ -84,25 +87,30 @@ class WBE_Admin_Product {
 		$ids    = array();
 		if ( function_exists( 'wc_get_product' ) ) {
 			$product = wc_get_product( $parent );
-			if ( $product && method_exists( $product, 'get_children' ) ) {
+			if ( $product && method_exists( $product, 'is_type' ) && $product->is_type( 'variable' ) && method_exists( $product, 'get_children' ) ) {
 				$ids = WBE_Engine::sibling_ids( $from, $product->get_children() );
 			}
 		}
 		if ( ! $ids ) {
 			wp_send_json_error( array( 'message' => 'تنوع دیگری برای کپی نیست.' ) );
 		}
-		$hide = ! empty( $_POST['hide_countdown'] ); // phpcs:ignore WordPress.Security.NonceVerification
+		$hide    = ! empty( $_POST['hide_countdown'] ); // phpcs:ignore WordPress.Security.NonceVerification
+		$copied  = 0;
 		foreach ( $ids as $id ) {
-			if ( ! current_user_can( 'edit_post', $id ) && ! current_user_can( 'edit_products' ) ) {
+			if ( ! current_user_can( 'edit_post', $id ) ) {
 				continue;
 			}
 			WBE_Product::save_batches( $id, $batches, $override, true );
 			WBE_Product::save_hide_countdown( $id, $hide );
+			$copied++;
+		}
+		if ( ! $copied ) {
+			wp_send_json_error( array( 'message' => 'دسترسی غیرمجاز' ), 403 );
 		}
 		wp_send_json_success(
 			array(
-				'copied'  => count( $ids ),
-				'message' => count( $ids ) . ' تنوع با همین بچ‌ها به‌روز شد. این تنوع را هم ذخیره کنید.',
+				'copied'  => $copied,
+				'message' => $copied . ' تنوع با همین بچ‌ها به‌روز شد. این تنوع را هم ذخیره کنید.',
 			)
 		);
 	}

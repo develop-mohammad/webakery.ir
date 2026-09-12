@@ -149,12 +149,12 @@ class WBE_Product {
 	public static function owns_price_stock( $product ) {
 		if ( is_numeric( $product ) ) {
 			if ( ! function_exists( 'wc_get_product' ) ) {
-				return true;
+				return false;
 			}
 			$product = wc_get_product( (int) $product );
 		}
 		if ( ! is_object( $product ) || ! method_exists( $product, 'get_type' ) ) {
-			return true;
+			return false;
 		}
 		return WBE_Engine::type_owns_stock( $product->get_type() );
 	}
