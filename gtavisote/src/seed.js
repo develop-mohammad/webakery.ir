@@ -5,10 +5,10 @@ const { hashPassword } = require('./util');
 
 function run(opts = {}) {
   const now = new Date().toISOString();
-  const siteUrl = String(opts.site_url || 'https://gtavisote.ir').replace(/\/$/, '');
+  const siteUrl = String(opts.site_url || 'https://gtavistore.ir').replace(/\/$/, '');
   const user = opts.username || 'admin';
   const pass = opts.password || 'change-me';
-  const email = opts.email || 'admin@gtavisote.ir';
+  const email = opts.email || 'admin@gtavistore.ir';
 
   store.replaceAll('users', [{
     id: 'user_admin',
@@ -24,20 +24,20 @@ function run(opts = {}) {
     id: 'main',
     site_title: 'وی‌سوت | GTA VISOTE',
     tagline: 'مرجع فارسی اخبار، شایعه و فروشگاه GTA VI',
-    seo_title: 'وی‌سوت | اخبار و فروشگاه GTA VI — gtavisote.ir',
+    seo_title: 'وی‌سوت | اخبار و فروشگاه GTA VI — gtavistore.ir',
     seo_description: 'اخبار رسمی، شایعات جداشده، راهنمای بازی و فروش نسخه فیزیکی، دیجیتال، باندل کنسول و محصولات مرتبط با GTA VI.',
     site_url: siteUrl,
     og_image: '/img/og.svg',
     contact_phone: '09120000000',
-    contact_email: 'shop@gtavisote.ir',
+    contact_email: 'shop@gtavistore.ir',
     address: 'ایران — فروش آنلاین',
     card_number: '6037-9977-0000-0000',
     card_name: 'فروشگاه وی‌سوت',
     shipping_cost: 85000,
     cod_enabled: 1,
     card_enabled: 1,
-    instagram: 'https://instagram.com/gtavisote',
-    telegram: 'https://t.me/gtavisote',
+    instagram: 'https://instagram.com/gtavistore',
+    telegram: 'https://t.me/gtavistore',
     analytics: '',
     disclaimer: 'وی‌سوت یک وب‌سایت غیررسمی است و هیچ وابستگی به Rockstar Games یا Take-Two Interactive ندارد. علائم تجاری Grand Theft Auto متعلق به دارندگان قانونی آن‌هاست.',
     footer_note: 'پیش‌خرید بازی اصلی فقط از فروشندگان مجاز. فایل کرک، بیلد لو رفته و محتوای غیرقانونی فروخته نمی‌شود.',
@@ -277,10 +277,10 @@ function pages(now) {
   return [
     {
       id: 'page_about', slug: 'about', title: 'درباره وی‌سوت', in_nav: 1,
-      seo_title: 'درباره gtavisote.ir', seo_description: 'وی‌سوت مرجع فارسی غیررسمی GTA VI است.',
+      seo_title: 'درباره gtavistore.ir', seo_description: 'وی‌سوت مرجع فارسی غیررسمی GTA VI است.',
       body: `## وی‌سوت چیست؟
 
-**GTA VISOTE** روی دامنه gtavisote.ir سه کار می‌کند:
+**GTA VISOTE** روی دامنه gtavistore.ir سه کار می‌کند:
 
 - پوشش اخبار رسمی جدا از شایعه
 - راهنمای بازی، شخصیت و خرید

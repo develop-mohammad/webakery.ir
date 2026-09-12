@@ -1,4 +1,4 @@
-نصب GTA VISOTE  (gtavisote.ir)
+نصب GTA VISOTE  (gtavistore.ir)
 ================================
 
 برای خرید هاست و سوار کردن روی لیارا، اول HOST-FA.txt را بخوان.
@@ -9,7 +9,7 @@
 یک VPS ارزان یا PaaS نود لازم است: لیارا، ابرآروان، یا هر VPS لینوکس.
 
 ۱) دامنه
-   gtavisote.ir را به IP سرور اشاره بده (A record).
+   gtavistore.ir را به IP سرور اشاره بده (A record).
 
 ۲) فایل‌ها
    پوشه gtavisote را روی سرور بگذار.
@@ -23,12 +23,12 @@
 
 ۴) نصب سایت
    مرورگر: http://IP:پورت/install
-   آدرس نهایی را https://gtavisote.ir بگذار.
+   آدرس نهایی را https://gtavistore.ir بگذار.
    کاربر و رمز ادمین بساز (رمز حداقل ۸ حرف).
 
 ۵) پشت Nginx (نمونه)
    server {
-     server_name gtavisote.ir;
+     server_name gtavistore.ir;
      location / {
        proxy_pass http://127.0.0.1:8787;
        proxy_set_header Host $host;
