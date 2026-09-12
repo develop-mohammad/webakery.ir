@@ -82,6 +82,11 @@ export function isEarlyRenewal(daysLeft: number): boolean {
 
 export function warningLevel(daysLeft: number, kind: LicenseKind): LicenseWarning {
   if (kind === 'locked') return 'urgent'
+  if (kind === 'trial') {
+    if (daysLeft <= WARN_URGENT_DAYS) return 'urgent'
+    if (daysLeft <= 5) return 'warn'
+    return 'none'
+  }
   if (daysLeft <= WARN_URGENT_DAYS) return 'urgent'
   if (daysLeft <= WARN_SOON_DAYS) return 'warn'
   if (daysLeft <= WARN_DAYS) return 'notice'
