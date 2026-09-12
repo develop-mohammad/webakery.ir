@@ -893,12 +893,133 @@
     return refresh;
   }
 
+  function bindHallSlots(root) {
+    var sel = qs(root, '[data-nck-hall-slot]');
+    if (!sel) return function () {};
+    var startInput = qs(root, '[name="start_hour"]');
+    var endInput = qs(root, '[name="end_hour"]');
+
+    function applySlot(value) {
+      var parts = String(value || '').split('-');
+      if (parts.length !== 2) return;
+      if (startInput && startInput.value !== parts[0]) {
+        startInput.value = parts[0];
+        startInput.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (startInput) {
+        startInput.value = parts[0];
+      }
+      if (endInput && endInput.value !== parts[1]) {
+        endInput.value = parts[1];
+        endInput.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (endInput) {
+        endInput.value = parts[1];
+      }
+    }
+
+    function rangeBusy(start, end) {
+      var s = parseHallMinutes(start);
+      var e = parseHallMinutes(end);
+      if (s === null || e === null) return false;
+      return hallBookingsOf(root).some(function (b) {
+        var bs = parseHallMinutes(b.start);
+        var be = parseHallMinutes(b.end);
+        return bs !== null && be !== null && s < be && bs < e;
+      });
+    }
+
+    function refresh() {
+      var firstFree = '';
+      var currentOk = false;
+      Array.prototype.forEach.call(sel.options, function (opt) {
+        if (!opt.value) return;
+        var parts = String(opt.value).split('-');
+        var busy = parts.length === 2 && rangeBusy(parts[0], parts[1]);
+        opt.disabled = busy;
+        if (!busy && !firstFree) firstFree = opt.value;
+        if (!busy && opt.value === sel.value) currentOk = true;
+      });
+      if (!currentOk && firstFree) {
+        sel.value = firstFree;
+      }
+      applySlot(sel.value);
+    }
+
+    sel.addEventListener('change', function () {
+      applySlot(sel.value);
+    });
+    refresh();
+    return refresh;
+  }
+
+  function bindHallQuote(root) {
+    var form = qs(root, 'form');
+    if (!form || !qs(form, '[data-nck-hall-spaces]')) return;
+
+    function sync() {
+      var space = qs(form, '[name="space"]:checked');
+      var hallName = qs(form, '[name="hall_name"]');
+      var amount = qs(form, '[name="amount"]');
+      var pay = qs(form, '[name="pay_amount"]');
+      var start = qs(form, '[name="start_hour"]');
+      var projEl = qs(form, '[name="projector"]');
+      var box = qs(form, '[data-nck-hall-quote]');
+
+      qsa(form, '[data-nck-hall-spaces] .nck-plan-card').forEach(function (card) {
+        var inp = card.querySelector('input');
+        card.classList.toggle('is-on', !!(inp && inp.checked));
+      });
+
+      if (hallName) {
+        var nextName = space ? (space.getAttribute('data-nck-name') || '') : '';
+        if (hallName.value !== nextName) {
+          hallName.value = nextName;
+          hallName.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+
+      var price = space ? parseInt(space.getAttribute('data-nck-price') || '0', 10) : 0;
+      if (isNaN(price)) price = 0;
+      var sm = parseHallMinutes(start && start.value);
+      var morning = sm !== null && hallWindowOf(sm) === 'morning';
+      var rent = morning ? Math.round(price / 2) : price;
+      var proj = 0;
+      if (projEl && projEl.checked) {
+        proj = parseInt(projEl.getAttribute('data-nck-price') || '0', 10);
+        if (isNaN(proj)) proj = 0;
+      }
+      var total = space ? (rent + proj) : 0;
+      if (amount) amount.value = space ? String(total) : '';
+      if (pay && space) pay.value = String(total);
+
+      if (box) {
+        if (!space) {
+          box.innerHTML = '<p>ابتدا یکی از فضاها را انتخاب کنید.</p>';
+        } else {
+          var html = '<p>اجاره ' + (morning ? 'صبح (۵۰٪ تخفیف) ' : 'عصر ') + (space.getAttribute('data-nck-name') || '') + ': ' + formatFaMoney(String(rent)) + '</p>';
+          if (proj) html += '<p>ویدئو پروژکتور: ' + formatFaMoney(String(proj)) + '</p>';
+          html += '<p><strong>جمع: ' + formatFaMoney(String(total)) + '</strong></p>';
+          box.innerHTML = html;
+        }
+      }
+    }
+
+    form.addEventListener('change', function (e) {
+      if (!e.target) return;
+      var n = e.target.name;
+      if (n === 'space' || n === 'projector' || n === 'nck_slot' || n === 'start_hour' || n === 'end_hour') sync();
+    });
+    sync();
+  }
+
   function bindHallPickers(root) {
-    var refreshRolls = bindHallRolls(root);
+    var refreshSlots = bindHallSlots(root);
+    var refreshRolls = qs(root, '[data-nck-time-rolls]') ? bindHallRolls(root) : function () {};
     root.nckHallRefresh = function () {
+      if (typeof refreshSlots === 'function') refreshSlots();
       if (typeof refreshRolls === 'function') refreshRolls();
     };
     bindHallCalendar(root);
+    bindHallQuote(root);
   }
 
   function updatePreamble(root) {

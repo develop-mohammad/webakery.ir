@@ -107,10 +107,24 @@ $s = NCK_Settings::all();
 			<td><input id="hall_signer" class="regular-text" type="text" name="settings[hall_signer]" value="<?php echo esc_attr( $s['hall_signer'] ); ?>" /></td>
 		</tr>
 		<tr>
-			<th><label for="hall_list">فهرست سالن‌ها</label></th>
+			<th>قیمت اجاره فضا</th>
 			<td>
-				<textarea id="hall_list" class="large-text" rows="4" name="settings[hall_list]"><?php echo esc_textarea( $s['hall_list'] ); ?></textarea>
-				<p class="description">هر خط یک سالن. در فرم اجاره به‌صورت پیشنهاد نمایش داده می‌شود.</p>
+				<p>
+					<label for="hall_space_library">کتابخانه</label>
+					<input id="hall_space_library" type="text" dir="ltr" name="settings[hall_space_library]" value="<?php echo esc_attr( (string) $s['hall_space_library'] ); ?>" />
+					تومان — هر نوبت ۹۰ دقیقه
+				</p>
+				<p>
+					<label for="hall_space_cafe">کافی‌شاپ</label>
+					<input id="hall_space_cafe" type="text" dir="ltr" name="settings[hall_space_cafe]" value="<?php echo esc_attr( (string) $s['hall_space_cafe'] ); ?>" />
+					تومان
+				</p>
+				<p>
+					<label for="hall_space_woodshop">کارگاه نجاری</label>
+					<input id="hall_space_woodshop" type="text" dir="ltr" name="settings[hall_space_woodshop]" value="<?php echo esc_attr( (string) $s['hall_space_woodshop'] ); ?>" />
+					تومان
+				</p>
+				<p class="description">رزرو صبح از ۹ تا ۱۳ با ۵۰ درصد تخفیف اجاره فضا محاسبه می‌شود. صندلی‌ها ۲۰ تا ۲۵ عدد است.</p>
 			</td>
 		</tr>
 		<tr>

@@ -134,6 +134,7 @@ class NCK_Ajax {
 			'national_id' => isset( $_POST['national_id'] ) ? wp_unslash( $_POST['national_id'] ) : '', // phpcs:ignore
 			'phone'       => isset( $_POST['phone'] ) ? wp_unslash( $_POST['phone'] ) : '', // phpcs:ignore
 			'hall_name'   => isset( $_POST['hall_name'] ) ? wp_unslash( $_POST['hall_name'] ) : '', // phpcs:ignore
+			'space'       => isset( $_POST['space'] ) ? wp_unslash( $_POST['space'] ) : '', // phpcs:ignore
 			'amount'      => isset( $_POST['amount'] ) ? wp_unslash( $_POST['amount'] ) : '', // phpcs:ignore
 			'event_date'  => isset( $_POST['event_date'] ) ? wp_unslash( $_POST['event_date'] ) : '', // phpcs:ignore
 			'start_hour'  => isset( $_POST['start_hour'] ) ? wp_unslash( $_POST['start_hour'] ) : '', // phpcs:ignore

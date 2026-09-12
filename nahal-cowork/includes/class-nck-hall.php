@@ -24,8 +24,95 @@ class NCK_Hall {
 		return 'هادی فروغی';
 	}
 
+	public static function chairs_min() {
+		return 20;
+	}
+
+	public static function chairs_max() {
+		return 25;
+	}
+
+	public static function slot_minutes() {
+		return 90;
+	}
+
+	/**
+	 * سه فضای قابل اجاره.
+	 *
+	 * @return array<string,array{id:string,name:string,price_key:string,default_price:int,desc:string}>
+	 */
+	public static function space_defs() {
+		return array(
+			'library'  => array(
+				'id'            => 'library',
+				'name'          => 'کتابخانه',
+				'price_key'     => 'hall_space_library',
+				'default_price' => 1500000,
+				'desc'          => 'فضای مطالعه و جلسات آرام',
+			),
+			'cafe'     => array(
+				'id'            => 'cafe',
+				'name'          => 'کافی‌شاپ',
+				'price_key'     => 'hall_space_cafe',
+				'default_price' => 2500000,
+				'desc'          => 'فضای پذیرایی و دورهمی',
+			),
+			'woodshop' => array(
+				'id'            => 'woodshop',
+				'name'          => 'کارگاه نجاری',
+				'price_key'     => 'hall_space_woodshop',
+				'default_price' => 1500000,
+				'desc'          => 'فضای کار عملی و کارگاه',
+			),
+		);
+	}
+
+	/**
+	 * @return array<string,array{id:string,name:string,price:int,desc:string}>
+	 */
+	public static function spaces() {
+		$s   = class_exists( 'NCK_Settings' ) ? NCK_Settings::all() : array();
+		$out = array();
+		foreach ( self::space_defs() as $id => $def ) {
+			$price = isset( $s[ $def['price_key'] ] ) ? (int) $s[ $def['price_key'] ] : (int) $def['default_price'];
+			$out[ $id ] = array(
+				'id'    => $id,
+				'name'  => $def['name'],
+				'price' => max( 0, $price ),
+				'desc'  => $def['desc'],
+			);
+		}
+		return $out;
+	}
+
+	public static function space_names() {
+		$names = array();
+		foreach ( self::space_defs() as $def ) {
+			$names[] = $def['name'];
+		}
+		return $names;
+	}
+
+	public static function space_of( $raw ) {
+		$raw = trim( (string) $raw );
+		if ( $raw === '' ) {
+			return null;
+		}
+		$spaces = self::spaces();
+		if ( isset( $spaces[ $raw ] ) ) {
+			return $spaces[ $raw ];
+		}
+		$key = self::hall_key( $raw );
+		foreach ( $spaces as $sp ) {
+			if ( self::hall_key( $sp['name'] ) === $key ) {
+				return $sp;
+			}
+		}
+		return null;
+	}
+
 	public static function default_halls() {
-		return array( 'سالن اصلی', 'سالن همایش' );
+		return self::space_names();
 	}
 
 	public static function parse_halls( $raw ) {
@@ -154,13 +241,73 @@ class NCK_Hall {
 	}
 
 	/**
+	 * نوبت‌های ۹۰ دقیقه‌ای داخل بازه‌های مجاز، با گام ۳۰ دقیقه.
+	 *
+	 * @return array<int,array{start:string,end:string,morning:bool,window:string}>
+	 */
+	public static function bookable_slots( $step = 30 ) {
+		$step = max( 1, (int) $step );
+		$len  = self::slot_minutes();
+		$out  = array();
+		foreach ( self::time_windows() as $w ) {
+			$start = (int) $w['start'];
+			$end   = (int) $w['end'];
+			for ( $m = $start; ( $m + $len ) <= $end; $m += $step ) {
+				$out[] = array(
+					'start'   => self::format_hour( $m ),
+					'end'     => self::format_hour( $m + $len ),
+					'morning' => ( 'morning' === $w['id'] ),
+					'window'  => $w['id'],
+				);
+			}
+		}
+		return $out;
+	}
+
+	public static function is_bookable_slot( $start_raw, $end_raw ) {
+		$s = NCK_Shifts::parse_hhmm( $start_raw );
+		$e = NCK_Shifts::parse_hhmm( $end_raw );
+		if ( null === $s || null === $e ) {
+			return false;
+		}
+		$want_s = self::format_hour( $s );
+		$want_e = self::format_hour( $e );
+		foreach ( self::bookable_slots() as $slot ) {
+			if ( $slot['start'] === $want_s && $slot['end'] === $want_e ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static function is_morning_slot( $start_raw, $end_raw = '' ) {
+		$start = NCK_Shifts::parse_hhmm( $start_raw );
+		if ( null === $start ) {
+			return false;
+		}
+		if ( 'morning' !== self::window_of( $start ) ) {
+			return false;
+		}
+		if ( $end_raw === '' ) {
+			return true;
+		}
+		$end = NCK_Shifts::parse_hhmm( $end_raw );
+		if ( null === $end ) {
+			return false;
+		}
+		return 'morning' === self::window_of( $end );
+	}
+
+	/**
+	 * بازه داخل ساعات مجاز سالن (بدون محدودیت مدت) — برای تقویم رزروهای قبلی.
+	 *
 	 * @return array{ok:bool,message?:string,start?:string,end?:string}
 	 */
-	public static function check_hours( $start_raw, $end_raw ) {
+	public static function check_window_hours( $start_raw, $end_raw ) {
 		$start = NCK_Shifts::parse_hhmm( $start_raw );
 		$end   = NCK_Shifts::parse_hhmm( $end_raw );
 		if ( null === $start || null === $end ) {
-			return array( 'ok' => false, 'message' => 'ساعت شروع و پایان را از رول انتخاب کنید.' );
+			return array( 'ok' => false, 'message' => 'ساعت شروع و پایان را انتخاب کنید.' );
 		}
 		if ( ! self::is_slot( $start ) || ! self::is_slot( $end ) ) {
 			return array( 'ok' => false, 'message' => 'ساعت اجاره فقط از ۹ تا ۱۳ یا از ۱۶ تا ۲۲ مجاز است.' );
@@ -177,6 +324,61 @@ class NCK_Hall {
 			'ok'    => true,
 			'start' => self::format_hour( $start ),
 			'end'   => self::format_hour( $end ),
+		);
+	}
+
+	/**
+	 * رزرو جدید: نوبت دقیق ۹۰ دقیقه‌ای داخل ساعات مجاز.
+	 *
+	 * @return array{ok:bool,message?:string,start?:string,end?:string}
+	 */
+	public static function check_hours( $start_raw, $end_raw ) {
+		$hours = self::check_window_hours( $start_raw, $end_raw );
+		if ( empty( $hours['ok'] ) ) {
+			return $hours;
+		}
+		if ( ! self::is_bookable_slot( $hours['start'], $hours['end'] ) ) {
+			return array( 'ok' => false, 'message' => 'هر رزرو سالن ۹۰ دقیقه است. یک نوبت ۹۰ دقیقه‌ای انتخاب کنید.' );
+		}
+		return $hours;
+	}
+
+	/**
+	 * مبلغ اجاره: صبح ۵۰٪ تخفیف فضا؛ پروژکتور جدا و بدون تخفیف.
+	 *
+	 * @return array{ok:bool,message?:string,space_id?:string,hall_name?:string,start?:string,end?:string,morning?:int,rent?:int,projector?:int,total?:int}
+	 */
+	public static function quote( $space_key, $start, $end, $projector = false ) {
+		$space = self::space_of( $space_key );
+		if ( ! $space ) {
+			return array( 'ok' => false, 'message' => 'یکی از فضاهای کتابخانه، کافی‌شاپ یا کارگاه نجاری را انتخاب کنید.' );
+		}
+		$hours = self::check_hours( $start, $end );
+		if ( empty( $hours['ok'] ) ) {
+			return $hours;
+		}
+		$morning = self::is_morning_slot( $hours['start'], $hours['end'] );
+		$rent    = (int) $space['price'];
+		if ( $morning ) {
+			$rent = (int) round( $rent / 2 );
+		}
+		$proj = 0;
+		if ( $projector ) {
+			$proj = 500000;
+			if ( class_exists( 'NCK_Settings' ) ) {
+				$proj = max( 0, (int) NCK_Settings::get( 'projector_price', 500000 ) );
+			}
+		}
+		return array(
+			'ok'        => true,
+			'space_id'  => $space['id'],
+			'hall_name' => $space['name'],
+			'start'     => $hours['start'],
+			'end'       => $hours['end'],
+			'morning'   => $morning ? 1 : 0,
+			'rent'      => $rent,
+			'projector' => $proj,
+			'total'     => $rent + $proj,
 		);
 	}
 
@@ -223,7 +425,7 @@ class NCK_Hall {
 			if ( $want !== '' && $room !== $want ) {
 				continue;
 			}
-			$hours = self::check_hours(
+			$hours = self::check_window_hours(
 				isset( $p['start_hour'] ) ? $p['start_hour'] : '',
 				isset( $p['end_hour'] ) ? $p['end_hour'] : ''
 			);
@@ -343,19 +545,19 @@ class NCK_Hall {
 			return array( 'ok' => false, 'message' => 'شماره موبایل معتبر نیست. مثال: ۰۹۱۲۳۴۵۶۷۸۹' );
 		}
 
-		$hall = trim( isset( $in['hall_name'] ) ? (string) $in['hall_name'] : '' );
+		$space_raw = isset( $in['space'] ) ? (string) $in['space'] : '';
+		if ( $space_raw === '' && isset( $in['hall_name'] ) ) {
+			$space_raw = (string) $in['hall_name'];
+		}
 		if ( function_exists( 'sanitize_text_field' ) ) {
-			$name = sanitize_text_field( $name );
-			$hall = sanitize_text_field( $hall );
+			$name      = sanitize_text_field( $name );
+			$space_raw = sanitize_text_field( $space_raw );
 		}
-		if ( $hall === '' ) {
-			return array( 'ok' => false, 'message' => 'نام سالن را وارد کنید.' );
+		$space = self::space_of( $space_raw );
+		if ( ! $space ) {
+			return array( 'ok' => false, 'message' => 'یکی از فضاهای کتابخانه، کافی‌شاپ یا کارگاه نجاری را انتخاب کنید.' );
 		}
-
-		$amount = self::parse_amount( isset( $in['amount'] ) ? $in['amount'] : '' );
-		if ( $amount < 1 ) {
-			return array( 'ok' => false, 'message' => 'مبلغ اجاره را وارد کنید.' );
-		}
+		$hall = $space['name'];
 
 		$date = NCK_Jalali::parse( isset( $in['event_date'] ) ? $in['event_date'] : '' );
 		if ( ! $date ) {
@@ -371,9 +573,16 @@ class NCK_Hall {
 		}
 
 		$chairs = isset( $in['chairs'] ) ? (int) NCK_Phone::latin_digits( $in['chairs'] ) : 0;
-		if ( $chairs < 1 ) {
-			return array( 'ok' => false, 'message' => 'تعداد صندلی را وارد کنید.' );
+		if ( $chairs < self::chairs_min() || $chairs > self::chairs_max() ) {
+			return array( 'ok' => false, 'message' => 'تعداد صندلی باید بین ۲۰ تا ۲۵ باشد.' );
 		}
+
+		$want_proj = ! empty( $in['projector'] );
+		$quote     = self::quote( $space['id'], $hours['start'], $hours['end'], $want_proj );
+		if ( empty( $quote['ok'] ) ) {
+			return $quote;
+		}
+		$amount = (int) $quote['total'];
 
 		$honorific = isset( $in['honorific'] ) ? (string) $in['honorific'] : 'mr';
 		$honorific = in_array( $honorific, array( 'mr', 'ms' ), true ) ? $honorific : 'mr';
@@ -392,24 +601,29 @@ class NCK_Hall {
 			return $pay;
 		}
 		$pay_p = isset( $pay['payload'] ) && is_array( $pay['payload'] ) ? $pay['payload'] : array();
+		$pay_p['pay_amount'] = $amount;
 
 		return array(
 			'ok'      => true,
 			'message' => '',
 			'payload' => array_merge(
 				array(
-					'kind'         => 'hall',
-					'honorific'    => $honorific,
-					'name'         => $name,
-					'national_id'  => $nid,
-					'phone'        => $phone,
-					'hall_name'    => $hall,
-					'amount'       => $amount,
-					'event_date'   => $date_s,
-					'start_hour'   => $start_s,
-					'end_hour'     => $end_s,
-					'chairs'       => $chairs,
-					'projector'    => ! empty( $in['projector'] ) ? 1 : 0,
+					'kind'              => 'hall',
+					'honorific'         => $honorific,
+					'name'              => $name,
+					'national_id'       => $nid,
+					'phone'             => $phone,
+					'space_id'          => $space['id'],
+					'hall_name'         => $hall,
+					'amount'            => $amount,
+					'rent'              => (int) $quote['rent'],
+					'projector_amount'  => (int) $quote['projector'],
+					'morning'           => ! empty( $quote['morning'] ) ? 1 : 0,
+					'event_date'        => $date_s,
+					'start_hour'        => $start_s,
+					'end_hour'          => $end_s,
+					'chairs'            => $chairs,
+					'projector'         => $want_proj ? 1 : 0,
 				),
 				$pay_p
 			),

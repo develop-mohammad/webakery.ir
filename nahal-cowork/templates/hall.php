@@ -1,7 +1,6 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 $s     = NCK_Settings::all();
-$halls = NCK_Hall::parse_halls( $s['hall_list'] );
 $note  = NCK_Hall::projector_note( (int) $s['projector_price'], (int) $s['projector_minutes'] );
 $blank = '…………………….';
 ?>
@@ -48,28 +47,55 @@ $blank = '…………………….';
 		<section class="nck-step" data-nck-step data-nck-step-label="سالن و زمان" hidden>
 			<div class="nck-grid nck-grid-hall">
 				<div class="nck-field nck-field-wide">
-					<label for="nck-hall-room">سالن</label>
-					<input id="nck-hall-room" name="hall_name" type="text" list="nck-halls" required placeholder="نام سالن" />
-					<datalist id="nck-halls">
-						<?php foreach ( $halls as $h ) : ?>
-							<option value="<?php echo esc_attr( $h ); ?>"><?php echo esc_html( $h ); ?></option>
+					<span class="nck-label">فضای اجاره</span>
+					<p class="nck-form-help">کتابخانه، کافی‌شاپ یا کارگاه نجاری را انتخاب کنید. هر رزرو ۹۰ دقیقه است؛ صبح از ۹ تا ۱۳ با ۵۰ درصد تخفیف اجاره فضا محاسبه می‌شود.</p>
+					<div class="nck-plan-list" data-nck-hall-spaces>
+						<?php foreach ( NCK_Hall::spaces() as $sp ) : ?>
+							<label class="nck-plan-card">
+								<input
+									type="radio"
+									name="space"
+									value="<?php echo esc_attr( $sp['id'] ); ?>"
+									required
+									data-nck-name="<?php echo esc_attr( $sp['name'] ); ?>"
+									data-nck-price="<?php echo esc_attr( (string) $sp['price'] ); ?>"
+								/>
+								<span class="nck-plan-copy">
+									<strong><?php echo esc_html( $sp['name'] ); ?></strong>
+									<small><?php echo esc_html( $sp['desc'] ); ?></small>
+								</span>
+								<span class="nck-plan-price"><?php echo esc_html( NCK_Hall::format_money( $sp['price'] ) ); ?></span>
+							</label>
 						<?php endforeach; ?>
-					</datalist>
-				</div>
-				<div class="nck-field">
-					<label for="nck-hall-amount">مبلغ اجاره (تومان)</label>
-					<input id="nck-hall-amount" name="amount" type="text" dir="ltr" inputmode="numeric" required placeholder="مثال: 5000000" />
+					</div>
+					<input id="nck-hall-room" name="hall_name" type="hidden" value="" />
 				</div>
 				<div class="nck-field">
 					<label for="nck-hall-chairs">تعداد صندلی</label>
-					<input id="nck-hall-chairs" name="chairs" type="number" min="1" required placeholder="۸۰" />
+					<select id="nck-hall-chairs" name="chairs" required>
+						<?php for ( $n = NCK_Hall::chairs_min(); $n <= NCK_Hall::chairs_max(); $n++ ) : ?>
+							<option value="<?php echo esc_attr( (string) $n ); ?>"><?php echo esc_html( NCK_Jalali::fa_digits( $n ) ); ?></option>
+						<?php endfor; ?>
+					</select>
+					<p class="nck-form-help">بین ۲۰ تا ۲۵ عدد.</p>
+				</div>
+				<div class="nck-field nck-field-wide">
+					<label class="nck-agree nck-projector-row" style="margin:0">
+						<span>
+							<input type="checkbox" name="projector" value="1" data-nck-price="<?php echo esc_attr( (string) (int) $s['projector_price'] ); ?>" />
+							نیاز به ویدئو پروژکتور
+						</span>
+						<span class="nck-plan-price"><?php echo esc_html( NCK_Hall::format_money( (int) $s['projector_price'] ) ); ?></span>
+					</label>
+					<p class="nck-form-help">در صورت نیاز این مبلغ به اجاره فضا اضافه می‌شود و تخفیف صبح ندارد.</p>
 				</div>
 				<?php include NCK_PATH . 'templates/hall-schedule.php'; ?>
 				<div class="nck-field nck-field-wide">
-					<label class="nck-agree" style="margin:0">
-						<input type="checkbox" name="projector" value="1" />
-						نیاز به ویدئو پروژکتور
-					</label>
+					<span class="nck-label">مبلغ اجاره</span>
+					<input id="nck-hall-amount" name="amount" type="hidden" value="" />
+					<div class="nck-hall-quote" data-nck-hall-quote>
+						<p>با انتخاب فضا و نوبت، مبلغ اجاره محاسبه می‌شود.</p>
+					</div>
 				</div>
 			</div>
 		</section>

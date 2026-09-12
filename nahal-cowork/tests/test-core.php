@@ -166,26 +166,59 @@ $check( 'کد ملی تکراری رقم رد می‌شود', null === NCK_Hall:
 $check( 'مبلغ فارسی', 5000000 === NCK_Hall::parse_amount( '۵٬۰۰۰٬۰۰۰ تومان' ) );
 $check( 'فرمت مبلغ', false !== strpos( NCK_Hall::format_money( 500000 ), 'تومان' ) );
 
+$spaces = NCK_Hall::spaces();
+$check( 'سه فضای سالن', 3 === count( $spaces ) );
+$check( 'کتابخانه در فضاها هست', isset( $spaces['library'] ) && 'کتابخانه' === $spaces['library']['name'] );
+$check( 'کافی‌شاپ در فضاها هست', isset( $spaces['cafe'] ) && 'کافی‌شاپ' === $spaces['cafe']['name'] );
+$check( 'نجاری در فضاها هست', isset( $spaces['woodshop'] ) && 'کارگاه نجاری' === $spaces['woodshop']['name'] );
+$check( 'قیمت کتابخانه', 1500000 === (int) $spaces['library']['price'] );
+$check( 'قیمت کافی‌شاپ', 2500000 === (int) $spaces['cafe']['price'] );
+$check( 'قیمت نجاری', 1500000 === (int) $spaces['woodshop']['price'] );
+$check( 'شناسه کتابخانه از نام', 'library' === NCK_Hall::space_of( 'کتابخانه' )['id'] );
+
+$bookable = NCK_Hall::bookable_slots();
+$check( '۱۶ نوبت ۹۰ دقیقه‌ای', 16 === count( $bookable ) );
+$check( 'نوبت صبح ۹ تا ۱۰:۳۰', true === NCK_Hall::is_bookable_slot( '09:00', '10:30' ) );
+$check( 'نوبت عصر ۱۶ تا ۱۷:۳۰', true === NCK_Hall::is_bookable_slot( '16:00', '17:30' ) );
+$check( 'بازه ۴ ساعته نوبت نیست', false === NCK_Hall::is_bookable_slot( '16:00', '20:00' ) );
+$check( 'بازه ۴ ساعته در پنجره مجاز است', ! empty( NCK_Hall::check_window_hours( '16:00', '20:00' )['ok'] ) );
+$check( 'بازه ۴ ساعته برای رزرو جدید رد می‌شود', empty( NCK_Hall::check_hours( '16:00', '20:00' )['ok'] ) );
+
+$q_lib_pm = NCK_Hall::quote( 'library', '16:00', '17:30', false );
+$check( 'اجاره عصر کتابخانه ۱٫۵ میلیون', ! empty( $q_lib_pm['ok'] ) && 1500000 === $q_lib_pm['total'] );
+$q_lib_am = NCK_Hall::quote( 'library', '09:00', '10:30', false );
+$check( 'اجاره صبح کتابخانه ۵۰ درصد تخفیف', ! empty( $q_lib_am['ok'] ) && 750000 === $q_lib_am['total'] && 1 === (int) $q_lib_am['morning'] );
+$q_cafe_pm = NCK_Hall::quote( 'cafe', '16:00', '17:30', false );
+$check( 'اجاره عصر کافی‌شاپ ۲٫۵ میلیون', ! empty( $q_cafe_pm['ok'] ) && 2500000 === $q_cafe_pm['total'] );
+$q_cafe_am = NCK_Hall::quote( 'کافی‌شاپ', '09:00', '10:30', false );
+$check( 'اجاره صبح کافی‌شاپ ۱٫۲۵ میلیون', ! empty( $q_cafe_am['ok'] ) && 1250000 === $q_cafe_am['total'] );
+$q_wood_proj = NCK_Hall::quote( 'woodshop', '16:00', '17:30', true );
+$check( 'نجاری عصر با پروژکتور ۲ میلیون', ! empty( $q_wood_proj['ok'] ) && 2000000 === $q_wood_proj['total'] && 500000 === $q_wood_proj['projector'] );
+$q_am_proj = NCK_Hall::quote( 'library', '09:00', '10:30', true );
+$check( 'صبح با پروژکتور: تخفیف فقط روی فضا', ! empty( $q_am_proj['ok'] ) && 1250000 === $q_am_proj['total'] );
+
 $ok = NCK_Hall::validate(
 	array(
 		'name'        => 'علی رضایی',
 		'honorific'   => 'mr',
 		'national_id' => $nid,
 		'phone'       => '09121234567',
-		'hall_name'   => 'سالن همایش',
-		'amount'      => '۲۰۰۰۰۰۰',
+		'space'       => 'library',
 		'event_date'  => '1404/06/20',
 		'start_hour'  => '16:00',
-		'end_hour'    => '20:00',
-		'chairs'      => '۸۰',
+		'end_hour'    => '17:30',
+		'chairs'      => '۲۰',
 		'payment'     => 'card',
-		'pay_amount'  => '۲۰۰۰۰۰۰',
+		'pay_amount'  => '1',
 	)
 );
 $check( 'قرارداد سالن کامل قبول می‌شود', ! empty( $ok['ok'] ), isset( $ok['message'] ) ? $ok['message'] : '' );
-$check( 'ساعت پایان در payload', ! empty( $ok['payload']['end_hour'] ) && '20:00' === $ok['payload']['end_hour'] );
+$check( 'ساعت پایان در payload', ! empty( $ok['payload']['end_hour'] ) && '17:30' === $ok['payload']['end_hour'] );
+$check( 'مبلغ سالن از پلن محاسبه می‌شود', ! empty( $ok['ok'] ) && 1500000 === (int) $ok['payload']['amount'] );
+$check( 'پرداخت سالن با مبلغ پلن است', ! empty( $ok['ok'] ) && 1500000 === (int) $ok['payload']['pay_amount'] );
 $check( 'روش پرداخت سالن در payload سایت است', ! empty( $ok['ok'] ) && 'site' === $ok['payload']['payment'] );
 $check( 'پیگیری سالن خودکار است', ! empty( $ok['payload']['pay_ref'] ) && 0 === strpos( $ok['payload']['pay_ref'], 'NCK-' ) );
+$check( 'شناسه فضای کتابخانه در payload', ! empty( $ok['ok'] ) && 'library' === $ok['payload']['space_id'] );
 
 $no_pay_hall = NCK_Hall::validate(
 	array(
@@ -193,12 +226,11 @@ $no_pay_hall = NCK_Hall::validate(
 		'honorific'   => 'mr',
 		'national_id' => $nid,
 		'phone'       => '09121234567',
-		'hall_name'   => 'سالن همایش',
-		'amount'      => '۲۰۰۰۰۰۰',
+		'hall_name'   => 'کتابخانه',
 		'event_date'  => '1404/06/20',
 		'start_hour'  => '16:00',
-		'end_hour'    => '20:00',
-		'chairs'      => '۸۰',
+		'end_hour'    => '17:30',
+		'chairs'      => '20',
 	)
 );
 $check( 'سالن بدون روش پرداخت با سایت ثبت می‌شود', ! empty( $no_pay_hall['ok'] ) && 'site' === $no_pay_hall['payload']['payment'] );
@@ -210,12 +242,11 @@ $bad_time = NCK_Hall::validate(
 		'honorific'   => 'mr',
 		'national_id' => $nid,
 		'phone'       => '09121234567',
-		'hall_name'   => 'سالن اصلی',
-		'amount'      => '1000',
+		'space'       => 'library',
 		'event_date'  => '1404/06/20',
 		'start_hour'  => '20:00',
 		'end_hour'    => '16:00',
-		'chairs'      => '10',
+		'chairs'      => '20',
 	)
 );
 $check( 'ساعت وارونه رد می‌شود', empty( $bad_time['ok'] ) );
@@ -226,12 +257,11 @@ $out_of_hours = NCK_Hall::validate(
 		'honorific'   => 'mr',
 		'national_id' => $nid,
 		'phone'       => '09121234567',
-		'hall_name'   => 'سالن اصلی',
-		'amount'      => '1000',
+		'space'       => 'library',
 		'event_date'  => '1404/06/20',
 		'start_hour'  => '8:00',
 		'end_hour'    => '10:00',
-		'chairs'      => '10',
+		'chairs'      => '20',
 	)
 );
 $check( 'ساعت ۸ صبح خارج از بازه رد می‌شود', empty( $out_of_hours['ok'] ) );
@@ -242,12 +272,11 @@ $gap_hours = NCK_Hall::validate(
 		'honorific'   => 'mr',
 		'national_id' => $nid,
 		'phone'       => '09121234567',
-		'hall_name'   => 'سالن اصلی',
-		'amount'      => '1000',
+		'space'       => 'library',
 		'event_date'  => '1404/06/20',
 		'start_hour'  => '12:00',
 		'end_hour'    => '17:00',
-		'chairs'      => '10',
+		'chairs'      => '20',
 	)
 );
 $check( 'عبور از فاصله ۱۳ تا ۱۶ رد می‌شود', empty( $gap_hours['ok'] ) );
@@ -258,15 +287,74 @@ $afternoon = NCK_Hall::validate(
 		'honorific'   => 'mr',
 		'national_id' => $nid,
 		'phone'       => '09121234567',
-		'hall_name'   => 'سالن اصلی',
-		'amount'      => '1000',
+		'space'       => 'library',
 		'event_date'  => '1404/06/20',
 		'start_hour'  => '14:00',
 		'end_hour'    => '15:00',
-		'chairs'      => '10',
+		'chairs'      => '20',
 	)
 );
 $check( 'ساعت ۱۴ خارج از تایم رد می‌شود', empty( $afternoon['ok'] ) );
+
+$long_slot = NCK_Hall::validate(
+	array(
+		'name'        => 'علی رضایی',
+		'honorific'   => 'mr',
+		'national_id' => $nid,
+		'phone'       => '09121234567',
+		'space'       => 'library',
+		'event_date'  => '1404/06/20',
+		'start_hour'  => '16:00',
+		'end_hour'    => '20:00',
+		'chairs'      => '20',
+	)
+);
+$check( 'رزرو طولانی‌تر از ۹۰ دقیقه رد می‌شود', empty( $long_slot['ok'] ) );
+
+$few_chairs = NCK_Hall::validate(
+	array(
+		'name'        => 'علی رضایی',
+		'honorific'   => 'mr',
+		'national_id' => $nid,
+		'phone'       => '09121234567',
+		'space'       => 'library',
+		'event_date'  => '1404/06/20',
+		'start_hour'  => '16:00',
+		'end_hour'    => '17:30',
+		'chairs'      => '10',
+	)
+);
+$check( 'صندلی کمتر از ۲۰ رد می‌شود', empty( $few_chairs['ok'] ) );
+
+$many_chairs = NCK_Hall::validate(
+	array(
+		'name'        => 'علی رضایی',
+		'honorific'   => 'mr',
+		'national_id' => $nid,
+		'phone'       => '09121234567',
+		'space'       => 'library',
+		'event_date'  => '1404/06/20',
+		'start_hour'  => '16:00',
+		'end_hour'    => '17:30',
+		'chairs'      => '26',
+	)
+);
+$check( 'صندلی بیشتر از ۲۵ رد می‌شود', empty( $many_chairs['ok'] ) );
+
+$unknown_hall = NCK_Hall::validate(
+	array(
+		'name'        => 'علی رضایی',
+		'honorific'   => 'mr',
+		'national_id' => $nid,
+		'phone'       => '09121234567',
+		'hall_name'   => 'سالن همایش',
+		'event_date'  => '1404/06/20',
+		'start_hour'  => '16:00',
+		'end_hour'    => '17:30',
+		'chairs'      => '20',
+	)
+);
+$check( 'سالن قدیمی خارج از سه پلن رد می‌شود', empty( $unknown_hall['ok'] ) );
 
 $morning_ok = NCK_Hall::validate(
 	array(
@@ -274,16 +362,17 @@ $morning_ok = NCK_Hall::validate(
 		'honorific'   => 'mr',
 		'national_id' => $nid,
 		'phone'       => '09121234567',
-		'hall_name'   => 'سالن اصلی',
-		'amount'      => '1000',
+		'space'       => 'cafe',
 		'event_date'  => '1404/06/20',
 		'start_hour'  => '9:00',
-		'end_hour'    => '13:00',
-		'chairs'      => '10',
+		'end_hour'    => '10:30',
+		'chairs'      => '25',
+		'projector'   => '1',
 	)
 );
-$check( 'بازه صبح ۹ تا ۱۳ قبول می‌شود', ! empty( $morning_ok['ok'] ), isset( $morning_ok['message'] ) ? $morning_ok['message'] : '' );
+$check( 'بازه صبح ۹۰ دقیقه‌ای قبول می‌شود', ! empty( $morning_ok['ok'] ), isset( $morning_ok['message'] ) ? $morning_ok['message'] : '' );
 $check( 'ساعت صبح نرمال ۹ است', ! empty( $morning_ok['ok'] ) && '09:00' === $morning_ok['payload']['start_hour'] );
+$check( 'صبح کافی‌شاپ با پروژکتور ۱٫۷۵ میلیون', ! empty( $morning_ok['ok'] ) && 1750000 === (int) $morning_ok['payload']['amount'] );
 
 $slots = NCK_Hall::time_slots();
 $check( '۲۲ شیار ساعت سالن', 22 === count( $slots ) );
@@ -295,20 +384,21 @@ $check( 'بازه مجاور تداخل ندارد', false === NCK_Hall::ranges_
 $check( 'بازه هم‌پوشان تداخل دارد', true === NCK_Hall::ranges_overlap( '16:00', '20:00', '18:00', '22:00' ) );
 $month_map = NCK_Hall::group_month_payloads(
 	array(
-		array( 'event_date' => '1404/06/20', 'start_hour' => '16:00', 'end_hour' => '20:00', 'hall_name' => 'سالن همایش' ),
-		array( 'event_date' => '1404/06/20', 'start_hour' => '09:00', 'end_hour' => '13:00', 'hall_name' => 'سالن اصلی' ),
-		array( 'event_date' => '1404/07/01', 'start_hour' => '16:00', 'end_hour' => '18:00', 'hall_name' => 'سالن همایش' ),
+		array( 'event_date' => '1404/06/20', 'start_hour' => '16:00', 'end_hour' => '20:00', 'hall_name' => 'کتابخانه' ),
+		array( 'event_date' => '1404/06/20', 'start_hour' => '09:00', 'end_hour' => '13:00', 'hall_name' => 'کافی‌شاپ' ),
+		array( 'event_date' => '1404/07/01', 'start_hour' => '16:00', 'end_hour' => '18:00', 'hall_name' => 'کتابخانه' ),
 	),
 	1404,
 	6,
-	'سالن همایش'
+	'کتابخانه'
 );
 $check( 'رزرو ماه فقط سالن انتخاب‌شده', isset( $month_map['1404/06/20'] ) && 1 === count( $month_map['1404/06/20'] ) );
 $check( 'ماه بعد در تقویم این ماه نیست', ! isset( $month_map['1404/07/01'] ) );
-$empty_month = NCK_Hall::month_bookings( 1404, 6, 'سالن همایش' );
+$check( 'رزرو قدیمی ۴ ساعته در تقویم می‌ماند', '16:00' === $month_map['1404/06/20'][0]['start'] && '20:00' === $month_map['1404/06/20'][0]['end'] );
+$empty_month = NCK_Hall::month_bookings( 1404, 6, 'کتابخانه' );
 $check( 'بدون وردپرس رزرو ماه خالی است', array() === $empty_month );
 
-$no_nid = NCK_Hall::validate( array( 'name' => 'علی رضایی', 'phone' => '09121234567', 'hall_name' => 'سالن', 'amount' => '1', 'event_date' => '1404/01/01', 'start_hour' => '8:00', 'end_hour' => '10:00', 'chairs' => '1' ) );
+$no_nid = NCK_Hall::validate( array( 'name' => 'علی رضایی', 'phone' => '09121234567', 'hall_name' => 'کتابخانه', 'amount' => '1', 'event_date' => '1404/01/01', 'start_hour' => '8:00', 'end_hour' => '10:00', 'chairs' => '1' ) );
 $check( 'بدون کد ملی رد می‌شود', empty( $no_nid['ok'] ) );
 
 $plans = NCK_Shifts::plan_types( 'both' );
@@ -574,6 +664,9 @@ $mark_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/brand-m
 $check( 'قالب لوگوی مشترک هست', false !== strpos( $mark_tpl, 'nck-mark' ) );
 $settings_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/admin-settings.php' );
 $check( 'تنظیمات انتخاب لوگو دارد', false !== strpos( $settings_tpl, 'data-nck-logo-pick' ) );
+$check( 'قیمت کتابخانه در تنظیمات هست', false !== strpos( $settings_tpl, 'hall_space_library' ) );
+$check( 'قیمت کافی‌شاپ در تنظیمات هست', false !== strpos( $settings_tpl, 'hall_space_cafe' ) );
+$check( 'قیمت نجاری در تنظیمات هست', false !== strpos( $settings_tpl, 'hall_space_woodshop' ) );
 $cowork_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/contract.php' );
 $check( 'فرم قرارداد از قالب لوگو استفاده می‌کند', false !== strpos( $cowork_tpl, 'brand-mark.php' ) );
 $check( 'فضای کار مرحله مفاد دارد', false !== strpos( $cowork_tpl, 'data-nck-step-label="مفاد قرارداد"' ) );
@@ -581,11 +674,16 @@ $check( 'دانلود قرارداد در مفاد هست', false !== strpos( $c
 $check( 'اجاره سالن مرحله مفاد دارد', false !== strpos( $hall_tpl, 'data-nck-step-label="مفاد قرارداد"' ) );
 $check( 'دانلود قرارداد سالن هست', false !== strpos( $hall_tpl, 'data-nck-download-review' ) );
 $check( 'تقویم شمسی اجاره سالن هست', false !== strpos( $hall_tpl, 'hall-schedule.php' ) );
+$check( 'سه پلن فضای سالن در فرم هست', false !== strpos( $hall_tpl, 'data-nck-hall-spaces' ) );
+$check( 'پلن کتابخانه در فرم سالن هست', false !== strpos( $hall_tpl, 'کتابخانه' ) );
+$check( 'پلن کافی‌شاپ در فرم سالن هست', false !== strpos( $hall_tpl, 'کافی‌شاپ' ) );
+$check( 'پلن نجاری در فرم سالن هست', false !== strpos( $hall_tpl, 'کارگاه نجاری' ) );
 $sched_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/hall-schedule.php' );
 $check( 'تاریخ سالن از تقویم باز می‌شود', false !== strpos( $sched_tpl, 'data-nck-cal' ) );
 $check( 'تقویم سالن ماهانه است', false !== strpos( $sched_tpl, 'nck-cal-month' ) );
 $check( 'لیست ساعت پر در تقویم هست', false !== strpos( $sched_tpl, 'data-nck-cal-busy' ) );
-$check( 'ساعت سالن رول دارد', false !== strpos( $sched_tpl, 'data-nck-time-rolls' ) );
+$check( 'نوبت ۹۰ دقیقه‌ای سالن هست', false !== strpos( $sched_tpl, 'data-nck-hall-slot' ) );
+$check( 'رول ساعت سالن حذف شده', false === strpos( $sched_tpl, 'data-nck-time-rolls' ) );
 $check( 'ورودی دستی ساعت سالن حذف شده', false === strpos( $sched_tpl, 'type="text"' ) );
 $js = (string) file_get_contents( dirname( __DIR__ ) . '/assets/js/frontend.js' );
 $check( 'دانلود مفاد در جاوااسکریپت هست', false !== strpos( $js, 'data-nck-download-review' ) );
@@ -594,6 +692,8 @@ $check( 'رفتن به درگاه در جاوااسکریپت هست', false !==
 $check( 'متن انتقال بانک در جاوااسکریپت هست', false !== strpos( $js, 'درگاه بانک' ) );
 $check( 'ورود اجباری پرداخت در جاوااسکریپت هست', false !== strpos( $js, 'need_login' ) );
 $check( 'بارگذاری ماه سالن در جاوااسکریپت هست', false !== strpos( $js, 'nck_hall_month' ) );
+$check( 'محاسبه مبلغ سالن در جاوااسکریپت هست', false !== strpos( $js, 'bindHallQuote' ) );
+$check( 'نوبت ۹۰ دقیقه‌ای در جاوااسکریپت هست', false !== strpos( $js, 'bindHallSlots' ) );
 $learner_tpl = (string) file_get_contents( dirname( __DIR__ ) . '/templates/learner.php' );
 $check( 'پذیرش چیپ کارت ندارد', false === strpos( $learner_tpl, 'value="card"' ) );
 $check( 'پذیرش پرداخت سایت پنهان دارد', false !== strpos( $learner_tpl, 'name="payment" value="site"' ) );

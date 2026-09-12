@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>نهال — پیش‌نمایش فرم‌ها</title>
-<link rel="stylesheet" href="assets/css/frontend.css?v=127" />
+<link rel="stylesheet" href="assets/css/frontend.css?v=130" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
   body{
@@ -405,9 +405,45 @@
           </section>
           <section class="nck-step" data-nck-step data-nck-step-label="سالن و زمان" hidden>
             <div class="nck-grid nck-grid-hall">
-              <div class="nck-field nck-field-wide"><label>سالن</label><input name="hall_name" type="text" required /></div>
-              <div class="nck-field"><label>مبلغ (تومان)</label><input name="amount" type="text" dir="ltr" required /></div>
-              <div class="nck-field"><label>تعداد صندلی</label><input name="chairs" type="number" min="1" required /></div>
+              <div class="nck-field nck-field-wide">
+                <span class="nck-label">فضای اجاره</span>
+                <p class="nck-form-help">هر رزرو ۹۰ دقیقه است؛ صبح از ۹ تا ۱۳ با ۵۰ درصد تخفیف اجاره فضا.</p>
+                <div class="nck-plan-list" data-nck-hall-spaces>
+                  <label class="nck-plan-card">
+                    <input type="radio" name="space" value="library" required data-nck-name="کتابخانه" data-nck-price="1500000" />
+                    <span class="nck-plan-copy"><strong>کتابخانه</strong><small>فضای مطالعه و جلسات آرام</small></span>
+                    <span class="nck-plan-price">۱,۵۰۰,۰۰۰ تومان</span>
+                  </label>
+                  <label class="nck-plan-card">
+                    <input type="radio" name="space" value="cafe" required data-nck-name="کافی‌شاپ" data-nck-price="2500000" />
+                    <span class="nck-plan-copy"><strong>کافی‌شاپ</strong><small>فضای پذیرایی و دورهمی</small></span>
+                    <span class="nck-plan-price">۲,۵۰۰,۰۰۰ تومان</span>
+                  </label>
+                  <label class="nck-plan-card">
+                    <input type="radio" name="space" value="woodshop" required data-nck-name="کارگاه نجاری" data-nck-price="1500000" />
+                    <span class="nck-plan-copy"><strong>کارگاه نجاری</strong><small>فضای کار عملی و کارگاه</small></span>
+                    <span class="nck-plan-price">۱,۵۰۰,۰۰۰ تومان</span>
+                  </label>
+                </div>
+                <input name="hall_name" type="hidden" value="" />
+              </div>
+              <div class="nck-field">
+                <label>تعداد صندلی</label>
+                <select name="chairs" required>
+                  <option value="20">۲۰</option>
+                  <option value="21">۲۱</option>
+                  <option value="22">۲۲</option>
+                  <option value="23">۲۳</option>
+                  <option value="24">۲۴</option>
+                  <option value="25">۲۵</option>
+                </select>
+              </div>
+              <div class="nck-field nck-field-wide">
+                <label class="nck-agree nck-projector-row" style="margin:0">
+                  <span><input type="checkbox" name="projector" value="1" data-nck-price="500000" /> نیاز به ویدئو پروژکتور</span>
+                  <span class="nck-plan-price">۵۰۰,۰۰۰ تومان</span>
+                </label>
+              </div>
               <div class="nck-field nck-field-wide">
                 <span class="nck-label">تاریخ برگزاری</span>
                 <p class="nck-form-help">تقویم ماهانه را ورق بزنید. روزهای نقطه‌دار رزرو دارند.</p>
@@ -432,20 +468,37 @@
                 </div>
               </div>
               <div class="nck-field nck-field-wide">
-                <span class="nck-label">ساعت اجاره</span>
-                <p class="nck-form-help">ساعت را روی رول بگردانید. فقط ۹ تا ۱۳ و ۱۶ تا ۲۲ قابل انتخاب است.</p>
-                <div class="nck-time-rolls" data-nck-time-rolls>
-                  <div class="nck-roll" data-nck-roll="start">
-                    <p class="nck-roll-caption">از ساعت</p>
-                    <div class="nck-roll-frame" data-nck-roll-frame tabindex="0"><ul class="nck-roll-list"></ul></div>
-                  </div>
-                  <div class="nck-roll" data-nck-roll="end">
-                    <p class="nck-roll-caption">تا ساعت</p>
-                    <div class="nck-roll-frame" data-nck-roll-frame tabindex="0"><ul class="nck-roll-list"></ul></div>
-                  </div>
-                  <input name="start_hour" type="hidden" required value="16:00" />
-                  <input name="end_hour" type="hidden" required value="20:00" />
-                </div>
+                <label>نوبت ۹۰ دقیقه‌ای</label>
+                <p class="nck-form-help">هر رزرو ۹۰ دقیقه است. نوبت صبح ۵۰ درصد تخفیف دارد.</p>
+                <select class="nck-slot-select" name="nck_slot" data-nck-hall-slot required>
+                  <optgroup label="صبح — ۵۰٪ تخفیف">
+                    <option value="09:00-10:30">۹:۰۰ تا ۱۰:۳۰</option>
+                    <option value="09:30-11:00">۹:۳۰ تا ۱۱:۰۰</option>
+                    <option value="10:00-11:30">۱۰:۰۰ تا ۱۱:۳۰</option>
+                    <option value="10:30-12:00">۱۰:۳۰ تا ۱۲:۰۰</option>
+                    <option value="11:00-12:30">۱۱:۰۰ تا ۱۲:۳۰</option>
+                    <option value="11:30-13:00">۱۱:۳۰ تا ۱۳:۰۰</option>
+                  </optgroup>
+                  <optgroup label="عصر">
+                    <option value="16:00-17:30" selected>۱۶:۰۰ تا ۱۷:۳۰</option>
+                    <option value="16:30-18:00">۱۶:۳۰ تا ۱۸:۰۰</option>
+                    <option value="17:00-18:30">۱۷:۰۰ تا ۱۸:۳۰</option>
+                    <option value="17:30-19:00">۱۷:۳۰ تا ۱۹:۰۰</option>
+                    <option value="18:00-19:30">۱۸:۰۰ تا ۱۹:۳۰</option>
+                    <option value="18:30-20:00">۱۸:۳۰ تا ۲۰:۰۰</option>
+                    <option value="19:00-20:30">۱۹:۰۰ تا ۲۰:۳۰</option>
+                    <option value="19:30-21:00">۱۹:۳۰ تا ۲۱:۰۰</option>
+                    <option value="20:00-21:30">۲۰:۰۰ تا ۲۱:۳۰</option>
+                    <option value="20:30-22:00">۲۰:۳۰ تا ۲۲:۰۰</option>
+                  </optgroup>
+                </select>
+                <input name="start_hour" type="hidden" required value="16:00" />
+                <input name="end_hour" type="hidden" required value="17:30" />
+              </div>
+              <div class="nck-field nck-field-wide">
+                <span class="nck-label">مبلغ اجاره</span>
+                <input name="amount" type="hidden" value="" />
+                <div class="nck-hall-quote" data-nck-hall-quote><p>با انتخاب فضا و نوبت، مبلغ اجاره محاسبه می‌شود.</p></div>
               </div>
             </div>
           </section>
@@ -645,9 +698,9 @@
         if (action === 'nck_hall_month') {
           var hall = String(data.hall_name || '').trim();
           var all = {
-            '1405/06/20': [{ start: '16:00', end: '20:00', hall: 'سالن همایش' }],
-            '1405/06/22': [{ start: '09:00', end: '13:00', hall: 'سالن اصلی' }],
-            '1405/06/25': [{ start: '16:00', end: '18:00', hall: 'سالن همایش' }, { start: '18:00', end: '22:00', hall: 'سالن اصلی' }]
+            '1405/06/20': [{ start: '16:00', end: '17:30', hall: 'کتابخانه' }],
+            '1405/06/22': [{ start: '09:00', end: '10:30', hall: 'کافی‌شاپ' }],
+            '1405/06/25': [{ start: '16:00', end: '17:30', hall: 'کارگاه نجاری' }, { start: '18:00', end: '19:30', hall: 'کتابخانه' }]
           };
           var days = {};
           Object.keys(all).forEach(function (k) {
@@ -670,9 +723,9 @@
           var nid = String(data.national_id || '').replace(/\D+/g, '');
           if (nid.length !== 10) return err('شماره ملی باید ۱۰ رقم باشد.');
           if (!phone(data.phone)) return err('شماره موبایل معتبر نیست.');
-          if (!data.hall_name) return err('نام سالن را وارد کنید.');
-          if (!parseInt(String(data.amount).replace(/\D+/g, ''), 10)) return err('مبلغ اجاره را وارد کنید.');
-          if (!data.chairs) return err('تعداد صندلی را وارد کنید.');
+          if (!data.space && !data.hall_name) return err('یکی از فضاهای کتابخانه، کافی‌شاپ یا کارگاه نجاری را انتخاب کنید.');
+          var chairs = parseInt(String(data.chairs || '').replace(/\D+/g, ''), 10);
+          if (chairs < 20 || chairs > 25) return err('تعداد صندلی باید بین ۲۰ تا ۲۵ باشد.');
           return ok({ message: 'قرارداد اجاره سالن ثبت شد.', print: '#print-hall', name: data.name });
         }
         if (action === 'nck_sign_learner') {
@@ -739,6 +792,6 @@
       });
     }
   </script>
-  <script src="assets/js/frontend.js?v=126"></script>
+  <script src="assets/js/frontend.js?v=130"></script>
 </body>
 </html>

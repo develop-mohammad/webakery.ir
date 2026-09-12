@@ -9,7 +9,7 @@
 | product | `nahal-cowork` |
 | name | قرارداد نهال \| فضای کار، سالن و پذیرش |
 | price | ۳۹۹,۰۰۰ تومان (۳۹۹۰۰۰۰ ریال) |
-| version | 1.2.9 |
+| version | 1.3.0 |
 | zip | `nahal-cowork.zip` |
 
 ## بخش‌های config.php
@@ -29,12 +29,12 @@
 
 // LS_UPDATES
 'nahal-cowork' => [
-    'version'      => '1.2.9',
+    'version'      => '1.3.0',
     'package'      => 'https://webakery.ir/license-server/updates/nahal-cowork.zip',
     'requires'     => '5.8',
     'tested'       => '6.7',
     'requires_php' => '7.4',
-    'changelog'    => 'نسخه ۱.۲.۹: بعد از رزرو، سفارش در ووکامرس و حسابدار ثبت می‌شود و کاربر مستقیم به درگاه بانک می‌رود.',
+    'changelog'    => 'نسخه ۱.۳.۰: اجاره سالن با سه فضا (کتابخانه، کافی‌شاپ، نجاری)، نوبت ۹۰ دقیقه‌ای، تخفیف ۵۰٪ صبح، پروژکتور اختیاری و صندلی ۲۰ تا ۲۵.',
 ],
 ```
 

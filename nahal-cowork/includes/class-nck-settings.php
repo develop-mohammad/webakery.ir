@@ -32,6 +32,9 @@ class NCK_Settings {
 			'hall_org'          => NCK_Hall::default_org(),
 			'hall_signer'       => NCK_Hall::default_signer(),
 			'hall_list'         => implode( "\n", NCK_Hall::default_halls() ),
+			'hall_space_library'  => 1500000,
+			'hall_space_cafe'     => 2500000,
+			'hall_space_woodshop' => 1500000,
 			'projector_price'   => 500000,
 			'projector_minutes' => 90,
 			'wc_sync'           => 1,
@@ -170,7 +173,10 @@ class NCK_Settings {
 
 		$out['hall_org']    = sanitize_text_field( isset( $in['hall_org'] ) ? $in['hall_org'] : $d['hall_org'] );
 		$out['hall_signer'] = sanitize_text_field( isset( $in['hall_signer'] ) ? $in['hall_signer'] : $d['hall_signer'] );
-		$out['hall_list']   = sanitize_textarea_field( isset( $in['hall_list'] ) ? $in['hall_list'] : $d['hall_list'] );
+		foreach ( array( 'hall_space_library', 'hall_space_cafe', 'hall_space_woodshop' ) as $space_fee ) {
+			$out[ $space_fee ] = max( 0, NCK_Hall::parse_amount( isset( $in[ $space_fee ] ) ? $in[ $space_fee ] : $d[ $space_fee ] ) );
+		}
+		$out['hall_list'] = implode( "\n", NCK_Hall::space_names() );
 
 		$price = isset( $in['projector_price'] ) ? NCK_Hall::parse_amount( $in['projector_price'] ) : (int) $d['projector_price'];
 		$out['projector_price'] = max( 0, $price );
