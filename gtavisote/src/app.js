@@ -239,6 +239,10 @@ async function handle(req, res) {
     return text(res, 404, 'not found');
   }
 
+  if (method === 'GET' && p === '/health') {
+    return text(res, 200, 'ok');
+  }
+
   if (!installed() && p !== '/install') {
     return redirect(res, sess, '/install');
   }
@@ -246,7 +250,9 @@ async function handle(req, res) {
   try {
     if (p === '/install' && method === 'GET') {
       if (installed()) return redirect(res, sess, '/');
-      const guess = `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host || 'localhost:8787'}`;
+      const fwd = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+      const proto = fwd === 'https' || fwd === 'http' ? fwd : 'http';
+      const guess = `${proto}://${req.headers.host || 'localhost:8787'}`;
       return html(res, sess, 200, frontT.install('', guess, sess.csrf));
     }
     if (p === '/install' && method === 'POST') {

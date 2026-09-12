@@ -77,6 +77,8 @@ async function main() {
     await waitUp();
     const css = await req('GET', '/css/front.css');
     assert(css.status === 200 && css.body.includes('--pink'), 'css');
+    const health = await req('GET', '/health');
+    assert(health.status === 200 && health.body.includes('ok'), 'health');
 
     let home = await req('GET', '/');
     let cookie = home.cookie;
