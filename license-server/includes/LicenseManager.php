@@ -37,6 +37,7 @@ class LicenseManager {
             'note'        => $note,
             'status'      => 'active',
             'expires_at'  => $expires_at,
+            'periods_paid'=> 1,
             'created_at'  => date('Y-m-d H:i:s'),
         ];
         Database::license_insert($lic);
@@ -85,9 +86,10 @@ class LicenseManager {
             Database::license_update(
                 $existing['license_key'],
                 array(
-                    'expires_at' => $new_exp,
-                    'status'     => 'active',
-                    'note'       => trim( ( $existing['note'] ?? '' ) . ' | تمدید ' . $months . 'ماهه ' . date( 'Y-m-d' ) ),
+                    'expires_at'   => $new_exp,
+                    'status'       => 'active',
+                    'periods_paid' => (int) ( $existing['periods_paid'] ?? 0 ) + 1,
+                    'note'         => trim( ( $existing['note'] ?? '' ) . ' | تمدید ' . $months . 'ماهه ' . date( 'Y-m-d' ) ),
                 )
             );
             if ( $domain !== '' ) {
@@ -205,7 +207,61 @@ class LicenseManager {
         $domain = self::clean_domain($domain);
         if ( ! Database::activation_find($key, $domain) ) return [ 'valid' => false, 'error' => 'domain_not_activated' ];
 
-        return [ 'valid' => true, 'email' => $lic['email'], 'product' => $lic['product'], 'expires_at' => $lic['expires_at'] ];
+        return [ 'valid' => true, 'email' => $lic['email'], 'product' => $lic['product'], 'expires_at' => $lic['expires_at'], 'periods_paid' => (int) ( $lic['periods_paid'] ?? 0 ) ];
+    }
+
+    /** چند روز تا پایان؛ null یعنی بدون انقضا */
+    public static function days_left( $expires_at ): ?int {
+        if ( $expires_at === null || $expires_at === '' ) return null;
+        $end = strtotime( $expires_at . ' 23:59:59' );
+        if ( ! $end ) return 0;
+        return (int) ceil( ( $end - time() ) / 86400 );
+    }
+
+    /** ۵ تا ۹ درصد بر اساس تعداد دوره‌های خریده‌شده */
+    public static function loyalty_percent( int $periods_paid ): int {
+        return min( 9, 5 + max( 0, $periods_paid - 1 ) );
+    }
+
+    public const EARLY_RENEWAL_DAYS = 3;
+
+    /**
+     * تخفیف تمدید زودهنگام برای محصول دوره‌ای (مثل دفترچی).
+     *
+     * @return array{early:bool,percent:int,discount:int,final:int,periods_paid:int,days_left:?int}
+     */
+    public static function quote_amount( int $base_rial, ?array $lic ): array {
+        $periods = (int) ( $lic['periods_paid'] ?? 0 );
+        $days    = $lic ? self::days_left( $lic['expires_at'] ?? null ) : null;
+        $early   = $lic && $periods > 0 && $days !== null && $days >= self::EARLY_RENEWAL_DAYS;
+        $percent = $early ? self::loyalty_percent( $periods ) : 0;
+        $discount = (int) round( $base_rial * $percent / 100 );
+        if ( $discount > $base_rial ) $discount = $base_rial;
+        return [
+            'early'        => $early,
+            'percent'      => $percent,
+            'discount'     => $discount,
+            'final'        => $base_rial - $discount,
+            'periods_paid' => $periods,
+            'days_left'    => $days,
+        ];
+    }
+
+    public static function find_for_customer( string $product, string $email = '', string $key = '', string $domain = '' ): ?array {
+        $product = strtolower( trim( $product ) );
+        if ( $key !== '' ) {
+            $lic = self::find( $key );
+            if ( $lic && strtolower( $lic['product'] ?? '' ) === $product ) return $lic;
+        }
+        if ( $email !== '' ) {
+            $lic = Database::license_find_by_email( $email, $product );
+            if ( $lic ) return $lic;
+        }
+        if ( $domain !== '' ) {
+            $lic = Database::license_find_by_domain( self::clean_domain( $domain ), $product );
+            if ( $lic ) return $lic;
+        }
+        return null;
     }
 
     public static function deactivate_domain( string $key, string $domain ): array {

@@ -128,6 +128,37 @@ switch ( $action ) {
         ] );
         break;
 
+    case 'quote':
+        $product = sanitize( $input['product'] ?? $_GET['product'] ?? '' );
+        $plan    = sanitize( $input['plan']    ?? $_GET['plan'] ?? '' );
+        $email   = sanitize( $input['email']   ?? $_GET['email'] ?? '' );
+        $key     = sanitize( $input['license_key'] ?? $_GET['license_key'] ?? '' );
+        $domain  = sanitize( $input['domain']  ?? $_GET['domain'] ?? '' );
+        if ( ! $product ) { json_out( false, 'پارامتر product الزامی است.' ); }
+        $plans = defined( 'LS_PLANS' ) && isset( LS_PLANS[ $product ] ) ? LS_PLANS[ $product ] : [];
+        $lic   = LicenseManager::find_for_customer( $product, $email, $key, $domain );
+        $out   = [];
+        foreach ( $plans as $pid => $pdata ) {
+            $base = (int) ( $pdata['price'] ?? 0 );
+            $q    = LicenseManager::quote_amount( $base, $lic );
+            $out[] = [
+                'id'         => (string) $pid,
+                'label'      => $pdata['label'] ?? $pid,
+                'months'     => (int) ( $pdata['months'] ?? 0 ),
+                'price'      => $base,
+                'pay'        => $q['final'],
+                'percent'    => $q['percent'],
+                'early'      => $q['early'],
+            ];
+        }
+        json_out( true, 'قیمت با تخفیف سابقه', 200, [
+            'periods_paid' => (int) ( $lic['periods_paid'] ?? 0 ),
+            'expires_at'   => $lic['expires_at'] ?? null,
+            'days_left'    => $lic ? LicenseManager::days_left( $lic['expires_at'] ?? null ) : null,
+            'plans'        => $out,
+        ] );
+        break;
+
     case 'coupon_list':
         // فقط برای ادمین (نیاز به secret دارد)
         $list = array_map( function( $c ) {
@@ -150,7 +181,7 @@ switch ( $action ) {
         break;
 
     default:
-        json_out( false, 'action نامعتبر است. مقادیر مجاز: create, activate, validate, deactivate, revoke, ping, update, coupon_validate, coupon_list' );
+        json_out( false, 'action نامعتبر است. مقادیر مجاز: create, activate, validate, deactivate, revoke, ping, update, coupon_validate, coupon_list, quote' );
 }
 
 function json_out( bool $success, string $message, int $code = 200, array $extra = [] ) {
