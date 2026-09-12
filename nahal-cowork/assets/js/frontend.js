@@ -995,7 +995,7 @@
         if (!space) {
           box.innerHTML = '<p>ابتدا یکی از فضاها را انتخاب کنید.</p>';
         } else {
-          var html = '<p>اجاره ' + (morning ? 'صبح (۵۰٪ تخفیف) ' : 'عصر ') + (space.getAttribute('data-nck-name') || '') + ': ' + formatFaMoney(String(rent)) + '</p>';
+          var html = '<p>اجاره ' + (morning ? 'صبح با تخفیف ۵۰ درصد ' : 'عصر ') + (space.getAttribute('data-nck-name') || '') + ': ' + formatFaMoney(String(rent)) + '</p>';
           if (proj) html += '<p>ویدئو پروژکتور: ' + formatFaMoney(String(proj)) + '</p>';
           html += '<p><strong>جمع: ' + formatFaMoney(String(total)) + '</strong></p>';
           box.innerHTML = html;

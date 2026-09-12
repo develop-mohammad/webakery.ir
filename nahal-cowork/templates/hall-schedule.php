@@ -46,7 +46,7 @@ $wd       = array( 'ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج' );
 	<label for="nck-hall-slot">نوبت ۹۰ دقیقه‌ای</label>
 	<p class="nck-form-help">هر رزرو ۹۰ دقیقه است. نوبت صبح از ۹ تا ۱۳ با ۵۰ درصد تخفیف اجاره فضا است؛ نوبت‌های پر قابل انتخاب نیستند.</p>
 	<select id="nck-hall-slot" class="nck-slot-select" name="nck_slot" data-nck-hall-slot required>
-		<optgroup label="صبح — ۵۰٪ تخفیف">
+		<optgroup label="صبح — تخفیف ۵۰ درصد">
 			<?php foreach ( $bookable as $slot ) : ?>
 				<?php
 				if ( empty( $slot['morning'] ) ) {
