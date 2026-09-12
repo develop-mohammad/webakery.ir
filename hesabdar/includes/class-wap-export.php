@@ -233,18 +233,17 @@ class WAP_Export {
             ) );
         }
         fputcsv( $fp, array() );
-        fputcsv( $fp, array( '--- واریزهای شاپرک (دقیقاً از API زرین‌پال / PAID) ---' ) );
-        fputcsv( $fp, array( 'شناسه تسویه', 'وضعیت', 'مبلغ ریال', 'مبلغ تومان', 'شناسه ارجاع بانکی', 'تاریخ واریز', 'تاریخ ایجاد', 'تاریخ شمسی واریز' ) );
+        fputcsv( $fp, array( '--- تسویه‌های واریزشده (مثل پنل زرین‌پال) ---' ) );
+        fputcsv( $fp, array( 'وضعیت', 'تاریخ تخمینی واریز', 'شناسه ارجاع بانکی', 'شناسه تسویه', 'مبلغ خالص تسویه (ریال)', 'معادل تومان', 'تاریخ شمسی واریز' ) );
         foreach ( (array) ( $report['settles'] ?? array() ) as $r ) {
             fputcsv( $fp, array(
+                $r['status_label'] ?? ( $r['status'] ?? '' ),
+                $r['payable_display'] ?? ( $r['payable_at'] ?? '' ),
+                $r['reference_id'] ?? '',
                 $r['id'] ?? '',
-                $r['status'] ?? '',
                 $r['amount_rial'] ?? 0,
                 $r['amount'] ?? 0,
-                $r['reference_id'] ?? '',
-                $r['reconciled_at'] ?? '',
-                $r['payable_at'] ?? '',
-                $r['date_jalali'] ?? '',
+                $r['payable_jalali'] ?? ( $r['date_jalali'] ?? '' ),
             ) );
         }
         fclose( $fp );
@@ -277,7 +276,7 @@ class WAP_Export {
                 'rows'    => array(),
             ),
             'واریز شاپرک' => array(
-                'headers' => array( 'شناسه تسویه', 'وضعیت', 'مبلغ ریال (عین زرین‌پال)', 'مبلغ تومان', 'شناسه ارجاع بانکی', 'تاریخ واریز', 'تاریخ ایجاد', 'تاریخ شمسی واریز' ),
+                'headers' => array( 'وضعیت', 'تاریخ تخمینی واریز', 'شناسه ارجاع بانکی', 'شناسه تسویه', 'مبلغ خالص تسویه (ریال)', 'معادل تومان', 'تاریخ شمسی واریز' ),
                 'rows'    => array(),
             ),
         );
@@ -296,14 +295,13 @@ class WAP_Export {
         }
         foreach ( (array) ( $report['settles'] ?? array() ) as $r ) {
             $sheets['واریز شاپرک']['rows'][] = array(
+                (string) ( $r['status_label'] ?? ( $r['status'] ?? '' ) ),
+                (string) ( $r['payable_display'] ?? ( $r['payable_at'] ?? '' ) ),
+                (string) ( $r['reference_id'] ?? '' ),
                 (string) ( $r['id'] ?? '' ),
-                (string) ( $r['status'] ?? '' ),
                 (float) ( $r['amount_rial'] ?? 0 ),
                 (float) ( $r['amount'] ?? 0 ),
-                (string) ( $r['reference_id'] ?? '' ),
-                (string) ( $r['reconciled_at'] ?? '' ),
-                (string) ( $r['payable_at'] ?? '' ),
-                (string) ( $r['date_jalali'] ?? '' ),
+                (string) ( $r['payable_jalali'] ?? ( $r['date_jalali'] ?? '' ) ),
             );
         }
         WAP_Excel::download( $sheets, 'shaparak-wc-report-' . date( 'Y-m-d' ) );

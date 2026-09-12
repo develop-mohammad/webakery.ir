@@ -36,7 +36,7 @@ $checks = array(
 	$root . '/includes/class-wap-chart.php' => array( 'build_date_overlay', 'daily_sequence', 'wap-gsc-metrics', 'is-dual' ),
 	$root . '/includes/class-wap-portal.php' => array( 'build_date_overlay', 'ماه جدید', 'ماه قدیم' ),
 	$root . '/assets/style.css' => array( 'wap-gsc-metrics', 'wap-gsc-footnote', 'is-dual' ),
-	$root . '/hesabdar.php' => array( '1.20.0' ),
+	$root . '/hesabdar.php' => array( '1.21.0' ),
 );
 foreach ( $checks as $file => $needles ) {
 	$c = file_get_contents( $file );

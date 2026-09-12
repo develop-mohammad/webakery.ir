@@ -25,7 +25,7 @@ class WAP_SMS {
 			'zp_terminal_id'   => '',
 			'zp_merchant_id'   => '',
 			'zp_access_token'  => '',
-			'settle_message'   => "واریز شاپرک به حساب انجام شد\nمبلغ: {amount} تومان\nشناسه ارجاع: {reference_id}\nزمان: {reconciled_at}",
+			'settle_message'   => "واریز شاپرک به حساب (تسویه شده)\nمبلغ خالص: {amount_rial} ریال\nشناسه تسویه: {reconcile_id}\nارجاع بانکی: {reference_id}\nتاریخ واریز: {payable_at}",
 		);
 	}
 

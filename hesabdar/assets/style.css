@@ -883,6 +883,27 @@ a.wap-bar-fill:hover { filter: brightness(1.1); }
 .wap-status-refunded   { background: #ede9fe; color: #5b21b6; }
 .wap-status-failed     { background: #fecaca; color: #7f1d1d; }
 
+/* ── وضعیت تسویه شاپرک (مثل پنل زرین‌پال) ── */
+.wap-settle-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    background: #e8f8ef;
+    color: #0f7a3f;
+}
+.wap-settle-paid { background: #e8f8ef; color: #0f7a3f; }
+.wap-settle-in_progress { background: #fff7e6; color: #a15c00; }
+.wap-settle-reversed { background: #fde8e8; color: #b42318; }
+.wap-settle-table .wap-settle-ref {
+    font-size: 12px;
+    max-width: 280px;
+    word-break: break-all;
+}
+
 .wap-bulk-bar {
     display: flex;
     align-items: center;

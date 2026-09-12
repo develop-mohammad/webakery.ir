@@ -159,9 +159,13 @@ class WAP_Zarinpal_Reconcile {
 				'amount_rial'   => number_format( (int) $amount ),
 				'reference_id'  => (string) ( $row['reference_id'] ?? '' ),
 				'reconcile_id'  => $id,
-				'status'        => $status,
-				'reconciled_at' => (string) ( $row['reconciled_at'] ?? '' ),
-				'payable_at'    => (string) ( $row['payable_at'] ?? '' ),
+				'status'        => class_exists( 'WAP_Zarinpal_Report' ) ? WAP_Zarinpal_Report::status_label( $status ) : $status,
+				'reconciled_at' => class_exists( 'WAP_Zarinpal_Report' )
+					? WAP_Zarinpal_Report::format_iso_display( (string) ( $row['reconciled_at'] ?? '' ) )
+					: (string) ( $row['reconciled_at'] ?? '' ),
+				'payable_at'    => class_exists( 'WAP_Zarinpal_Report' )
+					? WAP_Zarinpal_Report::format_iso_display( (string) ( $row['payable_at'] ?? '' ) )
+					: (string) ( $row['payable_at'] ?? '' ),
 			);
 			$msg = WAP_SMS::render_settle_message( $vars );
 

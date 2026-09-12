@@ -1667,20 +1667,20 @@ function wci_shaparak_report_page() {
     }
     echo '</tbody></table>';
 
-    echo '<h2>واریزهای شاپرک (دقیقاً از API زرین‌پال — PAID)</h2>';
-    echo '<table class="widefat striped"><thead><tr><th>شناسه</th><th>تاریخ واریز</th><th>مبلغ ریال</th><th>تومان</th><th>ارجاع بانکی</th><th>وضعیت</th></tr></thead><tbody>';
+    echo '<h2>تسویه‌های واریزشده (مثل پنل زرین‌پال)</h2>';
+    echo '<p class="description">همین واریزها پیامک می‌شوند. وضعیت «تسویه شده» = واریز به حساب.</p>';
+    echo '<table class="widefat striped"><thead><tr><th>وضعیت</th><th>تاریخ تخمینی واریز</th><th>شناسه ارجاع بانکی</th><th>شناسه تسویه</th><th>مبلغ خالص تسویه (ریال)</th></tr></thead><tbody>';
     if ( empty( $report['settles'] ) ) {
-        echo '<tr><td colspan="6">موردی نیست.</td></tr>';
+        echo '<tr><td colspan="5">موردی نیست.</td></tr>';
     } else {
         foreach ( $report['settles'] as $r ) {
             printf(
-                '<tr><td>%s</td><td>%s</td><td><strong>%s</strong></td><td>%s</td><td style="direction:ltr">%s</td><td>%s</td></tr>',
-                esc_html( $r['id'] ),
-                esc_html( $r['date_jalali'] ?: $r['reconciled_at'] ),
-                esc_html( number_format( $r['amount_rial'] ) ),
-                esc_html( number_format( $r['amount'] ) ),
+                '<tr><td><span style="display:inline-block;padding:2px 10px;border-radius:999px;background:#e8f8ef;color:#0f7a3f;font-size:12px">%s</span></td><td dir="ltr">%s</td><td style="direction:ltr;font-size:12px">%s</td><td dir="ltr">%s</td><td dir="ltr"><strong>%s</strong></td></tr>',
+                esc_html( $r['status_label'] ?? WAP_Zarinpal_Report::status_label( (string) ( $r['status'] ?? '' ) ) ),
+                esc_html( $r['payable_display'] ?: ( $r['payable_jalali'] ?: '—' ) ),
                 esc_html( $r['reference_id'] ),
-                esc_html( $r['status'] )
+                esc_html( $r['id'] ),
+                esc_html( number_format( $r['amount_rial'] ) )
             );
         }
     }

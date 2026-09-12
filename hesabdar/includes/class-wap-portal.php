@@ -1443,29 +1443,28 @@ class WAP_Portal {
         </div>
 
         <div class="wap-table-wrap">
-            <h3 style="margin:0 0 10px">واریزهای شاپرک به حساب (دقیقاً از API زرین‌پال — وضعیت PAID)</h3>
-            <table class="wap-table">
+            <h3 style="margin:0 0 10px">تسویه‌های واریزشده (مثل پنل زرین‌پال)</h3>
+            <p class="wap-hint" style="margin:0 0 12px;line-height:1.7">همین واریزها پیامک می‌شوند. وضعیت «تسویه شده» = واریز به حساب انجام شده است.</p>
+            <table class="wap-table wap-settle-table">
                 <thead>
                     <tr>
-                        <th>شناسه تسویه</th>
-                        <th>تاریخ واریز</th>
-                        <th>مبلغ ریال (عین پنل)</th>
-                        <th>معادل تومان</th>
-                        <th>شناسه ارجاع بانکی</th>
                         <th>وضعیت</th>
+                        <th>تاریخ تخمینی واریز</th>
+                        <th>شناسه ارجاع بانکی</th>
+                        <th>شناسه تسویه</th>
+                        <th>مبلغ خالص تسویه (ریال)</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if ( empty( $report['settles'] ) ) : ?>
-                    <tr><td colspan="6" class="wap-empty">واریز PAID در این بازه یافت نشد یا API تنظیم نشده است.</td></tr>
+                    <tr><td colspan="5" class="wap-empty">تسویهٔ واریزشده‌ای در این بازه نیست. Token و Terminal را در «پیامک واریز شاپرک» تنظیم کنید.</td></tr>
                 <?php else : foreach ( $report['settles'] as $r ) : ?>
                     <tr>
+                        <td><span class="wap-settle-badge wap-settle-<?php echo esc_attr( strtolower( (string) $r['status'] ) ); ?>"><?php echo esc_html( $r['status_label'] ?? WAP_Zarinpal_Report::status_label( (string) $r['status'] ) ); ?></span></td>
+                        <td dir="ltr"><?php echo esc_html( $r['payable_display'] ?: ( $r['payable_jalali'] ?: '—' ) ); ?></td>
+                        <td dir="ltr" class="wap-settle-ref"><?php echo esc_html( $r['reference_id'] ); ?></td>
                         <td dir="ltr"><?php echo esc_html( $r['id'] ); ?></td>
-                        <td dir="ltr"><?php echo esc_html( $r['date_jalali'] ?: $r['reconciled_at'] ); ?></td>
                         <td dir="ltr"><strong><?php echo esc_html( number_format( $r['amount_rial'] ) ); ?></strong></td>
-                        <td><?php echo esc_html( number_format( $r['amount'] ) ); ?></td>
-                        <td dir="ltr" style="font-size:12px"><?php echo esc_html( $r['reference_id'] ); ?></td>
-                        <td><?php echo esc_html( $r['status'] ); ?></td>
                     </tr>
                 <?php endforeach; endif; ?>
                 </tbody>

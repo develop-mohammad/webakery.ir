@@ -91,23 +91,29 @@ class WAP_Zarinpal_Report {
 				// مبلغ API زرین‌پال دقیقاً ریال است (مثل پنل)
 				$amount_rial = (float) ( $row['amount'] ?? 0 );
 				$amount_toman = $amount_rial / 10;
+				$status = (string) ( $row['status'] ?? '' );
 				$settles[] = array(
-					'id'            => (string) ( $row['id'] ?? '' ),
-					'status'        => (string) ( $row['status'] ?? '' ),
-					'amount_rial'   => $amount_rial,
-					'amount'        => $amount_toman,
-					'reference_id'  => (string) ( $row['reference_id'] ?? '' ),
-					'reconciled_at' => (string) ( $row['reconciled_at'] ?? '' ),
-					'payable_at'    => (string) ( $row['payable_at'] ?? '' ),
-					'date_jalali'   => self::format_iso_jalali( (string) ( $row['reconciled_at'] ?? '' ) ),
-					'payable_jalali'=> self::format_iso_jalali( (string) ( $row['payable_at'] ?? '' ) ),
+					'id'               => (string) ( $row['id'] ?? '' ),
+					'status'           => $status,
+					'status_label'     => self::status_label( $status ),
+					'amount_rial'      => $amount_rial,
+					'amount'           => $amount_toman,
+					'reference_id'     => (string) ( $row['reference_id'] ?? '' ),
+					'reconciled_at'    => (string) ( $row['reconciled_at'] ?? '' ),
+					'payable_at'       => (string) ( $row['payable_at'] ?? '' ),
+					'date_jalali'      => self::format_iso_jalali( (string) ( $row['reconciled_at'] ?? '' ) ),
+					'payable_jalali'   => self::format_iso_jalali( (string) ( $row['payable_at'] ?? '' ) ),
+					'payable_display'  => self::format_iso_display( (string) ( $row['payable_at'] ?? '' ) ),
+					'reconciled_display' => self::format_iso_display( (string) ( $row['reconciled_at'] ?? '' ) ),
 				);
 				$settle_total += $amount_toman;
 				$settle_rial  += $amount_rial;
 			}
-			// مرتب‌سازی مثل پنل: جدیدترین واریز اول
+			// مرتب‌سازی مثل پنل: جدیدترین تاریخ تخمینی واریز اول
 			usort( $settles, function( $a, $b ) {
-				return strcmp( (string) $b['reconciled_at'], (string) $a['reconciled_at'] );
+				$ka = (string) ( $a['payable_at'] ?: $a['reconciled_at'] );
+				$kb = (string) ( $b['payable_at'] ?: $b['reconciled_at'] );
+				return strcmp( $kb, $ka );
 			} );
 		}
 
@@ -157,7 +163,13 @@ class WAP_Zarinpal_Report {
 				continue;
 			}
 			$method = (string) $order->get_payment_method();
-			if ( ! WAP_Payment_Notify::is_zarinpal_method( $method ) ) {
+			$title  = (string) $order->get_payment_method_title();
+			$check  = $method . ' ' . $title;
+			if ( class_exists( 'WAP_Gateway' ) ) {
+				if ( ! WAP_Gateway::is_family( $check, WAP_Gateway::FAMILY_ZARINPAL ) ) {
+					continue;
+				}
+			} elseif ( ! preg_match( '/zarin|zpal|زرین/ui', $check ) ) {
 				continue;
 			}
 			$out[] = $order;
@@ -198,7 +210,7 @@ class WAP_Zarinpal_Report {
 		$token = trim( (string) WAP_SMS::get( 'zp_access_token', '' ) );
 		$tid   = trim( (string) WAP_SMS::get( 'zp_terminal_id', '' ) );
 		if ( $token === '' || $tid === '' ) {
-			return new WP_Error( 'wap_zp_cfg', 'Access Token و Terminal ID را در «اطلاع‌رسانی پیامک» وارد کنید.' );
+			return new WP_Error( 'wap_zp_cfg', 'Access Token و Terminal ID را در «پیامک واریز شاپرک» وارد کنید.' );
 		}
 
 		list( $from, $to ) = self::gregorian_range( $f );
@@ -244,6 +256,18 @@ class WAP_Zarinpal_Report {
 		return $out;
 	}
 
+	/** برچسب فارسی وضعیت تسویه (مثل پنل زرین‌پال). */
+	public static function status_label( string $status ): string {
+		$map = array(
+			'PAID'        => 'تسویه شده',
+			'IN_PROGRESS' => 'در حال انجام',
+			'REVERSED'    => 'برگشت‌خورده',
+			'ALL'         => 'همه',
+		);
+		$key = strtoupper( trim( $status ) );
+		return $map[ $key ] ?? ( $status !== '' ? $status : '—' );
+	}
+
 	private static function format_jalali( int $ts ): string {
 		$g = getdate( $ts );
 		list( $jy, $jm, $jd ) = WAP_Jalali::to_jalali( (int) $g['year'], (int) $g['mon'], (int) $g['mday'] );
@@ -256,5 +280,38 @@ class WAP_Zarinpal_Report {
 		}
 		$ts = strtotime( $iso );
 		return $ts ? self::format_jalali( $ts ) : $iso;
+	}
+
+	/**
+	 * نمایش تاریخ مثل پنل زرین‌پال: «امروز ۰۴:۰۰» یا «۲۸ مرداد ۰۴:۰۰».
+	 */
+	public static function format_iso_display( string $iso ): string {
+		if ( $iso === '' ) {
+			return '—';
+		}
+		$ts = strtotime( $iso );
+		if ( ! $ts ) {
+			return $iso;
+		}
+		$g = getdate( $ts );
+		list( $jy, $jm, $jd ) = WAP_Jalali::to_jalali( (int) $g['year'], (int) $g['mon'], (int) $g['mday'] );
+		$names = WAP_Jalali::month_names();
+		$month = $names[ $jm - 1 ] ?? (string) $jm;
+		$time  = sprintf( '%02d:%02d', (int) $g['hours'], (int) $g['minutes'] );
+
+		$today = WAP_Jalali::today();
+		if ( (int) $today['y'] === $jy && (int) $today['m'] === $jm && (int) $today['d'] === $jd ) {
+			return 'امروز ' . $time;
+		}
+		$now_mid  = strtotime( date( 'Y-m-d' ) . ' 12:00:00' );
+		$yest_mid = $now_mid ? strtotime( '-1 day', $now_mid ) : false;
+		if ( $yest_mid ) {
+			$yg = getdate( $yest_mid );
+			list( $yy, $ym, $yd ) = WAP_Jalali::to_jalali( (int) $yg['year'], (int) $yg['mon'], (int) $yg['mday'] );
+			if ( $yy === $jy && $ym === $jm && $yd === $jd ) {
+				return 'دیروز ' . $time;
+			}
+		}
+		return $jd . ' ' . $month . ' ' . $time;
 	}
 }
