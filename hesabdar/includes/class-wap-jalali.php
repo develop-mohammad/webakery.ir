@@ -67,15 +67,22 @@ class WAP_Jalali {
         return array( 'y' => $jy, 'm' => $jm, 'd' => $jd );
     }
 
-    // تبدیل رشته تاریخ (شمسی ۱۴۰۳/۰۱/۰۱ یا میلادی) به timestamp
-    public static function str_to_timestamp( $date_str, $end_of_day = false ) {
-        $date_str = trim( $date_str );
-        if ( empty( $date_str ) ) return 0;
-        $normalized = strtr( $date_str, array(
+    /** ارقام فارسی/عربی → لاتین و trim. */
+    public static function normalize_digits( $str ): string {
+        $str = trim( (string) $str );
+        return strtr( $str, array(
             '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4',
             '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9',
+            '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4',
+            '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9',
         ) );
-        if ( preg_match( '/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/', $normalized, $m ) && (int) $m[1] > 1200 ) {
+    }
+
+    // تبدیل رشته تاریخ (شمسی ۱۴۰۳/۰۱/۰۱ یا میلادی) به timestamp
+    public static function str_to_timestamp( $date_str, $end_of_day = false ) {
+        $date_str = self::normalize_digits( $date_str );
+        if ( $date_str === '' ) return 0;
+        if ( preg_match( '/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/', $date_str, $m ) && (int) $m[1] > 1200 ) {
             $greg = self::to_gregorian( $m[1], $m[2], $m[3] );
             $h = $end_of_day ? 23 : 0; $i = $end_of_day ? 59 : 0; $s = $end_of_day ? 59 : 0;
             return mktime( $h, $i, $s, $greg[1], $greg[2], $greg[0] );
@@ -108,5 +115,173 @@ class WAP_Jalali {
             default:
                 return array( sprintf( '%04d%02d', $jy, $jm ), $month_names[ $jm - 1 ] . ' ' . $jy );
         }
+    }
+
+    /** نام ماه‌های شمسی (۱..۱۲). */
+    public static function month_names(): array {
+        return array( 'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند' );
+    }
+
+    public static function format( $jy, $jm, $jd ): string {
+        return sprintf( '%d/%02d/%02d', (int) $jy, (int) $jm, (int) $jd );
+    }
+
+    /** پارس تاریخ شمسی YYYY/MM/DD — null اگر نامعتبر. */
+    public static function parse( $date_str ): ?array {
+        $normalized = self::normalize_digits( $date_str );
+        if ( $normalized === '' ) {
+            return null;
+        }
+        if ( ! preg_match( '/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/', $normalized, $m ) ) {
+            return null;
+        }
+        $y = (int) $m[1];
+        $mo = (int) $m[2];
+        $d = (int) $m[3];
+        if ( $y < 1200 || $mo < 1 || $mo > 12 || $d < 1 || $d > self::month_length( $y, $mo ) ) {
+            return null;
+        }
+        return array( 'y' => $y, 'm' => $mo, 'd' => $d );
+    }
+
+    /** ابتدا و انتهای یک ماه شمسی. */
+    public static function month_bounds( int $jy, int $jm ): array {
+        return array(
+            'from' => self::format( $jy, $jm, 1 ),
+            'to'   => self::format( $jy, $jm, self::month_length( $jy, $jm ) ),
+        );
+    }
+
+    /**
+     * نرمال‌سازی بازه: اگر از>تا جابه‌جا می‌شود؛ پیام‌های قابل‌نمایش برمی‌گرداند.
+     *
+     * @return array{from:string,to:string,swapped:bool,invalid:bool,messages:string[]}
+     */
+    public static function normalize_range( string $from, string $to ): array {
+        $out = array(
+            'from'     => $from,
+            'to'       => $to,
+            'swapped'  => false,
+            'invalid'  => false,
+            'messages' => array(),
+        );
+        if ( $from === '' && $to === '' ) {
+            return $out;
+        }
+        $pf = $from !== '' ? self::parse( $from ) : null;
+        $pt = $to !== '' ? self::parse( $to ) : null;
+        if ( $from !== '' && ! $pf ) {
+            $out['invalid']    = true;
+            $out['messages'][] = 'تاریخ شروع نامعتبر است. قالب درست: ۱۴۰۴/۰۱/۰۱';
+        }
+        if ( $to !== '' && ! $pt ) {
+            $out['invalid']    = true;
+            $out['messages'][] = 'تاریخ پایان نامعتبر است. قالب درست: ۱۴۰۴/۰۱/۳۱';
+        }
+        if ( $out['invalid'] ) {
+            return $out;
+        }
+        if ( $pf && $pt ) {
+            $ts_f = self::str_to_timestamp( $from, false );
+            $ts_t = self::str_to_timestamp( $to, true );
+            if ( $ts_f && $ts_t && $ts_f > $ts_t ) {
+                $out['from']       = $to;
+                $out['to']         = $from;
+                $out['swapped']    = true;
+                $out['messages'][] = 'بازه تاریخ برعکس بود (پایان قبل از شروع). خودکار اصلاح شد: «' . $out['from'] . '» تا «' . $out['to'] . '».';
+            }
+        }
+        return $out;
+    }
+
+    /** شیفت سال روی یک تاریخ شمسی (مثلاً ماه مشابه پارسال). */
+    public static function shift_year( string $date_str, int $years ): string {
+        $p = self::parse( $date_str );
+        if ( ! $p ) {
+            return '';
+        }
+        $y = $p['y'] + $years;
+        $d = min( $p['d'], self::month_length( $y, $p['m'] ) );
+        return self::format( $y, $p['m'], $d );
+    }
+
+    /** شیفت ماه شمسی (مثلاً ماه قبل). روز به طول ماه مقصد محدود می‌شود. */
+    public static function shift_month( string $date_str, int $months ): string {
+        $p = self::parse( $date_str );
+        if ( ! $p ) {
+            return '';
+        }
+        $y = $p['y'];
+        $m = $p['m'] + $months;
+        while ( $m < 1 ) {
+            $m += 12;
+            $y--;
+        }
+        while ( $m > 12 ) {
+            $m -= 12;
+            $y++;
+        }
+        $d = min( $p['d'], self::month_length( $y, $m ) );
+        return self::format( $y, $m, $d );
+    }
+
+    /**
+     * بازهٔ ماه قبل نسبت به بازهٔ اصلی.
+     * اگر بازهٔ اصلی یک ماه کامل باشد، کل ماه قبل برمی‌گردد؛ وگرنه هر دو سر بازه یک ماه جابه‌جا می‌شوند.
+     *
+     * @return array{from:string,to:string}|null
+     */
+    public static function previous_month_range( string $from, string $to ): ?array {
+        $pf = self::parse( $from );
+        $pt = self::parse( $to );
+        if ( ! $pf || ! $pt ) {
+            return null;
+        }
+        $full_month = ( $pf['y'] === $pt['y'] && $pf['m'] === $pt['m']
+            && $pf['d'] === 1 && $pt['d'] === self::month_length( $pt['y'], $pt['m'] ) );
+        if ( $full_month ) {
+            $y = $pf['y'];
+            $m = $pf['m'] - 1;
+            if ( $m < 1 ) {
+                $m = 12;
+                $y--;
+            }
+            return self::month_bounds( $y, $m );
+        }
+        $prev_from = self::shift_month( $from, -1 );
+        $prev_to   = self::shift_month( $to, -1 );
+        if ( $prev_from === '' || $prev_to === '' ) {
+            return null;
+        }
+        return array( 'from' => $prev_from, 'to' => $prev_to );
+    }
+
+    /**
+     * لیست ماه‌های اخیر برای انتخاب سریع.
+     *
+     * @return array<int,array{label:string,from:string,to:string,y:int,m:int}>
+     */
+    public static function recent_months( int $count = 14 ): array {
+        $today = self::today();
+        $y     = $today['y'];
+        $m     = $today['m'];
+        $names = self::month_names();
+        $out   = array();
+        for ( $i = 0; $i < $count; $i++ ) {
+            $bounds = self::month_bounds( $y, $m );
+            $out[]  = array(
+                'label' => $names[ $m - 1 ] . ' ' . $y,
+                'from'  => $bounds['from'],
+                'to'    => $bounds['to'],
+                'y'     => $y,
+                'm'     => $m,
+            );
+            $m--;
+            if ( $m < 1 ) {
+                $m = 12;
+                $y--;
+            }
+        }
+        return $out;
     }
 }
