@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS products (
 );
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
-CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode);
 
 CREATE TABLE IF NOT EXISTS price_history (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
