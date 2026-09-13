@@ -16,6 +16,7 @@ import { formatToman } from '@/lib/money'
 import { formatJalaliDateTime, toFaDigits } from '@/lib/jalali'
 import { cn } from '@/lib/utils'
 import type { Category, Product } from '../../shared/models'
+import { looksLikeBarcode, normalizeBarcode } from '../../shared/barcode'
 import { productPayUrl } from '../../shared/woo'
 import { useSettings } from '@/components/layout/SettingsProvider'
 
@@ -27,6 +28,7 @@ export function ProductsPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
+  const [draftBarcode, setDraftBarcode] = useState('')
 
   const load = useCallback(async () => {
     const [cats, list] = await Promise.all([
@@ -114,15 +116,38 @@ export function ProductsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Input
             className="max-w-xs"
-            placeholder="جستجوی نام یا SKU / اسکن بارکد"
+            placeholder="جستجوی نام یا SKU / اسکن بارکد + Enter"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={async (e) => {
+              if (e.key !== 'Enter') return
+              if (!looksLikeBarcode(search)) return
+              e.preventDefault()
+              try {
+                const found = await api().findProductByBarcode(search)
+                if (found) {
+                  setSearch(found.barcode || found.sku)
+                  toast.success(`پیدا شد: ${found.name}`)
+                  return
+                }
+                setDraftBarcode(normalizeBarcode(search))
+                setOpen(true)
+                toast.message('این بارکد در کالاها نیست — کالای جدید را کامل کن')
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : 'جستجوی بارکد نشد')
+              }
+            }}
           />
           <Button variant="outline" onClick={pullSite} disabled={loading || !connected}>
             <Download className="size-4" />
             {loading ? 'در حال دریافت…' : 'دریافت همه کالاهای سایت'}
           </Button>
-          <Button onClick={() => setOpen(true)}>
+          <Button
+            onClick={() => {
+              setDraftBarcode('')
+              setOpen(true)
+            }}
+          >
             <Plus className="size-4" />
             کالای جدید
           </Button>
@@ -162,7 +187,16 @@ export function ProductsPage() {
           )}
         </div>
       </div>
-      <ProductDialog open={open} onOpenChange={setOpen} categories={categories} onSaved={load} />
+      <ProductDialog
+        open={open}
+        initialBarcode={draftBarcode}
+        categories={categories}
+        onSaved={load}
+        onOpenChange={(v) => {
+          setOpen(v)
+          if (!v) setDraftBarcode('')
+        }}
+      />
     </div>
   )
 }
@@ -252,6 +286,14 @@ function CategoryTable({
         cell: (c) => <ProductLinks product={c.row.original} shopUrl={shopUrl} />,
       },
       { accessorKey: 'sku', header: 'SKU', cell: (c) => <span dir="ltr">{c.getValue<string>()}</span> },
+      {
+        accessorKey: 'barcode',
+        header: 'بارکد',
+        cell: (c) => {
+          const code = c.getValue<string>()
+          return code ? <span dir="ltr" className="tabular-nums">{code}</span> : <span className="text-muted-foreground">—</span>
+        },
+      },
       {
         accessorKey: 'buy_price',
         header: 'خرید',
@@ -366,23 +408,33 @@ function InlineNumber({ value, onSave }: { value: number; onSave: (v: number) =>
 
 function ProductDialog({
   open,
+  initialBarcode,
   onOpenChange,
   categories,
   onSaved,
 }: {
   open: boolean
+  initialBarcode?: string
   onOpenChange: (v: boolean) => void
   categories: Category[]
   onSaved: () => Promise<void>
 }) {
   const [name, setName] = useState('')
   const [sku, setSku] = useState('')
+  const [barcode, setBarcode] = useState('')
   const [buy, setBuy] = useState('0')
   const [sell, setSell] = useState('0')
   const [stock, setStock] = useState('0')
   const [alert, setAlert] = useState('0')
   const [cat, setCat] = useState<string>('')
   const [newCat, setNewCat] = useState('')
+
+  useEffect(() => {
+    if (!open) return
+    const code = initialBarcode || ''
+    setBarcode(code)
+    setSku(code)
+  }, [open, initialBarcode])
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -394,7 +446,8 @@ function ProductDialog({
       }
       await api().createProduct({
         name,
-        sku,
+        sku: sku.trim() || barcode.trim(),
+        barcode: barcode.trim(),
         buy_price: Number(buy) || 0,
         sell_price: Number(sell) || 0,
         stock: Number(stock) || 0,
@@ -405,6 +458,7 @@ function ProductDialog({
       onOpenChange(false)
       setName('')
       setSku('')
+      setBarcode('')
       await onSaved()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'ذخیره نشد')
@@ -421,7 +475,18 @@ function ProductDialog({
           <Label>نام</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} required />
           <Label>SKU</Label>
-          <Input dir="ltr" value={sku} onChange={(e) => setSku(e.target.value)} required />
+          <Input dir="ltr" value={sku} onChange={(e) => setSku(e.target.value)} required={!barcode.trim()} />
+          <Label>بارکد</Label>
+          <Input
+            dir="ltr"
+            value={barcode}
+            onChange={(e) => {
+              const next = e.target.value
+              setBarcode(next)
+              if (!sku || sku === barcode) setSku(next)
+            }}
+            placeholder="اسکن یا عدد روی جعبه"
+          />
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>قیمت خرید</Label>

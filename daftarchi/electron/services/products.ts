@@ -1,8 +1,10 @@
 import { getDb } from '../database/db'
+import { barcodeCandidates, looksLikeBarcode, normalizeBarcode } from '../../shared/barcode'
 import type { Category, NewProduct, Product, ProductPatch } from '../../shared/models'
 
 const PRODUCT_SELECT = `
-  SELECT p.id, p.name, p.sku, p.buy_price, p.sell_price, p.stock,
+  SELECT p.id, p.name, p.sku, COALESCE(p.barcode, '') AS barcode,
+         p.buy_price, p.sell_price, p.stock,
          p.category_id, COALESCE(c.name, 'بدون دسته') AS category_name,
          p.stock_alert, p.wc_product_id, COALESCE(p.site_url, '') AS site_url,
          p.created_at, p.updated_at
@@ -11,7 +13,20 @@ const PRODUCT_SELECT = `
 `
 
 function mapProduct(row: Omit<Product, 'low_stock'>): Product {
-  return { ...row, site_url: row.site_url || '', low_stock: row.stock_alert > 0 && row.stock <= row.stock_alert }
+  return {
+    ...row,
+    barcode: row.barcode || '',
+    site_url: row.site_url || '',
+    low_stock: row.stock_alert > 0 && row.stock <= row.stock_alert,
+  }
+}
+
+function assertBarcodeFree(barcode: string, exceptId?: number): void {
+  if (!barcode) return
+  const row = getDb()
+    .prepare('SELECT id, name FROM products WHERE barcode = ? AND id != ? LIMIT 1')
+    .get(barcode, exceptId ?? 0) as { id: number; name: string } | undefined
+  if (row) throw new Error(`این بارکد قبلاً برای «${row.name}» ثبت شده`)
 }
 
 export function listCategories(): Category[] {
@@ -33,9 +48,9 @@ export function listProducts(filter?: { categoryId?: number | null; search?: str
     params.push(filter.categoryId)
   }
   if (filter?.search?.trim()) {
-    where.push('(p.name LIKE ? OR p.sku LIKE ?)')
+    where.push('(p.name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?)')
     const q = `%${filter.search.trim()}%`
-    params.push(q, q)
+    params.push(q, q, q)
   }
   const sql = `${PRODUCT_SELECT} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY category_name, p.name`
   const rows = getDb().prepare(sql).all(...params) as Omit<Product, 'low_stock'>[]
@@ -43,11 +58,34 @@ export function listProducts(filter?: { categoryId?: number | null; search?: str
 }
 
 export function searchProducts(query: string, limit = 12): Product[] {
-  const q = `%${query.trim()}%`
+  const trimmed = query.trim()
+  if (!trimmed) return []
+  if (looksLikeBarcode(trimmed)) {
+    const exact = findByBarcode(trimmed)
+    if (exact) return [exact]
+  }
+  const q = `%${trimmed}%`
   const rows = getDb()
-    .prepare(`${PRODUCT_SELECT} WHERE p.name LIKE ? OR p.sku LIKE ? ORDER BY p.name LIMIT ?`)
-    .all(q, q, limit) as Omit<Product, 'low_stock'>[]
+    .prepare(
+      `${PRODUCT_SELECT} WHERE p.name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ? ORDER BY p.name LIMIT ?`,
+    )
+    .all(q, q, q, limit) as Omit<Product, 'low_stock'>[]
   return rows.map(mapProduct)
+}
+
+export function findByBarcode(raw: string): Product | undefined {
+  const candidates = barcodeCandidates(raw)
+  if (!candidates.length) return undefined
+  const placeholders = candidates.map(() => '?').join(', ')
+  const row = getDb()
+    .prepare(
+      `${PRODUCT_SELECT}
+       WHERE p.barcode IN (${placeholders}) OR p.sku IN (${placeholders})
+       ORDER BY CASE WHEN p.barcode IN (${placeholders}) THEN 0 ELSE 1 END, p.id
+       LIMIT 1`,
+    )
+    .get(...candidates, ...candidates, ...candidates) as Omit<Product, 'low_stock'> | undefined
+  return row ? mapProduct(row) : undefined
 }
 
 export function getProduct(id: number): Product | undefined {
@@ -80,17 +118,20 @@ export function findCategoryByWc(wcId: number): Category | undefined {
 
 export function createProduct(input: NewProduct, source = 'form'): Product {
   const now = new Date().toISOString()
-  const sku = input.sku.trim()
+  const barcode = normalizeBarcode(input.barcode || '')
+  const sku = (input.sku || '').trim() || barcode
   if (!input.name.trim()) throw new Error('نام کالا لازم است')
   if (!sku) throw new Error('کد کالا (SKU) لازم است')
+  assertBarcodeFree(barcode)
   const result = getDb()
     .prepare(
-      `INSERT INTO products (name, sku, buy_price, sell_price, stock, category_id, stock_alert, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO products (name, sku, barcode, buy_price, sell_price, stock, category_id, stock_alert, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       input.name.trim(),
       sku,
+      barcode,
       input.buy_price,
       input.sell_price,
       input.stock,
@@ -113,6 +154,7 @@ export function updateProduct(patch: ProductPatch, source = 'inline'): Product {
   const next = {
     name: patch.name?.trim() ?? current.name,
     sku: patch.sku?.trim() ?? current.sku,
+    barcode: patch.barcode !== undefined ? normalizeBarcode(patch.barcode) : current.barcode,
     buy_price: patch.buy_price ?? current.buy_price,
     sell_price: patch.sell_price ?? current.sell_price,
     stock: patch.stock ?? current.stock,
@@ -121,14 +163,16 @@ export function updateProduct(patch: ProductPatch, source = 'inline'): Product {
   }
   if (!next.name) throw new Error('نام کالا لازم است')
   if (!next.sku) throw new Error('کد کالا لازم است')
+  assertBarcodeFree(next.barcode, patch.id)
   getDb()
     .prepare(
-      `UPDATE products SET name=?, sku=?, buy_price=?, sell_price=?, stock=?, category_id=?, stock_alert=?, updated_at=?
+      `UPDATE products SET name=?, sku=?, barcode=?, buy_price=?, sell_price=?, stock=?, category_id=?, stock_alert=?, updated_at=?
        WHERE id=?`,
     )
     .run(
       next.name,
       next.sku,
+      next.barcode,
       next.buy_price,
       next.sell_price,
       next.stock,

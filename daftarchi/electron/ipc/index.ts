@@ -7,6 +7,7 @@ import {
   createCategory,
   createProduct,
   deleteProduct,
+  findByBarcode,
   listCategories,
   listProducts,
   searchProducts,
@@ -63,6 +64,7 @@ export function registerIpc(): void {
     listProducts(filter),
   )
   ipcMain.handle(IPC.productsSearch, (_e, query: string) => searchProducts(String(query || '')))
+  ipcMain.handle(IPC.productsFindBarcode, (_e, code: string) => findByBarcode(String(code || '')) ?? null)
   ipcMain.handle(IPC.productsCreate, (_e, input: NewProduct) => {
     assertLicenseActive()
     return createProduct(input)

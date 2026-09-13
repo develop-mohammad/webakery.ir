@@ -9,6 +9,7 @@ export type Product = {
   id: number
   name: string
   sku: string
+  barcode: string
   buy_price: number
   sell_price: number
   stock: number
@@ -26,6 +27,7 @@ export type ProductPatch = {
   id: number
   name?: string
   sku?: string
+  barcode?: string
   buy_price?: number
   sell_price?: number
   stock?: number
@@ -36,6 +38,7 @@ export type ProductPatch = {
 export type NewProduct = {
   name: string
   sku: string
+  barcode?: string
   buy_price: number
   sell_price: number
   stock: number

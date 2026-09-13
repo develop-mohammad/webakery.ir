@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS products (
   id             INTEGER PRIMARY KEY AUTOINCREMENT,
   name           TEXT    NOT NULL,
   sku            TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+  barcode        TEXT    NOT NULL DEFAULT '',
   buy_price      INTEGER NOT NULL DEFAULT 0,
   sell_price     INTEGER NOT NULL DEFAULT 0,
   stock          INTEGER NOT NULL DEFAULT 0,
@@ -35,6 +36,7 @@ CREATE TABLE IF NOT EXISTS products (
 );
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
+CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode);
 
 CREATE TABLE IF NOT EXISTS price_history (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,

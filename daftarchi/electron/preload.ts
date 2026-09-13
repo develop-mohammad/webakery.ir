@@ -15,6 +15,7 @@ const api = {
   listProducts: (filter?: { categoryId?: number | null; search?: string }) =>
     ipcRenderer.invoke(IPC.productsList, filter),
   searchProducts: (query: string) => ipcRenderer.invoke(IPC.productsSearch, query),
+  findProductByBarcode: (code: string) => ipcRenderer.invoke(IPC.productsFindBarcode, code),
   createProduct: (input: NewProduct) => ipcRenderer.invoke(IPC.productsCreate, input),
   updateProduct: (patch: ProductPatch) => ipcRenderer.invoke(IPC.productsUpdate, patch),
   deleteProduct: (id: number) => ipcRenderer.invoke(IPC.productsDelete, id),

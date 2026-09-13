@@ -29,6 +29,7 @@ export const IPC = {
   categoriesCreate: 'categories:create',
   productsList: 'products:list',
   productsSearch: 'products:search',
+  productsFindBarcode: 'products:findBarcode',
   productsCreate: 'products:create',
   productsUpdate: 'products:update',
   productsDelete: 'products:delete',
@@ -69,6 +70,7 @@ export type DaftarchiApi = {
   createCategory: (name: string) => Promise<Category>
   listProducts: (filter?: { categoryId?: number | null; search?: string }) => Promise<Product[]>
   searchProducts: (query: string) => Promise<Product[]>
+  findProductByBarcode: (code: string) => Promise<Product | null>
   createProduct: (input: NewProduct) => Promise<Product>
   updateProduct: (patch: ProductPatch) => Promise<Product>
   deleteProduct: (id: number) => Promise<void>

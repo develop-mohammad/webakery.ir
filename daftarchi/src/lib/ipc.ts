@@ -27,6 +27,7 @@ const fallback: DaftarchiApi = {
   },
   listProducts: async () => [],
   searchProducts: async () => [],
+  findProductByBarcode: async () => null,
   createProduct: async () => {
     throw new Error('آفلاین')
   },

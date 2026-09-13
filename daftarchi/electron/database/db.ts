@@ -62,6 +62,8 @@ function migrate(database: Database.Database): void {
   ensureColumn(database, 'categories', 'wc_category_id', 'INTEGER')
   database.exec('CREATE INDEX IF NOT EXISTS idx_categories_wc ON categories(wc_category_id)')
   ensureColumn(database, 'products', 'site_url', "TEXT NOT NULL DEFAULT ''")
+  ensureColumn(database, 'products', 'barcode', "TEXT NOT NULL DEFAULT ''")
+  database.exec('CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)')
   database.exec(`
     CREATE TABLE IF NOT EXISTS wc_orders (
       id             INTEGER PRIMARY KEY,

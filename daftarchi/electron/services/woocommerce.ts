@@ -15,6 +15,7 @@ import {
   variationDisplayName,
   wcGmtToIso,
 } from '../../shared/woo'
+import { extractWooBarcode } from '../../shared/barcode'
 import {
   createCategory,
   createProduct,
@@ -40,6 +41,8 @@ type WcProduct = {
   categories: { id: number; name: string }[]
   attributes?: { name?: string; option?: string }[]
   permalink?: string
+  global_unique_id?: string
+  meta_data?: { key?: string; value?: unknown }[]
 }
 type WcVariation = WcProduct & { parent_id?: number }
 
@@ -119,6 +122,7 @@ function upsertFromSite(
   stock: number,
   categoryId: number | null,
   siteUrl: string,
+  barcode: string,
 ): 'created' | 'updated' {
   const sku = allocateSku(preferredSku, wcId)
   const existing = findByWcId(wcId) ?? findBySku(sku)
@@ -134,6 +138,7 @@ function upsertFromSite(
         category_id: categoryId,
         stock: boundBefore ? existing.stock : stock,
         sell_price: boundBefore ? existing.sell_price : price,
+        ...(barcode ? { barcode } : {}),
       },
       'wc_pull',
     )
@@ -143,6 +148,7 @@ function upsertFromSite(
     {
       name,
       sku,
+      barcode,
       buy_price: 0,
       sell_price: price,
       stock,
@@ -172,6 +178,7 @@ function importSimple(item: WcProduct, currency: 'toman' | 'rial'): 'created' | 
     stock,
     categoryIdOf(item),
     siteLink(item),
+    extractWooBarcode(item),
   )
 }
 
@@ -186,10 +193,12 @@ async function importVariable(parent: WcProduct, currency: 'toman' | 'rial'): Pr
   let updated = 0
   const categoryId = categoryIdOf(parent)
   const parentLink = siteLink(parent)
+  const parentBarcode = extractWooBarcode(parent)
   for (const item of variations) {
     const price = toToman(item.regular_price || item.price || '0', currency)
     const stock = item.manage_stock ? Number(item.stock_quantity ?? 0) : 0
     const name = variationDisplayName(parent.name, item.attributes || [])
+    const ownBarcode = extractWooBarcode(item)
     const result = upsertFromSite(
       item.id,
       name,
@@ -198,6 +207,7 @@ async function importVariable(parent: WcProduct, currency: 'toman' | 'rial'): Pr
       stock,
       categoryId,
       siteLink(item) || parentLink,
+      ownBarcode || (variations.length === 1 ? parentBarcode : ''),
     )
     if (result === 'created') created += 1
     else updated += 1

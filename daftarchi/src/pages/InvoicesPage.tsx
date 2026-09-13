@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/ipc'
 import { formatToman } from '@/lib/money'
+import { looksLikeBarcode } from '../../shared/barcode'
 import type { Product } from '../../shared/models'
 
 type Line = { product: Product; qty: number; unit_price: number }
@@ -76,11 +77,30 @@ export function InvoicesPage() {
         <CardContent className="space-y-3">
           <div className="relative">
             <Input
+              autoFocus
+              dir="auto"
               placeholder="جستجو یا اسکن بارکد + Enter"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && hits[0]) addProduct(hits[0])
+              onKeyDown={async (e) => {
+                if (e.key !== 'Enter') return
+                e.preventDefault()
+                const typed = query.trim()
+                if (looksLikeBarcode(typed)) {
+                  try {
+                    const found = await api().findProductByBarcode(typed)
+                    if (found) {
+                      addProduct(found)
+                      return
+                    }
+                    toast.error('این بارکد در کالاها نیست')
+                    return
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : 'جستجوی بارکد نشد')
+                    return
+                  }
+                }
+                if (hits[0]) addProduct(hits[0])
               }}
             />
             {hits.length ? (
@@ -93,7 +113,10 @@ export function InvoicesPage() {
                     onClick={() => addProduct(p)}
                   >
                     <span>
-                      {p.name} <span className="text-xs text-muted-foreground">({p.sku})</span>
+                      {p.name}{' '}
+                      <span className="text-xs text-muted-foreground" dir="ltr">
+                        ({p.barcode || p.sku})
+                      </span>
                     </span>
                     <span>{formatToman(p.sell_price)}</span>
                   </button>
