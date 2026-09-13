@@ -1,0 +1,656 @@
+{
+  "name": "اتوماسیون محتوای دسته — خارج از سایت",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## این ورک‌فلو داخل وردپرس نیست\n\nروی **n8n** (داکر یا کلود) اجرا می‌شود.\nهر ساعت **یک بلوک** شیت را برمی‌دارد، با پرامپت شما مقاله می‌سازد، دو بار انسانی می‌کند، متن دسته را از REST وردپرس می‌نویسد، بعد تاریخ شمسی و تیک را در شیت می‌زند.",
+        "height": 220,
+        "width": 520
+      },
+      "id": "note-where",
+      "name": "کجا اجرا میشود",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        40
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "node-manual",
+      "name": "اجرای دستی",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "node-schedule",
+      "name": "هر ساعت یک بلوک",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $env.SHEET_TAB }}",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "node-sheets-read",
+      "name": "خواندن گوگل شیت",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const col = {\n  cat: $env.COL_CATEGORY || 'دسته',\n  title: $env.COL_TITLE || 'عنوان',\n  kw: $env.COL_KEYWORDS || 'کیورد اصلی',\n  lsi: $env.COL_LSI || 'کیورد فرعی',\n  brand: $env.COL_BRAND || 'برند',\n  done: $env.COL_DONE || 'انجام شد',\n  date: $env.COL_DATE || 'تاریخ',\n};\nconst rows = $input.all().map((item, idx) => {\n  const j = item.json;\n  return Object.assign({ row_number: j.row_number || j.rowNumber || (idx + 2) }, j);\n});\nfunction val(row, key) {\n  const v = row[key];\n  return v == null ? '' : String(v).trim();\n}\nfunction isDone(v) {\n  const s = String(v || '').trim().toLowerCase();\n  return ['true','1','yes','y','done','بله','انجام','انجام شد','x','✓','✔'].includes(s);\n}\nfunction splitKw(s) {\n  return String(s || '').split(/[\\n,،;|]+/).map(x => x.trim()).filter(Boolean);\n}\nconst blocks = [];\nlet open = null;\nfunction close() { if (open) { blocks.push(open); open = null; } }\nfor (const row of rows) {\n  const cat = val(row, col.cat);\n  const title = val(row, col.title);\n  const kws = splitKw(val(row, col.kw));\n  const lsi = splitKw(val(row, col.lsi));\n  const brand = val(row, col.brand);\n  const done = isDone(val(row, col.done));\n  const date = val(row, col.date);\n  const empty = !cat && !title && !kws.length && !lsi.length && !brand;\n  if (empty) { close(); continue; }\n  if (cat || title) {\n    close();\n    open = {\n      row_number: Number(row.row_number),\n      rows: [Number(row.row_number)],\n      category: cat || title,\n      title: title || cat,\n      keywords: kws,\n      lsi: lsi,\n      brand: brand,\n      done,\n      date,\n    };\n    continue;\n  }\n  if (open) {\n    open.rows.push(Number(row.row_number));\n    open.keywords = [...new Set(open.keywords.concat(kws))];\n    open.lsi = [...new Set(open.lsi.concat(lsi.length ? lsi : kws))];\n    if (brand && !open.brand) open.brand = brand;\n    if (done) open.done = true;\n    if (date) open.date = date;\n  }\n}\nclose();\nconst next = blocks.find(b => !b.done && b.category);\nif (!next) return [];\nnext.keyword_text = (next.keywords || []).join('\\n');\nnext.lsi_text = (next.lsi || []).join('\\n');\nnext.brand = next.brand || $env.BRAND_DEFAULT || '';\nreturn [{ json: next }];"
+      },
+      "id": "node-pick",
+      "name": "انتخاب بلوک بعدی",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function fill(tpl, vars) {\n  let out = tpl;\n  for (const [k, v] of Object.entries(vars)) {\n    if (k === 'content') continue;\n    out = out.replaceAll('{{' + k + '}}', v == null ? '' : String(v));\n  }\n  return out;\n}\nconst j = $json;\nconst vars = {\n  title: j.title || j.category || '',\n  category: j.category || '',\n  keywords: j.keyword_text || (j.keywords || []).join('\\n'),\n  lsi: j.lsi_text || (j.lsi || []).join('\\n'),\n  brand: j.brand || $env.BRAND_DEFAULT || '',\n  content: j.html || '',\n  min_score: $env.MIN_HUMAN_SCORE || '78',\n};\nj.prompt_generate = fill(\"تو در نقش یک نویسنده ارشد سئو (SEO Content Strategist) و متخصص تولید محتوای فارسی در حوزه صنعتی فعالیت می کنی. هدف تو تولید مقاله ای است که بتواند در نتایج گوگل رتبه بگیرد و برای کاربر ارزش واقعی ایجاد کند.\\n\\nمی خواهم یک مقاله سئو شده فارسی تولید کنی.\\n\\nعنوان مقاله:\\n\\n{{title}}\\n\\nکلمات کلیدی اصلی:\\n\\n{{keywords}}\\n\\nکلمات کلیدی فرعی و LSI:\\n\\n{{lsi}}\\n\\nساختار و الزامات سئو\\nمقاله باید بین 2000 تا 2500 کلمه باشد.\\nابتدا یک مقدمه 120 تا 200 کلمه ای بنویس که شامل کلمه کلیدی اصلی باشد.\\nعنوان اصلی در قالب h1 نوشته شود.\\nاز h2 برای سرفصل های اصلی و در صورت نیاز از h3 برای زیر بخش ها استفاده شود.\\nحداقل 8 تا 12 هدینگ ساختارمند داشته باشد.\\nزیر هر هدینگ حداقل 2 پاراگراف کامل نوشته شود.\\nهر پاراگراف بین 70 تا 150 کلمه باشد.\\nجملات کوتاه و روان باشند. ترجیحا زیر 20 کلمه.\\nلحن رسمی، تخصصی و در عین حال قابل فهم باشد.\\nمتن کاملا طبیعی و انسانی باشد و حالت ماشینی نداشته باشد.\\nاز نیم فاصله استفاده نشود.\\nاز بولت پوینت فقط در صورت نیاز استفاده شود.\\nچگالی کلمه کلیدی اصلی بین 1 تا 2 درصد باشد.\\nاز کیورد استافینگ خودداری شود.\\nکلمات کلیدی به صورت طبیعی در تیترها و بدنه پخش شوند.\\nالزامات محتوایی پیشرفته\\nمقاله باید شامل تحلیل تخصصی باشد نه توضیح سطحی.\\nمزایا و معایب هر گزینه بررسی شود.\\nمقایسه عملی و کاربردی ارائه شود.\\nنکات اجرایی و تجربی برای مدیران یا خریداران ارائه شود.\\nدر میانه مقاله یک جدول مقایسه ای کامل قرار داده شود.\\nجدول فقط با تگ table نوشته شود.\\nخارج از جدول هیچ HTML اضافه ای استفاده نشود.\\nقوانین برند\\nعبارت «{{brand}}» فقط 2 بار در کل مقاله استفاده شود.\\nسایر برندها بدون محدودیت اما طبیعی استفاده شوند.\\nقوانین HTML\\nکل خروجی فقط به صورت HTML باشد.\\nفقط از این تگ ها استفاده شود:h1h2h3ptabletrthtd\\nهیچ توضیحی خارج از HTML نوشته نشود.\\nهیچ کامنت یا متن اضافی تولید نشود.\\nبخش سوالات متداول (FAQ)\\nدر انتهای مقاله یک بخش سوالات متداول اضافه شود.\\n4 سوال مهم و جستجو محور نوشته شود.\\nهر سوال در یک پاراگراف و پاسخ آن در پاراگراف بعدی نوشته شود.\\nپاسخ ها خلاصه، کاربردی و دقیق باشند.\\nبهینه سازی برای رتبه گرفتن\\nمقدمه باید کاربر را درگیر کند.\\nاز عبارات مقایسه ای مانند بهترین، بررسی، راهنمای خرید، مزایا و معایب استفاده شود.\\nمتن باید اسکن پذیر باشد.\\nاز تکرار غیر ضروری پرهیز شود.\\nتمرکز بر رفع نیاز کاربر و پاسخ به قصد جستجو باشد.\\nخروجی نهایی:\\n\\nفقط مقاله کامل در قالب HTML\\n\\nبدون هیچ توضیح اضافی\\n\\nبدون اشاره به دستورالعمل ها\\n\", vars);\nj.prompt_human_1 = fill(\"این مقاله HTML برای دسته «{{category}}» است. یک بار بازنویسی کن تا کاملا شبیه نوشته یک نویسنده ارشد فارسی باشد، نه متن ماشینی.\\n\\nقواعد الزامی:\\n- فقط همین تگ ها مجاز است: h1 h2 h3 p table tr th td\\n- نیم فاصله نگذار و اگر هست حذف کن.\\n- عبارت برند «{{brand}}» در کل متن حداکثر 2 بار بماند.\\n- کلمات کلیدی اصلی را نگه دار: {{keywords}}\\n- کلمات LSI را طبیعی نگه دار: {{lsi}}\\n- معنی و ساختار مقاله را حفظ کن.\\n- کلیشه های هوش مصنوعی را حذف کن مثل: در دنیای امروز، نقش بسزایی، لازم به ذکر است، از اهمیت بالایی برخوردار است.\\n- فقط HTML نهایی را برگردان. هیچ توضیح اضافه ننویس.\\n\\nمتن:\\n{{content}}\\n\", vars);\nj.prompt_human_2 = fill(\"داور تشخیص متن انسانی و سئو فارسی هستی. فقط یک JSON معتبر و بدون توضیح اضافه برگردان:\\n{\\\"human\\\":true,\\\"score\\\":85,\\\"issues\\\":[],\\\"rewrite\\\":\\\"\\\"}\\n\\nمعیار score: چقدر شبیه نوشته انسانی فارسی است (100 یعنی کاملا انسانی).\\nاگر score زیر {{min_score}} است، human را false بگذار و در rewrite نسخه انسانی شده همان HTML را بده.\\nاگر انسانی است rewrite را رشته خالی بگذار.\\nاگر نیم فاصله دیدی یا متن رباتیک بود، امتیاز را کم کن.\\nتگ های مجاز فقط h1 h2 h3 p table tr th td هستند. اگر تگ دیگری بود در rewrite اصلاح کن.\\nبرند «{{brand}}» نباید بیش از 2 بار آمده باشد.\\n\\nدسته: {{category}}\\nعنوان: {{title}}\\nکلمات کلیدی: {{keywords}}\\nمتن:\\n{{content}}\\n\", vars);\nreturn [{ json: j }];"
+      },
+      "id": "node-fill",
+      "name": "پرکردن پرامپت",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AI_BASE }}/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.AI_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ JSON.stringify({ model: $env.AI_MODEL, temperature: 0.7, max_tokens: 8000, messages: [{ role: 'user', content: $json.prompt_generate }] }) }",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "node-ai-gen",
+      "name": "تولید مقاله",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        980,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 4000
+    },
+    {
+      "parameters": {
+        "jsCode": "let raw = '';\ntry {\n  raw = $json.choices[0].message.content;\n} catch (e) {\n  raw = String($json);\n}\nraw = String(raw || '').trim();\nconst fence = raw.match(/```(?:html)?\\s*([\\s\\S]*?)```/i);\nif (fence) raw = fence[1].trim();\nconst idx = raw.search(/<(?:h1|h2|p)\\b/i);\nif (idx >= 0) raw = raw.slice(idx);\nraw = raw.replace(/\\u200c/g, ' ');\nraw = raw.replace(/<\\/?(?:html|body|head|article|section|div|span|strong|em|b|i|ul|ol|li|br)[^>]*>/gi, '');\nconst j = Object.assign({}, $(\"پرکردن پرامپت\").first().json);\nj.html = raw.trim();\nj.html = j.html;\nreturn [{ json: j }];"
+      },
+      "id": "node-html1",
+      "name": "استخراج HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $json; j.prompt_human_1 = j.prompt_human_1.replaceAll('{{content}}', j.html || ''); return [{ json: j }];"
+      },
+      "id": "node-fill-h1",
+      "name": "پرامپت بررسی ۱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AI_BASE }}/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.AI_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ JSON.stringify({ model: $env.AI_MODEL, temperature: 0.7, max_tokens: 8000, messages: [{ role: 'user', content: $json.prompt_human_1 }] }) }",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "node-ai-h1",
+      "name": "بررسی انسانی ۱",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1660,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 4000
+    },
+    {
+      "parameters": {
+        "jsCode": "let raw = '';\ntry {\n  raw = $json.choices[0].message.content;\n} catch (e) {\n  raw = String($json);\n}\nraw = String(raw || '').trim();\nconst fence = raw.match(/```(?:html)?\\s*([\\s\\S]*?)```/i);\nif (fence) raw = fence[1].trim();\nconst idx = raw.search(/<(?:h1|h2|p)\\b/i);\nif (idx >= 0) raw = raw.slice(idx);\nraw = raw.replace(/\\u200c/g, ' ');\nraw = raw.replace(/<\\/?(?:html|body|head|article|section|div|span|strong|em|b|i|ul|ol|li|br)[^>]*>/gi, '');\nconst j = Object.assign({}, $(\"پرامپت بررسی ۱\").first().json);\nj.html = raw.trim();\nj.html = j.html;\nreturn [{ json: j }];"
+      },
+      "id": "node-html2",
+      "name": "استخراج پس از بررسی ۱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $json; j.prompt_human_2 = j.prompt_human_2.replaceAll('{{content}}', j.html || ''); return [{ json: j }];"
+      },
+      "id": "node-fill-h2",
+      "name": "پرامپت بررسی ۲",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AI_BASE }}/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.AI_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ JSON.stringify({ model: $env.AI_MODEL, temperature: 0.7, max_tokens: 8000, messages: [{ role: 'user', content: $json.prompt_human_2 }] }) }",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "node-ai-h2",
+      "name": "بررسی انسانی ۲",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2100,
+        400
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 4000
+    },
+    {
+      "parameters": {
+        "jsCode": "let raw = '';\ntry { raw = $json.choices[0].message.content; } catch (e) { raw = JSON.stringify($json); }\nconst m = String(raw).match(/\\{[\\s\\S]*\\}/);\nlet data = { human: false, score: 0, issues: [], rewrite: '' };\nif (m) { try { data = Object.assign(data, JSON.parse(m[0])); } catch (e) {} }\nconst prev = $('استخراج پس از بررسی ۱').first().json;\nlet html = prev.html;\nif (data.rewrite) {\n  let r = String(data.rewrite);\n  const idx = r.search(/<(?:h1|h2|p)\\b/i);\n  if (idx >= 0) r = r.slice(idx);\n  html = r.replace(/\\u200c/g, ' ').trim();\n}\nconst min = Number($env.MIN_HUMAN_SCORE || 78);\nconst human_ok = Boolean(data.human) && Number(data.score) >= min;\nreturn [{ json: Object.assign({}, prev, {\n  html,\n  human: Boolean(data.human),\n  score: Number(data.score) || 0,\n  issues: data.issues || [],\n  human_ok,\n}) }];"
+      },
+      "id": "node-verdict",
+      "name": "پس از تایید انسانی",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-human",
+              "leftValue": "={{ $json.human_ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if",
+      "name": "آیا متن انسانی است؟",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.WP_URL.replace(/\\/$/, '') }}/wp-json/wp/v2/{{ $env.WP_TAXONOMY === 'category' ? 'categories' : $env.WP_TAXONOMY }}?search={{ encodeURIComponent($json.category) }}&per_page=20",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {
+          "timeout": 40000
+        }
+      },
+      "id": "node-wp-search",
+      "name": "پیدا کردن دسته در سایت",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2780,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $('پس از تایید انسانی').first().json;\nconst list = Array.isArray($json) ? $json : ($json ? [$json] : []);\nconst name = prev.category;\nlet term = list.find(t => t && t.name === name) || list[0];\nif (!term || !term.id) {\n  throw new Error('دسته در سایت پیدا نشد: ' + name);\n}\nreturn [{ json: Object.assign({}, prev, { term_id: term.id }) }];"
+      },
+      "id": "node-term",
+      "name": "انتخاب شناسه دسته",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3000,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WP_URL.replace(/\\/$/, '') }}/wp-json/wp/v2/{{ $env.WP_TAXONOMY === 'category' ? 'categories' : $env.WP_TAXONOMY }}/{{ $json.term_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ description: $json.html }) }}",
+        "options": {
+          "timeout": 40000
+        }
+      },
+      "id": "node-wp-write",
+      "name": "نوشتن متن در دسته",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3220,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function toJalali(gy, gm, gd) {\n  const g_y_m = [0,31,59,90,120,151,181,212,243,273,304,334];\n  let jy = gy <= 1600 ? 0 : 979;\n  gy -= gy <= 1600 ? 621 : 1600;\n  const gy2 = gm > 2 ? gy + 1 : gy;\n  let days = 365 * gy + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) - 80 + gd + g_y_m[gm - 1];\n  jy += 33 * Math.floor(days / 12053);\n  days %= 12053;\n  jy += 4 * Math.floor(days / 1461);\n  days %= 1461;\n  if (days > 365) {\n    jy += Math.floor((days - 1) / 365);\n    days = (days - 1) % 365;\n  }\n  const jm_days = [31,31,31,31,31,31,30,30,30,30,30,29];\n  let i = 0;\n  for (; i < 11 && days >= jm_days[i]; i++) days -= jm_days[i];\n  return [jy, i + 1, days + 1];\n}\nconst tz = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tehran' }));\nconst [jy, jm, jd] = toJalali(tz.getFullYear(), tz.getMonth() + 1, tz.getDate());\nconst jalali = String(jy).padStart(4,'0') + '/' + String(jm).padStart(2,'0') + '/' + String(jd).padStart(2,'0');\nconst prev = $('انتخاب شناسه دسته').first().json;\nconst doneCol = $env.COL_DONE || 'انجام شد';\nconst dateCol = $env.COL_DATE || 'تاریخ';\nconst noteCol = $env.COL_NOTE || 'یادداشت';\nconst out = Object.assign({}, prev, { jalali, row_number: prev.row_number });\nout[doneCol] = 'TRUE';\nout[dateCol] = jalali;\nout[noteCol] = 'منتشر شد';\nreturn [{ json: out }];"
+      },
+      "id": "node-jalali",
+      "name": "تاریخ شمسی",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3440,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $env.SHEET_TAB }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": "row_number",
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "node-sheets-update",
+      "name": "تیک و تاریخ شمسی در شیت",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3660,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "content": "اگر امتیاز انسانی کافی نباشد، در سایت چیزی نوشته نمی‌شود و تیک شیت زده نمی‌شود. ساعت بعد دوباره همین بلوک را تلاش می‌کند.",
+        "height": 140,
+        "width": 360
+      },
+      "id": "note-fail",
+      "name": "اگر انسانی نبود",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2540,
+        520
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "node-stop",
+      "name": "توقف بدون انتشار",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2780,
+        520
+      ]
+    }
+  ],
+  "connections": {
+    "اجرای دستی": {
+      "main": [
+        [
+          {
+            "node": "خواندن گوگل شیت",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "هر ساعت یک بلوک": {
+      "main": [
+        [
+          {
+            "node": "خواندن گوگل شیت",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "خواندن گوگل شیت": {
+      "main": [
+        [
+          {
+            "node": "انتخاب بلوک بعدی",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "انتخاب بلوک بعدی": {
+      "main": [
+        [
+          {
+            "node": "پرکردن پرامپت",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "پرکردن پرامپت": {
+      "main": [
+        [
+          {
+            "node": "تولید مقاله",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "تولید مقاله": {
+      "main": [
+        [
+          {
+            "node": "استخراج HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "استخراج HTML": {
+      "main": [
+        [
+          {
+            "node": "پرامپت بررسی ۱",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "پرامپت بررسی ۱": {
+      "main": [
+        [
+          {
+            "node": "بررسی انسانی ۱",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "بررسی انسانی ۱": {
+      "main": [
+        [
+          {
+            "node": "استخراج پس از بررسی ۱",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "استخراج پس از بررسی ۱": {
+      "main": [
+        [
+          {
+            "node": "پرامپت بررسی ۲",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "پرامپت بررسی ۲": {
+      "main": [
+        [
+          {
+            "node": "بررسی انسانی ۲",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "بررسی انسانی ۲": {
+      "main": [
+        [
+          {
+            "node": "پس از تایید انسانی",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "پس از تایید انسانی": {
+      "main": [
+        [
+          {
+            "node": "آیا متن انسانی است؟",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "آیا متن انسانی است؟": {
+      "main": [
+        [
+          {
+            "node": "پیدا کردن دسته در سایت",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "توقف بدون انتشار",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "پیدا کردن دسته در سایت": {
+      "main": [
+        [
+          {
+            "node": "انتخاب شناسه دسته",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "انتخاب شناسه دسته": {
+      "main": [
+        [
+          {
+            "node": "نوشتن متن در دسته",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "نوشتن متن در دسته": {
+      "main": [
+        [
+          {
+            "node": "تاریخ شمسی",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "تاریخ شمسی": {
+      "main": [
+        [
+          {
+            "node": "تیک و تاریخ شمسی در شیت",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Tehran"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "webakery"
+    },
+    {
+      "name": "seo"
+    }
+  ]
+}

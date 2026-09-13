@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>اتوماسیون محتوا — خارج از سایت</title>
+  <style>
+    body { font-family: Tahoma, Vazirmatn, sans-serif; background: #f4f1ea; color: #1f2937; margin: 0; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 60px; }
+    h1 { font-size: 22px; margin: 0 0 8px; }
+    .lead { color: #4b5563; line-height: 1.8; }
+    .place { background: #111827; color: #fef3c7; border-radius: 12px; padding: 14px 16px; line-height: 1.9; }
+    .flow { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+    .box { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px; }
+    .box b { display: block; margin-bottom: 4px; }
+    .arrow { text-align: center; color: #92400e; font-size: 18px; }
+    .out { border-color: #c4b5a0; }
+    .site { border-style: dashed; }
+    .ok { background: #ecfdf5; }
+    .no { background: #fef2f2; }
+    code { font-size: 12px; background: #eee; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>این ورک‌فلو داخل سایت نیست</h1>
+    <p class="lead">مثل n8n روی یک سرور جدا اجرا می‌شود. وردپرس فقط مقصد نوشتن متن دسته است.</p>
+    <p class="place">محل اجرا: n8n (Docker پورت ۵۶۷۸) یا <code>python3 worker/run.py</code> با کرون ساعتی — نه افزونه وردپرس.</p>
+    <div class="flow">
+      <div class="box out"><b>۱. گوگل‌شیت</b>اولین بلوک بدون تیک + کلمات کلیدی</div>
+      <div class="arrow">↓</div>
+      <div class="box out"><b>۲. پرامپت شما</b>عنوان، کیورد اصلی، LSI، برند جایگزین می‌شود</div>
+      <div class="arrow">↓</div>
+      <div class="box out"><b>۳. هوش مصنوعی</b>مقاله HTML ۲۰۰۰ تا ۲۵۰۰ کلمه</div>
+      <div class="arrow">↓</div>
+      <div class="box out"><b>۴. بررسی انسانی ۱</b>بازنویسی غیرماشینی</div>
+      <div class="arrow">↓</div>
+      <div class="box out"><b>۵. بررسی انسانی ۲</b>امتیاز JSON — اگر رد شود هیچ چیز منتشر نمی‌شود</div>
+      <div class="arrow">↓</div>
+      <div class="box site"><b>۶. سایت (از بیرون)</b>REST وردپرس → فیلد متن دسته</div>
+      <div class="arrow">↓</div>
+      <div class="box ok"><b>۷. برگشت به شیت</b>تاریخ شمسی + تیک انجام شد → ساعت بعد بلوک بعدی</div>
+      <div class="box no"><b>مسیر شکست</b>بدون تیک، بدون نوشتن روی سایت</div>
+    </div>
+  </main>
+</body>
+</html>
