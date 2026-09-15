@@ -55,7 +55,7 @@ $boot = file_get_contents( $root . '/hesabdar.php' );
 assert( strpos( $boot, 'class-wap-payment-notify.php' ) === false, 'payment notify not loaded' );
 assert( strpos( $boot, 'WAP_Payment_Notify' ) === false, 'payment notify not inited' );
 assert( strpos( $boot, 'class-wap-zarinpal-reconcile.php' ) !== false, 'reconcile loaded' );
-assert( strpos( $boot, "1.24.0" ) !== false, 'version 1.24.0' );
+assert( strpos( $boot, "1.24.1" ) !== false, 'version 1.24.1' );
 assert( ! is_readable( $root . '/includes/class-wap-payment-notify.php' ), 'payment notify file removed' );
 
 echo "ALL SETTLE-ONLY SMS SMOKE TESTS PASSED\n";

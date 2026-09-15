@@ -600,13 +600,13 @@ class WAP_Order_Service {
 			'status' => array( 'publish' ),
 			'limit'  => $limit,
 			'return' => 'objects',
+			'type'   => array( 'simple', 'variable', 'variation', 'grouped', 'external' ),
 		);
 
 		if ( is_numeric( $term ) ) {
 			$args['include'] = array( absint( $term ) );
 		} else {
 			$args['s'] = $term;
-			$args['sku'] = $term;
 		}
 
 		$products = wc_get_products( $args );
@@ -617,23 +617,51 @@ class WAP_Order_Service {
 			if ( ! $product ) {
 				continue;
 			}
+			// برای متغیر: خود والد + وارییشن‌ها با موجودی WC هر کدام
+			if ( $product->is_type( 'variable' ) ) {
+				$out[] = self::product_payload( $product );
+				$seen[ $product->get_id() ] = true;
+				foreach ( $product->get_children() as $child_id ) {
+					if ( isset( $seen[ $child_id ] ) ) {
+						continue;
+					}
+					$child = wc_get_product( $child_id );
+					if ( ! $child || $child->get_status() !== 'publish' ) {
+						continue;
+					}
+					$out[] = self::product_payload( $child );
+					$seen[ $child_id ] = true;
+					if ( count( $out ) >= $limit ) {
+						return array_slice( $out, 0, $limit );
+					}
+				}
+				continue;
+			}
 			$out[] = self::product_payload( $product );
 			$seen[ $product->get_id() ] = true;
+			if ( count( $out ) >= $limit ) {
+				break;
+			}
 		}
 
-		// جستجوی SKU جداگانه
-		if ( ! is_numeric( $term ) ) {
+		// جستجوی SKU جداگانه (شامل وارییشن)
+		if ( ! is_numeric( $term ) && count( $out ) < $limit ) {
 			$by_sku = wc_get_products( array(
-				'status' => 'publish',
+				'status' => array( 'publish', 'private' ),
 				'sku'    => $term,
 				'limit'  => $limit,
 				'return' => 'objects',
+				'type'   => array( 'simple', 'variation', 'variable' ),
 			) );
 			foreach ( $by_sku as $product ) {
 				if ( isset( $seen[ $product->get_id() ] ) ) {
 					continue;
 				}
 				$out[] = self::product_payload( $product );
+				$seen[ $product->get_id() ] = true;
+				if ( count( $out ) >= $limit ) {
+					break;
+				}
 			}
 		}
 

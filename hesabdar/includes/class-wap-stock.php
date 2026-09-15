@@ -8,13 +8,31 @@ defined( 'ABSPATH' ) || exit;
 class WAP_Stock {
 
 	/**
+	 * شناسه محصول قابل‌موجودی از آیتم سفارش:
+	 * وارییشن اگر باشد، وگرنه محصول ساده/والد.
+	 *
+	 * @param WC_Order_Item_Product|object $item
+	 */
+	public static function id_from_order_item( $item ): int {
+		if ( ! is_object( $item ) || ! method_exists( $item, 'get_product_id' ) ) {
+			return 0;
+		}
+		$vid = method_exists( $item, 'get_variation_id' ) ? (int) $item->get_variation_id() : 0;
+		if ( $vid > 0 ) {
+			return $vid;
+		}
+		return (int) $item->get_product_id();
+	}
+
+	/**
 	 * موجودی عددی محصول از ووکامرس.
 	 *
-	 * - ساده / وارییشن: اگر manage stock روشن باشد، get_stock_quantity؛ وگرنه null
-	 * - متغیر (variable): اگر والد manage stock داشته باشد همان؛ وگرنه جمع موجودی وارییشن‌هایی که manage می‌کنند
+	 * - ساده / وارییشن: اگر خود محصول manage stock داشته باشد → get_stock_quantity
+	 * - متغیر (variable): اگر والد manage کند → موجودی والد؛
+	 *   وگرنه جمع موجودی وارییشن‌هایی که خودشان (نه parent) manage می‌کنند
 	 *
 	 * @param WC_Product|int|null $product محصول یا شناسه
-	 * @return int|null null یعنی موجودی در ووکامرس مدیریت نمی‌شود
+	 * @return int|null null یعنی موجودی عددی در ووکامرس مدیریت نمی‌شود
 	 */
 	public static function get_quantity( $product ): ?int {
 		$product = self::resolve( $product );
@@ -22,30 +40,29 @@ class WAP_Stock {
 			return null;
 		}
 
-		if ( $product->is_type( 'variable' ) ) {
-			if ( $product->managing_stock() ) {
-				$qty = $product->get_stock_quantity();
-				return $qty === null ? null : (int) $qty;
-			}
-			$sum  = 0;
-			$has  = false;
-			foreach ( $product->get_children() as $child_id ) {
-				$child = wc_get_product( $child_id );
-				if ( ! $child || ! $child->managing_stock() ) {
-					continue;
-				}
-				$has  = true;
-				$sum += (int) $child->get_stock_quantity();
-			}
-			return $has ? $sum : null;
+		// وارییشن یا ساده
+		if ( ! $product->is_type( 'variable' ) ) {
+			return self::own_managed_qty( $product );
 		}
 
-		if ( $product->managing_stock() ) {
+		// محصول متغیر
+		if ( self::is_self_managing( $product ) ) {
 			$qty = $product->get_stock_quantity();
 			return $qty === null ? null : (int) $qty;
 		}
 
-		return null;
+		$sum = 0;
+		$has = false;
+		foreach ( $product->get_children() as $child_id ) {
+			$child = wc_get_product( $child_id );
+			$cqty  = self::own_managed_qty( $child );
+			if ( $cqty === null ) {
+				continue;
+			}
+			$has  = true;
+			$sum += $cqty;
+		}
+		return $has ? $sum : null;
 	}
 
 	/**
@@ -88,7 +105,7 @@ class WAP_Stock {
 	}
 
 	/**
-	 * خلاصه برای ردیف‌های فروش محصول (pid از سفارش = والد برای متغیرها).
+	 * خلاصه برای ردیف فروش / جستجو.
 	 *
 	 * @return array{stock:int|null,stock_status:string,stock_display:string}
 	 */
@@ -101,6 +118,42 @@ class WAP_Stock {
 			'stock_status'  => $status,
 			'stock_display' => self::format_display( $product ),
 		);
+	}
+
+	/**
+	 * آیا این محصول خودش (نه از طریق parent) موجودی را مدیریت می‌کند؟
+	 *
+	 * @param WC_Product $product
+	 */
+	private static function is_self_managing( $product ): bool {
+		if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+			return false;
+		}
+		// وارییشن ممکن است manage_stock = 'parent' داشته باشد — آن را موجودی مستقل حساب نکن
+		if ( $product->is_type( 'variation' ) && method_exists( $product, 'get_manage_stock' ) ) {
+			$manage = $product->get_manage_stock();
+			if ( $manage === 'parent' || $manage === false || $manage === 'no' ) {
+				return false;
+			}
+			return ( $manage === true || $manage === 'yes' );
+		}
+		return (bool) $product->managing_stock();
+	}
+
+	/**
+	 * موجودی عددی فقط اگر خود محصول manage کند.
+	 *
+	 * @param WC_Product|null $product
+	 */
+	private static function own_managed_qty( $product ): ?int {
+		if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+			return null;
+		}
+		if ( ! self::is_self_managing( $product ) ) {
+			return null;
+		}
+		$qty = $product->get_stock_quantity();
+		return $qty === null ? null : (int) $qty;
 	}
 
 	/**

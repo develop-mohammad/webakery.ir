@@ -321,12 +321,19 @@ class WAP_Data {
                 continue;
             }
             foreach ( $order->get_items() as $item ) {
-                $pid = $item->get_product_id();
+                // وارییشن فروخته‌شده → همان شناسه وارییشن (موجودی WC همان وارییشن)
+                $pid = class_exists( 'WAP_Stock' )
+                    ? WAP_Stock::id_from_order_item( $item )
+                    : ( (int) $item->get_variation_id() ?: (int) $item->get_product_id() );
+                if ( $pid <= 0 ) {
+                    continue;
+                }
                 if ( ! isset( $products[ $pid ] ) ) {
+                    $line_product = $item->get_product();
                     $products[ $pid ] = array(
                         'pid'     => $pid,
                         'name'    => $item->get_name(),
-                        'sku'     => ( $item->get_product() && $item->get_product()->get_sku() ) ? $item->get_product()->get_sku() : '',
+                        'sku'     => ( $line_product && $line_product->get_sku() ) ? $line_product->get_sku() : '',
                         'qty'     => 0,
                         'revenue' => 0.0,
                         'orders'  => 0,
@@ -337,7 +344,7 @@ class WAP_Data {
                 $products[ $pid ]['orders']++;
             }
         }
-        // موجودی فعلی از ووکامرس (ساده / متغیر) — نه از فروش
+        // موجودی فعلی از ووکامرس برای همان pid (ساده یا وارییشن) — نه از فروش
         foreach ( $products as $pid => &$row ) {
             $snap = class_exists( 'WAP_Stock' )
                 ? WAP_Stock::snapshot_for_id( (int) $pid )
@@ -358,7 +365,14 @@ class WAP_Data {
                 continue;
             }
             foreach ( $order->get_items() as $item ) {
-                if ( (int) $item->get_product_id() === $product_id ) {
+                $line_id = class_exists( 'WAP_Stock' )
+                    ? WAP_Stock::id_from_order_item( $item )
+                    : ( (int) $item->get_variation_id() ?: (int) $item->get_product_id() );
+                // سازگاری با لینک‌های قدیمی والد متغیر
+                $match = $line_id === $product_id
+                    || (int) $item->get_product_id() === $product_id
+                    || (int) $item->get_variation_id() === $product_id;
+                if ( $match ) {
                     $rows[] = array( 'order' => $order, 'qty' => $item->get_quantity(), 'revenue' => (float) $item->get_total() );
                     break;
                 }

@@ -1003,7 +1003,13 @@ function wci_products_page() {
         $total_revenue = 0;
         foreach ( $orders as $order ) {
             foreach ( $order->get_items() as $item ) {
-                if ( (int) $item->get_product_id() === $product_id ) {
+                $line_id = class_exists( 'WAP_Stock' )
+                    ? WAP_Stock::id_from_order_item( $item )
+                    : ( (int) $item->get_variation_id() ?: (int) $item->get_product_id() );
+                $match = $line_id === $product_id
+                    || (int) $item->get_product_id() === $product_id
+                    || (int) $item->get_variation_id() === $product_id;
+                if ( $match ) {
                     if ( ! WAP_Data::is_paid_order( $order ) ) {
                         break;
                     }
@@ -1077,7 +1083,7 @@ function wci_products_page() {
     // ── Summary mode ──────────────────────────────────────────────────────────
     echo '<h1>فروش محصولات</h1>';
 
-    // Aggregate by product
+    // Aggregate by stockable product (variation if any — موجودی WC همان ردیف)
     $products = array();
     $pid_map  = array(); // pid => product_id (for links)
     foreach ( $orders as $order ) {
@@ -1085,11 +1091,17 @@ function wci_products_page() {
             continue;
         }
         foreach ( $order->get_items() as $item ) {
-            $pid = $item->get_product_id();
+            $pid = class_exists( 'WAP_Stock' )
+                ? WAP_Stock::id_from_order_item( $item )
+                : ( (int) $item->get_variation_id() ?: (int) $item->get_product_id() );
+            if ( $pid <= 0 ) {
+                continue;
+            }
             if ( ! isset( $products[ $pid ] ) ) {
+                $line_product = $item->get_product();
                 $products[ $pid ] = array(
                     'name'    => $item->get_name(),
-                    'sku'     => ( $item->get_product() && $item->get_product()->get_sku() ) ? $item->get_product()->get_sku() : '',
+                    'sku'     => ( $line_product && $line_product->get_sku() ) ? $line_product->get_sku() : '',
                     'qty'     => 0,
                     'revenue' => 0,
                     'orders'  => 0,
@@ -1275,7 +1287,13 @@ function wci_export_products_csv( $date_from = '', $date_to = '', $product_id = 
                 continue;
             }
             foreach ( $order->get_items() as $item ) {
-                if ( (int) $item->get_product_id() === $product_id ) {
+                $line_id = class_exists( 'WAP_Stock' )
+                    ? WAP_Stock::id_from_order_item( $item )
+                    : ( (int) $item->get_variation_id() ?: (int) $item->get_product_id() );
+                $match = $line_id === $product_id
+                    || (int) $item->get_product_id() === $product_id
+                    || (int) $item->get_variation_id() === $product_id;
+                if ( $match ) {
                     $name = trim( $order->get_billing_first_name() . ' ' . $order->get_billing_last_name() );
                     $row  = array(
                         $order->get_order_number(),
@@ -1304,12 +1322,18 @@ function wci_export_products_csv( $date_from = '', $date_to = '', $product_id = 
                 continue;
             }
             foreach ( $order->get_items() as $item ) {
-                $pid = $item->get_product_id();
+                $pid = class_exists( 'WAP_Stock' )
+                    ? WAP_Stock::id_from_order_item( $item )
+                    : ( (int) $item->get_variation_id() ?: (int) $item->get_product_id() );
+                if ( $pid <= 0 ) {
+                    continue;
+                }
                 if ( ! isset( $products[ $pid ] ) ) {
+                    $line_product = $item->get_product();
                     $products[ $pid ] = array(
                         'pid'  => $pid,
                         'name' => $item->get_name(),
-                        'sku'  => ( $item->get_product() && $item->get_product()->get_sku() ) ? $item->get_product()->get_sku() : '',
+                        'sku'  => ( $line_product && $line_product->get_sku() ) ? $line_product->get_sku() : '',
                         'qty'  => 0, 'revenue' => 0, 'orders' => 0,
                     );
                 }

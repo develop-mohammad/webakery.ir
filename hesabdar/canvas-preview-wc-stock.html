@@ -15,8 +15,8 @@
   </style>
 </head>
 <body>
-  <h1>گزارش محصولات — ستون موجودی از ووکامرس</h1>
-  <p>موجودی عددی از API ووکامرس خوانده می‌شود؛ برای محصول متغیر، جمع وارییشن‌ها (یا موجودی والد اگر مدیریت در والد باشد).</p>
+  <h1>گزارش محصولات — موجودی عین ووکامرس</h1>
+  <p>هر ردیف فروش (ساده یا وارییشن) موجودی همان شناسه را از API ووکامرس می‌گیرد؛ محصول متغیر به‌ازای هر وارییشن فروخته‌شده جداگانه است.</p>
   <table>
     <thead>
       <tr>
@@ -25,10 +25,11 @@
     </thead>
     <tbody>
       <tr><td>1</td><td><strong>تی‌شرت ساده</strong></td><td>TS-01</td><td>12</td><td>4</td><td>3</td><td>1,200,000 تومان</td></tr>
-      <tr><td>2</td><td><strong>کفش متغیر (رنگ/سایز)</strong></td><td>SH-VAR</td><td>10</td><td>8</td><td>5</td><td>4,500,000 تومان</td></tr>
-      <tr><td>3</td><td><strong>هدیه بدون مدیریت موجودی</strong></td><td>GF-00</td><td>موجود</td><td>2</td><td>2</td><td>0 تومان</td></tr>
+      <tr><td>2</td><td><strong>کفش — قرمز / ۴۲</strong></td><td>SH-R-42</td><td>3</td><td>2</td><td>2</td><td>1,800,000 تومان</td></tr>
+      <tr><td>3</td><td><strong>کفش — آبی / ۴۱</strong></td><td>SH-B-41</td><td>7</td><td>1</td><td>1</td><td>900,000 تومان</td></tr>
+      <tr><td>4</td><td><strong>هدیه بدون مدیریت موجودی</strong></td><td>GF-00</td><td>موجود</td><td>2</td><td>2</td><td>0 تومان</td></tr>
     </tbody>
   </table>
-  <p class="note">منبع: <code>WAP_Stock</code> → <code>get_stock_quantity()</code> / جمع فرزندان متغیر. «تعداد فروخته‌شده» از سفارش‌هاست و با موجودی یکی نیست.</p>
+  <p class="note">منبع: <code>WAP_Stock</code> → موجودی وارییشن/ساده از <code>get_stock_quantity()</code>. «تعداد فروخته‌شده» از سفارش است و با موجودی یکی نیست.</p>
 </body>
 </html>
