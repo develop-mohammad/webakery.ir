@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <rect width="800" height="500" fill="#101410"/>
+  <rect x="250" y="80" width="300" height="340" rx="8" fill="#142016" stroke="#2ee0c5" stroke-width="4"/>
+  <text x="400" y="260" text-anchor="middle" fill="#2ee0c5" font-size="28" font-family="Arial">XBOX</text>
+</svg>

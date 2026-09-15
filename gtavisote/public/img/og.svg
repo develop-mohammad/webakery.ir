@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1024"/>
+      <stop offset="1" stop-color="#07080c"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#g)"/>
+  <circle cx="980" cy="120" r="220" fill="#ff3b7a" opacity="0.25"/>
+  <circle cx="180" cy="520" r="260" fill="#2ee0c5" opacity="0.18"/>
+  <text x="80" y="300" fill="#f4efe4" font-size="92" font-family="Arial Black, sans-serif" letter-spacing="12">VISOTE</text>
+  <text x="80" y="370" fill="#2ee0c5" font-size="36" font-family="Arial, sans-serif">gtavisote.ir  GTA VI</text>
+</svg>

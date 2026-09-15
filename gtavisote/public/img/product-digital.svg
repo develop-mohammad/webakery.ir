@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <rect width="800" height="500" fill="#0e1218"/>
+  <rect x="180" y="160" width="440" height="160" rx="16" fill="#151b24" stroke="#2ee0c5"/>
+  <text x="400" y="255" text-anchor="middle" fill="#2ee0c5" font-size="28" font-family="Arial">DIGITAL CODE</text>
+</svg>

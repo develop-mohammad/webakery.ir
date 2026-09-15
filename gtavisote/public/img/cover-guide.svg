@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450">
+  <rect width="800" height="450" fill="#101018"/>
+  <circle cx="300" cy="230" r="70" fill="none" stroke="#ff3b7a" stroke-width="8"/>
+  <circle cx="500" cy="230" r="70" fill="none" stroke="#2ee0c5" stroke-width="8"/>
+  <text x="40" y="50" fill="#f4efe4" font-size="28" font-family="Arial">LUCIA + JASON</text>
+</svg>

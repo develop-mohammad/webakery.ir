@@ -1,0 +1,56 @@
+نصب GTA VISOTE  (gtavisote.ir)
+================================
+
+برای خرید هاست و سوار کردن روی لیارا، اول HOST-FA.txt را بخوان.
+
+بدون وردپرس. بدون PHP. فقط Node.js ۱۸ یا بالاتر.
+
+این CMS برای هاست اشتراکی cPanel معمولی (که فقط PHP دارد) مناسب نیست.
+یک VPS ارزان یا PaaS نود لازم است: لیارا، ابرآروان، یا هر VPS لینوکس.
+
+۱) دامنه
+   gtavisote.ir را به IP سرور اشاره بده (A record).
+
+۲) فایل‌ها
+   پوشه gtavisote را روی سرور بگذار.
+   Node ۱۸+ نصب باشد: node -v
+
+۳) اجرا
+   cd gtavisote
+   npm start
+   پیش‌فرض پورت ۸۷۸۷ است.
+   PORT=3000 npm start
+
+۴) نصب سایت
+   مرورگر: http://IP:پورت/install
+   آدرس نهایی را https://gtavisote.ir بگذار.
+   کاربر و رمز ادمین بساز (رمز حداقل ۸ حرف).
+
+۵) پشت Nginx (نمونه)
+   server {
+     server_name gtavisote.ir;
+     location / {
+       proxy_pass http://127.0.0.1:8787;
+       proxy_set_header Host $host;
+       proxy_set_header X-Forwarded-Proto $scheme;
+     }
+   }
+   SSL را با certbot یا پنل سرور فعال کن.
+
+۶) اجرای دائمی
+   با systemd یا pm2:
+   pm2 start server.js --name visote
+
+۷) بعد از نصب
+   /admin  → نوشته، محصول، سفارش
+   داده در پوشه data/ است. همان را بکاپ بگیر.
+   uploads در public/uploads
+
+امنیت
+- رمز پیش‌فرض نگذار.
+- data/ را در وب‌سرور مستقیم سرو نکن (این برنامه سرو نمی‌کند).
+- کرک و بیلد لو رفته نفروش.
+
+بروزرسانی
+- فایل‌ها را عوض کن، data را دست نزن.
+- VERSION را ببین. VERSIONING.md را بخوان.

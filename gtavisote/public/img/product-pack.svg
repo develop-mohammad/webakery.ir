@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <rect width="800" height="500" fill="#12161c"/>
+  <rect x="200" y="140" width="400" height="220" rx="12" fill="#1a2030" stroke="#2ee0c5"/>
+  <text x="400" y="270" text-anchor="middle" fill="#2ee0c5" font-size="24" font-family="Arial">WALLPAPER PACK</text>
+</svg>

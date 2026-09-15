@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <rect width="800" height="500" fill="#121214"/>
+  <rect x="220" y="90" width="360" height="320" rx="6" fill="#2a2a30" stroke="#c0c4cc" stroke-width="8"/>
+  <text x="400" y="260" text-anchor="middle" fill="#eee" font-size="22" font-family="Arial">STEELBOOK</text>
+</svg>
