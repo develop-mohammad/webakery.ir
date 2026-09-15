@@ -103,15 +103,16 @@ class WBL_Auth {
 	public static function redirect_url() {
 		$custom = trim( (string) WBL_Settings::get( 'redirect_after', '' ) );
 		if ( $custom ) {
-			return esc_url_raw( $custom );
-		}
-		if ( function_exists( 'wc_get_page_permalink' ) ) {
+			$url = esc_url_raw( $custom );
+		} elseif ( function_exists( 'wc_get_page_permalink' ) ) {
 			$url = wc_get_page_permalink( 'myaccount' );
-			if ( $url ) {
-				return $url;
+			if ( ! $url ) {
+				$url = home_url( '/' );
 			}
+		} else {
+			$url = home_url( '/' );
 		}
-		return home_url( '/' );
+		return esc_url_raw( apply_filters( 'wbl_login_redirect', $url ) );
 	}
 
 	public static function find_by_phone( $phone ) {
