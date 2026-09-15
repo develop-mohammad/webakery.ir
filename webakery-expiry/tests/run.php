@@ -892,8 +892,8 @@ $root     = dirname( __DIR__ );
 $boot_src = is_file( $root . '/webakery-expiry-pro.php' ) ? $root . '/webakery-expiry-pro.php' : $root . '/webakery-expiry.php';
 $boot     = file_get_contents( $boot_src );
 $readme   = file_get_contents( $root . '/readme.txt' );
-wbe_check( 'هدر افزونه نسخه ۱.۳.۱ دارد', false !== strpos( $boot, 'Version:     1.3.1' ) && false !== strpos( $boot, "define( 'WBE_VERSION', '1.3.1' )" ) );
-wbe_check( 'readme Stable tag با هدر یکی است', false !== strpos( $readme, 'Stable tag: 1.3.1' ) );
+wbe_check( 'هدر افزونه نسخه ۱.۴.۰ دارد', false !== strpos( $boot, 'Version:     1.4.0' ) && false !== strpos( $boot, "define( 'WBE_VERSION', '1.4.0' )" ) );
+wbe_check( 'readme Stable tag با هدر یکی است', false !== strpos( $readme, 'Stable tag: 1.4.0' ) );
 wbe_check( 'راهنما رایگان و پرو را یکسان می‌گوید', false !== strpos( $help, 'امکانات یکسان' ) );
 wbe_check( 'فرم گزارش باگ تلگرام دارد', false !== strpos( $bug, 't.me' ) && false !== strpos( $bug, 'wbe-bug-capture' ) && false !== strpos( $bug, 'wbe-bug-desc' ) );
 
@@ -912,7 +912,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.3.1' );
+	define( 'WBE_VERSION', '1.4.0' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {
