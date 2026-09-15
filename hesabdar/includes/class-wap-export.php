@@ -73,9 +73,9 @@ class WAP_Export {
 
         $fp = fopen( 'php://output', 'w' );
         fputs( $fp, "\xEF\xBB\xBF" );
-        fputcsv( $fp, array( 'نام محصول', 'SKU', 'تعداد فروخته‌شده', 'تعداد سفارشات', 'درآمد کل' ) );
+        fputcsv( $fp, array( 'نام محصول', 'SKU', 'موجودی', 'تعداد فروخته‌شده', 'تعداد سفارشات', 'درآمد کل' ) );
         foreach ( WAP_Data::get_product_sales( $orders ) as $p ) {
-            fputcsv( $fp, array( $p['name'], $p['sku'], $p['qty'], $p['orders'], $p['revenue'] ) );
+            fputcsv( $fp, array( $p['name'], $p['sku'], $p['stock_display'] ?? '—', $p['qty'], $p['orders'], $p['revenue'] ) );
         }
         fclose( $fp );
         exit;

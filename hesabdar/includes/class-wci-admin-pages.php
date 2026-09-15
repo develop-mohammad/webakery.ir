@@ -1105,6 +1105,12 @@ function wci_products_page() {
     $products_with_pid = array();
     foreach ( $products as $pid => $p ) {
         $p['pid'] = $pid;
+        $snap = class_exists( 'WAP_Stock' )
+            ? WAP_Stock::snapshot_for_id( (int) $pid )
+            : array( 'stock' => null, 'stock_status' => '', 'stock_display' => '—' );
+        $p['stock']         = $snap['stock'];
+        $p['stock_status']  = $snap['stock_status'];
+        $p['stock_display'] = $snap['stock_display'];
         $products_with_pid[] = $p;
     }
 
@@ -1199,6 +1205,7 @@ function wci_products_page() {
     echo '<th>#</th>';
     echo $sort_th( 'نام محصول', 'name' );
     echo '<th>SKU</th>';
+    echo '<th>موجودی</th>';
     echo $sort_th( 'تعداد فروخته‌شده', 'qty' );
     echo $sort_th( 'تعداد سفارشات', 'orders' );
     echo $sort_th( 'درآمد کل', 'revenue' );
@@ -1206,7 +1213,7 @@ function wci_products_page() {
     echo '</tr></thead><tbody>';
 
     if ( empty( $products_with_pid ) ) {
-        echo '<tr><td colspan="7" style="text-align:center;padding:30px">محصولی یافت نشد.</td></tr>';
+        echo '<tr><td colspan="8" style="text-align:center;padding:30px">محصولی یافت نشد.</td></tr>';
     }
 
     $i = 1;
@@ -1214,11 +1221,12 @@ function wci_products_page() {
         $avg      = $p['qty'] > 0 ? $p['revenue'] / $p['qty'] : 0;
         $drill    = add_query_arg( array_merge( $sf, array( 'product_id' => $p['pid'] ) ), admin_url( 'admin.php' ) );
         printf(
-            '<tr><td>%d</td><td><a href="%s" style="font-weight:bold">%s</a></td><td>%s</td><td><strong>%s</strong></td><td>%s</td><td><strong>%s</strong></td><td>%s</td></tr>',
+            '<tr><td>%d</td><td><a href="%s" style="font-weight:bold">%s</a></td><td>%s</td><td>%s</td><td><strong>%s</strong></td><td>%s</td><td><strong>%s</strong></td><td>%s</td></tr>',
             $i++,
             esc_url( $drill ),
             esc_html( $p['name'] ),
             esc_html( $p['sku'] ),
+            esc_html( $p['stock_display'] ?? '—' ),
             esc_html( number_format( $p['qty'] ) ),
             esc_html( $p['orders'] ),
             wp_kses_post( wc_price( $p['revenue'] ) ),
@@ -1299,6 +1307,7 @@ function wci_export_products_csv( $date_from = '', $date_to = '', $product_id = 
                 $pid = $item->get_product_id();
                 if ( ! isset( $products[ $pid ] ) ) {
                     $products[ $pid ] = array(
+                        'pid'  => $pid,
                         'name' => $item->get_name(),
                         'sku'  => ( $item->get_product() && $item->get_product()->get_sku() ) ? $item->get_product()->get_sku() : '',
                         'qty'  => 0, 'revenue' => 0, 'orders' => 0,
@@ -1310,9 +1319,13 @@ function wci_export_products_csv( $date_from = '', $date_to = '', $product_id = 
             }
         }
         usort( $products, function( $a, $b ) { return $b['revenue'] - $a['revenue']; } );
-        fputcsv( $fp, array( 'نام محصول', 'SKU', 'تعداد فروخته‌شده', 'تعداد سفارشات', 'درآمد کل' ) );
-        foreach ( $products as $p ) {
-            fputcsv( $fp, array( $p['name'], $p['sku'], $p['qty'], $p['orders'], $p['revenue'] ) );
+        fputcsv( $fp, array( 'نام محصول', 'SKU', 'موجودی', 'تعداد فروخته‌شده', 'تعداد سفارشات', 'درآمد کل' ) );
+        foreach ( $products as $pid => $p ) {
+            // usort reindexes — keep original pid on the row before sort
+            $snap = class_exists( 'WAP_Stock' )
+                ? WAP_Stock::snapshot_for_id( (int) ( $p['pid'] ?? $pid ) )
+                : array( 'stock_display' => '—' );
+            fputcsv( $fp, array( $p['name'], $p['sku'], $snap['stock_display'] ?? '—', $p['qty'], $p['orders'], $p['revenue'] ) );
         }
     }
 

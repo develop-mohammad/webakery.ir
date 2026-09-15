@@ -337,6 +337,16 @@ class WAP_Data {
                 $products[ $pid ]['orders']++;
             }
         }
+        // موجودی فعلی از ووکامرس (ساده / متغیر) — نه از فروش
+        foreach ( $products as $pid => &$row ) {
+            $snap = class_exists( 'WAP_Stock' )
+                ? WAP_Stock::snapshot_for_id( (int) $pid )
+                : array( 'stock' => null, 'stock_status' => '', 'stock_display' => '—' );
+            $row['stock']         = $snap['stock'];
+            $row['stock_status']  = $snap['stock_status'];
+            $row['stock_display'] = $snap['stock_display'];
+        }
+        unset( $row );
         usort( $products, function( $a, $b ) { return $b['revenue'] <=> $a['revenue']; } );
         return array_values( $products );
     }

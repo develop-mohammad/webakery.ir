@@ -12,5 +12,5 @@ assert( strpos( $boot, "'واریزی خالص'" ) !== false || strpos( $boot, '
 assert( strpos( $boot, 'شاپرک و کارمزد' ) === false );
 assert( strpos( $admin, "'shaparak' => 'واریزی خالص'" ) !== false );
 assert( strpos( $wci, '<h1>واریزی خالص</h1>' ) !== false );
-assert( strpos( $boot, '1.23.0' ) !== false );
+assert( strpos( $boot, '1.24.0' ) !== false );
 echo "ALL VARIZI-KHALES LABEL SMOKE PASSED\n";

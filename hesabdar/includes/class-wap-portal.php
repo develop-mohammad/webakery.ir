@@ -1305,16 +1305,17 @@ class WAP_Portal {
                     <?php endforeach; ?>
                     </tbody>
                     <?php else : ?>
-                    <thead><tr><th>#</th><th>نام محصول</th><th>SKU</th><th>تعداد فروخته‌شده</th><th>تعداد سفارشات</th><th>درآمد کل</th></tr></thead>
+                    <thead><tr><th>#</th><th>نام محصول</th><th>SKU</th><th>موجودی</th><th>تعداد فروخته‌شده</th><th>تعداد سفارشات</th><th>درآمد کل</th></tr></thead>
                     <tbody>
                     <?php if ( empty( $products ) ) : ?>
-                        <tr><td colspan="6" class="wap-empty">محصولی یافت نشد.</td></tr>
+                        <tr><td colspan="7" class="wap-empty">محصولی یافت نشد.</td></tr>
                     <?php else : $i = 1; foreach ( $products as $p ) :
                         $url = add_query_arg( array_merge( $base_params, array( 'wap_view' => 'products', 'product_id' => $p['pid'] ) ), self::panel_url() ); ?>
                         <tr>
                             <td><?php echo $i++; ?></td>
                             <td><a href="<?php echo esc_url( $url ); ?>"><strong><?php echo esc_html( $p['name'] ); ?></strong></a></td>
                             <td><?php echo esc_html( $p['sku'] ); ?></td>
+                            <td><?php echo esc_html( $p['stock_display'] ?? '—' ); ?></td>
                             <td><strong><?php echo esc_html( number_format( $p['qty'] ) ); ?></strong></td>
                             <td><?php echo esc_html( number_format( $p['orders'] ) ); ?></td>
                             <td><strong><?php echo esc_html( number_format( $p['revenue'] ) . ' ' . $currency ); ?></strong></td>

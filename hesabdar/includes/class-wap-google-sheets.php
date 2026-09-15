@@ -110,9 +110,9 @@ class WAP_Google_Sheets {
 				return array( 'title' => 'Hesabdar — ' . $name . ' — ' . date_i18n( 'Y-m-d H:i' ), 'rows' => $rows );
 			}
 
-			$rows = array( array( 'نام محصول', 'SKU', 'تعداد فروخته‌شده', 'تعداد سفارشات', 'درآمد کل' ) );
+			$rows = array( array( 'نام محصول', 'SKU', 'موجودی', 'تعداد فروخته‌شده', 'تعداد سفارشات', 'درآمد کل' ) );
 			foreach ( WAP_Data::get_product_sales( $orders ) as $p ) {
-				$rows[] = self::stringify_row( array( $p['name'], $p['sku'], $p['qty'], $p['orders'], $p['revenue'] ) );
+				$rows[] = self::stringify_row( array( $p['name'], $p['sku'], $p['stock_display'] ?? '—', $p['qty'], $p['orders'], $p['revenue'] ) );
 			}
 			return array( 'title' => 'Hesabdar — فروش محصولات — ' . date_i18n( 'Y-m-d H:i' ), 'rows' => $rows );
 		}

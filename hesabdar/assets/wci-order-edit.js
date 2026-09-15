@@ -110,7 +110,8 @@
             $.each(res.data, function (i, p) {
                 html += '<button type="button" class="wci-ac-item" data-product=\'' + JSON.stringify(p).replace(/'/g, '&#39;') + '\'>' +
                     '<span class="wci-ac-item-name">' + $('<div>').text(p.name).html() + '</span>' +
-                    '<span class="wci-ac-item-meta">' + (p.price_html || '') + (p.sku ? ' — ' + p.sku : '') + '</span>' +
+                    '<span class="wci-ac-item-meta">' + (p.price_html || '') + (p.sku ? ' — ' + p.sku : '') +
+                    (p.stock_display ? ' — موجودی: ' + p.stock_display : '') + '</span>' +
                     '</button>';
             });
             $box.html(html);

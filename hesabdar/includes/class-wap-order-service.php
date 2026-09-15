@@ -645,15 +645,19 @@ class WAP_Order_Service {
 	 * @return array<string,mixed>
 	 */
 	private static function product_payload( $product ): array {
+		$stock_qty = class_exists( 'WAP_Stock' ) ? WAP_Stock::get_quantity( $product ) : null;
+		$stock_st  = class_exists( 'WAP_Stock' ) ? WAP_Stock::get_status( $product ) : (string) $product->get_stock_status();
 		return array(
-			'id'           => $product->get_id(),
-			'parent_id'    => $product->get_parent_id(),
-			'name'         => $product->get_name(),
-			'sku'          => $product->get_sku(),
-			'price'        => (float) $product->get_price(),
-			'price_html'   => wp_strip_all_tags( wc_price( $product->get_price() ) ),
-			'type'         => $product->get_type(),
-			'stock_status' => $product->get_stock_status(),
+			'id'            => $product->get_id(),
+			'parent_id'     => $product->get_parent_id(),
+			'name'          => $product->get_name(),
+			'sku'           => $product->get_sku(),
+			'price'         => (float) $product->get_price(),
+			'price_html'    => wp_strip_all_tags( wc_price( $product->get_price() ) ),
+			'type'          => $product->get_type(),
+			'stock'         => $stock_qty,
+			'stock_status'  => $stock_st,
+			'stock_display' => class_exists( 'WAP_Stock' ) ? WAP_Stock::format_display( $product ) : $stock_st,
 		);
 	}
 
