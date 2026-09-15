@@ -11,6 +11,7 @@ class WBE_Product {
 	const META_BATCHES         = '_wbe_batches';
 	const META_CALENDAR        = '_wbe_calendar';
 	const META_ACTIVE_EXPIRY   = '_wbe_active_expiry';
+	const META_ACTIVE_LOT      = '_wbe_active_lot';
 	const META_HIDE_COUNTDOWN  = '_wbe_hide_countdown';
 
 	/** @var bool */
@@ -25,6 +26,18 @@ class WBE_Product {
 	/** @var array<int,bool> product_id => needs stock pull */
 	private static $stock_queued = array();
 
+	/** @var bool جلوگیری از pull هنگام کاهش/بازگشت موجودی سفارش */
+	private static $suppress_stock_pull = false;
+
+	public static function begin_order_stock( $can = true, $order = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+		self::$suppress_stock_pull = true;
+		return $can;
+	}
+
+	public static function end_order_stock( $order = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+		self::$suppress_stock_pull = false;
+	}
+
 	public static function register() {
 		add_action( 'woocommerce_product_object_updated_props', array( __CLASS__, 'on_props_updated' ), 20, 2 );
 		add_action( 'woocommerce_product_bulk_edit_save', array( __CLASS__, 'on_wc_price_save' ), 20 );
@@ -34,6 +47,8 @@ class WBE_Product {
 		add_action( 'woocommerce_new_product', array( __CLASS__, 'on_new_product' ), 20 );
 		add_action( 'woocommerce_product_set_stock', array( __CLASS__, 'on_wc_stock_object' ), 20 );
 		add_action( 'woocommerce_variation_set_stock', array( __CLASS__, 'on_wc_stock_object' ), 20 );
+		add_filter( 'woocommerce_can_reduce_order_stock', array( __CLASS__, 'begin_order_stock' ), 1, 2 );
+		add_action( 'woocommerce_reduce_order_stock', array( __CLASS__, 'end_order_stock' ), 999 );
 		add_action( 'updated_post_meta', array( __CLASS__, 'on_price_meta' ), 20, 4 );
 		add_action( 'added_post_meta', array( __CLASS__, 'on_price_meta' ), 20, 4 );
 	}
@@ -133,37 +148,32 @@ class WBE_Product {
 		$product_id = (int) $product_id;
 		$today      = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
 		$batches    = self::batches( $product_id );
-		$idx        = WBE_Engine::active_index( $batches, $today );
+		$prev_idx   = WBE_Engine::active_index( $batches, $today );
+		$prev_lot   = ( null !== $prev_idx && isset( $batches[ $prev_idx ]['id'] ) ) ? (string) $batches[ $prev_idx ]['id'] : '';
 		$result     = WBE_Engine::consume( $batches, $qty, $today );
-		$wc_stock   = self::read_wc_stock( $product_id );
-		if ( null !== $wc_stock && null !== $idx ) {
-			$result['batches'] = WBE_Engine::apply_wc_stock_at_index( $result['batches'], $idx, $wc_stock );
-		}
+		// بعد از مصرف، موجودی ووکامرس را روی بچ مصرف‌شده برنگردان — صفر شدن باید سوییچ رزرو را باز کند.
 		update_post_meta( $product_id, self::META_BATCHES, $result['batches'] );
-		self::sync_wc( $product_id, false );
+		$new_idx = WBE_Engine::active_index( $result['batches'], $today );
+		$new_lot = ( null !== $new_idx && isset( $result['batches'][ $new_idx ]['id'] ) ) ? (string) $result['batches'][ $new_idx ]['id'] : '';
+		$switched = ( $prev_lot !== $new_lot );
+		// سوییچ به بچ بعدی: موجودی همان بچ را روی ووکامرس SET کن.
+		self::sync_wc( $product_id, $switched );
 		return $result['batch_id'];
 	}
 
 	public static function restore( $product_id, $qty, $batch_id ) {
 		$product_id = (int) $product_id;
 		$today      = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
-		$batches    = WBE_Engine::restore( self::batches( $product_id ), $qty, $batch_id );
-		$wc_stock   = self::read_wc_stock( $product_id );
-		if ( null !== $wc_stock ) {
-			$idx = null;
-			foreach ( $batches as $i => $batch ) {
-				if ( isset( $batch['id'] ) && (string) $batch['id'] === (string) $batch_id ) {
-					$idx = (int) $i;
-					break;
-				}
-			}
-			if ( null === $idx ) {
-				$idx = WBE_Engine::active_index( $batches, $today );
-			}
-			$batches = WBE_Engine::apply_wc_stock_at_index( $batches, $idx, $wc_stock );
-		}
+		$before     = self::batches( $product_id );
+		$prev_idx   = WBE_Engine::active_index( $before, $today );
+		$prev_lot   = ( null !== $prev_idx && isset( $before[ $prev_idx ]['id'] ) ) ? (string) $before[ $prev_idx ]['id'] : '';
+		$batches    = WBE_Engine::restore( $before, $qty, $batch_id );
 		update_post_meta( $product_id, self::META_BATCHES, $batches );
-		self::sync_wc( $product_id, false );
+		$new_idx  = WBE_Engine::active_index( $batches, $today );
+		$new_lot  = ( null !== $new_idx && isset( $batches[ $new_idx ]['id'] ) ) ? (string) $batches[ $new_idx ]['id'] : '';
+		$switched = ( $prev_lot !== $new_lot );
+		// برگشت به بچ قبلی: موجودی همان بچ (بعد از restore) را روی ووکامرس بنشیناند.
+		self::sync_wc( $product_id, $switched );
 	}
 
 	/**
@@ -282,7 +292,8 @@ class WBE_Product {
 	}
 
 	/**
-	 * قیمت ووکامرس = بچ فعال. موجودی فقط وقتی نوشته می‌شود که ذخیرهٔ فرم باشد یا بچ فعال عوض شده باشد.
+	 * قیمت ووکامرس = بچ فعال.
+	 * موجودی ووکامرس = موجودی بچ فعال؛ وقتی بچ عوض شود (اتمام/انقضا) موجودی بچ بعدی SET می‌شود.
 	 *
 	 * @param int  $product_id
 	 * @param bool $push_stock
@@ -294,6 +305,7 @@ class WBE_Product {
 		$product_id = (int) $product_id;
 		if ( ! self::configured( $product_id ) ) {
 			delete_post_meta( $product_id, self::META_ACTIVE_EXPIRY );
+			delete_post_meta( $product_id, self::META_ACTIVE_LOT );
 			self::refresh_parent_expiry_index( $product_id );
 			return;
 		}
@@ -308,10 +320,11 @@ class WBE_Product {
 		}
 		self::$syncing = true;
 		$active        = self::active( $product_id );
-		$prev_expiry   = (string) get_post_meta( $product_id, self::META_ACTIVE_EXPIRY, true );
-		$new_expiry    = $active && ! empty( $active['expiry'] ) ? (string) $active['expiry'] : '';
-		$lot_changed   = ( '' !== $prev_expiry && $prev_expiry !== $new_expiry );
-		$write_stock   = $push_stock || $lot_changed;
+		$prev_lot      = (string) get_post_meta( $product_id, self::META_ACTIVE_LOT, true );
+		$new_lot       = $active && ! empty( $active['id'] ) ? (string) $active['id'] : '';
+		// سوییچ بچ (۱→۲→۳…): همیشه موجودی بچ جدید را روی ووکامرس SET کن.
+		$lot_changed = ( $prev_lot !== $new_lot ) && ( '' !== $prev_lot || '' === $new_lot );
+		$write_stock = $push_stock || $lot_changed;
 		$product->set_manage_stock( true );
 		$product->set_backorders( 'no' );
 		if ( $active ) {
@@ -334,12 +347,14 @@ class WBE_Product {
 				$product->set_stock_status( (int) $active['stock'] > 0 ? 'instock' : 'outofstock' );
 			}
 			update_post_meta( $product_id, self::META_ACTIVE_EXPIRY, $active['expiry'] );
+			update_post_meta( $product_id, self::META_ACTIVE_LOT, $new_lot );
 		} else {
 			if ( $write_stock ) {
 				$product->set_stock_quantity( 0 );
 				$product->set_stock_status( 'outofstock' );
 			}
 			delete_post_meta( $product_id, self::META_ACTIVE_EXPIRY );
+			delete_post_meta( $product_id, self::META_ACTIVE_LOT );
 		}
 		$product->save();
 		self::$syncing = false;
@@ -482,13 +497,14 @@ class WBE_Product {
 	}
 
 	/**
-	 * موجودی ووکامرس را روی بچ فعال بنویس. موجودی رزرو دست نمی‌خورد.
+	 * موجودی ووکامرس را روی بچ فعال بنویس. اگر بچ فعال صفر شد، بچ بعدی فعال می‌شود
+	 * و موجودی همان بچ روی ووکامرس SET می‌شود.
 	 *
 	 * @param WC_Product|int $product
 	 * @return bool آیا بچ تغییر کرد؟
 	 */
 	public static function pull_wc_stock( $product ) {
-		if ( self::$syncing || self::$pulling ) {
+		if ( self::$syncing || self::$pulling || self::$suppress_stock_pull ) {
 			return false;
 		}
 		if ( ! empty( $_POST['wbe_batches_nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
@@ -524,15 +540,24 @@ class WBE_Product {
 		if ( null === $wc_stock ) {
 			return false;
 		}
-		$today   = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
-		$batches = self::batches( $product_id );
-		$next    = WBE_Engine::apply_wc_stock_to_active( $batches, $wc_stock, $today );
-		if ( $next === $batches ) {
+		$today    = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
+		$batches  = self::batches( $product_id );
+		$prev_idx = WBE_Engine::active_index( $batches, $today );
+		$prev_lot = ( null !== $prev_idx && isset( $batches[ $prev_idx ]['id'] ) ) ? (string) $batches[ $prev_idx ]['id'] : '';
+		$next     = WBE_Engine::apply_wc_stock_to_active( $batches, $wc_stock, $today );
+		$new_idx  = WBE_Engine::active_index( $next, $today );
+		$new_lot  = ( null !== $new_idx && isset( $next[ $new_idx ]['id'] ) ) ? (string) $next[ $new_idx ]['id'] : '';
+		$switched = ( $prev_lot !== $new_lot );
+		if ( $next === $batches && ! $switched ) {
 			return false;
 		}
 		self::$pulling = true;
 		try {
 			self::save_batches( $product_id, $next, null, false );
+			if ( $switched ) {
+				// بچ قبلی تمام شد → موجودی بچ بعدی را روی ووکامرس SET کن.
+				self::sync_wc( $product_id, true );
+			}
 		} finally {
 			self::$pulling = false;
 		}

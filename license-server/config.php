@@ -151,12 +151,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه ۱.۴.۳: رفع نمایش ویجت + راهنمای مخفی بودن برای ادمین. ، ۳ ماهه ۳۵۰ و دائمی ۷۹۹ هزار تومان.',
     ],
     'webakery-expiry' => [
-        'version'      => '1.4.1',
+        'version'      => '1.5.0',
         'package'      => 'https://webakery.ir/license-server/updates/webakery-expiry-pro.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۴.۱: تغییر موجودی ووکامرس بلافاصله بچ فعال افزونه را به‌روز می‌کند.',
+        'changelog'    => 'نسخه ۱.۵.۰: با اتمام هر بچ، موجودی بچ بعدی روی ووکامرس SET می‌شود.',
     ],
 ] );
 

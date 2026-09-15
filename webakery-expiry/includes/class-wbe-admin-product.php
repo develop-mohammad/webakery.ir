@@ -357,15 +357,8 @@ class WBE_Admin_Product {
 			self::flag_incomplete_save( $pid );
 			$batches = WBE_Product::batches( $pid );
 		}
-		$today = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
-		// موجودی منبع حقیقت ووکامرس است — مقدار فرم افزونه را با آبجکت محصول هم‌تراز کن.
-		if ( method_exists( $product, 'get_stock_quantity' ) && class_exists( 'WBE_Engine' ) ) {
-			$wc_qty = $product->get_stock_quantity( 'edit' );
-			if ( WBE_Engine::has_numeric_stock( $wc_qty ) ) {
-				$batches = WBE_Engine::apply_wc_stock_to_active( $batches, $wc_qty, $today );
-			}
-		}
-		WBE_Product::save_batches( $pid, $batches, $override, false );
+		// موجودی بچ فعال را روی ووکامرس SET کن (بچ ۱ → WC؛ بعد از اتمام، بچ بعدی جایگزین می‌شود).
+		WBE_Product::save_batches( $pid, $batches, $override, true );
 		WBE_Product::save_hide_countdown( $pid, ! empty( $_POST['wbe_hide_countdown'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
 		$active = $batches ? WBE_Engine::active_index( $batches, class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' ) ) : null;
@@ -422,17 +415,7 @@ class WBE_Admin_Product {
 			self::flag_incomplete_save( $variation_id );
 			$batches = WBE_Product::batches( $variation_id );
 		}
-		$today = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
-		if ( function_exists( 'wc_get_product' ) && class_exists( 'WBE_Engine' ) ) {
-			$var = wc_get_product( $variation_id );
-			if ( $var && method_exists( $var, 'get_stock_quantity' ) ) {
-				$wc_qty = $var->get_stock_quantity( 'edit' );
-				if ( WBE_Engine::has_numeric_stock( $wc_qty ) ) {
-					$batches = WBE_Engine::apply_wc_stock_to_active( $batches, $wc_qty, $today );
-				}
-			}
-		}
-		WBE_Product::save_batches( $variation_id, $batches, $override, false );
+		WBE_Product::save_batches( $variation_id, $batches, $override, true );
 		WBE_Product::save_hide_countdown( $variation_id, ! empty( $data['hide_countdown'] ) );
 
 		$active_i = $batches ? WBE_Engine::active_index( $batches, class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' ) ) : null;
@@ -456,8 +439,6 @@ class WBE_Admin_Product {
 				WBE_Product::push_wc_sale_dates( $variation_id, $date_ops );
 			}
 		}
-		// موجودی را از بچ روی ووکامرس هل نده — منبع موجودی خود ووکامرس است.
-		WBE_Product::sync_wc( $variation_id, false );
 	}
 
 	public function sync_after_save( $product_id ) {
@@ -468,8 +449,10 @@ class WBE_Admin_Product {
 				return;
 			}
 		}
-		// فقط قیمت/انقضا را همگام کن؛ موجودی را از بچ بازنویسی نکن.
-		WBE_Product::sync_wc( $product_id, false );
+		// ذخیرهٔ بالا با push_stock=true انجام شده؛ اینجا فقط قیمت را مطمئن کن اگر فرم ناقص بود.
+		if ( empty( $_POST['wbe_batches_nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			WBE_Product::sync_wc( $product_id, false );
+		}
 	}
 
 	public function columns( $cols ) {

@@ -64,7 +64,7 @@ $attr_lbl = isset( $attr_label ) ? (string) $attr_label : '';
 			<strong>موجودی فعال این تنوع</strong>
 			<button type="button" class="button wbe-copy-variations">کپی بچ‌ها به همه تنوع‌ها</button>
 		</div>
-		<p class="description">موجودی این باکس همان موجودی ووکامرس این تنوع است. قیمت و انقضای همین تنوع روی فروشگاه دیده می‌شود.</p>
+		<p class="description">موجودی این باکس همان موجودی ووکامرس این تنوع است و با ذخیره روی ووکامرس SET می‌شود. با اتمام این بچ، موجودی بچ رزرو بعدی جایگزین می‌شود.</p>
 		<div class="wbe-active-grid wbe-active-grid--variation">
 			<p class="form-field">
 				<label>قیمت اصلی</label>

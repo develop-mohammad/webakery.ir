@@ -91,6 +91,20 @@ wbe_check( 'بازگشت موجودی به همان بچ', 2 === (int) $restored
 $idx = WBE_Engine::active_index( $restored, $today );
 wbe_check( 'بعد از بازگشت، نزدیک‌ترین دوباره فعال است', 0 === $idx );
 
+
+echo "\n=== سوییچ موجودی به ووکامرس ===\n";
+$cascade = array(
+	array( 'id' => 'a', 'price' => '100', 'stock' => 2, 'expiry' => '2026-02-01' ),
+	array( 'id' => 'b', 'price' => '120', 'stock' => 5, 'expiry' => '2026-06-01' ),
+	array( 'id' => 'c', 'price' => '140', 'stock' => 9, 'expiry' => '2026-12-01' ),
+);
+$c1 = WBE_Engine::consume( $cascade, 2, $today );
+$i1 = WBE_Engine::active_index( $c1['batches'], $today );
+wbe_check( 'بعد از اتمام بچ ۱، بچ ۲ فعال است', 1 === $i1 && 5 === (int) $c1['batches'][ $i1 ]['stock'] );
+$c2 = WBE_Engine::consume( $c1['batches'], 5, $today );
+$i2 = WBE_Engine::active_index( $c2['batches'], $today );
+wbe_check( 'بعد از اتمام بچ ۲، بچ ۳ فعال است', 2 === $i2 && 9 === (int) $c2['batches'][ $i2 ]['stock'] );
+
 echo "\n=== پیکربندی ===\n";
 wbe_check( 'آرایه خالی تنظیم نشده', false === WBE_Engine::is_configured( array() ) );
 $clean = WBE_Engine::sanitize_batches(
@@ -856,8 +870,10 @@ wbe_check( 'کشیدن موجودی ووکامرس هوک دارد', false !== s
 wbe_check( 'هوک set_stock موجودی را می‌کشد', false !== strpos( $prod_src, 'woocommerce_product_set_stock' ) );
 wbe_check( 'متا _stock صف همگام‌سازی دارد', false !== strpos( $prod_src, "'_stock'" ) && false !== strpos( $prod_src, 'stock_queued' ) );
 $admin_src = file_get_contents( dirname( __DIR__ ) . '/includes/class-wbe-admin-product.php' );
-wbe_check( 'ذخیره تکی موجودی ووکامرس را روی بچ می‌نشاند', false !== strpos( $admin_src, 'apply_wc_stock_to_active' ) );
-wbe_check( 'بعد از ذخیره موجودی را از بچ هل نمی‌کند', false !== strpos( $admin_src, 'sync_wc( $product_id, false )' ) );
+wbe_check( 'ذخیره تکی موجودی بچ فعال را روی ووکامرس SET می‌کند', false !== strpos( $admin_src, 'save_batches( $pid, $batches, $override, true )' ) );
+wbe_check( 'سوییچ بچ با META_ACTIVE_LOT تشخیص داده می‌شود', false !== strpos( $prod_src, 'META_ACTIVE_LOT' ) && false !== strpos( $prod_src, 'lot_changed' ) );
+wbe_check( 'مصرف سفارش هنگام سوییچ موجودی بچ بعدی را هل می‌کند', false !== strpos( $prod_src, 'function consume' ) && false !== strpos( $prod_src, 'sync_wc( $product_id, $switched )' ) );
+wbe_check( 'کاهش موجودی سفارش pull را موقتاً خاموش می‌کند', false !== strpos( $prod_src, 'suppress_stock_pull' ) && false !== strpos( $prod_src, 'woocommerce_can_reduce_order_stock' ) );
 $js = file_get_contents( dirname( __DIR__ ) . '/assets/admin.js' );
 wbe_check( 'جی‌اس موجودی ووکامرس را به افزونه می‌آورد', false !== strpos( $js, 'syncWcToActive' ) && false !== strpos( $js, '#_stock' ) );
 wbe_check( 'همگام‌سازی پیش‌فرض موجودی ووکامرس را بازنویسی نمی‌کند', false !== strpos( $prod_src, 'function sync_wc( $product_id, $push_stock = false )' ) );
@@ -900,8 +916,8 @@ $root     = dirname( __DIR__ );
 $boot_src = is_file( $root . '/webakery-expiry-pro.php' ) ? $root . '/webakery-expiry-pro.php' : $root . '/webakery-expiry.php';
 $boot     = file_get_contents( $boot_src );
 $readme   = file_get_contents( $root . '/readme.txt' );
-wbe_check( 'هدر افزونه نسخه ۱.۴.۱ دارد', false !== strpos( $boot, 'Version:     1.4.1' ) && false !== strpos( $boot, "define( 'WBE_VERSION', '1.4.1' )" ) );
-wbe_check( 'readme Stable tag با هدر یکی است', false !== strpos( $readme, 'Stable tag: 1.4.1' ) );
+wbe_check( 'هدر افزونه نسخه ۱.۵.۰ دارد', false !== strpos( $boot, 'Version:     1.5.0' ) && false !== strpos( $boot, "define( 'WBE_VERSION', '1.5.0' )" ) );
+wbe_check( 'readme Stable tag با هدر یکی است', false !== strpos( $readme, 'Stable tag: 1.5.0' ) );
 wbe_check( 'راهنما رایگان و پرو را یکسان می‌گوید', false !== strpos( $help, 'امکانات یکسان' ) );
 wbe_check( 'فرم گزارش باگ تلگرام دارد', false !== strpos( $bug, 't.me' ) && false !== strpos( $bug, 'wbe-bug-capture' ) && false !== strpos( $bug, 'wbe-bug-desc' ) );
 
@@ -920,7 +936,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.4.1' );
+	define( 'WBE_VERSION', '1.5.0' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {
