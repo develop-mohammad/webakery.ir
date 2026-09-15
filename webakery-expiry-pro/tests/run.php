@@ -885,6 +885,12 @@ wbe_check( 'راهنما صفحه دارد', false !== strpos( $help, 'رفع ک
 wbe_check( 'راهنما تقویم و کپی تنوع دارد', false !== strpos( $help, 'کپی بچ‌ها به همه تنوع‌ها' ) );
 wbe_check( 'راهنما ویرایش سریع و کل موجودی دارد', false !== strpos( $help, 'ویرایش سریع' ) && false !== strpos( $help, 'کل موجودی' ) );
 wbe_check( 'راهنما موجودی ووکامرس را می‌گوید', false !== strpos( $help, 'موجودی ووکامرس' ) );
+$root     = dirname( __DIR__ );
+$boot_src = is_file( $root . '/webakery-expiry-pro.php' ) ? $root . '/webakery-expiry-pro.php' : $root . '/webakery-expiry.php';
+$boot     = file_get_contents( $boot_src );
+$readme   = file_get_contents( $root . '/readme.txt' );
+wbe_check( 'هدر افزونه نسخه ۱.۳.۰ دارد', false !== strpos( $boot, 'Version:     1.3.0' ) && false !== strpos( $boot, "define( 'WBE_VERSION', '1.3.0' )" ) );
+wbe_check( 'readme Stable tag با هدر یکی است', false !== strpos( $readme, 'Stable tag: 1.3.0' ) );
 wbe_check( 'راهنما رایگان و پرو را یکسان می‌گوید', false !== strpos( $help, 'امکانات یکسان' ) );
 wbe_check( 'فرم گزارش باگ تلگرام دارد', false !== strpos( $bug, 't.me' ) && false !== strpos( $bug, 'wbe-bug-capture' ) && false !== strpos( $bug, 'wbe-bug-desc' ) );
 
@@ -903,7 +909,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.2.21' );
+	define( 'WBE_VERSION', '1.3.0' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {
