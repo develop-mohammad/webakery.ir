@@ -64,7 +64,7 @@ class WAP_Report_Image {
             'restrict_accountant'      => empty( $raw['restrict_accountant'] ) ? 0 : 1,
             'accountant_download_only' => empty( $raw['accountant_download_only'] ) ? 0 : 1,
             'accountant_tabs'          => array_values( array_intersect(
-                array( 'sales', 'orders', 'products', 'shaparak', 'analytics' ),
+                array( 'sales', 'orders', 'products', 'buyers', 'shaparak', 'analytics' ),
                 array_map( 'sanitize_key', (array) ( $raw['accountant_tabs'] ?? array() ) )
             ) ),
         );
@@ -130,7 +130,7 @@ class WAP_Report_Image {
     }
 
     public static function allowed_tabs_for_user( $user = null ): array {
-        $all = array( 'sales', 'orders', 'products', 'shaparak', 'analytics' );
+        $all = array( 'sales', 'orders', 'products', 'buyers', 'shaparak', 'analytics' );
         $s   = self::settings();
         if ( empty( $s['restrict_accountant'] ) || ! self::is_accountant_only( $user ) ) {
             return $all;
@@ -156,6 +156,7 @@ class WAP_Report_Image {
             'sales'     => 'گزارش-مالی',
             'orders'    => 'سفارش‌ها',
             'products'  => 'محصولات',
+            'buyers'    => 'خریداران-محصول',
             'shaparak'  => 'واریزی خالص',
             'analytics' => 'داشبورد',
             'preview'   => 'پیش‌نمایش',

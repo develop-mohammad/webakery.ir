@@ -927,23 +927,30 @@ function wci_products_page() {
         wp_die( 'Unauthorized' );
     }
 
-    $is_jalali  = wci_is_jalali();
-    $date_from  = sanitize_text_field( isset( $_GET['date_from'] ) ? $_GET['date_from'] : '' );
-    $date_to    = sanitize_text_field( isset( $_GET['date_to'] )   ? $_GET['date_to']   : '' );
-    $product_id = intval( isset( $_GET['product_id'] ) ? $_GET['product_id'] : 0 );
-    $orderby_p  = sanitize_text_field( isset( $_GET['orderby'] )   ? $_GET['orderby']   : 'revenue' );
-    $order_dir  = ( isset( $_GET['order'] ) && $_GET['order'] === 'ASC' ) ? 'ASC' : 'DESC';
+    $is_jalali     = wci_is_jalali();
+    $date_from     = sanitize_text_field( isset( $_GET['date_from'] ) ? $_GET['date_from'] : '' );
+    $date_to       = sanitize_text_field( isset( $_GET['date_to'] )   ? $_GET['date_to']   : '' );
+    $product_id    = intval( isset( $_GET['product_id'] ) ? $_GET['product_id'] : 0 );
+    $order_status  = sanitize_text_field( isset( $_GET['order_status'] ) ? $_GET['order_status'] : '' );
+    $product_cat   = absint( isset( $_GET['product_cat'] ) ? $_GET['product_cat'] : 0 );
+    $orderby_p     = sanitize_text_field( isset( $_GET['orderby'] )   ? $_GET['orderby']   : 'revenue' );
+    $order_dir     = ( isset( $_GET['order'] ) && $_GET['order'] === 'ASC' ) ? 'ASC' : 'DESC';
+    $paid_only     = ( $order_status === '__paid__' );
+    $categories    = class_exists( 'WAP_Data' ) ? WAP_Data::get_product_categories() : array();
 
     // CSV export (handles both summary and drilldown)
     if ( isset( $_GET['action'] ) && $_GET['action'] === 'wci_export_products_csv' ) {
         check_admin_referer( 'wci_products_export' );
-        wci_export_products_csv( $date_from, $date_to, $product_id );
+        wci_export_products_csv( $date_from, $date_to, $product_id, $order_status, $product_cat );
         exit;
     }
 
     // Build order args
     $all_statuses = array_map( function( $s ) { return str_replace( 'wc-', '', $s ); }, array_keys( wc_get_order_statuses() ) );
     $args = array( 'limit' => -1, 'return' => 'objects', 'type' => 'shop_order', 'status' => $all_statuses );
+    if ( $order_status !== '' && $order_status !== '__paid__' ) {
+        $args['status'] = array( $order_status );
+    }
     $ts_from = $date_from ? wci_date_to_timestamp( $date_from, false ) : 0;
     $ts_to   = $date_to   ? wci_date_to_timestamp( $date_to,   true  ) : 0;
     if ( $ts_from && $ts_to ) { $args['date_created'] = $ts_from . '...' . $ts_to; }
@@ -1083,48 +1090,9 @@ function wci_products_page() {
     // ── Summary mode ──────────────────────────────────────────────────────────
     echo '<h1>فروش محصولات</h1>';
 
-    // Aggregate by stockable product (variation if any — موجودی WC همان ردیف)
-    $products = array();
-    $pid_map  = array(); // pid => product_id (for links)
-    foreach ( $orders as $order ) {
-        if ( ! WAP_Data::is_paid_order( $order ) ) {
-            continue;
-        }
-        foreach ( $order->get_items() as $item ) {
-            $pid = class_exists( 'WAP_Stock' )
-                ? WAP_Stock::id_from_order_item( $item )
-                : ( (int) $item->get_variation_id() ?: (int) $item->get_product_id() );
-            if ( $pid <= 0 ) {
-                continue;
-            }
-            if ( ! isset( $products[ $pid ] ) ) {
-                $line_product = $item->get_product();
-                $products[ $pid ] = array(
-                    'name'    => $item->get_name(),
-                    'sku'     => ( $line_product && $line_product->get_sku() ) ? $line_product->get_sku() : '',
-                    'qty'     => 0,
-                    'revenue' => 0,
-                    'orders'  => 0,
-                );
-            }
-            $products[ $pid ]['qty']     += $item->get_quantity();
-            $products[ $pid ]['revenue'] += $item->get_total();
-            $products[ $pid ]['orders']++;
-        }
-    }
-
-    // Keep product_id keys alongside values for links; convert to indexed after sort
-    $products_with_pid = array();
-    foreach ( $products as $pid => $p ) {
-        $p['pid'] = $pid;
-        $snap = class_exists( 'WAP_Stock' )
-            ? WAP_Stock::snapshot_for_id( (int) $pid )
-            : array( 'stock' => null, 'stock_status' => '', 'stock_display' => '—' );
-        $p['stock']         = $snap['stock'];
-        $p['stock_status']  = $snap['stock_status'];
-        $p['stock_display'] = $snap['stock_display'];
-        $products_with_pid[] = $p;
-    }
+    // خالی یا __paid__ → فقط موفق؛ وضعیت مشخص → همه سفارش‌های همان وضعیت
+    $require_paid = ( $order_status === '' || $order_status === '__paid__' );
+    $products_with_pid = WAP_Data::get_product_sales( $orders, $require_paid, $product_cat );
 
     // Sort
     $asc = $order_dir === 'ASC';
@@ -1152,14 +1120,28 @@ function wci_products_page() {
         echo '<span style="margin:0 4px">تا</span>';
         echo '<input type="date" name="date_to" id="wci_date_to" value="' . esc_attr( $date_to ) . '">';
     }
+    echo '<select name="order_status"><option value="">همه وضعیت‌ها (فقط موفق در جدول)</option>';
+    echo '<option value="__paid__"' . selected( $order_status, '__paid__', false ) . '>فقط موفق</option>';
+    foreach ( wc_get_order_statuses() as $slug => $label ) {
+        $val = str_replace( 'wc-', '', $slug );
+        echo '<option value="' . esc_attr( $val ) . '"' . selected( $order_status, $val, false ) . '>' . esc_html( $label ) . '</option>';
+    }
+    echo '</select>';
+    echo '<select name="product_cat"><option value="0">همه دسته‌ها</option>';
+    foreach ( $categories as $cat ) {
+        echo '<option value="' . esc_attr( $cat['id'] ) . '"' . selected( $product_cat, $cat['id'], false ) . '>' . esc_html( $cat['name'] ) . '</option>';
+    }
+    echo '</select>';
     echo '<button type="submit" class="button button-primary">نمایش</button>';
     echo '<a href="' . esc_url( admin_url( 'admin.php?page=wci-products' ) ) . '" class="button">پاک کردن</a>';
     $exp_url = add_query_arg( array(
-        'page'      => 'wci-products',
-        'action'    => 'wci_export_products_csv',
-        'date_from' => $date_from,
-        'date_to'   => $date_to,
-        '_wpnonce'  => wp_create_nonce( 'wci_products_export' ),
+        'page'         => 'wci-products',
+        'action'       => 'wci_export_products_csv',
+        'date_from'    => $date_from,
+        'date_to'      => $date_to,
+        'order_status' => $order_status,
+        'product_cat'  => $product_cat,
+        '_wpnonce'     => wp_create_nonce( 'wci_products_export' ),
     ), admin_url( 'admin.php' ) );
     echo '<a href="' . esc_url( $exp_url ) . '" class="button wci-btn-excel" style="margin-right:auto">📊 خروجی Excel</a>';
     echo '</form>';
@@ -1176,7 +1158,7 @@ function wci_products_page() {
     echo '</div>';
 
     // Sort links helper
-    $sf = array( 'page' => 'wci-products', 'date_from' => $date_from, 'date_to' => $date_to );
+    $sf = array( 'page' => 'wci-products', 'date_from' => $date_from, 'date_to' => $date_to, 'order_status' => $order_status, 'product_cat' => $product_cat );
     $sort_th = function( $label, $col ) use ( $sf, $orderby_p, $order_dir ) {
         $nd  = ( $orderby_p === $col && $order_dir === 'DESC' ) ? 'ASC' : 'DESC';
         $arr = $orderby_p === $col ? ( $order_dir === 'DESC' ? ' ↓' : ' ↑' ) : '';
@@ -1248,15 +1230,21 @@ function wci_products_page() {
     echo '</tbody></table></div>';
 }
 
-function wci_export_products_csv( $date_from = '', $date_to = '', $product_id = 0 ) {
+function wci_export_products_csv( $date_from = '', $date_to = '', $product_id = 0, $order_status = '', $product_cat = 0 ) {
     while ( ob_get_level() ) { ob_end_clean(); }
 
     if ( empty( $date_from ) ) $date_from  = sanitize_text_field( isset( $_GET['date_from'] )   ? $_GET['date_from']   : '' );
     if ( empty( $date_to ) )   $date_to    = sanitize_text_field( isset( $_GET['date_to'] )     ? $_GET['date_to']     : '' );
     if ( ! $product_id )       $product_id = intval( isset( $_GET['product_id'] ) ? $_GET['product_id'] : 0 );
+    if ( $order_status === '' ) $order_status = sanitize_text_field( isset( $_GET['order_status'] ) ? $_GET['order_status'] : '' );
+    if ( ! $product_cat )      $product_cat  = absint( isset( $_GET['product_cat'] ) ? $_GET['product_cat'] : 0 );
+    $require_paid = ( $order_status === '' || $order_status === '__paid__' );
 
     $all_statuses = array_map( function( $s ) { return str_replace( 'wc-', '', $s ); }, array_keys( wc_get_order_statuses() ) );
     $args = array( 'limit' => -1, 'return' => 'objects', 'type' => 'shop_order', 'status' => $all_statuses );
+    if ( $order_status !== '' && $order_status !== '__paid__' ) {
+        $args['status'] = array( $order_status );
+    }
     $ts_from = $date_from ? wci_date_to_timestamp( $date_from, false ) : 0;
     $ts_to   = $date_to   ? wci_date_to_timestamp( $date_to,   true  ) : 0;
     if ( $ts_from && $ts_to ) { $args['date_created'] = $ts_from . '...' . $ts_to; }
@@ -1316,45 +1304,158 @@ function wci_export_products_csv( $date_from = '', $date_to = '', $product_id = 
     } else {
         // Summary export: all products
         header( 'Content-Disposition: attachment; filename="products-sales-' . date( 'Y-m-d' ) . '.csv"' );
-        $products = array();
-        foreach ( $orders as $order ) {
-            if ( ! WAP_Data::is_paid_order( $order ) ) {
-                continue;
-            }
-            foreach ( $order->get_items() as $item ) {
-                $pid = class_exists( 'WAP_Stock' )
-                    ? WAP_Stock::id_from_order_item( $item )
-                    : ( (int) $item->get_variation_id() ?: (int) $item->get_product_id() );
-                if ( $pid <= 0 ) {
-                    continue;
-                }
-                if ( ! isset( $products[ $pid ] ) ) {
-                    $line_product = $item->get_product();
-                    $products[ $pid ] = array(
-                        'pid'  => $pid,
-                        'name' => $item->get_name(),
-                        'sku'  => ( $line_product && $line_product->get_sku() ) ? $line_product->get_sku() : '',
-                        'qty'  => 0, 'revenue' => 0, 'orders' => 0,
-                    );
-                }
-                $products[ $pid ]['qty']     += $item->get_quantity();
-                $products[ $pid ]['revenue'] += $item->get_total();
-                $products[ $pid ]['orders']++;
-            }
-        }
-        usort( $products, function( $a, $b ) { return $b['revenue'] - $a['revenue']; } );
         fputcsv( $fp, array( 'نام محصول', 'SKU', 'موجودی', 'تعداد فروخته‌شده', 'تعداد سفارشات', 'درآمد کل' ) );
-        foreach ( $products as $pid => $p ) {
-            // usort reindexes — keep original pid on the row before sort
-            $snap = class_exists( 'WAP_Stock' )
-                ? WAP_Stock::snapshot_for_id( (int) ( $p['pid'] ?? $pid ) )
-                : array( 'stock_display' => '—' );
-            fputcsv( $fp, array( $p['name'], $p['sku'], $snap['stock_display'] ?? '—', $p['qty'], $p['orders'], $p['revenue'] ) );
+        foreach ( WAP_Data::get_product_sales( $orders, $require_paid, $product_cat ) as $p ) {
+            fputcsv( $fp, array( $p['name'], $p['sku'], $p['stock_display'] ?? '—', $p['qty'], $p['orders'], $p['revenue'] ) );
         }
     }
 
     fclose( $fp );
     exit;
+}
+
+/**
+ * گزارش مشتریان خریدار یک یا چند محصول انتخابی.
+ */
+function wci_product_buyers_page() {
+    if ( ! hesabdar_user_can_wci() ) {
+        wp_die( 'Unauthorized' );
+    }
+
+    $is_jalali    = wci_is_jalali();
+    $date_from    = sanitize_text_field( $_GET['date_from'] ?? '' );
+    $date_to      = sanitize_text_field( $_GET['date_to'] ?? '' );
+    $order_status = sanitize_text_field( $_GET['order_status'] ?? '' );
+    $product_ids  = WAP_Data::parse_ids( $_GET['product_ids'] ?? array() );
+    $paid_only    = ( $order_status === '__paid__' );
+    $labels       = WAP_Data::product_labels( $product_ids );
+
+    if ( isset( $_GET['action'] ) && $_GET['action'] === 'wci_export_buyers_csv' ) {
+        check_admin_referer( 'wci_buyers_export' );
+        $all_statuses = array_map( function( $s ) { return str_replace( 'wc-', '', $s ); }, array_keys( wc_get_order_statuses() ) );
+        $args = array( 'limit' => -1, 'return' => 'objects', 'type' => 'shop_order', 'status' => $all_statuses );
+        if ( $order_status !== '' && $order_status !== '__paid__' ) {
+            $args['status'] = array( $order_status );
+        }
+        $ts_from = $date_from ? wci_date_to_timestamp( $date_from, false ) : 0;
+        $ts_to   = $date_to   ? wci_date_to_timestamp( $date_to, true ) : 0;
+        if ( $ts_from && $ts_to ) { $args['date_created'] = $ts_from . '...' . $ts_to; }
+        elseif ( $ts_from ) { $args['date_created'] = '>=' . $ts_from; }
+        elseif ( $ts_to )   { $args['date_created'] = '<=' . $ts_to; }
+        $orders = wci_filter_orders_by_date_range( wc_get_orders( $args ), $ts_from, $ts_to );
+        $buyers = WAP_Data::get_buyers_by_products( $orders, $product_ids, $paid_only );
+        WAP_Export::buyers_csv( $buyers );
+    }
+
+    $buyers = array();
+    if ( ! empty( $product_ids ) ) {
+        $all_statuses = array_map( function( $s ) { return str_replace( 'wc-', '', $s ); }, array_keys( wc_get_order_statuses() ) );
+        $args = array( 'limit' => -1, 'return' => 'objects', 'type' => 'shop_order', 'status' => $all_statuses );
+        if ( $order_status !== '' && $order_status !== '__paid__' ) {
+            $args['status'] = array( $order_status );
+        }
+        $ts_from = $date_from ? wci_date_to_timestamp( $date_from, false ) : 0;
+        $ts_to   = $date_to   ? wci_date_to_timestamp( $date_to, true ) : 0;
+        if ( $ts_from && $ts_to ) { $args['date_created'] = $ts_from . '...' . $ts_to; }
+        elseif ( $ts_from ) { $args['date_created'] = '>=' . $ts_from; }
+        elseif ( $ts_to )   { $args['date_created'] = '<=' . $ts_to; }
+        $orders = wci_filter_orders_by_date_range( wc_get_orders( $args ), $ts_from, $ts_to );
+        $buyers = WAP_Data::get_buyers_by_products( $orders, $product_ids, $paid_only );
+    }
+
+    $date_ph_from = $is_jalali ? '۱۴۰۳/۰۱/۰۱' : 'YYYY-MM-DD';
+    $date_ph_to   = $is_jalali ? '۱۴۰۳/۱۲/۲۹' : 'YYYY-MM-DD';
+
+    echo '<div class="wrap wci-wrap">';
+    echo '<h1>خریداران محصول</h1>';
+    echo '<p class="description">مشتریانی که حداقل یکی از محصولات انتخاب‌شده را در بازه و وضعیت مشخص خریده‌اند.</p>';
+
+    echo '<form method="get" class="wci-filter-bar" style="align-items:flex-start;flex-wrap:wrap">';
+    echo '<input type="hidden" name="page" value="wci-product-buyers">';
+    echo '<span class="wci-filter-label">📅 ' . ( $is_jalali ? 'بازه شمسی' : 'بازه میلادی' ) . ':</span>';
+    if ( $is_jalali ) {
+        echo '<input type="text" name="date_from" id="wci_date_from" value="' . esc_attr( $date_from ) . '" placeholder="' . esc_attr( $date_ph_from ) . '" class="wci-date-input" style="width:110px;direction:ltr" autocomplete="off">';
+        echo '<span style="margin:0 4px">تا</span>';
+        echo '<input type="text" name="date_to" id="wci_date_to" value="' . esc_attr( $date_to ) . '" placeholder="' . esc_attr( $date_ph_to ) . '" class="wci-date-input" style="width:110px;direction:ltr" autocomplete="off">';
+    } else {
+        echo '<input type="date" name="date_from" id="wci_date_from" value="' . esc_attr( $date_from ) . '">';
+        echo '<span style="margin:0 4px">تا</span>';
+        echo '<input type="date" name="date_to" id="wci_date_to" value="' . esc_attr( $date_to ) . '">';
+    }
+    echo '<select name="order_status"><option value="">همه وضعیت‌ها</option>';
+    echo '<option value="__paid__"' . selected( $order_status, '__paid__', false ) . '>فقط موفق</option>';
+    foreach ( wc_get_order_statuses() as $slug => $label ) {
+        $val = str_replace( 'wc-', '', $slug );
+        echo '<option value="' . esc_attr( $val ) . '"' . selected( $order_status, $val, false ) . '>' . esc_html( $label ) . '</option>';
+    }
+    echo '</select>';
+
+    $all_products = wc_get_products( array( 'status' => 'publish', 'limit' => 300, 'orderby' => 'title', 'order' => 'ASC', 'return' => 'objects' ) );
+    echo '<label style="display:flex;flex-direction:column;gap:4px;min-width:260px">محصولات';
+    echo '<select name="product_ids[]" multiple size="8" style="min-width:260px;min-height:140px">';
+    foreach ( $all_products as $product ) {
+        $pid = $product->get_id();
+        echo '<option value="' . esc_attr( $pid ) . '"' . selected( in_array( $pid, $product_ids, true ), true, false ) . '>'
+            . esc_html( $product->get_name() ) . ' (#' . esc_html( (string) $pid ) . ')</option>';
+    }
+    echo '</select><span class="description">با Ctrl/Cmd چند محصول انتخاب کنید.</span></label>';
+
+    echo '<button type="submit" class="button button-primary">نمایش</button>';
+    echo '<a href="' . esc_url( admin_url( 'admin.php?page=wci-product-buyers' ) ) . '" class="button">پاک کردن</a>';
+    if ( ! empty( $product_ids ) ) {
+        $exp_url = add_query_arg( array(
+            'page'         => 'wci-product-buyers',
+            'action'       => 'wci_export_buyers_csv',
+            'date_from'    => $date_from,
+            'date_to'      => $date_to,
+            'order_status' => $order_status,
+            'product_ids'  => $product_ids,
+            '_wpnonce'     => wp_create_nonce( 'wci_buyers_export' ),
+        ), admin_url( 'admin.php' ) );
+        echo '<a href="' . esc_url( $exp_url ) . '" class="button wci-btn-excel" style="margin-right:auto">📊 خروجی Excel</a>';
+    }
+    echo '</form>';
+    if ( $is_jalali ) { wci_print_jalali_picker_script(); }
+
+    if ( empty( $product_ids ) ) {
+        echo '<div class="notice notice-info inline"><p>حداقل یک محصول انتخاب کنید.</p></div></div>';
+        return;
+    }
+
+    if ( ! empty( $labels ) ) {
+        echo '<p>محصولات انتخابی: <strong>' . esc_html( implode( '، ', array_values( $labels ) ) ) . '</strong></p>';
+    }
+
+    $total_qty     = array_sum( array_column( $buyers, 'qty' ) );
+    $total_revenue = array_sum( array_column( $buyers, 'revenue' ) );
+    echo '<div class="wci-export-bar" style="margin-bottom:12px">';
+    echo '<span>تعداد مشتریان: <strong>' . number_format( count( $buyers ) ) . '</strong></span>';
+    echo '<span style="margin-right:20px">مجموع اقلام: <strong>' . number_format( $total_qty ) . '</strong></span>';
+    echo '<span style="margin-right:20px">مبلغ: <strong>' . wp_kses_post( wc_price( $total_revenue ) ) . '</strong></span>';
+    echo '</div>';
+
+    echo '<table class="widefat wci-table"><thead><tr>';
+    echo '<th>#</th><th>نام</th><th>تلفن</th><th>ایمیل</th><th>شهر</th><th>تعداد سفارش</th><th>تعداد اقلام</th><th>مبلغ</th><th>آخرین خرید</th>';
+    echo '</tr></thead><tbody>';
+    if ( empty( $buyers ) ) {
+        echo '<tr><td colspan="9" style="text-align:center;padding:30px">مشتری‌ای یافت نشد.</td></tr>';
+    } else {
+        $i = 1;
+        foreach ( $buyers as $b ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( (string) $i++ ) . '</td>';
+            echo '<td><strong>' . esc_html( $b['name'] !== '' ? $b['name'] : '—' ) . '</strong></td>';
+            echo '<td style="direction:ltr;text-align:right">' . esc_html( $b['phone'] !== '' ? $b['phone'] : '—' ) . '</td>';
+            echo '<td>' . esc_html( $b['email'] !== '' ? $b['email'] : '—' ) . '</td>';
+            echo '<td>' . esc_html( $b['city'] !== '' ? $b['city'] : '—' ) . '</td>';
+            echo '<td>' . esc_html( number_format( $b['orders_count'] ) ) . '</td>';
+            echo '<td><strong>' . esc_html( number_format( $b['qty'] ) ) . '</strong></td>';
+            echo '<td><strong>' . wp_kses_post( wc_price( $b['revenue'] ) ) . '</strong></td>';
+            echo '<td>' . esc_html( $b['last_order_ts'] ? date_i18n( 'Y/m/d H:i', $b['last_order_ts'] ) : '—' ) . '</td>';
+            echo '</tr>';
+        }
+    }
+    echo '</tbody></table></div>';
 }
 
 // ─── گزارش مالی (خروجی کلی بر اساس بازه شمسی) ─────────────────────────────────

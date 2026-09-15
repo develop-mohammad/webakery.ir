@@ -588,16 +588,33 @@ class WAP_Order_Service {
 	}
 
 	/**
+	 * نرمال‌سازی حروف فارسی/عربی برای جستجو (ی/ي ، ک/ك و فاصله‌ها).
+	 */
+	public static function normalize_fa( string $text ): string {
+		$map = array(
+			'ي' => 'ی',
+			'ى' => 'ی',
+			'ك' => 'ک',
+			'ۀ' => 'ه',
+			'ة' => 'ه',
+			'‌' => ' ', // ZWNJ
+		);
+		$text = strtr( $text, $map );
+		$text = preg_replace( '/\s+/u', ' ', $text );
+		return trim( (string) $text );
+	}
+
+	/**
 	 * @return array<int,array<string,mixed>>
 	 */
-	public static function search_products( string $term, int $limit = 20 ): array {
-		$term = trim( $term );
+	public static function search_products( string $term, int $limit = 30 ): array {
+		$term = self::normalize_fa( trim( $term ) );
 		if ( $term === '' || ! class_exists( 'WooCommerce' ) ) {
 			return array();
 		}
 
 		$args = array(
-			'status' => array( 'publish' ),
+			'status' => array( 'publish', 'private' ),
 			'limit'  => $limit,
 			'return' => 'objects',
 			'type'   => array( 'simple', 'variable', 'variation', 'grouped', 'external' ),

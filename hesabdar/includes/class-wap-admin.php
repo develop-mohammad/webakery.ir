@@ -285,7 +285,7 @@ class WAP_Admin {
                         <td>
                             <label><input type="checkbox" name="wap_ri[restrict_accountant]" value="1" <?php checked( (int) $s['restrict_accountant'], 1 ); ?>> فقط تب‌های انتخابی برای حسابدار</label>
                             <div style="margin-top:8px">
-                                <?php foreach ( array( 'sales' => 'گزارش مالی', 'orders' => 'سفارش‌ها', 'products' => 'محصولات', 'shaparak' => 'واریزی خالص', 'analytics' => 'داشبورد' ) as $k => $lbl ) : ?>
+                                <?php foreach ( array( 'sales' => 'گزارش مالی', 'orders' => 'سفارش‌ها', 'products' => 'محصولات', 'buyers' => 'خریداران محصول', 'shaparak' => 'واریزی خالص', 'analytics' => 'داشبورد' ) as $k => $lbl ) : ?>
                                     <label style="margin-left:12px"><input type="checkbox" name="wap_ri[accountant_tabs][]" value="<?php echo esc_attr( $k ); ?>" <?php checked( in_array( $k, (array) $s['accountant_tabs'], true ) ); ?>> <?php echo esc_html( $lbl ); ?></label>
                                 <?php endforeach; ?>
                             </div>

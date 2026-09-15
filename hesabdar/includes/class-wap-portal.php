@@ -11,6 +11,25 @@ class WAP_Portal {
 
     const PANEL_ACCOUNTANT = 'accountant';
 
+    public static function init_ajax(): void {
+        add_action( 'wp_ajax_wap_search_products', array( __CLASS__, 'ajax_search_products' ) );
+    }
+
+    public static function ajax_search_products(): void {
+        if ( ! is_user_logged_in() || ! self::current_user_allowed() ) {
+            wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+        }
+        if ( ! check_ajax_referer( 'wap_portal_search', 'nonce', false ) ) {
+            wp_send_json_error( array( 'message' => 'Invalid nonce' ), 403 );
+        }
+        if ( ! class_exists( 'WAP_Order_Service' ) ) {
+            wp_send_json_success( array() );
+        }
+        $term = isset( $_REQUEST['term'] ) ? wp_unslash( (string) $_REQUEST['term'] ) : '';
+        $term = sanitize_text_field( $term );
+        wp_send_json_success( WAP_Order_Service::search_products( $term ) );
+    }
+
     public static function panel_url( $type = null ) {
         return home_url( '/accountant-panel/' );
     }
@@ -284,14 +303,25 @@ class WAP_Portal {
         }
 
         if ( $type === 'products_csv' || $type === 'product_orders_csv' ) {
-            $f          = WAP_Data::get_filters();
-            $orders     = WAP_Data::get_orders( $f );
-            $product_id = ! empty( $_GET['product_id'] ) ? (int) $_GET['product_id'] : 0;
+            $f           = WAP_Data::get_filters();
+            $orders      = WAP_Data::get_orders( $f );
+            $product_id  = ! empty( $_GET['product_id'] ) ? (int) $_GET['product_id'] : 0;
+            $paid_only   = WAP_Data::should_require_paid( $f );
+            $product_cat = (int) ( $f['product_cat'] ?? 0 );
             if ( $type === 'product_orders_csv' && $product_id ) {
-                WAP_Export::product_orders_csv( $orders, $product_id );
+                WAP_Export::product_orders_csv( $orders, $product_id, $paid_only );
             } else {
-                WAP_Export::products_csv( $orders );
+                WAP_Export::products_csv( $orders, $paid_only, $product_cat );
             }
+            return;
+        }
+
+        if ( $type === 'buyers_csv' ) {
+            $f           = WAP_Data::get_filters();
+            $orders      = WAP_Data::get_orders( $f );
+            $product_ids = ! empty( $f['product_ids'] ) ? $f['product_ids'] : array();
+            $buyers      = WAP_Data::get_buyers_by_products( $orders, $product_ids, WAP_Data::should_require_paid( $f ) );
+            WAP_Export::buyers_csv( $buyers );
             return;
         }
 
@@ -334,11 +364,12 @@ class WAP_Portal {
     private static function foot() {
         $today = WAP_Jalali::today();
         $params = array(
-            'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
-            'nonce'     => wp_create_nonce( 'wap_sheets_export' ),
-            'view'      => self::current_view(),
-            'productId' => ! empty( $_GET['product_id'] ) ? (int) $_GET['product_id'] : 0,
-            'query'     => array_map( 'sanitize_text_field', wp_unslash( $_GET ) ),
+            'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+            'nonce'       => wp_create_nonce( 'wap_sheets_export' ),
+            'searchNonce' => wp_create_nonce( 'wap_portal_search' ),
+            'view'        => self::current_view(),
+            'productId'   => ! empty( $_GET['product_id'] ) ? (int) $_GET['product_id'] : 0,
+            'query'       => array_map( 'sanitize_text_field', wp_unslash( $_GET ) ),
         );
         $img = class_exists( 'WAP_Report_Image' ) ? WAP_Report_Image::client_config() : array();
         ?>
@@ -395,7 +426,7 @@ class WAP_Portal {
             $raw = wp_unslash( $_GET['wap_view'] );
         }
         $view = sanitize_text_field( $raw ?: 'sales' );
-        $view = in_array( $view, array( 'sales', 'orders', 'products', 'shaparak', 'analytics' ), true ) ? $view : 'sales';
+        $view = in_array( $view, array( 'sales', 'orders', 'products', 'buyers', 'shaparak', 'analytics' ), true ) ? $view : 'sales';
         if ( class_exists( 'WAP_Report_Image' ) && ! WAP_Report_Image::can_view_tab( $view ) ) {
             $allowed = WAP_Report_Image::allowed_tabs_for_user();
             $view = $allowed[0] ?? 'sales';
@@ -417,6 +448,8 @@ class WAP_Portal {
                             echo 'لیست و جزئیات سفارش‌های پرداخت‌شده';
                         } elseif ( $view === 'products' ) {
                             echo 'تحلیل فروش به تفکیک محصول';
+                        } elseif ( $view === 'buyers' ) {
+                            echo 'مشتریانی که محصولات انتخابی را خریده‌اند';
                         } elseif ( $view === 'shaparak' ) {
                             echo 'واریزی خالص — مسیر خرید تا واریز به حساب';
                         } elseif ( $view === 'analytics' ) {
@@ -449,6 +482,7 @@ class WAP_Portal {
                     'analytics' => 'داشبورد',
                     'orders'    => 'سفارش‌ها',
                     'products'  => 'محصولات',
+                    'buyers'    => 'خریداران محصول',
                     'shaparak'  => 'واریزی خالص',
                 );
                 foreach ( $tabs as $tab_key => $tab_label ) :
@@ -466,6 +500,8 @@ class WAP_Portal {
                     self::render_orders_tab();
                 } elseif ( $view === 'products' ) {
                     self::render_products_tab();
+                } elseif ( $view === 'buyers' ) {
+                    self::render_buyers_tab();
                 } elseif ( $view === 'shaparak' ) {
                     self::render_shaparak_tab();
                 } elseif ( $view === 'analytics' ) {
@@ -1096,15 +1132,18 @@ class WAP_Portal {
     }
 
     private static function render_products_tab() {
-        $prepared   = self::prepare_date_ranges( WAP_Data::get_filters() );
-        $f          = $prepared['filters'];
-        $notices    = $prepared['notices'];
-        $cmp_from   = $prepared['compare_from'];
-        $cmp_to     = $prepared['compare_to'];
-        $product_id = ! empty( $_GET['product_id'] ) ? (int) $_GET['product_id'] : 0;
-        $orders     = $prepared['primary_invalid'] ? array() : WAP_Data::get_orders( $f );
-        $presets    = WAP_Data::quick_presets();
-        $currency   = get_woocommerce_currency_symbol();
+        $prepared    = self::prepare_date_ranges( WAP_Data::get_filters() );
+        $f           = $prepared['filters'];
+        $notices     = $prepared['notices'];
+        $cmp_from    = $prepared['compare_from'];
+        $cmp_to      = $prepared['compare_to'];
+        $product_id  = ! empty( $_GET['product_id'] ) ? (int) $_GET['product_id'] : 0;
+        $paid_only   = WAP_Data::should_require_paid( $f );
+        $product_cat = (int) ( $f['product_cat'] ?? 0 );
+        $categories  = WAP_Data::get_product_categories();
+        $orders      = $prepared['primary_invalid'] ? array() : WAP_Data::get_orders( $f );
+        $presets     = WAP_Data::quick_presets();
+        $currency    = get_woocommerce_currency_symbol();
         if ( ! $prepared['primary_invalid'] && empty( $orders ) ) {
             $notices[] = 'در بازه «' . $f['date_from'] . '» تا «' . $f['date_to'] . '» هیچ سفارشی پیدا نشد. ماه را از لیست زیر انتخاب کنید.';
         }
@@ -1118,6 +1157,9 @@ class WAP_Portal {
         $export_params = array_merge( $base_params, array( 'wap_view' => 'products' ) );
         if ( $product_id ) {
             $export_params['product_id'] = $product_id;
+        }
+        if ( $product_cat ) {
+            $export_params['product_cat'] = $product_cat;
         }
         $products_csv_url = self::export_url(
             $export_params,
@@ -1144,6 +1186,26 @@ class WAP_Portal {
                 <label>مقایسه تا</label>
                 <input type="text" id="wap_compare_to" name="compare_to" class="wap-jcal" data-wap-jcal="compare-to" value="<?php echo esc_attr( $cmp_to ); ?>" placeholder="ماه مشابه — تا" autocomplete="off" <?php echo $date_locked ? 'readonly data-wap-date-locked="1"' : ''; ?>>
             </div>
+            <div class="wap-field">
+                <label>وضعیت سفارش</label>
+                <select name="order_status">
+                    <option value="">همه وضعیت‌ها (موفق + لغو شده + …)</option>
+                    <option value="__paid__" <?php selected( $f['order_status'], '__paid__' ); ?>>فقط موفق</option>
+                    <?php foreach ( wc_get_order_statuses() as $slug => $label ) :
+                        $val = str_replace( 'wc-', '', $slug ); ?>
+                        <option value="<?php echo esc_attr( $val ); ?>" <?php selected( $f['order_status'], $val ); ?>><?php echo esc_html( $label ); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="wap-field">
+                <label>دسته‌بندی محصول</label>
+                <select name="product_cat">
+                    <option value="0">همه دسته‌ها</option>
+                    <?php foreach ( $categories as $cat ) : ?>
+                        <option value="<?php echo esc_attr( $cat['id'] ); ?>" <?php selected( $product_cat, $cat['id'] ); ?>><?php echo esc_html( $cat['name'] ); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
             <div class="wap-field wap-field-actions">
                 <button type="submit" class="wap-btn wap-btn-primary">اعمال فیلتر</button>
                 <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'products', self::panel_url() ) ); ?>" class="wap-btn wap-btn-ghost">پاک کردن</a>
@@ -1161,7 +1223,7 @@ class WAP_Portal {
         <?php if ( $product_id ) :
             $product      = wc_get_product( $product_id );
             $product_name = $product ? $product->get_name() : ( '#' . $product_id );
-            $rows         = WAP_Data::get_product_drilldown( $orders, $product_id );
+            $rows         = WAP_Data::get_product_drilldown( $orders, $product_id, $paid_only );
             $total_qty = 0; $total_revenue = 0.0;
             foreach ( $rows as $r ) { $total_qty += $r['qty']; $total_revenue += $r['revenue']; }
             ?>
@@ -1207,7 +1269,7 @@ class WAP_Portal {
             </div>
             </div><!-- #wap_capture -->
         <?php else :
-            $products      = WAP_Data::get_product_sales( $orders );
+            $products      = WAP_Data::get_product_sales( $orders, $paid_only, $product_cat );
             $total_qty     = array_sum( array_column( $products, 'qty' ) );
             $total_revenue = array_sum( array_column( $products, 'revenue' ) );
             $products2     = array();
@@ -1215,7 +1277,7 @@ class WAP_Portal {
             if ( $prepared['compare_ready'] ) {
                 $f2 = array_merge( $f, array( 'date_from' => $cmp_from, 'date_to' => $cmp_to ) );
                 $orders2 = WAP_Data::get_orders( $f2 );
-                $products2 = WAP_Data::get_product_sales( $orders2 );
+                $products2 = WAP_Data::get_product_sales( $orders2, $paid_only, $product_cat );
                 if ( empty( $orders2 ) ) {
                     echo '<div class="wap-alert" role="status">بازه مقایسه («' . esc_html( $cmp_from ) . '» تا «' . esc_html( $cmp_to ) . '») سفارشی ندارد.</div>';
                 }
@@ -1802,4 +1864,145 @@ class WAP_Portal {
         </div><!-- #wap_capture -->
         <?php
     }
+
+    private static function render_buyers_tab() {
+        $prepared    = self::prepare_date_ranges( WAP_Data::get_filters() );
+        $f           = $prepared['filters'];
+        $notices     = $prepared['notices'];
+        $product_ids = ! empty( $f['product_ids'] ) ? $f['product_ids'] : array();
+        $presets     = WAP_Data::quick_presets();
+        $currency    = get_woocommerce_currency_symbol();
+        $labels      = WAP_Data::product_labels( $product_ids );
+        $has_query   = ! empty( $product_ids );
+        $date_locked = class_exists( 'WAP_Report_Image' ) && WAP_Report_Image::is_date_locked();
+
+        $base_params = array(
+            'wap_view'     => 'buyers',
+            'date_from'    => $f['date_from'],
+            'date_to'      => $f['date_to'],
+            'order_status' => $f['order_status'],
+        );
+        foreach ( $product_ids as $pid ) {
+            $base_params['product_ids'][] = $pid;
+        }
+
+        $buyers = array();
+        if ( $has_query && empty( $prepared['primary_invalid'] ) ) {
+            $orders = WAP_Data::get_orders( $f );
+            $buyers = WAP_Data::get_buyers_by_products( $orders, $product_ids, WAP_Data::should_require_paid( $f ) );
+        }
+
+        $total_qty     = $has_query ? array_sum( array_column( $buyers, 'qty' ) ) : 0;
+        $total_revenue = $has_query ? array_sum( array_column( $buyers, 'revenue' ) ) : 0.0;
+        $csv_url       = self::export_url( $base_params, 'buyers_csv' );
+        ?>
+        <form method="get" action="<?php echo esc_url( self::panel_url() ); ?>" class="wap-filters" id="wap_buyers_form">
+            <input type="hidden" name="wap_view" value="buyers">
+            <div class="wap-field wap-field-date">
+                <label>از تاریخ (شمسی)</label>
+                <input type="text" id="wap_date_from" name="date_from" class="wap-jcal" data-wap-jcal="primary-from" value="<?php echo esc_attr( $f['date_from'] ); ?>" placeholder="کلیک کنید — انتخاب روز یا ماه" autocomplete="off" <?php echo $date_locked ? 'readonly data-wap-date-locked="1"' : ''; ?>>
+            </div>
+            <div class="wap-field wap-field-date">
+                <label>تا تاریخ (شمسی)</label>
+                <input type="text" id="wap_date_to" name="date_to" class="wap-jcal" data-wap-jcal="primary-to" value="<?php echo esc_attr( $f['date_to'] ); ?>" placeholder="کلیک کنید — انتخاب روز یا ماه" autocomplete="off" <?php echo $date_locked ? 'readonly data-wap-date-locked="1"' : ''; ?>>
+            </div>
+            <div class="wap-field">
+                <label>وضعیت سفارش</label>
+                <select name="order_status">
+                    <option value="">همه وضعیت‌ها (موفق + لغو شده + …)</option>
+                    <option value="__paid__" <?php selected( $f['order_status'], '__paid__' ); ?>>فقط موفق</option>
+                    <?php foreach ( wc_get_order_statuses() as $slug => $label ) :
+                        $val = str_replace( 'wc-', '', $slug ); ?>
+                        <option value="<?php echo esc_attr( $val ); ?>" <?php selected( $f['order_status'], $val ); ?>><?php echo esc_html( $label ); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="wap-field wap-field-wide">
+                <label>محصولات (یک یا چند مورد)</label>
+                <div class="wap-product-picker" id="wap_product_picker"
+                     data-selected="<?php echo esc_attr( wp_json_encode( array_map( function( $id ) use ( $labels ) {
+                         return array( 'id' => $id, 'name' => $labels[ $id ] ?? ( '#' . $id ) );
+                     }, $product_ids ) ) ); ?>">
+                    <div class="wap-product-chips" id="wap_product_chips"></div>
+                    <div class="wap-product-search-wrap">
+                        <input type="text" id="wap_product_search" class="wap-product-search" placeholder="جستجوی محصول (نام، SKU یا شناسه)…" autocomplete="off">
+                        <div id="wap_product_results" class="wap-ac-results" hidden></div>
+                    </div>
+                    <div id="wap_product_ids_inputs"></div>
+                </div>
+                <p class="wap-hint">حداقل یک محصول انتخاب کنید؛ مشتریانی که هر کدام از این محصولات را خریده باشند در لیست می‌آیند.</p>
+            </div>
+            <div class="wap-field wap-field-actions">
+                <button type="submit" class="wap-btn wap-btn-primary">نمایش خریداران</button>
+                <a href="<?php echo esc_url( add_query_arg( 'wap_view', 'buyers', self::panel_url() ) ); ?>" class="wap-btn wap-btn-ghost">پاک کردن</a>
+            </div>
+        </form>
+
+        <div class="wap-presets" id="wap_presets">
+            <?php foreach ( $presets as $label => $range ) : ?>
+                <button type="button" class="wap-chip" data-from="<?php echo esc_attr( $range[0] ); ?>" data-to="<?php echo esc_attr( $range[1] ); ?>"><?php echo esc_html( $label ); ?></button>
+            <?php endforeach; ?>
+        </div>
+        <?php self::render_month_pickers( $date_locked ); ?>
+        <?php self::render_filter_notices( $notices ); ?>
+
+        <?php if ( ! $has_query ) : ?>
+            <div class="wap-alert wap-alert-info">برای مشاهدهٔ لیست مشتریان، ابتدا یک یا چند محصول را انتخاب و فیلتر را اعمال کنید.</div>
+        <?php else : ?>
+            <?php if ( ! empty( $labels ) ) : ?>
+                <p class="wap-selected-products">محصولات انتخابی:
+                    <?php echo esc_html( implode( '، ', array_values( $labels ) ) ); ?>
+                </p>
+            <?php endif; ?>
+            <div class="wap-cards">
+                <div class="wap-card"><span class="wap-card-icon">👥</span><span class="wap-card-label">تعداد مشتریان</span><span class="wap-card-value"><?php echo esc_html( number_format( count( $buyers ) ) ); ?></span></div>
+                <div class="wap-card wap-card-accent"><span class="wap-card-icon">🔢</span><span class="wap-card-label">مجموع اقلام خریداری‌شده</span><span class="wap-card-value"><?php echo esc_html( number_format( $total_qty ) ); ?></span></div>
+                <div class="wap-card wap-card-net"><span class="wap-card-icon">💰</span><span class="wap-card-label">مبلغ محصولات انتخابی</span><span class="wap-card-value"><?php echo esc_html( number_format( $total_revenue ) . ' ' . $currency ); ?></span></div>
+            </div>
+            <?php self::render_export_bar( $csv_url, 'buyers' ); ?>
+            <div class="wap-table-wrap" id="wap_capture">
+                <table class="wap-table">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>نام مشتری</th>
+                        <th>تلفن</th>
+                        <th>ایمیل</th>
+                        <th>شهر</th>
+                        <th>تعداد سفارش</th>
+                        <th>وضعیت‌ها</th>
+                        <th>تعداد اقلام</th>
+                        <th>مبلغ</th>
+                        <th>آخرین خرید</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php if ( empty( $buyers ) ) : ?>
+                        <tr><td colspan="10" class="wap-empty">مشتری‌ای با این فیلترها یافت نشد. بازه تاریخ را بزرگ‌تر کنید یا وضعیت را روی «همه وضعیت‌ها» بگذارید.</td></tr>
+                    <?php else : $i = 1; foreach ( $buyers as $b ) : ?>
+                        <tr>
+                            <td><?php echo (int) $i++; ?></td>
+                            <td><strong><?php echo esc_html( $b['name'] !== '' ? $b['name'] : '—' ); ?></strong></td>
+                            <td style="direction:ltr;text-align:right"><?php echo esc_html( $b['phone'] !== '' ? $b['phone'] : '—' ); ?></td>
+                            <td><?php echo esc_html( $b['email'] !== '' ? $b['email'] : '—' ); ?></td>
+                            <td><?php echo esc_html( $b['city'] !== '' ? $b['city'] : '—' ); ?></td>
+                            <td><?php echo esc_html( number_format( $b['orders_count'] ) ); ?></td>
+                            <td><?php
+                            $status_bits = array();
+                            foreach ( (array) ( $b['statuses'] ?? array() ) as $st => $cnt ) {
+                                $status_bits[] = wc_get_order_status_name( $st ) . ' (' . number_format( (int) $cnt ) . ')';
+                            }
+                            echo esc_html( $status_bits ? implode( '، ', $status_bits ) : '—' );
+                            ?></td>
+                            <td><strong><?php echo esc_html( number_format( $b['qty'] ) ); ?></strong></td>
+                            <td><strong><?php echo esc_html( number_format( $b['revenue'] ) . ' ' . $currency ); ?></strong></td>
+                            <td><?php echo esc_html( $b['last_order_ts'] ? date_i18n( 'Y/m/d H:i', $b['last_order_ts'] ) : '—' ); ?></td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif;
+    }
+
 }

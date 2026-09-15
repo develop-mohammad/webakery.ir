@@ -25,7 +25,7 @@ $js     = file_get_contents( $root . '/assets/wci-order-edit.js' );
 $boot   = file_get_contents( $root . '/hesabdar.php' );
 
 assert_true( strpos( $boot, 'class-wap-stock.php' ) !== false, 'boot loads WAP_Stock' );
-assert_true( strpos( $boot, "1.24.1" ) !== false, 'version 1.24.1' );
+assert_true( strpos( $boot, "1.25.0" ) !== false, 'version 1.25.0' );
 
 assert_true( strpos( $stock, 'id_from_order_item' ) !== false, 'maps order item to variation/simple id' );
 assert_true( strpos( $stock, 'is_self_managing' ) !== false || strpos( $stock, "get_manage_stock" ) !== false, 'avoids parent-managed variation double-count' );
@@ -42,7 +42,7 @@ assert_true( strpos( $stock, 'managing_stock' ) !== false, 'respects managing_st
 assert_true( strpos( $data, 'WAP_Stock::snapshot_for_id' ) !== false, 'get_product_sales enriches WC stock' );
 assert_true( strpos( $order, "'stock'" ) !== false && strpos( $order, 'WAP_Stock::get_quantity' ) !== false, 'product_payload includes WC stock qty' );
 assert_true( strpos( $portal, '>موجودی<' ) !== false && strpos( $portal, 'stock_display' ) !== false, 'portal products table shows موجودی' );
-assert_true( strpos( $admin, '>موجودی<' ) !== false && strpos( $admin, 'WAP_Stock::snapshot_for_id' ) !== false, 'admin products table shows موجودی' );
+assert_true( strpos( $admin, '>موجودی<' ) !== false && ( strpos( $admin, 'WAP_Stock::snapshot_for_id' ) !== false || strpos( $admin, 'stock_display' ) !== false ), 'admin products table shows موجودی' );
 assert_true( strpos( $export, 'موجودی' ) !== false, 'CSV export includes موجودی' );
 assert_true( strpos( $js, 'موجودی:' ) !== false && strpos( $js, 'stock_display' ) !== false, 'order search shows stock_display' );
 

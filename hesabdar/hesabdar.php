@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hesabdar
  * Description: مدیریت کامل مشتریان و فروش ووکامرس (سفارش‌ها، ایجاد/ویرایش سفارش، محصولات، گزارش مالی، فاکتور) از داخل پیشخوان + پرتال مستقل و مینیمال ورود حسابدار بدون دسترسی به پیشخوان.
- * Version:     1.24.1
+ * Version:     1.25.0
  * Plugin URI:  https://webakery.ir
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,7 +22,7 @@ if ( defined( 'HESABDAR_LOADED' ) ) {
 }
 define( 'HESABDAR_LOADED', true );
 
-define( 'WAP_VERSION', '1.24.1' );
+define( 'WAP_VERSION', '1.25.0' );
 define( 'WAP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WAP_URL', plugin_dir_url( __FILE__ ) );
 
@@ -187,6 +187,7 @@ function hesabdar_load_wci_module() {
 			'class-wci-exporter.php',
 			'class-wci-invoice.php',
 			'class-wci-bulk-invoice.php',
+			'class-wci-tracking.php',
 			'class-wap-order-service.php',
 			'class-wci-admin-pages.php',
 			'class-wci-order-edit.php',
@@ -196,6 +197,9 @@ function hesabdar_load_wci_module() {
 				hesabdar_admin_error( 'بخش WCI بارگذاری نشد (<code>' . esc_html( $file ) . '</code>).' );
 				return;
 			}
+		}
+		if ( class_exists( 'WCI_Tracking' ) ) {
+			WCI_Tracking::init();
 		}
 		hesabdar_register_wci_hooks();
 		$loaded = true;
@@ -359,6 +363,7 @@ function hesabdar_register_wci_hooks() {
 		add_submenu_page( 'wci-orders', 'سفارش‌ها', 'لیست سفارش‌ها', $cap, 'wci-orders', hesabdar_wci_page_cb( 'wci_orders_page' ) );
 		add_submenu_page( 'wci-orders', 'ویرایش سفارش', '—', $cap, 'wci-order-edit', hesabdar_wci_page_cb( 'wci_order_edit_page' ) );
 		add_submenu_page( 'wci-orders', 'فروش محصولات', 'فروش محصولات', $cap, 'wci-products', hesabdar_wci_page_cb( 'wci_products_page' ) );
+		add_submenu_page( 'wci-orders', 'خریداران محصول', 'خریداران محصول', $cap, 'wci-product-buyers', hesabdar_wci_page_cb( 'wci_product_buyers_page' ) );
 		add_submenu_page( 'wci-orders', 'گزارش مالی', 'گزارش مالی', $cap, 'wci-reports', hesabdar_wci_page_cb( 'wci_reports_page' ) );
 		add_submenu_page( 'wci-orders', 'واریزی خالص', 'واریزی خالص', $cap, 'wci-shaparak', hesabdar_wci_page_cb( 'wci_shaparak_report_page' ) );
 		add_submenu_page( 'wci-orders', 'داشبورد تصویری', 'داشبورد تصویری', $cap, 'wci-analytics', function() {
@@ -530,6 +535,10 @@ add_action( 'admin_post_wap_export', array( 'WAP_Portal', 'handle_export_admin_p
 add_action( 'admin_post_wap_invoice', array( 'WAP_Portal', 'handle_invoice_admin_post' ) );
 add_action( 'admin_post_wap_bulk_orders', array( 'WAP_Portal', 'handle_bulk_orders_admin_post' ) );
 add_action( 'admin_post_wci_bulk_print', array( 'WCI_Bulk_Invoice', 'handle_admin_post' ) );
+
+if ( class_exists( 'WAP_Portal' ) && method_exists( 'WAP_Portal', 'init_ajax' ) ) {
+	WAP_Portal::init_ajax();
+}
 
 // Google Sheets — داده برای ساخت شیت در مرورگر (ورود با گوگل)
 add_action( 'admin_post_wap_sheets_csv', array( 'WAP_Google_Sheets', 'handle_temp_csv_download' ) );
