@@ -146,12 +146,43 @@
 		}
 	}
 
+	function syncWcToActive($panel) {
+		if (!$panel || !$panel.length) {
+			return;
+		}
+		var $row = $panel.closest('.inline-edit-row');
+		var stock;
+		if ($row.length) {
+			stock = $row.find('input[name="_stock"]').val();
+		} else {
+			stock = $('#_stock').val();
+		}
+		if (typeof stock === 'undefined') {
+			return;
+		}
+		$panel.find('#wbe_active_stock').val(stock);
+		$panel.find('.wbe-batch-stock').filter(function () {
+			return $(this).attr('name') && String($(this).attr('name')).indexOf('[active][stock]') !== -1;
+		}).first().val(stock);
+	}
+
 	$(document).on('change', '#wbe_active_price, #wbe_active_sale, #wbe_active_stock', function () {
 		var $panel = $(this).closest('.wbe-product-panel');
 		syncActiveToWc($panel);
 		if ($(this).is('#wbe_active_price')) {
 			syncSaleFromDisc($panel.find('.wbe-active-box'));
 		}
+	});
+
+	$(document).on('change input', '#_stock, input[name="_stock"]', function () {
+		var $panel = $('#wbe-product-panel');
+		if (!$panel.length) {
+			$panel = $(this).closest('.inline-edit-row').find('.wbe-product-panel');
+		}
+		if (!$panel.length) {
+			$panel = $('.wbe-product-panel').first();
+		}
+		syncWcToActive($panel);
 	});
 
 	$(document).on('change', '#wbe-batches-body input[name*="[price]"]', function () {

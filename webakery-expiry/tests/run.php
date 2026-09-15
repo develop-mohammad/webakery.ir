@@ -852,6 +852,14 @@ wbe_check( 'owns_price_stock بدون ووکامرس رد می‌کند', 1 === 
 $stock_src = file_get_contents( dirname( __DIR__ ) . '/includes/class-wbe-stock.php' );
 wbe_check( 'فیلتر موجودی مقدار بچ را جایگزین ووکامرس نمی‌کند', false === strpos( $stock_src, "return \$active ? (int) \$active['stock'] : 0" ) );
 wbe_check( 'فیلتر موجودی مقدار ووکامرس را برمی‌گرداند', false !== strpos( $stock_src, 'return $qty;' ) );
+wbe_check( 'کشیدن موجودی ووکامرس هوک دارد', false !== strpos( $prod_src, 'function pull_wc_stock' ) && false !== strpos( $prod_src, 'stock_quantity' ) );
+wbe_check( 'هوک set_stock موجودی را می‌کشد', false !== strpos( $prod_src, 'woocommerce_product_set_stock' ) );
+wbe_check( 'متا _stock صف همگام‌سازی دارد', false !== strpos( $prod_src, "'_stock'" ) && false !== strpos( $prod_src, 'stock_queued' ) );
+$admin_src = file_get_contents( dirname( __DIR__ ) . '/includes/class-wbe-admin-product.php' );
+wbe_check( 'ذخیره تکی موجودی ووکامرس را روی بچ می‌نشاند', false !== strpos( $admin_src, 'apply_wc_stock_to_active' ) );
+wbe_check( 'بعد از ذخیره موجودی را از بچ هل نمی‌کند', false !== strpos( $admin_src, 'sync_wc( $product_id, false )' ) );
+$js = file_get_contents( dirname( __DIR__ ) . '/assets/admin.js' );
+wbe_check( 'جی‌اس موجودی ووکامرس را به افزونه می‌آورد', false !== strpos( $js, 'syncWcToActive' ) && false !== strpos( $js, '#_stock' ) );
 wbe_check( 'همگام‌سازی پیش‌فرض موجودی ووکامرس را بازنویسی نمی‌کند', false !== strpos( $prod_src, 'function sync_wc( $product_id, $push_stock = false )' ) );
 wbe_check( 'خواندن موجودی والد متغیر را رد می‌کند', false !== strpos( $prod_src, "is_type( 'variable' )" ) && false !== strpos( $prod_src, 'function read_wc_stock' ) );
 $batch_view = file_get_contents( dirname( __DIR__ ) . '/includes/views/product-batches.php' );
@@ -892,8 +900,8 @@ $root     = dirname( __DIR__ );
 $boot_src = is_file( $root . '/webakery-expiry-pro.php' ) ? $root . '/webakery-expiry-pro.php' : $root . '/webakery-expiry.php';
 $boot     = file_get_contents( $boot_src );
 $readme   = file_get_contents( $root . '/readme.txt' );
-wbe_check( 'هدر افزونه نسخه ۱.۴.۰ دارد', false !== strpos( $boot, 'Version:     1.4.0' ) && false !== strpos( $boot, "define( 'WBE_VERSION', '1.4.0' )" ) );
-wbe_check( 'readme Stable tag با هدر یکی است', false !== strpos( $readme, 'Stable tag: 1.4.0' ) );
+wbe_check( 'هدر افزونه نسخه ۱.۴.۱ دارد', false !== strpos( $boot, 'Version:     1.4.1' ) && false !== strpos( $boot, "define( 'WBE_VERSION', '1.4.1' )" ) );
+wbe_check( 'readme Stable tag با هدر یکی است', false !== strpos( $readme, 'Stable tag: 1.4.1' ) );
 wbe_check( 'راهنما رایگان و پرو را یکسان می‌گوید', false !== strpos( $help, 'امکانات یکسان' ) );
 wbe_check( 'فرم گزارش باگ تلگرام دارد', false !== strpos( $bug, 't.me' ) && false !== strpos( $bug, 'wbe-bug-capture' ) && false !== strpos( $bug, 'wbe-bug-desc' ) );
 
@@ -912,7 +920,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.4.0' );
+	define( 'WBE_VERSION', '1.4.1' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

@@ -22,6 +22,9 @@ class WBE_Product {
 	/** @var array<int,bool> product_id => update_discount */
 	private static $queued = array();
 
+	/** @var array<int,bool> product_id => needs stock pull */
+	private static $stock_queued = array();
+
 	public static function register() {
 		add_action( 'woocommerce_product_object_updated_props', array( __CLASS__, 'on_props_updated' ), 20, 2 );
 		add_action( 'woocommerce_product_bulk_edit_save', array( __CLASS__, 'on_wc_price_save' ), 20 );
@@ -29,6 +32,8 @@ class WBE_Product {
 		add_action( 'woocommerce_rest_insert_product_object', array( __CLASS__, 'on_wc_price_save' ), 20, 1 );
 		add_action( 'woocommerce_product_import_inserted_product_object', array( __CLASS__, 'on_wc_price_save' ), 20, 1 );
 		add_action( 'woocommerce_new_product', array( __CLASS__, 'on_new_product' ), 20 );
+		add_action( 'woocommerce_product_set_stock', array( __CLASS__, 'on_wc_stock_object' ), 20 );
+		add_action( 'woocommerce_variation_set_stock', array( __CLASS__, 'on_wc_stock_object' ), 20 );
 		add_action( 'updated_post_meta', array( __CLASS__, 'on_price_meta' ), 20, 4 );
 		add_action( 'added_post_meta', array( __CLASS__, 'on_price_meta' ), 20, 4 );
 	}
@@ -448,23 +453,94 @@ class WBE_Product {
 			return;
 		}
 		$watch = array( 'regular_price', 'sale_price', 'price' );
-		if ( ! array_intersect( $watch, $props ) ) {
-			return;
+		if ( array_intersect( $watch, $props ) ) {
+			$sale_updated = in_array( 'sale_price', $props, true );
+			self::pull_wc_price( $product, $sale_updated );
 		}
-		$sale_updated = in_array( 'sale_price', $props, true );
-		self::pull_wc_price( $product, $sale_updated );
+		if ( in_array( 'stock_quantity', $props, true ) ) {
+			self::pull_wc_stock( $product );
+		}
 	}
 
 	public static function on_wc_price_save( $product ) {
 		self::pull_wc_price( $product, self::request_updates_sale() );
+		self::pull_wc_stock( $product );
 	}
 
 	public static function on_new_product( $product_id ) {
 		self::pull_wc_price( (int) $product_id, true );
+		self::pull_wc_stock( (int) $product_id );
 	}
 
 	/**
-	 * افزونه‌هایی که مستقیم `_regular_price` می‌نویسند (ویرایش گروهی، ساخت از دسته).
+	 * وقتی ووکامرس موجودی را عوض می‌کند، بچ فعال را هم‌تراز کن (بدون بازنویسی `_stock`).
+	 *
+	 * @param WC_Product|int $product
+	 */
+	public static function on_wc_stock_object( $product ) {
+		self::pull_wc_stock( $product );
+	}
+
+	/**
+	 * موجودی ووکامرس را روی بچ فعال بنویس. موجودی رزرو دست نمی‌خورد.
+	 *
+	 * @param WC_Product|int $product
+	 * @return bool آیا بچ تغییر کرد؟
+	 */
+	public static function pull_wc_stock( $product ) {
+		if ( self::$syncing || self::$pulling ) {
+			return false;
+		}
+		if ( ! empty( $_POST['wbe_batches_nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			// ذخیره فرم افزونه خودش موجودی را از آبجکت ووکامرس می‌گیرد.
+			return false;
+		}
+		if ( class_exists( 'WBE_Plugin' ) && ! WBE_Plugin::licensed() ) {
+			return false;
+		}
+		if ( is_numeric( $product ) ) {
+			if ( ! function_exists( 'wc_get_product' ) ) {
+				return false;
+			}
+			$product = wc_get_product( (int) $product );
+		}
+		if ( ! is_object( $product ) || ! method_exists( $product, 'get_id' ) ) {
+			return false;
+		}
+		$product_id = (int) $product->get_id();
+		if ( ! $product_id || ! self::owns_price_stock( $product ) || ! self::configured( $product_id ) ) {
+			return false;
+		}
+		$wc_stock = null;
+		if ( method_exists( $product, 'get_stock_quantity' ) ) {
+			$qty = $product->get_stock_quantity( 'edit' );
+			if ( class_exists( 'WBE_Engine' ) && WBE_Engine::has_numeric_stock( $qty ) ) {
+				$wc_stock = (int) $qty;
+			}
+		}
+		if ( null === $wc_stock ) {
+			$wc_stock = self::read_wc_stock( $product_id );
+		}
+		if ( null === $wc_stock ) {
+			return false;
+		}
+		$today   = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
+		$batches = self::batches( $product_id );
+		$next    = WBE_Engine::apply_wc_stock_to_active( $batches, $wc_stock, $today );
+		if ( $next === $batches ) {
+			return false;
+		}
+		self::$pulling = true;
+		try {
+			self::save_batches( $product_id, $next, null, false );
+		} finally {
+			self::$pulling = false;
+		}
+		return true;
+	}
+
+	/**
+	 * افزونه‌هایی که مستقیم `_regular_price` / `_stock` می‌نویسند.
 	 *
 	 * @param int    $meta_id
 	 * @param int    $object_id
@@ -475,7 +551,9 @@ class WBE_Product {
 		if ( self::$syncing || self::$pulling ) {
 			return;
 		}
-		if ( ! in_array( $meta_key, array( '_regular_price', '_sale_price', '_price' ), true ) ) {
+		$price_keys = array( '_regular_price', '_sale_price', '_price' );
+		$stock_key  = ( '_stock' === $meta_key );
+		if ( ! $stock_key && ! in_array( $meta_key, $price_keys, true ) ) {
 			return;
 		}
 		$object_id = (int) $object_id;
@@ -488,11 +566,21 @@ class WBE_Product {
 				return;
 			}
 		}
-		if ( ! isset( self::$queued[ $object_id ] ) ) {
-			self::$queued[ $object_id ] = false;
-		}
-		if ( '_sale_price' === $meta_key ) {
-			self::$queued[ $object_id ] = true;
+		if ( $stock_key ) {
+			if ( ! isset( self::$queued[ $object_id ] ) ) {
+				self::$queued[ $object_id ] = false;
+			}
+			if ( ! isset( self::$stock_queued ) ) {
+				self::$stock_queued = array();
+			}
+			self::$stock_queued[ $object_id ] = true;
+		} else {
+			if ( ! isset( self::$queued[ $object_id ] ) ) {
+				self::$queued[ $object_id ] = false;
+			}
+			if ( '_sale_price' === $meta_key ) {
+				self::$queued[ $object_id ] = true;
+			}
 		}
 		if ( function_exists( 'has_action' ) && function_exists( 'add_action' ) && ! has_action( 'shutdown', array( __CLASS__, 'flush_queued' ) ) ) {
 			add_action( 'shutdown', array( __CLASS__, 'flush_queued' ) );
@@ -500,13 +588,15 @@ class WBE_Product {
 	}
 
 	public static function flush_queued() {
-		if ( empty( self::$queued ) ) {
-			return;
-		}
 		$jobs         = self::$queued;
+		$stock_jobs   = self::$stock_queued;
 		self::$queued = array();
+		self::$stock_queued = array();
 		foreach ( $jobs as $id => $update_discount ) {
 			self::pull_wc_price( (int) $id, (bool) $update_discount );
+		}
+		foreach ( array_keys( $stock_jobs ) as $id ) {
+			self::pull_wc_stock( (int) $id );
 		}
 	}
 
