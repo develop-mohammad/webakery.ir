@@ -88,7 +88,7 @@ $attr_lbl = isset( $attr_label ) ? (string) $attr_label : '';
 				<input type="text" class="wbe-date" name="<?php echo esc_attr( $prefix ); ?>[sale_to]" value="<?php echo esc_attr( $sale_to_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 			</p>
 			<p class="form-field">
-				<label>موجودی</label>
+				<label>موجودی (ووکامرس)</label>
 				<input type="number" class="wbe-batch-stock" name="<?php echo esc_attr( $prefix ); ?>[active][stock]" min="0" step="1" value="<?php echo esc_attr( (string) $a_stock ); ?>" />
 			</p>
 			<p class="form-field">

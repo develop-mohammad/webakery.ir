@@ -858,6 +858,9 @@ $batch_view = file_get_contents( dirname( __DIR__ ) . '/includes/views/product-b
 $var_view   = file_get_contents( dirname( __DIR__ ) . '/includes/views/product-variation-batches.php' );
 wbe_check( 'باکس تکی موجودی را از ووکامرس می‌خواند', false !== strpos( $batch_view, 'stock_from_wc' ) );
 wbe_check( 'باکس تنوع موجودی را از ووکامرس می‌خواند', false !== strpos( $var_view, 'stock_from_wc' ) );
+wbe_check( 'برچسب موجودی تکی ووکامرس را می‌گوید', false !== strpos( $batch_view, 'موجودی (ووکامرس)' ) );
+wbe_check( 'برچسب موجودی تنوع ووکامرس را می‌گوید', false !== strpos( $var_view, 'موجودی (ووکامرس)' ) );
+wbe_check( 'نوار گروهی موجودی فعال را ووکامرس می‌نامد', false !== strpos( file_get_contents( dirname( __DIR__ ) . '/includes/views/bulk-prices.php' ), 'موجودی فعال (ووکامرس)' ) );
 
 echo "\n=== کندی گروهی و گزارش باگ ===\n";
 require_once dirname( __DIR__ ) . '/includes/class-wbe-support.php';
@@ -889,8 +892,8 @@ $root     = dirname( __DIR__ );
 $boot_src = is_file( $root . '/webakery-expiry-pro.php' ) ? $root . '/webakery-expiry-pro.php' : $root . '/webakery-expiry.php';
 $boot     = file_get_contents( $boot_src );
 $readme   = file_get_contents( $root . '/readme.txt' );
-wbe_check( 'هدر افزونه نسخه ۱.۳.۰ دارد', false !== strpos( $boot, 'Version:     1.3.0' ) && false !== strpos( $boot, "define( 'WBE_VERSION', '1.3.0' )" ) );
-wbe_check( 'readme Stable tag با هدر یکی است', false !== strpos( $readme, 'Stable tag: 1.3.0' ) );
+wbe_check( 'هدر افزونه نسخه ۱.۳.۱ دارد', false !== strpos( $boot, 'Version:     1.3.1' ) && false !== strpos( $boot, "define( 'WBE_VERSION', '1.3.1' )" ) );
+wbe_check( 'readme Stable tag با هدر یکی است', false !== strpos( $readme, 'Stable tag: 1.3.1' ) );
 wbe_check( 'راهنما رایگان و پرو را یکسان می‌گوید', false !== strpos( $help, 'امکانات یکسان' ) );
 wbe_check( 'فرم گزارش باگ تلگرام دارد', false !== strpos( $bug, 't.me' ) && false !== strpos( $bug, 'wbe-bug-capture' ) && false !== strpos( $bug, 'wbe-bug-desc' ) );
 
@@ -909,7 +912,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.3.0' );
+	define( 'WBE_VERSION', '1.3.1' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

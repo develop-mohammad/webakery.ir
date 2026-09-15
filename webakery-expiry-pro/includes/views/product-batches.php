@@ -81,7 +81,7 @@ if ( ! empty( $wbe_qe ) ) {
 				<input type="text" class="wbe-date" id="wbe_sale_to" name="wbe_sale_to" value="<?php echo esc_attr( $sale_to_fa ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" dir="ltr" autocomplete="off" />
 			</p>
 			<p class="form-field">
-				<label for="wbe_active_stock">۶. موجودی</label>
+				<label for="wbe_active_stock">۶. موجودی (ووکامرس)</label>
 				<input type="number" class="wbe-batch-stock" id="wbe_active_stock" name="wbe_active[stock]" min="0" step="1" value="<?php echo esc_attr( (string) $a_stock ); ?>" />
 			</p>
 			<p class="form-field">

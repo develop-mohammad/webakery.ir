@@ -134,7 +134,7 @@ $csv_url     = wp_nonce_url(
 				<input type="text" class="wbe-date" id="wbe_sale_to" name="wbe_sale_to" placeholder="<?php echo esc_attr( $ph_date ); ?>" dir="ltr" autocomplete="off" />
 			</div>
 			<div class="wbe-bulk-field">
-				<label for="wbe_stock_mode">موجودی فعال</label>
+				<label for="wbe_stock_mode">موجودی فعال (ووکامرس)</label>
 				<select id="wbe_stock_mode" name="wbe_stock_mode" class="wbe-bulk-mode">
 					<?php foreach ( $modes as $key => $label ) : ?>
 						<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>

@@ -15,7 +15,7 @@
 | شناسه | `webakery-expiry` |
 | نام | انقضای کالا پرو |
 | قیمت | ۸۰۰٬۰۰۰ تومان (۸٬۰۰۰٬۰۰۰ ریال) |
-| نسخه فعلی | **1.3.0** |
+| نسخه فعلی | **1.3.1** |
 | سازنده | webakery.ir — محمد حاجی مهدیخانی |
 | بسته آپدیت | `license-server/updates/webakery-expiry-pro.zip` |
 | URL بسته | `https://webakery.ir/license-server/updates/webakery-expiry-pro.zip` |
@@ -38,12 +38,12 @@
 
 // LS_UPDATES
 'webakery-expiry' => [
-        'version'      => '1.3.0',
+        'version'      => '1.3.1',
         'package'      => 'https://webakery.ir/license-server/updates/webakery-expiry-pro.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۳.۰: موجودی فعال از ووکامرس خوانده می‌شود (ساده و تنوع).
+        'changelog'    => 'نسخه ۱.۳.۱: موجودی فعال از ووکامرس (ساده/تنوع) + برچسب صریح در ویرایش تکی و گروهی.',
 ],
 ```
 
