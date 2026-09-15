@@ -46,6 +46,10 @@ if ( ! defined( 'WCCP_URL' ) ) {
 if ( ! defined( 'WCCP_PRODUCT' ) ) {
 	define( 'WCCP_PRODUCT', 'wccp' );
 }
+/** نسخه دمو مارکت‌پلیس — با tools/build-demo-zips.sh روی true ست می‌شود */
+if ( ! defined( 'WCCP_DEMO' ) ) {
+	define( 'WCCP_DEMO', false );
+}
 
 $wccp_autoload = WCCP_PATH . 'includes/Autoload.php';
 if ( ! is_readable( $wccp_autoload ) ) {

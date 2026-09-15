@@ -31,6 +31,11 @@ define( 'NM_DB_VERSION', '1.0.13' );
 define( 'NM_AUTHOR', 'webakery.ir' );
 define( 'NM_AUTHOR_URI', 'https://webakery.ir' );
 
+/** نسخه دمو مارکت‌پلیس — با tools/build-demo-zips.sh روی true ست می‌شود */
+if ( ! defined( 'NM_DEMO' ) ) {
+	define( 'NM_DEMO', false );
+}
+
 if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 	add_action( 'admin_notices', function () {
 		if ( ! current_user_can( 'activate_plugins' ) ) {

@@ -25,6 +25,11 @@ define( 'AL_PATH', plugin_dir_path( __FILE__ ) );
 define( 'AL_URL', plugin_dir_url( __FILE__ ) );
 define( 'AL_PRODUCT', 'access-levels' );
 
+/** نسخه دمو مارکت‌پلیس — با tools/build-demo-zips.sh روی true ست می‌شود */
+if ( ! defined( 'AL_DEMO' ) ) {
+	define( 'AL_DEMO', false );
+}
+
 require_once AL_PATH . 'includes/class-al-plugin.php';
 
 register_activation_hook( __FILE__, array( 'AL_Plugin', 'activate' ) );

@@ -42,6 +42,8 @@ class NM_Plugin {
 			'version'    => NM_VERSION,
 			'trial_days' => 7,
 			'page'       => 'admin.php?page=nobat-man&tab=license',
+			'demo_constant' => 'NM_DEMO',
+			'buy_url'    => 'https://webakery.ir',
 			'features'   => array(
 				'متخصصین و بیزینس‌های نامحدود',
 				'تیکت، اشتراک ماهانه و پرداخت قسطی',

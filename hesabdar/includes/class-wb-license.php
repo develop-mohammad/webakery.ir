@@ -31,6 +31,9 @@ class WB_License {
             'register_menu' => true,   // منوی مرکزی «لایسنس افزونه‌ها»
             'page'          => '',     // صفحه بازگشت اختصاصی (مثلاً admin.php?page=xxx&tab=license)
             'features'      => [ 'به‌روزرسانی خودکار', 'پشتیبانی فنی', 'فعال‌سازی روی ۱ دامنه' ],
+            'demo'          => false,  // نسخه دمو مارکت‌پلیس (همه امکانات بدون لایسنس)
+            'demo_constant' => '',     // مثلاً HESABDAR_DEMO — اگر true باشد حالت دمو فعال است
+            'buy_url'       => 'https://webakery.ir',
         ], $cfg );
 
         $slug = sanitize_key( $cfg['product'] );
@@ -85,8 +88,31 @@ class WB_License {
         $left = ( $t + self::days( $slug ) * DAY_IN_SECONDS ) - time();
         return max( 0, (int) ceil( $left / DAY_IN_SECONDS ) );
     }
-    /** آیا افزونه قابل استفاده است؟ (لایسنس معتبر یا دوره آزمایشی) */
+    /** نسخه دمو مارکت‌پلیس؟ (بدون نیاز به لایسنس) */
+    public static function is_demo( $slug ) {
+        $cfg = self::$products[ $slug ] ?? [];
+        if ( ! empty( $cfg['demo'] ) ) {
+            return true;
+        }
+        $const = isset( $cfg['demo_constant'] ) ? (string) $cfg['demo_constant'] : '';
+        return $const !== '' && defined( $const ) && constant( $const );
+    }
+
+    /** لینک خرید نسخه کامل */
+    public static function buy_url( $slug ) {
+        $cfg = self::$products[ $slug ] ?? [];
+        $url = isset( $cfg['buy_url'] ) ? trim( (string) $cfg['buy_url'] ) : '';
+        if ( $url !== '' ) {
+            return $url;
+        }
+        return self::pay_url( $slug );
+    }
+
+    /** آیا افزونه قابل استفاده است؟ (دمو، لایسنس معتبر یا دوره آزمایشی) */
     public static function is_active( $slug ) {
+        if ( self::is_demo( $slug ) ) {
+            return true;
+        }
         return self::is_valid( $slug ) || self::trial_active( $slug );
     }
 
@@ -179,6 +205,14 @@ class WB_License {
         if ( $screen && strpos( (string) $screen->id, self::MENU_SLUG ) !== false ) return;
 
         foreach ( self::$products as $slug => $cfg ) {
+            $buy = esc_url( self::buy_url( $slug ) );
+            if ( self::is_demo( $slug ) ) {
+                echo '<div class="notice notice-info" style="border-right-color:#0ea5e9"><p>'
+                    . '🧪 <strong>' . esc_html( $cfg['name'] ?: $slug ) . '</strong> — نسخه <strong>دمو</strong> است؛ همه امکانات برای تست آزادند. '
+                    . 'برای استفاده واقعی روی سایت خودتان '
+                    . '<a href="' . $buy . '" target="_blank" rel="noopener"><strong>نسخه کامل را از webakery.ir بخرید</strong></a>.</p></div>';
+                continue;
+            }
             if ( self::is_valid( $slug ) ) continue;
             $url = esc_url( self::page_url( $slug ) );
             if ( self::trial_active( $slug ) ) {
@@ -236,6 +270,9 @@ class WB_License {
     /* ─── باکس پرداخت/لایسنس (UI جذاب) ─────────────────────────── */
     public static function render_box( $slug ) {
         if ( ! isset( self::$products[ $slug ] ) ) return '';
+        if ( self::is_demo( $slug ) ) {
+            return self::render_demo_box( $slug );
+        }
         $cfg    = self::$products[ $slug ];
         $status = get_option( self::o( $slug, 'status' ), 'none' );
         $info   = get_option( self::o( $slug, 'info' ), [] );
@@ -350,6 +387,53 @@ class WB_License {
         return ob_get_clean();
     }
 
+    /** باکس اختصاصی نسخه دمو — بدون فرم لایسنس، با CTA خرید نسخه کامل */
+    protected static function render_demo_box( $slug ) {
+        $cfg = self::$products[ $slug ];
+        $buy = esc_url( self::buy_url( $slug ) );
+        $pay = esc_url( self::pay_url( $slug ) );
+        ob_start();
+        echo self::css();
+        ?>
+        <div class="wbl-box wbl-demo">
+            <div class="wbl-hero">
+                <div class="wbl-hero-glow"></div>
+                <div class="wbl-hero-row">
+                    <div class="wbl-hero-icon">🧪</div>
+                    <div class="wbl-hero-main">
+                        <div class="wbl-hero-name"><?php echo esc_html( $cfg['name'] ?: $slug ); ?></div>
+                        <span class="wbl-pill wbl-pill-demo">نسخه دمو</span>
+                    </div>
+                    <div class="wbl-hero-price">
+                        <span class="wbl-price"><?php echo esc_html( $cfg['price'] ); ?></span>
+                        <span class="wbl-price-sub">نسخه کامل</span>
+                    </div>
+                </div>
+                <div class="wbl-trial-text" style="margin-top:14px">
+                    همه امکانات برای تست آزاد است — لایسنس لازم نیست. این نسخه فقط برای آزمایش قبل از خرید است.
+                </div>
+            </div>
+            <div class="wbl-body">
+                <ul class="wbl-features">
+                    <?php foreach ( (array) $cfg['features'] as $f ) : ?>
+                        <li><span>✓</span> <?php echo esc_html( $f ); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+                <a href="<?php echo $buy; ?>" class="wbl-btn-pay" target="_blank" rel="noopener">
+                    <span class="wbl-btn-pay-ic">🛒</span>
+                    خرید نسخه کامل از webakery.ir
+                    <span class="wbl-btn-pay-amt"><?php echo esc_html( $cfg['price'] ); ?></span>
+                </a>
+                <div class="wbl-secure">پس از خرید، ZIP اصلی را نصب کنید و لایسنس را فعال کنید. نسخه دمو را روی سایت واقعی نگه ندارید.</div>
+                <p style="text-align:center;margin:12px 0 0">
+                    <a href="<?php echo $pay; ?>" target="_blank" rel="noopener">پرداخت مستقیم و فعال‌سازی لایسنس ←</a>
+                </p>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
     /* ─── پیام نتیجه (فعال‌سازی/خطا) ──────────────────────────── */
     protected static function notice_html() {
         $m = sanitize_key( $_GET['wbl_msg'] ?? '' );
@@ -430,6 +514,7 @@ class WB_License {
         if ( ! is_object( $transient ) ) return $transient;
 
         foreach ( self::$products as $slug => $cfg ) {
+            if ( self::is_demo( $slug ) ) continue; // نسخه دمو نباید با ZIP فروش جایگزین شود
             if ( empty( $cfg['basename'] ) ) continue;
             $info = self::fetch_update( $slug );
             if ( empty( $info['version'] ) || empty( $info['package'] ) ) continue;
@@ -503,6 +588,8 @@ class WB_License {
  background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 55%,#2563eb 100%)}
 .wbl-valid .wbl-hero{background:linear-gradient(135deg,#059669 0%,#0d9488 100%)}
 .wbl-expired .wbl-hero{background:linear-gradient(135deg,#be123c 0%,#9333ea 100%)}
+.wbl-demo .wbl-hero{background:linear-gradient(135deg,#0284c7 0%,#0369a1 55%,#0ea5e9 100%)}
+.wbl-pill-demo{background:rgba(255,255,255,.28)!important}
 .wbl-hero-glow{position:absolute;top:-60px;left:-40px;width:200px;height:200px;border-radius:50%;
  background:rgba(255,255,255,.15);filter:blur(20px)}
 .wbl-hero-row{position:relative;display:flex;align-items:center;gap:14px}

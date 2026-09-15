@@ -460,6 +460,10 @@ $form_html = '
         <button type="submit" class="btn-pay" id="pay_btn">پرداخت با زیبال 💳</button>
     </form>
     <div class="features">' . $features_html . '</div>
+    <p class="login-hint" style="margin-top:12px">
+        🧪 قبل از خرید تست کنید:
+        <a href="' . htmlspecialchars( rtrim( $SERVER, '/' ) . '/license-server/demos/?plugin=' . rawurlencode( $plugin ) ) . '" target="_blank" rel="noopener">دانلود نسخه دمو رایگان</a>
+    </p>
     <p class="login-hint">لایسنس دارید؟ <a href="' . htmlspecialchars(rtrim($SERVER, '/') . '/license-server/portal/') . '">وارد شوید</a></p>
 </div>
 

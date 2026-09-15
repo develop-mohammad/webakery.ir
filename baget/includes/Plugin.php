@@ -100,6 +100,8 @@ class Plugin {
 					'server'        => 'https://webakery.ir/license-server',
 					'register_menu' => true,
 					'page'          => 'admin.php?page=wccp&tab=license',
+					'demo_constant' => 'WCCP_DEMO',
+					'buy_url'       => 'https://webakery.ir',
 					'features'      => array(
 						'ویرایش و جابه‌جایی فیلدهای checkout',
 						'فیلد رادیو، چندگزینه‌ای و dropdown',
