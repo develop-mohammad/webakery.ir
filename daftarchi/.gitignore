@@ -1,0 +1,11 @@
+node_modules
+dist
+dist-electron
+release
+data
+backups
+*.sqlite
+*.sqlite-*
+*.log
+.DS_Store
+Thumbs.db
