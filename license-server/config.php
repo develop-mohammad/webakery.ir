@@ -121,12 +121,12 @@ define( 'LS_UPDATES', [
         'changelog'    => 'نسخه اولیه.',
     ],
     'hesabdar' => [
-        'version'      => '1.23.0',
+        'version'      => '1.25.0',
         'package'      => 'https://webakery.ir/license-server/updates/hesabdar.zip',
         'requires'     => '5.8',
         'tested'       => '6.7',
         'requires_php' => '7.4',
-        'changelog'    => 'نسخه ۱.۱۸.۰: پنل یکپارچه — حذف پنل مدیر، فرم افزودن حسابدار و دسترسی نقش‌ها؛ فقط یک آدرس /accountant-panel/.',
+        'changelog'    => 'نسخه ۱.۲۵.۰: گزارش خریداران محصول، فیلتر دسته‌بندی، پیگیری پستی سفارش؛ موجودی از ووکامرس؛ واریزی خالص شاپرک.',
     ],
     'nobat-man' => [
         'version'      => '1.0.13',
