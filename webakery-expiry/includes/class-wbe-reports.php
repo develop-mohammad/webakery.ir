@@ -82,7 +82,10 @@ class WBE_Reports {
 				'price'      => $active ? (float) $active['price'] : 0,
 				'regular'    => $active ? (float) $active['price'] : 0,
 				'discount'   => $active ? WBE_Engine::discount_of( $active ) : 0,
-				'stock'      => $active ? (int) $active['stock'] : 0,
+				'stock'      => (int) WBE_Engine::stock_from_wc(
+					( $product && method_exists( $product, 'get_stock_quantity' ) ) ? $product->get_stock_quantity( 'edit' ) : '',
+					$active ? $active['stock'] : 0
+				),
 				'reserves'   => max( 0, count( $batches ) - ( $active ? 1 : 0 ) ),
 				'batches'    => count( $batches ),
 				'sold_qty'   => $sold_qty,

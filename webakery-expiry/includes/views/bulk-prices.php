@@ -37,7 +37,7 @@ $csv_url     = wp_nonce_url(
 ?>
 <div class="wrap wbe-wrap wbe-bulk-wrap" dir="rtl" data-calendar="<?php echo esc_attr( $calendar ); ?>">
 	<h1>ویرایش گروهی محصول</h1>
-	<p class="wbe-sub">ابتدا <strong>برند</strong> را انتخاب کنید. ستون‌های <strong>موجودی فعال</strong> همیشه هستند؛ <strong>کل موجودی</strong> جمع فعال و رزرو است. ستون‌های <strong>موجودی رزرو</strong> با سوییچ پایین روشن/خاموش می‌شوند و تماماً قابل ویرایش‌اند.</p>
+	<p class="wbe-sub">ابتدا <strong>برند</strong> را انتخاب کنید. ستون <strong>موجودی فعال</strong> همان موجودی ووکامرس است (ساده یا هر تنوع)؛ <strong>کل موجودی</strong> جمع فعال و رزرو است. ستون‌های <strong>موجودی رزرو</strong> با سوییچ پایین روشن/خاموش می‌شوند و تماماً قابل ویرایش‌اند.</p>
 
 	<div id="wbe-bulk-notice" hidden class="notice is-dismissible"></div>
 	<?php if ( $updated || $skipped ) : ?>

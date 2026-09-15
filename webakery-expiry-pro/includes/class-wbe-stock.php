@@ -110,12 +110,16 @@ class WBE_Stock {
 		return (string) WBE_Engine::effective_sale( $active );
 	}
 
+	/**
+	 * موجودی فروشگاه = موجودی ووکامرس (ساده و تنوع). بچ فقط رزرو/انقضا را نگه می‌دارد.
+	 *
+	 * @param mixed      $qty
+	 * @param WC_Product $product
+	 * @return mixed
+	 */
 	public static function filter_stock( $qty, $product ) {
-		if ( WBE_Product::is_syncing() || ! self::ok_product( $product ) ) {
-			return $qty;
-		}
-		$active = WBE_Product::active( $product->get_id() );
-		return $active ? (int) $active['stock'] : 0;
+		unset( $product );
+		return $qty;
 	}
 
 	public static function filter_on_sale( $on_sale, $product ) {

@@ -195,6 +195,132 @@ class WBE_Engine {
 	}
 
 	/**
+	 * آیا مقدار موجودی عددی است؟ صفر معتبر است.
+	 *
+	 * @param mixed $value
+	 * @return bool
+	 */
+	public static function has_numeric_stock( $value ) {
+		return null !== $value && '' !== $value && is_numeric( $value );
+	}
+
+	/**
+	 * موجودی نمایشی: همیشه ووکامرس، در غیر این صورت بچ.
+	 *
+	 * @param mixed $wc_stock
+	 * @param mixed $batch_stock
+	 * @return int|string
+	 */
+	public static function stock_from_wc( $wc_stock, $batch_stock = '' ) {
+		if ( self::has_numeric_stock( $wc_stock ) ) {
+			return (int) $wc_stock;
+		}
+		if ( self::has_numeric_stock( $batch_stock ) ) {
+			return (int) $batch_stock;
+		}
+		return '';
+	}
+
+	/**
+	 * نزدیک‌ترین بچ منقضی‌نشده (حتی با موجودی صفر).
+	 *
+	 * @param array  $batches
+	 * @param string $today
+	 * @return int|null
+	 */
+	public static function nearest_unexpired_index( array $batches, $today ) {
+		$best_i = null;
+		$best_e = null;
+		$today  = (string) $today;
+		foreach ( $batches as $i => $batch ) {
+			if ( ! is_array( $batch ) ) {
+				continue;
+			}
+			$exp = isset( $batch['expiry'] ) ? (string) $batch['expiry'] : '';
+			if ( '' === $exp || $exp < $today ) {
+				continue;
+			}
+			if ( null === $best_i || $exp < $best_e ) {
+				$best_i = (int) $i;
+				$best_e = $exp;
+			}
+		}
+		return $best_i;
+	}
+
+	/**
+	 * موجودی ووکامرس را روی بچ فعال می‌نشاند (رزرو دست نمی‌خورد).
+	 * اگر ووکامرس صفر باشد رزرو را صفر نمی‌کند.
+	 *
+	 * @param array      $batches
+	 * @param mixed      $wc_stock
+	 * @param string     $today
+	 * @return array
+	 */
+	public static function apply_wc_stock_to_active( array $batches, $wc_stock, $today ) {
+		if ( empty( $batches ) || ! self::has_numeric_stock( $wc_stock ) ) {
+			return $batches;
+		}
+		$qty = max( 0, (int) $wc_stock );
+		$idx = self::active_index( $batches, $today );
+		if ( null === $idx && $qty > 0 ) {
+			$idx = self::nearest_unexpired_index( $batches, $today );
+		}
+		if ( null === $idx || ! isset( $batches[ $idx ] ) || ! is_array( $batches[ $idx ] ) ) {
+			return $batches;
+		}
+		if ( (int) $batches[ $idx ]['stock'] === $qty ) {
+			return $batches;
+		}
+		$batches[ $idx ]['stock'] = $qty;
+		return $batches;
+	}
+
+	/**
+	 * موجودی ووکامرس را روی یک ایندکس مشخص می‌نشاند (بعد از مصرف همان بچ).
+	 *
+	 * @param array    $batches
+	 * @param int|null $idx
+	 * @param mixed    $wc_stock
+	 * @return array
+	 */
+	public static function apply_wc_stock_at_index( array $batches, $idx, $wc_stock ) {
+		if ( null === $idx || ! isset( $batches[ $idx ] ) || ! is_array( $batches[ $idx ] ) ) {
+			return $batches;
+		}
+		if ( ! self::has_numeric_stock( $wc_stock ) ) {
+			return $batches;
+		}
+		$batches[ $idx ]['stock'] = max( 0, (int) $wc_stock );
+		return $batches;
+	}
+
+	/**
+	 * آیا عملیات گروهی موجودی ووکامرس/فعال را عوض می‌کند؟
+	 *
+	 * @param array $ops
+	 * @return bool
+	 */
+	public static function has_stock_ops( array $ops ) {
+		if ( array_key_exists( 'stock', $ops ) && null !== $ops['stock'] && '' !== $ops['stock'] ) {
+			return true;
+		}
+		if ( ! empty( $ops['stock_mode'] ) && 'none' !== $ops['stock_mode'] ) {
+			return true;
+		}
+		if ( array_key_exists( 'reserved', $ops ) && null !== $ops['reserved'] && '' !== $ops['reserved'] ) {
+			return true;
+		}
+		if ( array_key_exists( 'res_stock', $ops ) && null !== $ops['res_stock'] && '' !== $ops['res_stock'] ) {
+			return true;
+		}
+		if ( array_key_exists( 'reserves', $ops ) && is_array( $ops['reserves'] ) ) {
+			return true;
+		}
+		return ! empty( $ops['add_batch'] );
+	}
+
+	/**
 	 * تنظیم جمع موجودی رزرو روی بچ‌های غیر فعال.
 	 * اگر چند بچ رزرو باشد، کل مقدار روی اولین رزرو می‌نشیند و بقیه صفر می‌شوند.
 	 *
@@ -1095,7 +1221,7 @@ class WBE_Engine {
 	 * @param mixed       $sale_from
 	 * @param mixed       $sale_to
 	 * @param string      $today
-	 * @param array       $wc     fallback ووکامرس وقتی بچی نیست.
+	 * @param array       $wc     موجودی ووکامرس همیشه منبع موجودی فعال است.
 	 * @return array
 	 */
 	public static function bulk_row_from_record( $id, $title, $sku, array $batches, $calendar, $sale_from, $sale_to, $today, $wc = array() ) {
@@ -1107,6 +1233,11 @@ class WBE_Engine {
 		$stock    = $active ? (int) $active['stock'] : '';
 		$reserved = self::reserved_stock( $batches, $today );
 		$total    = self::total_stock( $batches );
+		$wc_stock = isset( $wc['stock'] ) ? $wc['stock'] : '';
+		if ( self::has_numeric_stock( $wc_stock ) ) {
+			$stock = (int) $wc_stock;
+			$total = (int) $stock + (int) $reserved;
+		}
 		$expiry   = ( $active && ! empty( $active['expiry'] ) ) ? (string) $active['expiry'] : '';
 
 		$ridx      = self::primary_reserve_index( $batches, $today );
@@ -1142,7 +1273,9 @@ class WBE_Engine {
 			$wc_sale  = isset( $wc['sale'] ) ? $wc['sale'] : '';
 			$discount = self::discount_from_prices( $regular, $wc_sale );
 			$sale     = ( '' !== $wc_sale && null !== $wc_sale ) ? (string) $wc_sale : $regular;
-			$stock    = isset( $wc['stock'] ) && '' !== $wc['stock'] && null !== $wc['stock'] ? (int) $wc['stock'] : '';
+			if ( ! self::has_numeric_stock( $wc_stock ) ) {
+				$stock = '';
+			}
 			if ( empty( $batches ) ) {
 				$total = ( '' !== $stock && null !== $stock ) ? (int) $stock : 0;
 			}

@@ -104,7 +104,7 @@ class WBE_Product {
 			}
 		}
 		if ( $sync ) {
-			self::sync_wc( $product_id );
+			self::sync_wc( $product_id, true );
 		} else {
 			self::refresh_parent_expiry_index( $product_id );
 		}
@@ -126,18 +126,39 @@ class WBE_Product {
 
 	public static function consume( $product_id, $qty ) {
 		$product_id = (int) $product_id;
+		$today      = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
 		$batches    = self::batches( $product_id );
-		$result     = WBE_Engine::consume( $batches, $qty, WBE_Jalali::today_ymd() );
+		$idx        = WBE_Engine::active_index( $batches, $today );
+		$result     = WBE_Engine::consume( $batches, $qty, $today );
+		$wc_stock   = self::read_wc_stock( $product_id );
+		if ( null !== $wc_stock && null !== $idx ) {
+			$result['batches'] = WBE_Engine::apply_wc_stock_at_index( $result['batches'], $idx, $wc_stock );
+		}
 		update_post_meta( $product_id, self::META_BATCHES, $result['batches'] );
-		self::sync_wc( $product_id );
+		self::sync_wc( $product_id, false );
 		return $result['batch_id'];
 	}
 
 	public static function restore( $product_id, $qty, $batch_id ) {
 		$product_id = (int) $product_id;
+		$today      = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
 		$batches    = WBE_Engine::restore( self::batches( $product_id ), $qty, $batch_id );
+		$wc_stock   = self::read_wc_stock( $product_id );
+		if ( null !== $wc_stock ) {
+			$idx = null;
+			foreach ( $batches as $i => $batch ) {
+				if ( isset( $batch['id'] ) && (string) $batch['id'] === (string) $batch_id ) {
+					$idx = (int) $i;
+					break;
+				}
+			}
+			if ( null === $idx ) {
+				$idx = WBE_Engine::active_index( $batches, $today );
+			}
+			$batches = WBE_Engine::apply_wc_stock_at_index( $batches, $idx, $wc_stock );
+		}
 		update_post_meta( $product_id, self::META_BATCHES, $batches );
-		self::sync_wc( $product_id );
+		self::sync_wc( $product_id, false );
 	}
 
 	/**
@@ -224,9 +245,44 @@ class WBE_Product {
 	}
 
 	/**
-	 * قیمت و موجودی ووکامرس = بچ فعال. رزرو دیده نمی‌شود.
+	 * موجودی زنده ووکامرس (ساده یا تنوع). والد متغیر null است.
+	 *
+	 * @param int $product_id
+	 * @return int|null
 	 */
-	public static function sync_wc( $product_id ) {
+	public static function read_wc_stock( $product_id ) {
+		$product_id = (int) $product_id;
+		if ( $product_id <= 0 ) {
+			return null;
+		}
+		if ( function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $product_id );
+			if ( $product && method_exists( $product, 'is_type' ) && $product->is_type( 'variable' ) ) {
+				return null;
+			}
+			if ( $product && method_exists( $product, 'get_stock_quantity' ) ) {
+				$qty = $product->get_stock_quantity( 'edit' );
+				if ( class_exists( 'WBE_Engine' ) && WBE_Engine::has_numeric_stock( $qty ) ) {
+					return (int) $qty;
+				}
+			}
+		}
+		if ( function_exists( 'get_post_meta' ) ) {
+			$raw = get_post_meta( $product_id, '_stock', true );
+			if ( class_exists( 'WBE_Engine' ) && WBE_Engine::has_numeric_stock( $raw ) ) {
+				return (int) $raw;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * قیمت ووکامرس = بچ فعال. موجودی فقط وقتی نوشته می‌شود که ذخیرهٔ فرم باشد یا بچ فعال عوض شده باشد.
+	 *
+	 * @param int  $product_id
+	 * @param bool $push_stock
+	 */
+	public static function sync_wc( $product_id, $push_stock = false ) {
 		if ( self::$syncing || ! function_exists( 'wc_get_product' ) ) {
 			return;
 		}
@@ -247,6 +303,10 @@ class WBE_Product {
 		}
 		self::$syncing = true;
 		$active        = self::active( $product_id );
+		$prev_expiry   = (string) get_post_meta( $product_id, self::META_ACTIVE_EXPIRY, true );
+		$new_expiry    = $active && ! empty( $active['expiry'] ) ? (string) $active['expiry'] : '';
+		$lot_changed   = ( '' !== $prev_expiry && $prev_expiry !== $new_expiry );
+		$write_stock   = $push_stock || $lot_changed;
 		$product->set_manage_stock( true );
 		$product->set_backorders( 'no' );
 		if ( $active ) {
@@ -264,12 +324,16 @@ class WBE_Product {
 				$product->set_date_on_sale_from( '' );
 				$product->set_date_on_sale_to( '' );
 			}
-			$product->set_stock_quantity( (int) $active['stock'] );
-			$product->set_stock_status( 'instock' );
+			if ( $write_stock ) {
+				$product->set_stock_quantity( (int) $active['stock'] );
+				$product->set_stock_status( (int) $active['stock'] > 0 ? 'instock' : 'outofstock' );
+			}
 			update_post_meta( $product_id, self::META_ACTIVE_EXPIRY, $active['expiry'] );
 		} else {
-			$product->set_stock_quantity( 0 );
-			$product->set_stock_status( 'outofstock' );
+			if ( $write_stock ) {
+				$product->set_stock_quantity( 0 );
+				$product->set_stock_status( 'outofstock' );
+			}
 			delete_post_meta( $product_id, self::META_ACTIVE_EXPIRY );
 		}
 		$product->save();
@@ -691,7 +755,7 @@ class WBE_Product {
 				if ( $batches ) {
 					self::$syncing = true;
 					update_post_meta( $product_id, self::META_BATCHES, $batches );
-					self::push_wc_price_meta( $product_id, $batches );
+					self::push_wc_price_meta( $product_id, $batches, true );
 					self::ensure_sale_date_meta( $product_id, $batches );
 					self::refresh_wc_index( $product_id );
 					self::$syncing = false;
@@ -729,7 +793,7 @@ class WBE_Product {
 		self::$syncing = true;
 		if ( $batches_changed ) {
 			update_post_meta( $product_id, self::META_BATCHES, $next );
-			self::push_wc_price_meta( $product_id, $next );
+			self::push_wc_price_meta( $product_id, $next, WBE_Engine::has_stock_ops( $ops ) );
 		}
 		if ( $touch_dates ) {
 			self::push_wc_sale_dates( $product_id, $ops );
@@ -812,7 +876,7 @@ class WBE_Product {
 		}
 		self::$syncing = true;
 		update_post_meta( $product_id, self::META_BATCHES, $batches );
-		self::push_wc_price_meta( $product_id, $batches );
+		self::push_wc_price_meta( $product_id, $batches, true );
 		$touch_dates = ! empty( $ops['clear_sale'] )
 			|| ( isset( $ops['sale_from'] ) && '' !== $ops['sale_from'] )
 			|| ( isset( $ops['sale_to'] ) && '' !== $ops['sale_to'] );
@@ -895,14 +959,17 @@ class WBE_Product {
 	 *
 	 * @param int   $product_id
 	 * @param array $batches
+	 * @param bool  $push_stock موجودی بچ را روی `_stock` بنویس (فقط وقتی کاربر موجودی را عوض کرده).
 	 */
-	public static function push_wc_price_meta( $product_id, array $batches ) {
+	public static function push_wc_price_meta( $product_id, array $batches, $push_stock = true ) {
 		$product_id = (int) $product_id;
 		$today      = class_exists( 'WBE_Jalali' ) ? WBE_Jalali::today_ymd() : gmdate( 'Y-m-d' );
 		$idx        = WBE_Engine::active_index( $batches, $today );
 		if ( null === $idx ) {
-			update_post_meta( $product_id, '_stock', 0 );
-			update_post_meta( $product_id, '_stock_status', 'outofstock' );
+			if ( $push_stock ) {
+				update_post_meta( $product_id, '_stock', 0 );
+				update_post_meta( $product_id, '_stock_status', 'outofstock' );
+			}
 			delete_post_meta( $product_id, self::META_ACTIVE_EXPIRY );
 			return;
 		}
@@ -922,9 +989,11 @@ class WBE_Product {
 			delete_post_meta( $product_id, '_sale_price_dates_from' );
 			delete_post_meta( $product_id, '_sale_price_dates_to' );
 		}
-		$stock = (int) $active['stock'];
-		update_post_meta( $product_id, '_stock', $stock );
-		update_post_meta( $product_id, '_stock_status', $stock > 0 ? 'instock' : 'outofstock' );
+		if ( $push_stock ) {
+			$stock = (int) $active['stock'];
+			update_post_meta( $product_id, '_stock', $stock );
+			update_post_meta( $product_id, '_stock_status', $stock > 0 ? 'instock' : 'outofstock' );
+		}
 		update_post_meta( $product_id, self::META_ACTIVE_EXPIRY, $active['expiry'] );
 	}
 

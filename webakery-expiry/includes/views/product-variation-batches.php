@@ -27,7 +27,9 @@ if ( $active ) {
 } elseif ( $a_disc > 0 && $a_price && class_exists( 'WBE_Engine' ) ) {
 	$a_sale = (string) WBE_Engine::sale_price( $a_price, $a_disc );
 }
-$a_stock  = $active ? (int) $active['stock'] : ( isset( $wc_stock ) && '' !== $wc_stock && null !== $wc_stock ? (int) $wc_stock : '' );
+$a_stock  = class_exists( 'WBE_Engine' )
+	? WBE_Engine::stock_from_wc( isset( $wc_stock ) ? $wc_stock : '', $active ? $active['stock'] : '' )
+	: ( $active ? (int) $active['stock'] : ( isset( $wc_stock ) && '' !== $wc_stock && null !== $wc_stock ? (int) $wc_stock : '' ) );
 $a_expiry = ( $active && ! empty( $active['expiry'] ) ) ? WBE_Jalali::format_ymd( $active['expiry'], $effective, false ) : '';
 $a_id     = $active && isset( $active['id'] ) ? $active['id'] : '';
 $a_disc_v = $a_disc > 0 ? (string) $a_disc : '';
@@ -62,7 +64,7 @@ $attr_lbl = isset( $attr_label ) ? (string) $attr_label : '';
 			<strong>موجودی فعال این تنوع</strong>
 			<button type="button" class="button wbe-copy-variations">کپی بچ‌ها به همه تنوع‌ها</button>
 		</div>
-		<p class="description">قیمت، موجودی و انقضای همین تنوع روی فروشگاه دیده می‌شود.</p>
+		<p class="description">موجودی این باکس همان موجودی ووکامرس این تنوع است. قیمت و انقضای همین تنوع روی فروشگاه دیده می‌شود.</p>
 		<div class="wbe-active-grid wbe-active-grid--variation">
 			<p class="form-field">
 				<label>قیمت اصلی</label>

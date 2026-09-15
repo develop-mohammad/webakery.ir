@@ -24,7 +24,9 @@ if ( $active ) {
 } elseif ( $a_disc > 0 && $a_price && class_exists( 'WBE_Engine' ) ) {
 	$a_sale = (string) WBE_Engine::sale_price( $a_price, $a_disc );
 }
-$a_stock  = $active ? (int) $active['stock'] : ( isset( $wc_stock ) && '' !== $wc_stock && null !== $wc_stock ? (int) $wc_stock : '' );
+$a_stock  = class_exists( 'WBE_Engine' )
+	? WBE_Engine::stock_from_wc( isset( $wc_stock ) ? $wc_stock : '', $active ? $active['stock'] : '' )
+	: ( $active ? (int) $active['stock'] : ( isset( $wc_stock ) && '' !== $wc_stock && null !== $wc_stock ? (int) $wc_stock : '' ) );
 $a_expiry = ( $active && ! empty( $active['expiry'] ) ) ? WBE_Jalali::format_ymd( $active['expiry'], $effective, false ) : '';
 $a_id     = $active && isset( $active['id'] ) ? $active['id'] : '';
 $a_disc_v = $a_disc > 0 ? (string) $a_disc : '';
@@ -55,7 +57,7 @@ if ( ! empty( $wbe_qe ) ) {
 		<div class="wbe-batches__head">
 			<strong>موجودی فعال (قابل ویرایش)</strong>
 		</div>
-		<p class="description">قیمت، موجودی و انقضای فعال روی فروشگاه دیده می‌شود. نام، SKU و وضعیت را از همین صفحه ووکامرس یا از ویرایش گروهی عوض کنید.</p>
+		<p class="description">موجودی این باکس همان موجودی ووکامرس است (محصول ساده یا هر تنوع). قیمت و انقضای فعال روی فروشگاه دیده می‌شود. نام، SKU و وضعیت را از همین صفحه ووکامرس یا از ویرایش گروهی عوض کنید.</p>
 		<div class="wbe-active-grid">
 			<p class="form-field">
 				<label for="wbe_active_price">۱. قیمت اصلی</label>

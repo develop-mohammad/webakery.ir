@@ -390,6 +390,64 @@ $row = WBE_Engine::bulk_row_from_record( 7, 'شیر', 'S1', $bulk, 'gregorian', 
 wbe_check( 'ردیف گروهی از بچ فعال ساخته می‌شود', 7 === $row['id'] && '200000' === $row['regular'] && 10 === (int) $row['discount'] && 4 === (int) $row['stock'] );
 wbe_check( 'تاریخ جشنواره در ردیف گروهی', '2026-01-01' === $row['from'] && '2026-01-31' === $row['to'] );
 
+echo "\n=== موجودی از ووکامرس ===\n";
+wbe_check( 'صفر ووکامرس معتبر است', true === WBE_Engine::has_numeric_stock( 0 ) && true === WBE_Engine::has_numeric_stock( '0' ) );
+wbe_check( 'خالی موجودی نیست', false === WBE_Engine::has_numeric_stock( '' ) && false === WBE_Engine::has_numeric_stock( null ) );
+wbe_check( 'موجودی نمایشی از ووکامرس', 25 === (int) WBE_Engine::stock_from_wc( 25, 4 ) );
+wbe_check( 'موجودی صفر ووکامرس بچ را نمی‌پوشاند', 0 === (int) WBE_Engine::stock_from_wc( 0, 9 ) );
+wbe_check( 'بدون ووکامرس از بچ', 4 === (int) WBE_Engine::stock_from_wc( '', 4 ) );
+$over = WBE_Engine::apply_wc_stock_to_active( $bulk, 30, '2026-01-15' );
+wbe_check( 'موجودی ووکامرس روی بچ فعال می‌نشیند', 30 === (int) $over[0]['stock'] && 8 === (int) $over[1]['stock'] );
+$zero_wc = WBE_Engine::apply_wc_stock_to_active( $bulk, 0, '2026-01-15' );
+wbe_check( 'صفر ووکامرس رزرو را صفر نمی‌کند', 0 === (int) $zero_wc[0]['stock'] && 8 === (int) $zero_wc[1]['stock'] );
+$empty_lot = array(
+	array( 'id' => 'a', 'price' => '10', 'stock' => 0, 'expiry' => '2026-06-01' ),
+	array( 'id' => 'b', 'price' => '8', 'stock' => 0, 'expiry' => '2026-12-01' ),
+);
+$revived = WBE_Engine::apply_wc_stock_to_active( $empty_lot, 7, '2026-01-15' );
+wbe_check( 'اگر ووکامرس موجودی دارد نزدیک‌ترین بچ صفرشده زنده می‌شود', 7 === (int) $revived[0]['stock'] && 0 === (int) $revived[1]['stock'] );
+$pinned = WBE_Engine::apply_wc_stock_at_index(
+	array(
+		array( 'id' => 'a', 'price' => '10', 'stock' => 0, 'expiry' => '2026-06-01' ),
+		array( 'id' => 'b', 'price' => '8', 'stock' => 12, 'expiry' => '2026-12-01' ),
+	),
+	0,
+	0
+);
+wbe_check( 'مصرف تمام‌شده رزرو را لمس نمی‌کند', 0 === (int) $pinned[0]['stock'] && 12 === (int) $pinned[1]['stock'] );
+wbe_check( 'عملیات موجودی گروهی تشخیص داده می‌شود', true === WBE_Engine::has_stock_ops( array( 'stock_mode' => 'set', 'stock' => 3 ) ) );
+wbe_check( 'فقط قیمت عملیات موجودی نیست', false === WBE_Engine::has_stock_ops( array( 'discount' => 10 ) ) );
+$row_wc = WBE_Engine::bulk_row_from_record(
+	7,
+	'شیر',
+	'S1',
+	$bulk,
+	'gregorian',
+	'2026-01-01',
+	'2026-01-31',
+	'2026-01-15',
+	array( 'stock' => '20' )
+);
+wbe_check( 'ردیف گروهی موجودی فعال را از ووکامرس می‌گیرد', 20 === (int) $row_wc['stock'] && 28 === (int) $row_wc['total_stock'] && 8 === (int) $row_wc['reserved'] );
+$row_var_wc = WBE_Engine::bulk_row_from_record(
+	99,
+	'شیر — رنگ: قرمز',
+	'SKU-R',
+	array(
+		array( 'id' => 'a', 'price' => '100', 'stock' => 3, 'expiry' => '2026-06-01', 'discount' => 0 ),
+	),
+	'jalali',
+	'',
+	'',
+	'2026-01-15',
+	array(
+		'stock'        => '15',
+		'is_variation' => true,
+		'parent_id'    => 50,
+	)
+);
+wbe_check( 'ردیف تنوع موجودی ووکامرس تنوع را نشان می‌دهد', 15 === (int) $row_var_wc['stock'] && 15 === (int) $row_var_wc['total_stock'] );
+
 $plain = WBE_Engine::apply_plain_state( 100000, '', 5, array( 'regular_mode' => 'set', 'regular_value' => 120000 ) );
 wbe_check( 'بدون بچ قیمت اصلی تنظیم می‌شود', '120000' === $plain['regular'] && '' === $plain['sale'] && 0 === (int) $plain['discount'] );
 $plain_d = WBE_Engine::apply_plain_state( 100000, '', 5, array( 'discount' => 20 ) );
@@ -791,6 +849,15 @@ wbe_check( 'کپی تنوع هدف را با edit_products باز نمی‌کن�
 wbe_check( 'کپی تنوع نوع تنوع را چک می‌کند', false !== strpos( $admin_prod, "'product_variation'" ) );
 $prod_src = file_get_contents( dirname( __DIR__ ) . '/includes/class-wbe-product.php' );
 wbe_check( 'owns_price_stock بدون ووکامرس رد می‌کند', 1 === preg_match( '/function owns_price_stock[\s\S]*?wc_get_product[\s\S]*?return false;/', $prod_src ) );
+$stock_src = file_get_contents( dirname( __DIR__ ) . '/includes/class-wbe-stock.php' );
+wbe_check( 'فیلتر موجودی مقدار بچ را جایگزین ووکامرس نمی‌کند', false === strpos( $stock_src, "return \$active ? (int) \$active['stock'] : 0" ) );
+wbe_check( 'فیلتر موجودی مقدار ووکامرس را برمی‌گرداند', false !== strpos( $stock_src, 'return $qty;' ) );
+wbe_check( 'همگام‌سازی پیش‌فرض موجودی ووکامرس را بازنویسی نمی‌کند', false !== strpos( $prod_src, 'function sync_wc( $product_id, $push_stock = false )' ) );
+wbe_check( 'خواندن موجودی والد متغیر را رد می‌کند', false !== strpos( $prod_src, "is_type( 'variable' )" ) && false !== strpos( $prod_src, 'function read_wc_stock' ) );
+$batch_view = file_get_contents( dirname( __DIR__ ) . '/includes/views/product-batches.php' );
+$var_view   = file_get_contents( dirname( __DIR__ ) . '/includes/views/product-variation-batches.php' );
+wbe_check( 'باکس تکی موجودی را از ووکامرس می‌خواند', false !== strpos( $batch_view, 'stock_from_wc' ) );
+wbe_check( 'باکس تنوع موجودی را از ووکامرس می‌خواند', false !== strpos( $var_view, 'stock_from_wc' ) );
 
 echo "\n=== کندی گروهی و گزارش باگ ===\n";
 require_once dirname( __DIR__ ) . '/includes/class-wbe-support.php';
@@ -817,6 +884,7 @@ $bug  = file_get_contents( dirname( __DIR__ ) . '/includes/views/bug-report.php'
 wbe_check( 'راهنما صفحه دارد', false !== strpos( $help, 'رفع کندی' ) && false !== strpos( $help, 'موجودی رزرو' ) );
 wbe_check( 'راهنما تقویم و کپی تنوع دارد', false !== strpos( $help, 'کپی بچ‌ها به همه تنوع‌ها' ) );
 wbe_check( 'راهنما ویرایش سریع و کل موجودی دارد', false !== strpos( $help, 'ویرایش سریع' ) && false !== strpos( $help, 'کل موجودی' ) );
+wbe_check( 'راهنما موجودی ووکامرس را می‌گوید', false !== strpos( $help, 'موجودی ووکامرس' ) );
 wbe_check( 'راهنما رایگان و پرو را یکسان می‌گوید', false !== strpos( $help, 'امکانات یکسان' ) );
 wbe_check( 'فرم گزارش باگ تلگرام دارد', false !== strpos( $bug, 't.me' ) && false !== strpos( $bug, 'wbe-bug-capture' ) && false !== strpos( $bug, 'wbe-bug-desc' ) );
 
@@ -835,7 +903,7 @@ if ( ! defined( 'WBE_FILE' ) ) {
 	define( 'WBE_FILE', dirname( __DIR__ ) . '/webakery-expiry.php' );
 }
 if ( ! defined( 'WBE_VERSION' ) ) {
-	define( 'WBE_VERSION', '1.2.20' );
+	define( 'WBE_VERSION', '1.2.21' );
 }
 if ( ! function_exists( 'get_option' ) ) {
 	function get_option( $key, $default = false ) {

@@ -183,7 +183,9 @@ class WBE_Admin_Product {
 		} elseif ( $a_disc > 0 && $a_price ) {
 			$a_sale = (string) WBE_Engine::sale_price( $a_price, $a_disc );
 		}
-		$a_stock  = $active ? (int) $active['stock'] : ( '' !== $vars['wc_stock'] && null !== $vars['wc_stock'] ? (int) $vars['wc_stock'] : '' );
+		$a_stock  = class_exists( 'WBE_Engine' )
+			? WBE_Engine::stock_from_wc( $vars['wc_stock'], $active ? $active['stock'] : '' )
+			: ( $active ? (int) $active['stock'] : ( '' !== $vars['wc_stock'] && null !== $vars['wc_stock'] ? (int) $vars['wc_stock'] : '' ) );
 		$a_expiry = ( $active && ! empty( $active['expiry'] ) ) ? WBE_Jalali::format_ymd( $active['expiry'], $vars['effective'], false ) : '';
 		$reserves = array();
 		if ( ! empty( $batches ) ) {
@@ -436,7 +438,7 @@ class WBE_Admin_Product {
 				WBE_Product::push_wc_sale_dates( $variation_id, $date_ops );
 			}
 		}
-		WBE_Product::sync_wc( $variation_id );
+		WBE_Product::sync_wc( $variation_id, true );
 	}
 
 	public function sync_after_save( $product_id ) {
@@ -447,7 +449,7 @@ class WBE_Admin_Product {
 				return;
 			}
 		}
-		WBE_Product::sync_wc( $product_id );
+		WBE_Product::sync_wc( $product_id, true );
 	}
 
 	public function columns( $cols ) {

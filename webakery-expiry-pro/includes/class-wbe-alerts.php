@@ -69,7 +69,10 @@ class WBE_Alerts {
 					'name'      => $product->get_name(),
 					'days'      => -1,
 					'expiry_fa' => '—',
-					'stock'     => 0,
+					'stock'     => (int) WBE_Engine::stock_from_wc(
+						method_exists( $product, 'get_stock_quantity' ) ? $product->get_stock_quantity( 'edit' ) : '',
+						0
+					),
 					'point'     => 'expired',
 				);
 				continue;
@@ -84,7 +87,10 @@ class WBE_Alerts {
 				'name'      => $product->get_name(),
 				'days'      => $days,
 				'expiry_fa' => WBE_Jalali::format_ymd( $active['expiry'], $cal, true ),
-				'stock'     => (int) $active['stock'],
+				'stock'     => (int) WBE_Engine::stock_from_wc(
+					method_exists( $product, 'get_stock_quantity' ) ? $product->get_stock_quantity( 'edit' ) : '',
+					$active['stock']
+				),
 				'point'     => $point,
 			);
 			if ( 'expired' === $point ) {
