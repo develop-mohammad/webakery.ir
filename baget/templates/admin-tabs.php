@@ -22,6 +22,10 @@ $tabs = array(
 		'label' => 'پرداخت',
 		'url'   => admin_url( 'admin.php?page=wccp&tab=payments' ),
 	),
+	'quick-buy'   => array(
+		'label' => 'خرید سریع',
+		'url'   => admin_url( 'admin.php?page=wccp&tab=quick-buy' ),
+	),
 	'license'     => array(
 		'label' => 'خرید و لایسنس',
 		'url'   => admin_url( 'admin.php?page=wccp&tab=license' ),

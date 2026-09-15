@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Baget — پیش‌نمایش خرید سریع</title>
+	<style>
+		:root { font-family: Tahoma, Vazirmatn, sans-serif; }
+		body { margin: 0; background: #f8fafc; color: #0f172a; }
+		.wrap { max-width: 1080px; margin: 0 auto; padding: 24px 16px 48px; }
+		h1 { margin: 0 0 8px; font-size: 22px; }
+		.muted { color: #64748b; font-size: 14px; margin: 0 0 18px; }
+		.tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+		.tabs button {
+			border: 1px solid #e9d5ff; background: #fff; border-radius: 999px;
+			padding: 8px 14px; font-weight: 700; cursor: pointer;
+		}
+		.tabs button.is-on { background: #6d28d9; color: #fff; border-color: #6d28d9; }
+		.panel { display: none; }
+		.panel.is-on { display: block; }
+		.card { background: #fff; border: 1px solid #e9d5ff; border-radius: 16px; padding: 18px; box-shadow: 0 8px 24px rgba(15,23,42,.04); }
+		.howto { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+		.howto div { background: #fff; border: 1px solid #e9d5ff; border-radius: 14px; padding: 12px; }
+		.howto span { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #6d28d9; color: #fff; font-weight: 800; margin-left: 8px; }
+		.product { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
+		.thumb { height: 220px; border-radius: 16px; background: linear-gradient(160deg,#ede9fe,#c4b5fd); }
+		.price { color: #6d28d9; font-size: 22px; font-weight: 800; }
+		.buy {
+			display: inline-block; background: #6d28d9; color: #fff; border: 0; border-radius: 12px;
+			padding: 12px 28px; font-weight: 800; cursor: pointer; font-size: 16px;
+		}
+		.note { font-size: 13px; color: #64748b; margin-top: 10px; }
+		.form label { display: block; font-weight: 700; margin: 12px 0 6px; }
+		.form input {
+			width: 100%; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;
+		}
+		.pay { margin-top: 16px; background: #0f172a; color: #fff; border: 0; border-radius: 12px; padding: 12px 22px; font-weight: 800; cursor: pointer; }
+		.ok { display: none; background: #ecfdf5; color: #047857; border: 1px solid #bbf7d0; border-radius: 12px; padding: 12px; margin-top: 14px; font-weight: 700; }
+		.ok.is-on { display: block; }
+		.admin-row { display: flex; gap: 8px; align-items: center; margin: 10px 0; font-weight: 700; }
+		.badge { display: inline-block; background: #ecfdf5; color: #047857; border-radius: 999px; padding: 2px 8px; font-size: 12px; }
+		@media (max-width: 800px) {
+			.howto, .product { grid-template-columns: 1fr; }
+		}
+	</style>
+</head>
+<body>
+	<div class="wrap">
+		<h1>خرید سریع Baget</h1>
+		<p class="muted">با زدن دکمه خرید، محصول به سبد فعلی اضافه می‌شود و مشتری مستقیم فرم مشخصات پرداخت را می‌بیند.</p>
+		<div class="tabs">
+			<button type="button" class="is-on" data-panel="admin">تنظیمات ادمین</button>
+			<button type="button" data-panel="shop">صفحه محصول</button>
+			<button type="button" data-panel="pay">صفحه پرداخت</button>
+		</div>
+
+		<section id="admin" class="panel is-on">
+			<div class="howto">
+				<div><span>۱</span><strong>دکمه خرید</strong><p class="muted">در محصول یا فروشگاه</p></div>
+				<div><span>۲</span><strong>سبد فعلی</strong><p class="muted">خالی نمی‌شود</p></div>
+				<div><span>۳</span><strong>صفحه پرداخت</strong><p class="muted">ورود مشخصات</p></div>
+				<div><span>۴</span><strong>درگاه</strong><p class="muted">ادامه پرداخت</p></div>
+			</div>
+			<div class="card">
+				<header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+					<strong>تنظیمات خرید سریع</strong>
+					<span class="badge">فعال</span>
+				</header>
+				<label class="admin-row"><input type="checkbox" checked disabled /> خرید سریع فعال باشد (رد شدن از صفحه سبد)</label>
+				<label><strong>متن دکمه خرید</strong><input value="خرید" readonly /></label>
+				<label class="admin-row"><input type="checkbox" checked disabled /> اگر کسی وارد صفحه سبد شد، به پرداخت هدایت شود</label>
+			</div>
+		</section>
+
+		<section id="shop" class="panel">
+			<div class="card product">
+				<div class="thumb" aria-hidden="true"></div>
+				<div>
+					<h2 style="margin-top:0">افزونه Baget</h2>
+					<p class="price">۱۹۹٬۰۰۰ تومان</p>
+					<p>با یک کلیک به صفحه پرداخت می‌روید. مشخصات را همان‌جا وارد می‌کنید.</p>
+					<button type="button" class="buy" id="buy-btn">خرید</button>
+					<p class="note" id="shop-note">سبد فعلی حفظ می‌شود — محصول قبلی حذف نمی‌شود.</p>
+				</div>
+			</div>
+		</section>
+
+		<section id="pay" class="panel">
+			<div class="card form">
+				<h2 style="margin-top:0">تکمیل مشخصات و پرداخت</h2>
+				<p class="muted">سفارش: افزونه Baget — ۱۹۹٬۰۰۰ تومان</p>
+				<label>نام<input id="first" placeholder="مثلاً سارا" /></label>
+				<label>نام خانوادگی<input id="last" placeholder="محمدی" /></label>
+				<label>موبایل<input id="phone" placeholder="0912xxxxxxx" dir="ltr" /></label>
+				<label>ایمیل<input id="email" placeholder="you@example.com" dir="ltr" /></label>
+				<button type="button" class="pay" id="pay-btn">ثبت سفارش و پرداخت</button>
+				<div class="ok" id="ok">سفارش ثبت شد — مشتری بدون صفحه سبد به پرداخت رسید.</div>
+			</div>
+		</section>
+	</div>
+	<script>
+		function show(id) {
+			document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('is-on'); });
+			document.querySelectorAll('.tabs button').forEach(function (b) { b.classList.toggle('is-on', b.getAttribute('data-panel') === id); });
+			document.getElementById(id).classList.add('is-on');
+		}
+		document.querySelectorAll('.tabs button').forEach(function (b) {
+			b.addEventListener('click', function () { show(b.getAttribute('data-panel')); });
+		});
+		document.getElementById('buy-btn').addEventListener('click', function () {
+			show('pay');
+			document.getElementById('first').focus();
+		});
+		document.getElementById('pay-btn').addEventListener('click', function () {
+			var phone = document.getElementById('phone').value.replace(/\D/g, '');
+			var first = document.getElementById('first').value.trim();
+			if (!first || !/^09\d{9}$/.test(phone)) {
+				document.getElementById('ok').textContent = 'نام و شماره موبایل ۱۱ رقمی با ۰۹ لازم است.';
+				document.getElementById('ok').style.color = '#b91c1c';
+				document.getElementById('ok').style.background = '#fef2f2';
+				document.getElementById('ok').classList.add('is-on');
+				return;
+			}
+			document.getElementById('ok').style.color = '#047857';
+			document.getElementById('ok').style.background = '#ecfdf5';
+			document.getElementById('ok').textContent = 'سفارش ثبت شد — مشتری بدون صفحه سبد به پرداخت رسید.';
+			document.getElementById('ok').classList.add('is-on');
+		});
+	</script>
+</body>
+</html>

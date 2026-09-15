@@ -24,6 +24,7 @@ class Admin {
 		add_action( 'admin_post_wccp_delete_template', array( $this, 'handle_delete_template' ) );
 		add_action( 'admin_post_wccp_save_wc_templates', array( $this, 'handle_save_wc_templates' ) );
 		add_action( 'admin_post_wccp_save_payments', array( $this, 'handle_save_payments' ) );
+		add_action( 'admin_post_wccp_save_quick_buy', array( $this, 'handle_save_quick_buy' ) );
 	}
 
 	/** @return string */
@@ -52,11 +53,17 @@ class Admin {
 		add_submenu_page( 'wccp', 'لینک پرداخت', 'لینک پرداخت', $cap, 'edit.php?post_type=wccp_product' );
 		add_submenu_page( 'wccp', 'افزودن لینک پرداخت', 'افزودن لینک پرداخت', $cap, 'post-new.php?post_type=wccp_product' );
 		add_submenu_page( 'wccp', 'پرداخت', 'پرداخت', $cap, 'wccp-payments', array( $this, 'render_payments_redirect' ) );
+		add_submenu_page( 'wccp', 'خرید سریع', 'خرید سریع', $cap, 'wccp-quick-buy', array( $this, 'render_quick_buy_redirect' ) );
 		add_submenu_page( 'wccp', 'خرید و لایسنس', 'خرید و لایسنس', $cap, 'wccp-license', array( $this, 'render_license_page' ) );
 	}
 
 	public function render_payments_redirect() {
 		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=payments' ) );
+		exit;
+	}
+
+	public function render_quick_buy_redirect() {
+		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=quick-buy' ) );
 		exit;
 	}
 
@@ -154,6 +161,10 @@ class Admin {
 			$this->render_payments_page();
 			return;
 		}
+		if ( 'quick-buy' === $tab ) {
+			$this->render_quick_buy_page();
+			return;
+		}
 
 		$this->render_fields_page();
 	}
@@ -164,6 +175,32 @@ class Admin {
 		}
 		$tab = 'payments';
 		include WCCP_PATH . 'templates/admin-payments.php';
+	}
+
+	public function render_quick_buy_page() {
+		if ( ! current_user_can( self::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		$tab = 'quick-buy';
+		include WCCP_PATH . 'templates/admin-quick-buy.php';
+	}
+
+	public function handle_save_quick_buy() {
+		if ( ! current_user_can( self::admin_capability() ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'دسترسی غیرمجاز' );
+		}
+		check_admin_referer( 'wccp_save_quick_buy' );
+		QuickBuy::save_settings(
+			array(
+				'enabled'       => ! empty( $_POST['enabled'] ) ? 1 : 0,
+				'button_text'   => wp_unslash( $_POST['button_text'] ?? '' ), // phpcs:ignore
+				'redirect_cart' => ! empty( $_POST['redirect_cart'] ) ? 1 : 0,
+			)
+		);
+		add_settings_error( 'wccp_quick_buy', 'ok', 'تنظیمات خرید سریع ذخیره شد.', 'updated' );
+		set_transient( 'settings_errors', get_settings_errors(), 30 );
+		wp_safe_redirect( admin_url( 'admin.php?page=wccp&tab=quick-buy' ) );
+		exit;
 	}
 
 	public function handle_save_payments() {
