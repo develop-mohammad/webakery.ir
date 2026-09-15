@@ -93,7 +93,8 @@ class UpdateManager {
             'wccp'          => 'baget.zip',
             'hesabdar'      => 'hesabdar.zip',
             'access-levels' => 'access-levels.zip',
-            'sokhte-jet'    => 'sokhte-jet.zip',
+            'sokhte-jet'      => 'sokhte-jet.zip',
+            'webakery-expiry' => 'webakery-expiry-pro.zip',
         );
         if ( ! isset( $map[ $product ] ) ) {
             return null;
